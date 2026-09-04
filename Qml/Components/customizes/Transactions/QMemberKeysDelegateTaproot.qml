@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.1
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -380,7 +380,7 @@ Rectangle {
                 anchors.right: parent.right
                 onButtonClicked: {
                     signOptionMenu.x = 20
-                    signOptionMenu.y = 20 - signOptionMenu.height
+                    signOptionMenu.y = 20 - signOptionMenu.implicitHeight
                     signOptionMenu.open()
                 }
             }

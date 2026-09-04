@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2151
+    label.text: QSTR.STR_QML_2151
     extraHeader: Item {}
     
     property string totalAllocated: "100%"
@@ -60,7 +60,7 @@ QOnScreenContentTypeA {
                 
                 QLato {
                     id: descText
-                    text: STR.STR_QML_2241
+                    text: QSTR.STR_QML_2241
                     font.pixelSize: 16
                     wrapMode: Text.WordWrap
                     lineHeight: 20
@@ -85,11 +85,11 @@ QOnScreenContentTypeA {
                         height: parent.height
                         contentHeight: stagesColumn.height
                         clip: true
-                        ScrollBar.vertical: ScrollBar { active: true }
-                        
+                        ScrollBar.vertical: QScrollBar { }
+
                         Column {
                             id: stagesColumn
-                            width: parent.width
+                            width: parent.width - 8  // leave room for QScrollBar (8px)
                             spacing: 0
                             
                             Repeater {
@@ -147,7 +147,7 @@ QOnScreenContentTypeA {
                             }
 
                             QLato {
-                                text: STR.STR_QML_2242 + vm.availablePercentage + "% (" + vm.availableBalanceDisplay + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC)" : " sats)")
+                                text: QSTR.STR_QML_2242 + vm.availablePercentage + "% (" + vm.availableBalanceDisplay + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC)" : " sats)")
                                 font.pixelSize: 12
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignLeft
@@ -165,7 +165,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_777
+            label.text: QSTR.STR_QML_777
             label.font.pixelSize: 14
             type: eTypeR
             onButtonClicked: {
@@ -176,7 +176,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_1735
+            label.text: QSTR.STR_QML_1735
             label.font.pixelSize: 14
             type: eTypeE
             enabled: vm.availableBalanceSats > 0

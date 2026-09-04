@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../origins"
 
 Column {
@@ -111,10 +111,10 @@ Column {
             interactive: true
             contentWidth: width
             contentHeight: _input.implicitHeight
-            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            ScrollBar.vertical: QScrollBar { }
             QTextArea {
                 id: _input
-                width: boxWidth
+                width: boxWidth - 8  // leave room for QScrollBar (8px)
                 background: Item{}
                 color: textColor
                 font.pixelSize: 16

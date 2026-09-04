@@ -35,8 +35,7 @@ QNunchukRoomUsers::QNunchukRoomUsers(Room *r): m_room(r)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     if(m_room){
         QQmlEngine::setObjectOwnership(m_room, QQmlEngine::CppOwnership);
-        connect(m_room, &Room::userAdded, this, &QNunchukRoomUsers::refresh);
-        connect(m_room, &Room::userRemoved, this, &QNunchukRoomUsers::refresh);
+        connect(m_room, &Room::memberListChanged, this, &QNunchukRoomUsers::refresh);
     }
 }
 
@@ -47,18 +46,29 @@ QNunchukRoomUsers::~QNunchukRoomUsers()
 
 int QNunchukRoomUsers::rowCount(const QModelIndex &parent) const
 {
-    return m_room ? m_room->users().count() : 0;
+    Q_UNUSED(parent)
+    return m_room ? m_room->joinedMembers().count() : 0;
 }
 
 QVariant QNunchukRoomUsers::data(const QModelIndex &index, int role) const
 {
+    if(!m_room || !index.isValid()){
+        return {};
+    }
+    const auto members = m_room->joinedMembers();
+    if(index.row() < 0 || index.row() >= members.count()){
+        return {};
+    }
+    const RoomMember& member = members.at(index.row());
     switch (role) {
     case user_id:
-        return m_room ? m_room->users().at(index.row())->id() : QVariant();
+        return member.id();
     case user_name:
-        return m_room ? m_room->users().at(index.row())->displayname(m_room) : QVariant();
+        return member.displayName();
     case user_avatar:
-        return m_room ? m_room->users().at(index.row())->avatarMediaId() : QVariant();
+        return member.avatarMediaId();
+    case user_is_local:
+        return member.id() == m_room->localMember().id();
     default:
         return QVariant();
     }
@@ -70,10 +80,14 @@ QHash<int, QByteArray> QNunchukRoomUsers::roleNames() const
     names[user_id]     = "id";
     names[user_name]   = "name";
     names[user_avatar] = "avatar";
+    names[user_is_local] = "isLocal";
     return names;
 }
 
 QVariant QNunchukRoomUsers::get(int row) {
+    if(row < 0 || row >= rowCount()){
+        return {};
+    }
     QHash<int,QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
     QVariantMap res;
@@ -100,8 +114,11 @@ void QNunchukRoomUsers::refresh()
 
 bool QNunchukRoomUsers::HasContact(const QString &id)
 {
-    for(User* user:m_room->users()){
-        if(user && user->id().contains(id)){
+    if(!m_room){
+        return false;
+    }
+    for(const RoomMember& user : m_room->joinedMembers()){
+        if(user.id() == id){
             return true;
         }
     }

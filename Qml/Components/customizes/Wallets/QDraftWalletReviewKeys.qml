@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -43,9 +43,9 @@ Item {
                 id: signerlist
                 anchors.fill: parent
                 model: newWalletInfo.walletSingleSignerAssigned
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: QDraftWalletKeyDeletage {
-                    width: signerlist.width
+                    width: signerlist.width - 8  // leave room for QScrollBar (8px)
                     signerData {
                         single_name: singleSigner_name
                         single_type: single_signer_type

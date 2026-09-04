@@ -79,14 +79,15 @@ void EVT_APP_SETTING_CHANGE_PASSPHRASE_HANDLER(QVariant msg) {
 }
 
 void EVT_APP_SETTING_REQUEST_RESTART_HANDLER(QVariant msg) {
-    qApp->quit();
-#if defined (Q_OS_WIN)
-    QString command = QString("cmd /C \"%1 \"").arg(qApp->applicationFilePath());
-    QProcess::startDetached(command);
-#else
-    QProcess::startDetached(qApp->applicationFilePath());
-#endif
-    DBG_INFO << "Restart new application's instance";
+    const QString program = qApp->applicationFilePath();
+    const QStringList arguments;
+
+    if (QProcess::startDetached(program, arguments)) {
+        DBG_INFO << "Restart new application's instance";
+        qApp->quit();
+    } else {
+        DBG_ERROR << "Failed to restart application:" << program;
+    }
 }
 
 void EVT_APP_SETTING_REQUEST_RESCAN_HANDLER(QVariant msg) {

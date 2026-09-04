@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -106,7 +106,7 @@ QOnScreenContentTypeA {
                         return contentHeight > height ? contentHeight - height : 0
                     }
                 }
-                ScrollBar.vertical: ScrollBar { active: keylistflick.interactive }
+                ScrollBar.vertical: QScrollBar { }
 
                 Loader {
                     id: keylistLoader

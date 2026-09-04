@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/customizes/Texts"
 
 Column {
@@ -33,7 +33,7 @@ Column {
     QLato {
         width: parent.width
         height: paintedHeight
-        text: STR.STR_QML_2169
+        text: QSTR.STR_QML_2169
         font.weight: Font.Bold
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
@@ -57,13 +57,13 @@ Column {
                 width: parent.width
                 text: {
                     if (fallback_type == "NONE") {
-                        return STR.STR_QML_2251
+                        return QSTR.STR_QML_2251
                     } else if (fallback_type == "INACTIVITY") {
-                        return STR.STR_QML_2250.arg(fallback_interval)
+                        return QSTR.STR_QML_2250.arg(fallback_interval)
                     } else if (fallback_type == "DATE_BASED") {
-                        return STR.STR_QML_2249.arg(fallback_dateTime)                    
+                        return QSTR.STR_QML_2249.arg(fallback_dateTime)
                     }
-                    return STR.STR_QML_2251
+                    return QSTR.STR_QML_2251
                 }
                 color: fallbackChanged ? "#CF4018" : "#031F2B"
                 font.pixelSize: 16

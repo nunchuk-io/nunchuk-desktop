@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -66,12 +66,14 @@ QScreen {
                     maxLength: 20
                     textInputted: AppModel.newWalletInfo.walletName
                     onTextInputtedChanged: {
+                        if (_walletName.input.inputMethodComposing) return
                         AppModel.newWalletInfo.walletName = textInputted
                         if(!_walletName.isValid){
                             _walletName.isValid = true
                             _walletName.errorText = ""
                         }
                         _walletName.showError = false;
+                        firstEnable = false
                     }
                 }
                 QLine {
@@ -167,6 +169,11 @@ QScreen {
             function addressType() {
                 return addressTypeSelection.typeOption
             }
+            function commitWalletNameInput() {
+                if (_walletName.input.inputMethodComposing) {
+                    Qt.inputMethod.commit()
+                }
+            }
         }
         onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         bottomRight: QTextButton {
@@ -177,6 +184,7 @@ QScreen {
             type: eTypeE
             enabled: _content.contentItem.isEnable() || firstEnable
             onButtonClicked: {
+                _content.contentItem.commitWalletNameInput()
                 if(!_content.contentItem.isEnable()){
                     _warning.open()
                     return

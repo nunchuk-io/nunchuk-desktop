@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -35,6 +35,8 @@ import "../../../localization/STR_QML.js" as STR
 Item {
     id: root
     property int count: AppModel.walletList.count
+    property bool selectionActive: false
+    property string selectedWalletId: ""
     width: 300
     height: walletList.contentHeight
     Component {
@@ -43,10 +45,7 @@ Item {
             id: dragArea
             property bool held: false
             property string oldWalletId: ""
-            anchors {
-                left: parent.left
-                right: parent.right
-            }
+            width: parent ? parent.width : 0
             // Archived wallets are hidden from the active list.
             // height=0 is sufficient: a zero-height item is invisible and receives no
             // mouse/drag events. Avoid visible: false because it calls setVisible() which
@@ -56,8 +55,12 @@ Item {
             // non-zero height (walletListdelegate.height) independent of dragArea's own
             // height, so without clipping it still paints at dragArea's zero-height
             // position and visually overlaps the neighboring list item.
+            // Note: wallet_isReplaced is intentionally NOT included here — a replaced wallet
+            // that the user explicitly unarchives must be visible in the active list.
+            // It still renders with "Deactivated" badge and "[DEPRECATED]" name prefix
+            // (controlled by QWalletManagerDelegate.isReplaced and isLocked).
             clip: true
-            height: (model.wallet_isArchived || model.wallet_isReplaced) ? 0 : content.height
+            height: model.wallet_isArchived ? 0 : content.height
             drag.target: held ? content : undefined
             drag.axis: Drag.YAxis
             onPressAndHold: {
@@ -96,9 +99,10 @@ Item {
                 QWalletManagerDelegate {
                     id: walletListdelegate
                     width: walletList.width
-                    isCurrentIndex: (!pendingList.visible) ? (walletList.visible) && (index === walletList.currentIndex) :
-                                                             (walletList.visible) && (index === walletList.currentIndex)
-                                                             && (GlobalData.listFocusing === _FOCUS_WALLET)
+                    isCurrentIndex: root.selectionActive
+                                    && !model.wallet_isArchived
+                                    && root.selectedWalletId !== ""
+                                    && model.wallet_id === root.selectedWalletId
                     walletCurrency: model.wallet_Balance_Currency
                     walletName :model.wallet_name
                     walletBalance: model.wallet_Balance

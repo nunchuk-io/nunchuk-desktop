@@ -24,10 +24,26 @@
 #include "ifaces/Servers/Draco.h"
 #include "utils/enumconverter.hpp"
 #include <QCryptographicHash>
+#include <QFileInfo>
 #include <QHash>
 #include <QJsonDocument>
 #include <QUrl>
 #include <boost/algorithm/string.hpp>
+
+namespace {
+
+bool isUsableStorageDirectory(const QString &path)
+{
+    const QFileInfo info(path);
+    const bool usable = !path.isEmpty() && info.exists() && info.isDir() &&
+        info.isReadable() && info.isWritable();
+    if (!usable) {
+        DBG_ERROR << "Storage directory is not usable:" << path;
+    }
+    return usable;
+}
+
+} // namespace
 
 QString qUtils::deviceId() {
     QString deviceId = QSysInfo::machineUniqueId();
@@ -96,20 +112,28 @@ qint64 qUtils::QAmountFromValue(const QString &btcValue, const bool allow_negati
 }
 
 QString qUtils::QValueFromAmount(const qint64 amount) {
-    // DBG_INFO << amount << INT64_MAX;
     QString ret = "";
+
     try {
-        ret = QString::fromStdString(nunchuk::Utils::ValueFromAmount(amount));
-    } catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        ret = QString::fromStdString(
+            nunchuk::Utils::ValueFromAmount(amount));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException"
+                 << ex.code() << ex.what();
         ret = "";
-    } catch (std::exception &e) {
+    }
+    catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what();
         ret = "";
     }
-    if ((int)AppSetting::Unit::BTC == AppSetting::instance()->unit() && false == AppSetting::instance()->enableFixedPrecision()) {
-        ret.remove(QRegExp("0+$"));  // Remove any number of trailing 0's
-        ret.remove(QRegExp("\\.$")); // If the last character is just a '.' then remove it
+
+    if ((int)AppSetting::Unit::BTC ==
+            AppSetting::instance()->unit()
+        && !AppSetting::instance()->enableFixedPrecision())
+    {
+        ret.remove(QRegularExpression("0+$"));
+        ret.remove(QRegularExpression("\\.$"));
     }
     return ret;
 }
@@ -131,21 +155,37 @@ QString qUtils::QAddressToScriptPubKey(const QString &address) {
 }
 
 QString qUtils::QGetFilePath(QString in) {
-    if (in.isEmpty() || in == "") {
-        return "";
+    if (in.isEmpty()) {
+        return {};
     }
-    // QML file dialogs return percent-encoded URLs ("%20" for spaces, "%23"
-    // for '#'). Stripping the scheme keeps the encoding and the path lookup
-    // fails, so decode through QUrl for local files.
-    QUrl url(in);
-    if (url.isLocalFile()) {
-        return url.toLocalFile();
-    }
-#ifdef _WIN32
-    return in.remove("file:///");
-#else
-    return in.remove("file://");
+
+    const QUrl url(in);
+    if (!url.isLocalFile()) {
+        const QString scheme = url.scheme();
+        if (scheme.compare(QStringLiteral("file"), Qt::CaseInsensitive) == 0) {
+            DBG_ERROR << "Invalid local file URL:" << in;
+            return {};
+        }
+
+        // The input can already be a local path. QUrl parses a Windows drive
+        // letter, and POSIX parses a valid name such as "report:2026.csv", as
+        // a scheme. Preserve those forms while rejecting explicit URLs.
+        const bool isWindowsDrivePath =
+            in.size() >= 2 && in.at(0).isLetter() && in.at(1) == ':';
+        bool isExplicitNonLocalUrl = in.contains(QStringLiteral("://"));
+#ifdef Q_OS_WIN
+        // A colon is only valid in a Windows local path as the drive prefix.
+        isExplicitNonLocalUrl = isExplicitNonLocalUrl ||
+            (!scheme.isEmpty() && !isWindowsDrivePath);
 #endif
+        if (isExplicitNonLocalUrl) {
+            DBG_ERROR << "Unsupported non-local file URL:" << in;
+            return {};
+        }
+        return in;
+    }
+
+    return url.toLocalFile();
 }
 
 bool qUtils::QIsValidXPub(const QString &value, QString &out) {
@@ -208,7 +248,16 @@ QStringList qUtils::GetBIP39WordList() {
 
 void qUtils::SetPassPhrase(const QString &storage_path, const QString &account, nunchuk::Chain chain, const QString &old_passphrase,
                            const QString &new_passphrase) {
-    nunchuk::Utils::SetPassPhrase(storage_path.toStdString(), account.toStdString(), chain, old_passphrase.toStdString(), new_passphrase.toStdString());
+    if (!isUsableStorageDirectory(storage_path)) {
+        return;
+    }
+    try {
+        nunchuk::Utils::SetPassPhrase(storage_path.toStdString(), account.toStdString(), chain, old_passphrase.toStdString(), new_passphrase.toStdString());
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_ERROR << "SetPassPhrase failed:" << ex.code() << ex.what();
+    } catch (const std::exception &ex) {
+        DBG_ERROR << "SetPassPhrase failed:" << ex.what();
+    }
 }
 
 nunchuk::Wallet qUtils::ParseWalletDescriptor(const QString &descs, QWarningMessage &msg) {
@@ -265,8 +314,27 @@ QString qUtils::ParseQRTransaction(const QStringList &qrtags, QWarningMessage &m
     return QString::fromStdString(psbt);
 }
 
-std::vector<nunchuk::PrimaryKey> qUtils::GetPrimaryKeys(const QString &storage_path, nunchuk::Chain chain) {
-    return nunchuk::Utils::GetPrimaryKeys(storage_path.toStdString(), chain);
+std::vector<nunchuk::PrimaryKey> qUtils::GetPrimaryKeys(
+    const QString &storage_path, nunchuk::Chain chain, QWarningMessage &msg) {
+    if (!isUsableStorageDirectory(storage_path)) {
+        msg.setWarningMessage(
+            nunchuk::StorageException::INVALID_DATADIR,
+            "Data directory is missing or not readable and writable",
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return {};
+    }
+    try {
+        return nunchuk::Utils::GetPrimaryKeys(storage_path.toStdString(), chain);
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_ERROR << "GetPrimaryKeys failed:" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(),
+                              EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (const std::exception &ex) {
+        DBG_ERROR << "GetPrimaryKeys failed:" << ex.what();
+        msg.setWarningMessage(-1, ex.what(),
+                              EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return {};
 }
 
 QString qUtils::GetMasterFingerprint(const QString &mnemonic, const QString &passphrase) {
@@ -508,7 +576,7 @@ int qUtils::Precision(double input) {
     int lastDigit = 0;
     for (int i = 1; i <= maxDigits; i++) {
         remaining = (remaining * 10);
-        int round = qRound(remaining) % 10;
+        int round = static_cast<int>(qRound64(remaining) % 10);
         if (round != 0) {
             if (round < 0)
                 break;
@@ -543,12 +611,12 @@ uint qUtils::GetTimeSecond(QString time_str) {
     QString day = list.at(1);
     QString year = list.at(2);
     QDate date(year.toInt(), month.toInt(), day.toInt());
-    QDateTime time(date);
-    return time.toTime_t();
+    QDateTime time(date, QTime(0, 0));
+    return time.toSecsSinceEpoch();
 }
 
 uint qUtils::GetCurrentTimeSecond() {
-    return QDateTime::currentDateTime().toTime_t();
+    return QDateTime::currentDateTime().toSecsSinceEpoch();
 }
 
 QString qUtils::GetTimeString(uint time_second, bool is_relative) {
@@ -895,8 +963,9 @@ QString qUtils::SignPsbt(const QString &hwi_path, const nunchuk::Device &device,
 }
 
 QString qUtils::ImportDataViaFile(const QString &filepath) {
-    if (QFile::exists(filepath)) {
-        QFile file(filepath);
+    const QString localPath = QGetFilePath(filepath);
+    if (QFile::exists(localPath)) {
+        QFile file(localPath);
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QTextStream in(&file);
             QString fileContent = in.readAll();
@@ -907,15 +976,29 @@ QString qUtils::ImportDataViaFile(const QString &filepath) {
     return "";
 }
 
-void qUtils::ExportDataViaFile(const QString &filepath, const QString &data) {
-    QFile file(filepath);
+bool qUtils::ExportDataViaFile(const QString &filepath, const QString &data)
+{
+    const QString localPath = QGetFilePath(filepath);
+    if (localPath.isEmpty()) {
+        return false;
+    }
+    QFile file(localPath);
+
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream st(&file);
-        st.setCodec("UTF-8");
-        st << data << endl;
+
+        st << data << Qt::endl;
+
         st.flush();
+        const bool success = st.status() == QTextStream::Ok &&
+            file.error() == QFileDevice::NoError;
         file.close();
+        if (success) {
+            return true;
+        }
     }
+    DBG_ERROR << "Cannot write file:" << localPath << file.errorString();
+    return false;
 }
 
 bool qUtils::isValidXPRV(const QString &xprv, QWarningMessage &msg) {
@@ -1399,6 +1482,9 @@ uint64_t qUtils::getTimestampFromDateTime(const QString &dateTimeStr, const QTim
         localTz = tz;
     }
     QDateTime dt = QDateTime::fromString(dateTimeStr, "MM/dd/yyyy HH:mm");
+    if (!dt.isValid()) {
+        dt = QDateTime::fromString(dateTimeStr, "MM/dd/yyyy");
+    }
     dt.setTimeZone(localTz);
     return dt.toSecsSinceEpoch();
 }
@@ -1647,6 +1733,24 @@ QString qUtils::formatMiniscript(const QString &input, int indentSize, int maxIn
     }
 
     return output;
+}
+
+bool qUtils::isMiniscriptContent(const QString &content) {
+    if (content.isEmpty() || content.contains(QChar::Null)) {
+        DBG_INFO << "isMiniscriptContent: empty or binary content";
+        return false;
+    }
+    // Reject binary files: any control character that isn't normal whitespace
+    // indicates binary data (image headers, video frames, etc.)
+    for (const QChar &c : content) {
+        ushort u = c.unicode();
+        if (u < 32 && u != '\t' && u != '\n' && u != '\r') {
+            DBG_INFO << "isMiniscriptContent: binary control character detected" << u;
+            return false;
+        }
+    }
+    DBG_INFO << "isMiniscriptContent: text content accepted";
+    return true;
 }
 
 // Convert vector<uint8_t> -> hex string

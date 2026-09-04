@@ -13,7 +13,7 @@ import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
-import QtGraphicalEffects 1.0
+import Qt5Compat.GraphicalEffects
 /**************************************************************************
  * This file is part of the Nunchuk software (https://nunchuk.io/)        *
  * Copyright (C) 2020-2022 Enigmo								          *
@@ -33,10 +33,8 @@ import QtGraphicalEffects 1.0
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.1
-import QtQuick.Controls.Styles 1.4
+import QtQuick
+import QtQuick.Controls
 
 Item {
     property int walletType: ServiceSetting.walletInfo.walletType

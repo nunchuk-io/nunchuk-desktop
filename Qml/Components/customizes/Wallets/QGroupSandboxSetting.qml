@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_157
+    label.text: QSTR.STR_QML_157
     extraHeader: Item {}
     onCloseClicked: closeTo()
     content: Item {
@@ -50,7 +50,7 @@ QOnScreenContentTypeB {
             spacing: 24
             QTextInputBoxTypeB {
                 id: _walletName
-                label: STR.STR_QML_025
+                label: QSTR.STR_QML_025
                 boxWidth: _cols.width
                 boxHeight: 48
                 isValid: true
@@ -87,12 +87,12 @@ QOnScreenContentTypeB {
                         onSelectTypeOption: {
                             addressTypeSelection.typeOption = type
                             newWalletInfo.customizeMiniscript = ""
-                            if (type !== sandbox.addressType) {
+                            if (type !== sandbox.addressType && sandbox.addedCount > 0) {
                                 _warning.open()
                             }
                         }
                         onTypeOptionChanged: {
-                            if (typeOption !== sandbox.addressType) {
+                            if (typeOption !== sandbox.addressType && sandbox.addedCount > 0) {
                                 _warning.open()
                             }
                         }
@@ -186,7 +186,7 @@ QOnScreenContentTypeB {
         QTextButton {
             width: 99
             height: 48
-            label.text: STR.STR_QML_265
+            label.text: QSTR.STR_QML_265
             label.font.pixelSize: 16
             type: eTypeE
             enabled: _content.contentItem.isEnable()
@@ -202,9 +202,9 @@ QOnScreenContentTypeB {
     }
     QPopupInfoTwoButtons {
         id: _warning
-        title: STR.STR_QML_661
-        contentText: STR.STR_QML_1650
-        labels: [STR.STR_QML_432,STR.STR_QML_097]
+        title: QSTR.STR_QML_661
+        contentText: QSTR.STR_QML_1650
+        labels: [QSTR.STR_QML_432,QSTR.STR_QML_097]
         types: [_btnBase.eTypeP, _btnBase.eTypeE]
         isVertical: false
         funcs: [

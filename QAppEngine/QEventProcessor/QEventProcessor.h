@@ -83,6 +83,7 @@ private:
     int                                                 m_currentFlow;
     QMap<int, int>                                      m_PopupTriger;
     QObject*                                            m_currentScreen;
+    bool                                                m_shutdown{false};
 private:
     explicit QEventProcessor();
     virtual ~QEventProcessor();

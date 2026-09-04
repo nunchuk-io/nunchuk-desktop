@@ -1,22 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-die()
-{
+die() {
     echo "ERROR: $*" >&2
     exit 1
 }
 
-is_elf()
-{
-    file -Lb -- "$1" 2>/dev/null | grep -q '^ELF '
+failures=0
+symbols_file_to_clean=""
+
+record_failure() {
+    echo "ERROR: $*" >&2
+    failures=$((failures + 1))
 }
 
-is_host_runtime()
-{
-    # These libraries form part of the host ABI, graphics/audio stack, or
-    # hardware drivers. Bundling them makes an AppImage less portable and, for
-    # glibc, can mix a foreign libc with the host ELF loader.
+cleanup() {
+    if [[ -n "${symbols_file_to_clean}" ]]; then
+        rm -f -- "${symbols_file_to_clean}"
+    fi
+}
+
+is_elf() {
+    readelf -h -- "$1" >/dev/null 2>&1
+}
+
+is_host_runtime() {
+    # Keep the host ABI, graphics/audio stack and hardware drivers outside the
+    # AppImage. libstdc++ and libgcc_s intentionally follow linuxdeploy's
+    # AppImage excludelist; their maximum required versions are reported below.
+    # All other dependencies must resolve from inside the AppDir.
     case "$1" in
         linux-vdso.so.*|ld-linux*.so.*|ld-*.so|\
         libc.so.*|libc-*.so|libdl.so.*|libdl-*.so|\
@@ -33,6 +45,7 @@ is_host_runtime()
         libxcb.so.*|libX11.so.*|libX11-xcb.so.*|libwayland-client.so.*|\
         libasound.so.*|libfontconfig.so.*|libfreetype.so.*|libharfbuzz.so.*|\
         libcom_err.so.*|libexpat.so.*|libgpg-error.so.*|\
+        libgcc_s.so.*|libstdc++.so.*|\
         libICE.so.*|libSM.so.*|libusb-1.0.so.*|libuuid.so.*|libz.so.*|\
         libjack.so.*|libpipewire-0.3.so.*|libxcb-dri2.so.*|\
         libxcb-dri3.so.*|libfribidi.so.*|libgmp.so.*)
@@ -44,298 +57,381 @@ is_host_runtime()
     esac
 }
 
-remove_host_runtimes()
-{
+require_file() {
+    local path="$1"
+    local description="$2"
+
+    if [[ ! -f "${path}" ]]; then
+        record_failure "Missing ${description}: ${path}"
+    fi
+}
+
+require_executable() {
+    local path="$1"
+    local description="$2"
+
+    if [[ ! -x "${path}" ]]; then
+        record_failure "Missing or non-executable ${description}: ${path}"
+    fi
+}
+
+require_match() {
+    local root="$1"
+    local pattern="$2"
+    local description="$3"
+    local match
+
+    if [[ ! -d "${root}" ]]; then
+        record_failure "Missing directory for ${description}: ${root}"
+        return
+    fi
+
+    match="$(find "${root}" -type f -name "${pattern}" -print -quit)"
+    if [[ -z "${match}" ]]; then
+        record_failure "Missing ${description} matching ${root}/${pattern}"
+    fi
+}
+
+verify_no_bundled_host_runtimes() {
     local appdir="$1"
     local entry
 
     while IFS= read -r -d '' entry; do
-        if is_host_runtime "$(basename -- "$entry")"; then
-            echo "Removing host runtime: $entry"
-            rm -f -- "$entry"
+        if is_host_runtime "$(basename -- "${entry}")"; then
+            record_failure "Host runtime must not be bundled: ${entry}"
         fi
-    done < <(find "$appdir" \( -type f -o -type l \) -print0)
+    done < <(
+        find "${appdir}" \( -type f -o -type l \) -print0 \
+            | LC_ALL=C sort -z
+    )
 }
 
-collect_dependencies()
-{
+build_library_path() {
     local appdir="$1"
-    local qt_prefix="$2"
-    local openssl_lib="$3"
-    local search_path
-    local elf output soname arrow resolved destination
-    local copied=0
-    local index=0
-    local entry
 
-    search_path="$appdir/lib:$appdir/bin:$qt_prefix/lib:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu:$openssl_lib"
-
-    remove_host_runtimes "$appdir"
-
-    mapfile -d '' -t queue < <(find "$appdir" -type f -print0)
-    declare -A seen=()
-
-    while (( index < ${#queue[@]} )); do
-        elf="${queue[$index]}"
-        index=$((index + 1))
-
-        if [[ -n "${seen[$elf]+present}" ]]; then
-            continue
-        fi
-        seen["$elf"]=1
-
-        is_elf "$elf" || continue
-
-        if ! output="$(env LD_LIBRARY_PATH="$search_path" ldd "$elf" 2>&1)"; then
-            case "$output" in
-                *'statically linked'*|*'not a dynamic executable'*)
-                    continue
-                    ;;
-                *)
-                    printf '%s\n' "$output" >&2
-                    die "ldd failed while scanning $elf"
-                    ;;
-            esac
-        fi
-
-        while read -r soname arrow resolved _; do
-            [[ "$arrow" == '=>' ]] || continue
-
-            if [[ "$resolved" == 'not' ]]; then
-                if is_host_runtime "$soname"; then
-                    echo "Host runtime not bundled: $soname (required by $elf)"
-                    continue
-                fi
-                die "Missing dependency $soname while scanning $elf"
-            fi
-            [[ -f "$resolved" ]] || die "Dependency does not exist: $resolved"
-            is_host_runtime "$soname" && continue
-
-            case "$resolved" in
-                "$appdir"/*)
-                    continue
-                    ;;
-            esac
-
-            [[ "$soname" == "$(basename -- "$soname")" ]] ||
-                die "Unsafe dependency SONAME: $soname"
-
-            destination="$appdir/lib/$soname"
-            if [[ -e "$destination" || -L "$destination" ]]; then
-                cmp -s -- "$resolved" "$destination" ||
-                    die "Different libraries share SONAME $soname"
-                continue
-            fi
-
-            echo "Bundling $soname from $resolved"
-            cp -L --preserve=mode,timestamps -- "$resolved" "$destination"
-            chmod a+rX "$destination"
-            queue+=("$destination")
-            copied=$((copied + 1))
-        done <<< "$output"
-    done
-
-    remove_host_runtimes "$appdir"
-    echo "Bundled $copied additional runtime libraries."
+    # Mirror the runtime library roots. Adding plugin or QML directories here
+    # could hide a broken RUNPATH by letting ldd resolve a dependency from a
+    # directory the packaged process would never search.
+    printf '%s\n' "${appdir}/usr/lib"
 }
 
-verify_appdir()
-{
+verify_dynamic_identity() {
     local appdir="$1"
-    local report="$2"
-    local search_path="$appdir/lib:$appdir/bin"
-    local canonical_appdir
-    local elf output soname arrow resolved canonical_resolved
-    local version_info
-    local failures=0
-    local symbols_file
-    local max_glibc max_glibcxx
-    local entry
-    local actual_qt_plugins expected_qt_plugins nss_pattern
+    local application="${appdir}/usr/bin/nunchuk-qt"
+    local ssl_library="${appdir}/usr/lib/libssl.so.3"
+    local crypto_library="${appdir}/usr/lib/libcrypto.so.3"
     local dynamic_info
 
-    canonical_appdir="$(readlink -f -- "$appdir")"
-    symbols_file="$(mktemp)"
-
-    for required in \
-        "$appdir/AppRun" \
-        "$appdir/bin/nunchuk-qt" \
-        "$appdir/bin/hwi" \
-        "$appdir/libexec/QtWebEngineProcess" \
-        "$appdir/resources/icudtl.dat" \
-        "$appdir/resources/qtwebengine_resources.pak" \
-        "$appdir/resources/qtwebengine_resources_100p.pak" \
-        "$appdir/resources/qtwebengine_resources_200p.pak" \
-        "$appdir/resources/ca-certificates.crt" \
-        "$appdir/lib/libssl.so.1.1" \
-        "$appdir/lib/libcrypto.so.1.1" \
-        "$appdir/qt-plugin-manifest.txt" \
-        "$appdir/nunchuk.desktop" \
-        "$appdir/nunchuk-qt.png"; do
-        if [[ ! -e "$required" ]]; then
-            echo "Missing AppDir runtime file: $required" >&2
-            failures=$((failures + 1))
+    if [[ -f "${application}" ]]; then
+        dynamic_info="$(readelf -d -- "${application}" 2>/dev/null || true)"
+        if [[ "${dynamic_info}" != *'Shared library: [libQt6Core.so.6]'* ]]; then
+            record_failure "Nunchuk does not declare Qt6 Core as a runtime dependency"
         fi
-    done
-
-    for executable in \
-        "$appdir/AppRun" \
-        "$appdir/bin/nunchuk-qt" \
-        "$appdir/bin/hwi" \
-        "$appdir/libexec/QtWebEngineProcess"; do
-        if [[ ! -x "$executable" ]]; then
-            echo "AppDir file is not executable: $executable" >&2
-            failures=$((failures + 1))
+        if [[ "${dynamic_info}" != *'Shared library: [libQt6NetworkAuth.so.6]'* ]]; then
+            record_failure "Nunchuk does not declare Qt6 NetworkAuth as a runtime dependency"
         fi
-    done
-
-    find "$appdir/translations/qtwebengine_locales" \
-        -type f -name '*.pak' -print -quit | grep -q . || {
-        echo "Qt WebEngine locales are missing" >&2
-        failures=$((failures + 1))
-    }
-    find "$appdir/plugins" -type f -name 'libqxcb.so' -print -quit | grep -q . || {
-        echo "Qt XCB platform plugin is missing" >&2
-        failures=$((failures + 1))
-    }
-    find "$appdir/lib" -maxdepth 1 -type f -name 'libQt5NetworkAuth.so*' \
-        -print -quit | grep -q . || {
-        echo "Qt NetworkAuth runtime is missing" >&2
-        failures=$((failures + 1))
-    }
-    dynamic_info="$(readelf -d "$appdir/bin/nunchuk-qt" 2>/dev/null || true)"
-    if [[ "$dynamic_info" != *'Shared library: [libQt5NetworkAuth.so'* ]]; then
-        echo "Nunchuk does not declare Qt NetworkAuth as a runtime dependency" >&2
-        failures=$((failures + 1))
-    fi
-    dynamic_info="$(readelf -d "$appdir/lib/libssl.so.1.1" 2>/dev/null || true)"
-    if [[ "$dynamic_info" != *'Library soname: [libssl.so.1.1]'* ]]; then
-        echo "Bundled OpenSSL runtime has an unexpected libssl SONAME" >&2
-        failures=$((failures + 1))
-    fi
-    dynamic_info="$(readelf -d "$appdir/lib/libcrypto.so.1.1" 2>/dev/null || true)"
-    if [[ "$dynamic_info" != *'Library soname: [libcrypto.so.1.1]'* ]]; then
-        echo "Bundled OpenSSL runtime has an unexpected libcrypto SONAME" >&2
-        failures=$((failures + 1))
-    fi
-
-    actual_qt_plugins="$({
-        cd "$appdir/plugins"
-        find . \( -type f -o -type l \) -name '*.so*' \
-            -printf '%P\n' | LC_ALL=C sort
-    })"
-    expected_qt_plugins="$(cat "$appdir/qt-plugin-manifest.txt" 2>/dev/null || true)"
-    if [[ "$actual_qt_plugins" != "$expected_qt_plugins" ]]; then
-        echo "Qt plugin set does not match its deployment manifest" >&2
-        failures=$((failures + 1))
-    fi
-
-    for nss_pattern in \
-        'libsoftokn3.so' \
-        'libsoftokn3.chk' \
-        'libfreebl*.so' \
-        'libfreebl*.chk' \
-        'libnssckbi.so'; do
-        find "$appdir/lib" -maxdepth 1 -type f -name "$nss_pattern" \
-            -print -quit | grep -q . || {
-            echo "NSS WebEngine runtime is missing: $nss_pattern" >&2
-            failures=$((failures + 1))
-        }
-    done
-
-    while IFS= read -r -d '' entry; do
-        if is_host_runtime "$(basename -- "$entry")"; then
-            echo "Host runtime must not be bundled: $entry" >&2
-            failures=$((failures + 1))
+        if [[ "${dynamic_info}" == *'Shared library: [libQt5'* ]]; then
+            record_failure "Nunchuk unexpectedly declares a Qt5 runtime dependency"
         fi
-    done < <(find "$appdir" \( -type f -o -type l \) -print0)
+    fi
 
-    {
-        printf 'AppDir: %s\n' "$canonical_appdir"
-        printf 'Dependency resolution:\n'
-    } > "$report"
+    if [[ -f "${ssl_library}" ]]; then
+        dynamic_info="$(readelf -d -- "${ssl_library}" 2>/dev/null || true)"
+        if [[ "${dynamic_info}" != *'Library soname: [libssl.so.3]'* ]]; then
+            record_failure "Bundled OpenSSL runtime has an unexpected libssl SONAME"
+        fi
+    fi
+
+    if [[ -f "${crypto_library}" ]]; then
+        dynamic_info="$(readelf -d -- "${crypto_library}" 2>/dev/null || true)"
+        if [[ "${dynamic_info}" != *'Library soname: [libcrypto.so.3]'* ]]; then
+            record_failure "Bundled OpenSSL runtime has an unexpected libcrypto SONAME"
+        fi
+    fi
+}
+
+verify_ldd_entry() {
+    local appdir="$1"
+    local report="$2"
+    local elf="$3"
+    local line="$4"
+    local soname
+    local resolved
+    local remainder
+    local canonical_resolved
+
+    line="${line#"${line%%[![:space:]]*}"}"
+    [[ -n "${line}" ]] || return
+    if [[ "${line}" == 'ldd: warning: you do not have execution permission for '* ]]; then
+        return
+    fi
+
+    if [[ "${line}" == *'=>'* ]]; then
+        soname="${line%%[[:space:]]*}"
+        remainder="${line#*=>}"
+        remainder="${remainder#"${remainder%%[![:space:]]*}"}"
+
+        if [[ "${remainder}" == 'not found'* ]]; then
+            if is_host_runtime "${soname}"; then
+                printf '%s -> host runtime (not present on build host)\n' \
+                    "${soname}" >> "${report}"
+                return
+            fi
+            record_failure "${elf} is missing ${soname}"
+            printf '%s -> not found\n' "${soname}" >> "${report}"
+            return
+        fi
+
+        resolved="${remainder%%[[:space:]]*}"
+        if [[ -z "${resolved}" || "${resolved}" != /* ]]; then
+            record_failure "Could not parse dependency path for ${soname} in ${elf}: ${line}"
+            return
+        fi
+    else
+        resolved="${line%%[[:space:]]*}"
+        soname="$(basename -- "${resolved}")"
+
+        if [[ "${resolved}" != /* ]]; then
+            if is_host_runtime "${soname}"; then
+                printf '%s -> host runtime\n' "${soname}" >> "${report}"
+                return
+            fi
+            record_failure "Could not resolve dependency entry in ${elf}: ${line}"
+            return
+        fi
+    fi
+
+    if [[ ! -e "${resolved}" ]]; then
+        record_failure "Resolved dependency does not exist for ${elf}: ${soname} => ${resolved}"
+        return
+    fi
+
+    canonical_resolved="$(readlink -f -- "${resolved}" 2>/dev/null || true)"
+    if [[ -z "${canonical_resolved}" ]]; then
+        record_failure "Could not canonicalize dependency for ${elf}: ${soname} => ${resolved}"
+        return
+    fi
+
+    printf '%s -> %s\n' "${soname}" "${canonical_resolved}" >> "${report}"
+
+    if is_host_runtime "${soname}"; then
+        case "${canonical_resolved}" in
+            "${appdir}"/*)
+                record_failure \
+                    "${elf} resolves host runtime from AppDir: ${soname} => ${resolved}"
+                ;;
+        esac
+        return
+    fi
+
+    case "${canonical_resolved}" in
+        "${appdir}"/*)
+            ;;
+        *)
+            record_failure "${elf} uses a non-host library outside AppDir: ${soname} => ${resolved}"
+            ;;
+    esac
+}
+
+verify_elf_dependencies() {
+    local appdir="$1"
+    local report="$2"
+    local library_path="$3"
+    local symbols_file="$4"
+    local elf
+    local output
+    local parsed_output
+    local status
+    local version_info
+    local needs_info
+    local line
+    local non_dynamic_output_regex='^[[:blank:]]*(statically linked|not a dynamic executable)[[:blank:]]*$'
 
     while IFS= read -r -d '' elf; do
-        is_elf "$elf" || continue
+        is_elf "${elf}" || continue
 
-        version_info="$(readelf --version-info "$elf" 2>/dev/null || true)"
+        version_info="$(LC_ALL=C readelf --version-info -- "${elf}" 2>/dev/null || true)"
+        needs_info="$(sed -n '/Version needs section/,$p' <<< "${version_info}")"
         grep -oE 'GLIBC(XX)?_[0-9]+(\.[0-9]+)*' \
-            <<< "$version_info" >> "$symbols_file" || true
+            <<< "${needs_info}" >> "${symbols_file}" || true
 
-        if [[ "$version_info" == *GLIBC_PRIVATE* ]]; then
-            echo "$elf requires GLIBC_PRIVATE" >&2
-            failures=$((failures + 1))
+        if [[ "${needs_info}" == *GLIBC_PRIVATE* ]]; then
+            record_failure "${elf} requires GLIBC_PRIVATE"
         fi
 
-        if ! output="$(env LD_LIBRARY_PATH="$search_path" ldd "$elf" 2>&1)"; then
-            case "$output" in
-                *'statically linked'*|*'not a dynamic executable'*)
-                    continue
-                    ;;
-                *)
-                    printf '%s\n' "$output" >&2
-                    echo "ldd failed while verifying $elf" >&2
-                    failures=$((failures + 1))
-                    continue
-                    ;;
-            esac
+        set +e
+        output="$(LC_ALL=C LD_LIBRARY_PATH="${library_path}" ldd -- "${elf}" 2>&1)"
+        status=$?
+        set -e
+
+        parsed_output="$(sed -E \
+            '/^[[:blank:]]*ldd: warning: you do not have execution permission for /d' \
+            <<< "${output}")"
+        if [[ "${parsed_output}" =~ ${non_dynamic_output_regex} ]]; then
+            continue
         fi
 
-        while read -r soname arrow resolved _; do
-            [[ "$arrow" == '=>' ]] || continue
+        if (( status != 0 )); then
+            printf '%s\n' "${output}" >&2
+            record_failure "ldd failed while verifying ${elf}"
+            continue
+        fi
 
-            if [[ "$resolved" == 'not' ]]; then
-                if is_host_runtime "$soname"; then
-                    printf '%s -> host runtime (not present on build host)\n' \
-                        "$soname" >> "$report"
-                    continue
-                fi
-                echo "$elf is missing $soname" >&2
-                failures=$((failures + 1))
-                continue
-            fi
+        while IFS= read -r line; do
+            verify_ldd_entry "${appdir}" "${report}" "${elf}" "${line}"
+        done <<< "${parsed_output}"
+    done < <(find "${appdir}" -type f -print0 | LC_ALL=C sort -z)
+}
 
-            printf '%s -> %s\n' "$soname" "$resolved" >> "$report"
-            is_host_runtime "$soname" && continue
+verify_hwi() {
+    local appdir="$1"
+    local report="$2"
+    local library_path="$3"
+    local hwi="${appdir}/usr/bin/hwi"
+    local output
 
-            canonical_resolved="$(readlink -f -- "$resolved")"
-            case "$canonical_resolved" in
-                "$canonical_appdir"/*)
-                    ;;
-                *)
-                    echo "$elf uses a library outside AppDir: $soname => $resolved" >&2
-                    failures=$((failures + 1))
-                    ;;
-            esac
-        done <<< "$output"
-    done < <(find "$appdir" -type f -print0)
+    [[ -x "${hwi}" ]] || return
+
+    if output="$(LD_LIBRARY_PATH="${library_path}" "${hwi}" --version 2>&1)"; then
+        printf '\nHWI version:\n%s\n' "${output}" >> "${report}"
+    else
+        printf '%s\n' "${output}" >&2
+        record_failure "Bundled HWI failed to execute with --version"
+    fi
+}
+
+verify_appdir() {
+    local appdir="$1"
+    local report="$2"
+    local canonical_appdir
+    local library_path
+    local symbols_file
+    local max_glibc
+    local max_glibcxx
+
+    for command_name in basename find grep ldd mktemp readelf readlink rm sed sort tail; do
+        command -v "${command_name}" >/dev/null \
+            || die "Missing verification tool: ${command_name}"
+    done
+
+    [[ -d "${appdir}" ]] || die "AppDir does not exist: ${appdir}"
+    [[ -d "${appdir}/usr" ]] || die "AppDir does not use the expected /usr layout: ${appdir}"
+
+    canonical_appdir="$(readlink -f -- "${appdir}")"
+    [[ -n "${canonical_appdir}" ]] || die "Could not canonicalize AppDir: ${appdir}"
+
+    symbols_file="$(mktemp)"
+    symbols_file_to_clean="${symbols_file}"
+    trap cleanup EXIT
+
+    {
+        printf 'AppDir: %s\n' "${canonical_appdir}"
+        printf 'Dependency resolution:\n'
+    } > "${report}"
+
+    require_executable "${canonical_appdir}/AppRun" "AppRun"
+    require_executable "${canonical_appdir}/usr/bin/nunchuk-qt" "Nunchuk binary"
+    require_executable "${canonical_appdir}/usr/bin/hwi" "HWI binary"
+    require_executable \
+        "${canonical_appdir}/usr/libexec/QtWebEngineProcess" \
+        "QtWebEngineProcess"
+
+    require_file \
+        "${canonical_appdir}/usr/share/applications/nunchuk.desktop" \
+        "desktop entry"
+    require_file "${canonical_appdir}/usr/resources/icudtl.dat" "Qt WebEngine ICU data"
+    require_file \
+        "${canonical_appdir}/usr/resources/v8_context_snapshot.bin" \
+        "Qt WebEngine V8 snapshot"
+    require_file "${canonical_appdir}/usr/lib/libssl.so.3" "OpenSSL libssl 3 runtime"
+    require_file "${canonical_appdir}/usr/lib/libcrypto.so.3" "OpenSSL libcrypto 3 runtime"
+    require_file \
+        "${canonical_appdir}/usr/lib/ossl-modules/legacy.so" \
+        "OpenSSL legacy provider"
+
+    require_file \
+        "${canonical_appdir}/usr/resources/qtwebengine_resources.pak" \
+        "Qt WebEngine resources"
+    require_file \
+        "${canonical_appdir}/usr/resources/qtwebengine_resources_100p.pak" \
+        "Qt WebEngine 100-percent resources"
+    require_file \
+        "${canonical_appdir}/usr/resources/qtwebengine_resources_200p.pak" \
+        "Qt WebEngine 200-percent resources"
+    require_match \
+        "${canonical_appdir}/usr/translations/qtwebengine_locales" \
+        '*.pak' \
+        "Qt WebEngine locales"
+    require_match "${canonical_appdir}/usr/lib" 'libQt6Core.so*' "Qt6 Core runtime"
+    require_match \
+        "${canonical_appdir}/usr/lib" \
+        'libQt6NetworkAuth.so*' \
+        "Qt6 NetworkAuth runtime"
+    require_match \
+        "${canonical_appdir}/usr/lib" \
+        'libQt6WebEngineCore.so*' \
+        "Qt6 WebEngineCore runtime"
+    require_match \
+        "${canonical_appdir}/usr/lib" \
+        'libQt6ShaderTools.so*' \
+        "Qt6 ShaderTools runtime"
+    require_match "${canonical_appdir}/usr/lib" 'libminizip.so.1*' "minizip runtime"
+
+    require_file \
+        "${canonical_appdir}/usr/qml/Qt5Compat/GraphicalEffects/qmldir" \
+        "Qt5Compat GraphicalEffects metadata"
+    require_file \
+        "${canonical_appdir}/usr/qml/Qt5Compat/GraphicalEffects/private/libqtgraphicaleffectsprivateplugin.so" \
+        "Qt5Compat GraphicalEffects private plugin"
+
+    for plugin in \
+        platforms/libqxcb.so \
+        imageformats/libqjpeg.so \
+        imageformats/libqsvg.so \
+        iconengines/libqsvgicon.so \
+        multimedia/libffmpegmediaplugin.so \
+        sqldrivers/libqsqlite.so \
+        tls/libqopensslbackend.so; do
+        require_file \
+            "${canonical_appdir}/usr/plugins/${plugin}" \
+            "required Qt6 plugin ${plugin}"
+    done
+
+    verify_no_bundled_host_runtimes "${canonical_appdir}"
+    verify_dynamic_identity "${canonical_appdir}"
+
+    library_path="$(build_library_path "${canonical_appdir}")"
+    verify_elf_dependencies \
+        "${canonical_appdir}" \
+        "${report}" \
+        "${library_path}" \
+        "${symbols_file}"
+    verify_hwi "${canonical_appdir}" "${report}" "${library_path}"
 
     {
         printf '\nRequired symbol versions:\n'
-        sort -Vu "$symbols_file"
-    } >> "$report"
+        LC_ALL=C sort -Vu "${symbols_file}"
+    } >> "${report}"
 
-    max_glibc="$({ grep -oE '^GLIBC_[0-9.]+' "$symbols_file" || true; } |
-        sort -V | tail -n 1)"
-    max_glibcxx="$({ grep -oE '^GLIBCXX_[0-9.]+' "$symbols_file" || true; } |
-        sort -V | tail -n 1)"
+    max_glibc="$({ grep -oE '^GLIBC_[0-9.]+' "${symbols_file}" || true; } \
+        | LC_ALL=C sort -V | tail -n 1)"
+    max_glibcxx="$({ grep -oE '^GLIBCXX_[0-9.]+' "${symbols_file}" || true; } \
+        | LC_ALL=C sort -V | tail -n 1)"
     printf '\nmax_glibc=%s\nmax_glibcxx=%s\n' \
-        "${max_glibc:-unknown}" "${max_glibcxx:-unknown}" >> "$report"
+        "${max_glibc:-unknown}" \
+        "${max_glibcxx:-unknown}" >> "${report}"
 
     if (( failures > 0 )); then
-        rm -f -- "$symbols_file"
-        die "AppDir verification failed with $failures error(s)"
+        die "AppDir verification failed with ${failures} error(s)"
     fi
-    env LD_LIBRARY_PATH="$search_path" "$appdir/bin/hwi" --version
-    rm -f -- "$symbols_file"
+
+    rm -f -- "${symbols_file}"
+    symbols_file_to_clean=""
+    trap - EXIT
     echo "AppDir verification passed."
 }
 
 case "${1:-}" in
-    collect)
-        [[ $# -eq 4 ]] || die "Usage: $0 collect APPDIR QT_PREFIX OPENSSL_LIB"
-        collect_dependencies "$2" "$3" "$4"
-        ;;
     verify)
         [[ $# -eq 3 ]] || die "Usage: $0 verify APPDIR REPORT"
         verify_appdir "$2" "$3"

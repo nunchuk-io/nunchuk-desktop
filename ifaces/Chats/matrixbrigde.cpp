@@ -184,6 +184,18 @@ QNunchukMatrixEvent matrixbrigde::SignTransaction(const QString &room_id,
     return QNunchukMatrixEvent();
 }
 
+nunchuk::NunchukMatrixEvent matrixbrigde::SignTransaction(const QString &room_id,
+                                                          const QString &init_event_id,
+                                                          const nunchuk::Device &device,
+                                                          QWarningMessage &msg)
+{
+    return matrixifaces::instance()->SignTransaction(room_id.toStdString(),
+                                                      nunchukiface::instance()->nunchukinstance(),
+                                                      init_event_id.toStdString(),
+                                                      device,
+                                                      msg);
+}
+
 
 QNunchukMatrixEvent matrixbrigde::SignAirgapTransaction(const QString &init_event_id,
                                                         const QString &master_fingerprint,
@@ -255,9 +267,9 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
             ret.data()->updateWalletInfo(jsonObj);
         }
         QStringList userIds;
-        userIds.reserve(room->room()->users().size());
-        for (auto u : room->room()->users()){
-            userIds.append(u->id());
+        userIds.reserve(room->room()->members().size());
+        for (auto u : room->room()->members()){
+            userIds.append(u.id());
         }
         QJsonObject json_content_object = stringToJson(ret.data()->get_json_content());
         QJsonObject joins = json_content_object["joins"].toObject();
@@ -341,7 +353,7 @@ QRoomTransactionModelPtr matrixbrigde::GetPendingTransactions(const QString &roo
 {
     QWarningMessage msg;
     QRoomTransactionModelPtr ret = QRoomTransactionModelPtr(new QRoomTransactionModel()) ;
-    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msg);
+    std::vector<nunchuk::RoomTransaction> results = GetOriginPendingTransactions(room_id, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         foreach (nunchuk::RoomTransaction room_tx, results) {
             QWarningMessage txWarning;
@@ -371,10 +383,17 @@ QRoomTransactionModelPtr matrixbrigde::GetPendingTransactions(const QString &roo
 
 void matrixbrigde::ConsumeEvent(const QString& room_id,const QNunchukMatrixEvent &event)
 {
+    ConsumeEvent(room_id, event.nunchukEvent());
+}
+
+void matrixbrigde::ConsumeEvent(
+        const QString &room_id,
+        const nunchuk::NunchukMatrixEvent &event)
+{
     QWarningMessage msg;
     matrixifaces::instance()->ConsumeEvent(room_id.toStdString(),
                                            nunchukiface::instance()->nunchukinstance(),
-                                           event.nunchukEvent(),
+                                           event,
                                            msg);
 }
 
@@ -408,18 +427,10 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
     signetServer.push_back(AppSetting::instance()->secondaryServer().toStdString());
     setting.set_signet_servers(signetServer);
 
-    // hwi path
-    setting.set_hwi_path(bridge::hwiPath().toStdString());
-
-    //  certificate file
-    QString certPath = "";
-    if(AppSetting::instance()->enableCertificateFile()){
-        certPath = AppSetting::instance()->certificateFile();
+    if (!bridge::configureFilesystemPaths(setting, msg)) {
+        matrixifaces::instance()->resetMatrixInstance();
+        return;
     }
-    setting.set_certificate_file(certPath.toStdString());
-
-    // Storage path
-    setting.set_storage_path(AppSetting::instance()->storagePath().toStdString());
 
     setting.enable_proxy(AppSetting::instance()->enableTorProxy());
     setting.set_proxy_host(AppSetting::instance()->torProxyAddress().toStdString());
@@ -451,10 +462,16 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
 
 QNunchukMatrixEvent matrixbrigde::GetEvent(const QString& room_id,const QString &event_id, QWarningMessage &msg)
 {
-    nunchuk::NunchukMatrixEvent ret = matrixifaces::instance()->GetEvent(room_id.toStdString(),
-                                                                         event_id.toStdString(),
-                                                                         msg);
-    return QNunchukMatrixEvent(ret);
+    return QNunchukMatrixEvent(GetEventData(room_id, event_id, msg));
+}
+
+nunchuk::NunchukMatrixEvent matrixbrigde::GetEventData(const QString &room_id,
+                                                       const QString &event_id,
+                                                       QWarningMessage &msg)
+{
+    return matrixifaces::instance()->GetEvent(room_id.toStdString(),
+                                               event_id.toStdString(),
+                                               msg);
 }
 
 QList<QRoomWalletPtr> matrixbrigde::GetAllRoomWallets(QWarningMessage &msg)
@@ -478,9 +495,9 @@ QList<QRoomWalletPtr> matrixbrigde::GetAllRoomWallets(QWarningMessage &msg)
                     roomWallet.data()->updateWalletInfo(jsonObj);
                     //Signer info
                     QStringList userIds;
-                    userIds.reserve(room->room()->users().size());
-                    for (auto u : room->room()->users()){
-                        userIds.append(u->id());
+                    userIds.reserve(room->room()->members().size());
+                    for (auto u : room->room()->members()){
+                        userIds.append(u.id());
                     }
                     QJsonObject json_content_object = stringToJson(roomWallet.data()->get_json_content());
                     QJsonObject joins = json_content_object["joins"].toObject();
@@ -563,6 +580,13 @@ nunchuk::RoomTransaction matrixbrigde::GetOriginPendingTransaction(const QString
     return {};
 }
 
+std::vector<nunchuk::RoomTransaction> matrixbrigde::GetOriginPendingTransactions(
+        const QString &room_id,
+        QWarningMessage &msg)
+{
+    return matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msg);
+}
+
 QString matrixbrigde::GetTransactionId(const QString &room_id,const QString &init_event_id, QWarningMessage &msg)
 {
     std::string ret = matrixifaces::instance()->GetTransactionId(room_id.toStdString(),
@@ -633,9 +657,17 @@ QNunchukMatrixEvent matrixbrigde::ImportWallet(const QString &room_id,
                                                const QString& filepath,
                                                QWarningMessage &msg)
 {
-    DBG_INFO << room_id << name << description << filepath;
+    const QString localPath = qUtils::QGetFilePath(filepath);
+    DBG_INFO << room_id << name << description << localPath;
     nunchuk::NunchukMatrixEvent e;
-    QFile sourceFile(filepath);
+    if (localPath.isEmpty()) {
+        msg.setWarningMessage(
+            nunchuk::NunchukException::INVALID_PARAMETER,
+            "Invalid or unsupported local file path",
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return e;
+    }
+    QFile sourceFile(localPath);
     if(sourceFile.open(QIODevice::ReadOnly)){
         QString descs = sourceFile.readAll();
         sourceFile.close();
@@ -651,7 +683,10 @@ QNunchukMatrixEvent matrixbrigde::ImportWallet(const QString &room_id,
                                                  msg);
 
     }else{
-        msg.setWarningMessage(-1, "", EWARNING::WarningType::EXCEPTION_MSG);
+        msg.setWarningMessage(
+            nunchuk::NunchukException::INVALID_PARAMETER,
+            QString("Cannot open wallet file: %1").arg(sourceFile.errorString()),
+            EWARNING::WarningType::EXCEPTION_MSG);
     }
     return QNunchukMatrixEvent(e);
     // De call ham nay em call event EVT_IMPORT_SHARED_WALLET_REQUEST va

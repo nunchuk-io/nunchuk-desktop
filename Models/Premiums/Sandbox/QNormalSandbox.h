@@ -18,6 +18,7 @@ class QNormalSandbox : public QStateFlow
     Q_PROPERTY(QString      groupName        READ groupName                 WRITE setGroupName         NOTIFY groupSandboxChanged)
     Q_PROPERTY(int          addressType      READ addressType               WRITE setAddressType       NOTIFY groupSandboxChanged)
     Q_PROPERTY(QVariantList groupKeys        READ groupKeys                                            NOTIFY groupSandboxChanged)
+    Q_PROPERTY(int          addedCount       READ addedCount                                           NOTIFY groupSandboxChanged)
     Q_PROPERTY(QString      url              READ url                                                  NOTIFY groupSandboxChanged)
     Q_PROPERTY(int          userCount        READ userCount                                            NOTIFY groupSandboxChanged)
     Q_PROPERTY(bool         enoughSigner     READ enoughSigner                                         NOTIFY groupSandboxChanged)
@@ -48,6 +49,7 @@ public:
     QString platformkeyPolicyType();
     QString url() const;
     QVariantList groupKeys() const;
+    int addedCount() const;
 
     int userCount() const;
     void setUserCount(int number);

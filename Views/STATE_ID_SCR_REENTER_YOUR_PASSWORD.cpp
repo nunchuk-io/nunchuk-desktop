@@ -55,18 +55,15 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         }
         break;
     case E::STATE_ID_SCR_SETUP_SECURITY_QUESTION:
-        DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->list2FA().size();
-        if (ServiceSetting::instance()->servicesTagPtr()->list2FA().size() > 0) {
-            QString w_id = ServiceSetting::instance()->servicesTagPtr()->list2FA().first();
-            if (auto w = AppModel::instance()->walletList()->getWalletById(w_id)) {
-                ServiceSetting::instance()->setWalletInfo(w);
-                w->setFlow((int) AlertEnum::E_Alert_t::SERVICE_TAG_UPDATE_SECURITY_QUESTION);
+        {
+            auto servicesTag = ServiceSetting::instance()->servicesTagPtr();
+            auto keyRecovery = servicesTag->keyRecoveryPtr();
+            QWalletPtr securityQuestionWallet;
+            if (keyRecovery->startSecurityQuestionUpdate(password, securityQuestionWallet)) {
+                ServiceSetting::instance()->setWalletInfo(securityQuestionWallet);
+                securityQuestionWallet->setFlow((int) AlertEnum::E_Alert_t::SERVICE_TAG_UPDATE_SECURITY_QUESTION);
+                QEventProcessor::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
             }
-        }
-        if (ServiceSetting::instance()->servicesTagPtr()->requestUpdateSecurityQuestionPassword(password)) {
-            ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->setRequireQuestions({});
-            ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->CreateAllSecurityQuestions();
-            QEventProcessor::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
         }
         break;
     case E::STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD:

@@ -18,8 +18,8 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 import Features.RightPanel.ViewModels 1.0
 
 Loader {

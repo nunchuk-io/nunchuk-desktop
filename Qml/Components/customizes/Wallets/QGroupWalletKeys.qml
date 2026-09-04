@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -14,7 +14,7 @@ import "../../../../localization/STR_QML.js" as STR
 
 Column {
     id: groupKeyComp
-    width: 352
+    width: 344  // 352 - 8 (QScrollBar width) to avoid overlap in QSetupGroupWallet Flickable
     spacing: 16
     readonly property var tmpColors: [
         {colorStr: "#9EC063",           url: "qrc:/Images/Images/User-dark.svg" },

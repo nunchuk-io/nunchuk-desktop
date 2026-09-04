@@ -17,12 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
-import QtQuick.Controls.Styles 1.4
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -62,7 +60,7 @@ Item {
         boxWidth: _item.width
         boxHeight: Math.max(384, input.paintedHeight)
         label: STR.STR_QML_1135
-        onTypingFinished: {
+        onTypingFinished: (currentText) => {
             addresses = _address.textInputted
             hasAddress = addresses!== ""
         }

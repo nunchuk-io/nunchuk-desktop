@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../../Components/origins"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/Signers"
@@ -47,7 +47,7 @@ QSingleSignerBaseDelegate {
             QTextButton {
                 width: 57
                 height: 36
-                label.text: STR.STR_QML_509
+                label.text: QSTR.STR_QML_509
                 label.font.pixelSize: 12
                 type: eTypeE
                 anchors.verticalCenter: parent.verticalCenter
@@ -65,7 +65,7 @@ QSingleSignerBaseDelegate {
                 anchors.right: parent.right
 
                 QLato {
-                    text: STR.STR_QML_2108
+                    text: QSTR.STR_QML_2108
                     font.pixelSize: 12
                     color: "#031F2B"
                     anchors.verticalCenter: parent.verticalCenter

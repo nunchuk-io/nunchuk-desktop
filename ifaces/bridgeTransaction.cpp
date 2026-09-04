@@ -1,5 +1,6 @@
 #include "bridgeTransaction.h"
 #include "QWarningMessage.h"
+#include "qUtils.h"
 
 namespace bridge::transaction {
 bool UpdateTransactionMemo(const QString &wallet_id, const QString &tx_id, const QString &new_memo) {
@@ -8,7 +9,15 @@ bool UpdateTransactionMemo(const QString &wallet_id, const QString &tx_id, const
 }
 
 nunchuk::Transaction ImportTransaction(const QString &wallet_id, const QString &file_path, QWarningMessage &msg) {
-    nunchuk::Transaction trans_result = nunchukiface::instance()->ImportTransaction(wallet_id.toStdString(), file_path.toStdString(), msg);
+    const QString localPath = qUtils::QGetFilePath(file_path);
+    if (localPath.isEmpty()) {
+        msg.setWarningMessage(
+            nunchuk::NunchukException::INVALID_PARAMETER,
+            "Invalid or unsupported local file path",
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return {};
+    }
+    nunchuk::Transaction trans_result = nunchukiface::instance()->ImportTransaction(wallet_id.toStdString(), localPath.toStdString(), msg);
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         return trans_result;
     } else {

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_785
+    label.text: QSTR.STR_QML_785
     readonly property int confirmations: Math.max(0, (AppModel.blockHeight - transactionInfo.height) + 1)
     extraHeader: QBadge {
         height: 24
@@ -53,11 +53,11 @@ QOnScreenContentTypeA {
         myRole: vm.walletInfo.myRole
         pendingSignature: vm.transactionInfo.pendingSignatures
         isDummy: vm.transactionInfo.isClaimTx || vm.transactionInfo.isDummyTx
-        onAddrToVerify: {
+        onAddrToVerify: (addr) => {
             displayAddressBusybox.addrToVerify = addr
             vm.verifyAddress(addr)
         }
-        onNewMemoNotify: {
+        onNewMemoNotify: (newMemo) => {
             vm.setMemo(newMemo)
         }
         signerEvents: {
@@ -95,11 +95,11 @@ QOnScreenContentTypeA {
             width: 240
             height: 48
             type: eSECONDARY
-            label: STR.STR_QML_299
+            label: QSTR.STR_QML_299
             optionVisible: exportContextMenu.visible
             onButtonClicked: {
                 exportContextMenu.x = 20
-                exportContextMenu.y = 20 - exportContextMenu.height
+                exportContextMenu.y = 20 - exportContextMenu.implicitHeight
                 exportContextMenu.open()
             }                
             QMultiContextMenu {
@@ -109,7 +109,7 @@ QOnScreenContentTypeA {
                 property var exportMessage: [
                     {
                         visible: true,
-                        label: STR.STR_QML_114,
+                        label: QSTR.STR_QML_114,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -122,7 +122,7 @@ QOnScreenContentTypeA {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_1531,
+                        label: QSTR.STR_QML_1531,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -135,7 +135,7 @@ QOnScreenContentTypeA {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_2097,
+                        label: QSTR.STR_QML_2097,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -150,7 +150,7 @@ QOnScreenContentTypeA {
                 property var importMessage: [
                     {
                         visible: true,
-                        label: STR.STR_QML_302,
+                        label: QSTR.STR_QML_302,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -163,7 +163,7 @@ QOnScreenContentTypeA {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_677,
+                        label: QSTR.STR_QML_677,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -178,7 +178,7 @@ QOnScreenContentTypeA {
                 mapMenu: [
                     {
                         visible: true,
-                        label: STR.STR_QML_294,
+                        label: QSTR.STR_QML_294,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                         color: "#031F2B",
@@ -189,7 +189,7 @@ QOnScreenContentTypeA {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_252,
+                        label: QSTR.STR_QML_252,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                         color: "#031F2B",
@@ -205,7 +205,7 @@ QOnScreenContentTypeA {
             id: startbroatcast
             width: 180
             height: 48
-            label.text: STR.STR_QML_497
+            label.text: QSTR.STR_QML_497
             label.font.pixelSize: 16
             type: eTypeE
             enabled: transactionInfo.timelockedUntil.enabledBroadcastTxBtn
@@ -269,9 +269,9 @@ QOnScreenContentTypeA {
     QPopupInfoThreeButtons {
         id: _warning
         property string link:"https://nunchuk.io/"
-        title: STR.STR_QML_339
-        contentText: STR.STR_QML_1006
-        labels: [STR.STR_QML_1004, STR.STR_QML_1005, STR.STR_QML_079]
+        title: QSTR.STR_QML_339
+        contentText: QSTR.STR_QML_1006
+        labels: [QSTR.STR_QML_1004, QSTR.STR_QML_1005, QSTR.STR_QML_079]
         funcs: [
             function() {
                 signingBusyBox.open()

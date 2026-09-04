@@ -18,89 +18,94 @@
  *                                                                        *
  **************************************************************************/
 #include "QBarcodeFilter.h"
-#include <QImage>
-#include <QtMultimedia/qvideoframe.h>
-#include <QVideoFilterRunnable>
-#include "QBarcodeDecoder.h"
-#include "qUtils.h"
-#include "QOutlog.h"
-
-void processImage(QBarcodeDecoder *decoder, const QImage &image, ZXing::BarcodeFormats formats)
-{
-    decoder->process(image, formats);
-}
-
-QBarcodeFilterRunnable::QBarcodeFilterRunnable(QBarcodeFilter *filter) : m_filter{filter}
-{
-
-}
-
-QVideoFrame QBarcodeFilterRunnable::run(QVideoFrame *input, const QVideoSurfaceFormat &surfaceFormat, RunFlags flags)
-{
-    Q_UNUSED(surfaceFormat);
-    Q_UNUSED(flags);
-
-    if (m_filter->getDecoder()->isDecoding()) {
-        return *input;
-    }
-    if (m_filter->getImageFuture().isRunning()) {
-        return *input;
-    }
-    const QImage croppedCapturedImage = m_filter->getDecoder()->videoFrameToImage(*input, m_filter->captureRect().toRect());
-    m_filter->getImageFuture() = QtConcurrent::run(processImage,
-                                                  m_filter->getDecoder(),
-                                                  croppedCapturedImage,
-                                                  m_filter->format());
-    return *input;
-}
 
 QBarcodeFilter::QBarcodeFilter(QObject *parent)
-    : QAbstractVideoFilter{parent}
-    , m_decoder{new QBarcodeDecoder}
-    , m_format{ZXing::BarcodeFormat::QRCode}
-    , m_scanPercent{0}
+    : QObject(parent)
+    , m_videoSink(new QVideoSink(this))
+    , m_decoder(QSharedPointer<QBarcodeDecoder>::create())   // no parent — lifetime managed by shared ptr
+    , m_processing(QSharedPointer<QAtomicInt>::create(0))
 {
-    setScanPercent(0);
-    setScanComplete(false);
-    resetTags();
-    connect(m_decoder, &QBarcodeDecoder::tagFound, this, &QBarcodeFilter::tagFound);
-    connect(m_decoder, &QBarcodeDecoder::tagFound, this, &QBarcodeFilter::calculateTags);
+    // videoFrameChanged is emitted on the camera pipeline thread;
+    // Qt::DirectConnection keeps latency low — processFrame must be re-entrant-safe.
+    connect(m_videoSink, &QVideoSink::videoFrameChanged,
+            this, &QBarcodeFilter::processFrame,
+            Qt::DirectConnection);
+
+    // tagFound is emitted from a QtConcurrent worker thread.
+    // Qt::AutoConnection → QueuedConnection across threads, so onDecoderTagFound
+    // always runs on the main thread where m_scanComplete / m_scanPercent live.
+    // When QBarcodeFilter is destroyed, QObject::~QObject disconnects this
+    // connection — any late tagFound emission from a still-running worker is
+    // safely discarded (empty connection list, no crash).
+    connect(m_decoder.data(), &QBarcodeDecoder::tagFound,
+            this, &QBarcodeFilter::onDecoderTagFound,
+            Qt::AutoConnection);
 }
 
-QBarcodeFilter::~QBarcodeFilter()
+// ── videoSink ────────────────────────────────────────────────────────────────
+QVideoSink* QBarcodeFilter::videoSink()
 {
-    setScanPercent(0);
-    setScanComplete(false);
-    resetTags();
+    return m_videoSink;
 }
 
-QVideoFilterRunnable *QBarcodeFilter::createFilterRunnable()
+// ── videoOutput property ──────────────────────────────────────────────────────
+// Declarative binding to a QML VideoOutput item.
+// Reads VideoOutput.videoSink via QObject::property() and connects its
+// videoFrameChanged signal to processFrame.  Disconnects from the previous
+// sink when the binding changes (supports dynamic re-binding).
+QObject* QBarcodeFilter::videoOutput() const
 {
-    return new QBarcodeFilterRunnable(this);
+    return m_videoOutput;
 }
 
-ZXing::BarcodeFormat QBarcodeFilter::format() const
+void QBarcodeFilter::setVideoOutput(QObject* videoOutputItem)
 {
-    return m_format;
-}
-
-void QBarcodeFilter::calculateTags(const QString &tag)
-{
-    if(m_tags.contains(tag)){
+    if (m_videoOutput == videoOutputItem)
         return;
+
+    // Disconnect from previous VideoOutput's sink
+    if (m_connectedSink) {
+        disconnect(m_connectedSink, &QVideoSink::videoFrameChanged,
+                   this,            &QBarcodeFilter::processFrame);
+        m_connectedSink = nullptr;
     }
-    m_tags.append(tag);
-    m_tags.removeDuplicates();
-    nunchuk::AnalyzeQRResult ret = qUtils::AnalyzeQR(m_tags);
-    if(ret.estimated_percent_complete == 0 && ret.expected_part_count == 0){
-        setScanComplete(true);
-        setScanPercent(100);\
+
+    m_videoOutput = videoOutputItem;
+
+    if (videoOutputItem) {
+        QVariant sinkVariant = videoOutputItem->property("videoSink");
+        QVideoSink* sink = sinkVariant.value<QVideoSink*>();
+        if (sink) {
+            m_connectedSink = sink;
+            connect(sink, &QVideoSink::videoFrameChanged,
+                    this,  &QBarcodeFilter::processFrame,
+                    Qt::DirectConnection);
+        } else {
+            qWarning("QBarcodeFilter::setVideoOutput: could not obtain QVideoSink from VideoOutput");
+        }
     }
-    else {
-        setScanPercent(ret.estimated_percent_complete*100);
-        setScanComplete(ret.is_complete);
-    }
-    DBG_INFO << ret.expected_part_count << ret.processed_parts_count << ret.is_failure << ret.is_complete << ret.is_success << ret.estimated_percent_complete;
+
+    emit videoOutputChanged();
+}
+
+// ── captureRect ───────────────────────────────────────────────────────────────
+QRectF QBarcodeFilter::captureRect() const
+{
+    return m_captureRect;
+}
+
+void QBarcodeFilter::setCaptureRect(const QRectF &rect)
+{
+    if (m_captureRect == rect)
+        return;
+    m_captureRect = rect;
+    emit captureRectChanged();
+}
+
+// ── scanPercent / scanComplete ────────────────────────────────────────────────
+int QBarcodeFilter::scanPercent() const
+{
+    return m_scanPercent;
 }
 
 bool QBarcodeFilter::scanComplete() const
@@ -108,54 +113,62 @@ bool QBarcodeFilter::scanComplete() const
     return m_scanComplete;
 }
 
-void QBarcodeFilter::setScanComplete(bool newScanComplete)
+// ── Frame processing ──────────────────────────────────────────────────────────
+void QBarcodeFilter::processFrame(const QVideoFrame &frame)
 {
-    if (m_scanComplete == newScanComplete)
+    if (!frame.isValid())
         return;
-    m_scanComplete = newScanComplete;
-    emit scanCompleteChanged();
-}
 
-int QBarcodeFilter::scanPercent() const
-{
-    return m_scanPercent;
-}
-
-void QBarcodeFilter::setScanPercent(int newScanPercent)
-{
-    if (m_scanPercent == newScanPercent)
+    // Debounce: drop frames while a decode is already running.
+    // testAndSetAcquire(expected, newValue): returns true only if the swap succeeded.
+    if (!m_processing->testAndSetAcquire(0, 1))
         return;
-    m_scanPercent = newScanPercent;
-    emit scanPercentChanged();
-}
 
-void QBarcodeFilter::resetTags()
-{
-    m_tags.clear();
-}
+    QVideoFrame copy(frame);
+    if (!copy.map(QVideoFrame::ReadOnly)) {
+        m_processing->storeRelease(0);
+        return;
+    }
+    QImage image = copy.toImage();
+    copy.unmap();
 
-QRectF QBarcodeFilter::captureRect() const
-{
-    return m_captureRect;
-}
-
-void QBarcodeFilter::setCaptureRect(const QRectF &captureRect)
-{
-    if (captureRect == m_captureRect) {
+    if (image.isNull()) {
+        m_processing->storeRelease(0);
         return;
     }
 
-    m_captureRect = captureRect;
+    // Crop to the QML-supplied capture rect (centre box) when valid.
+    // captureRect is in source/camera pixel coordinates (set via
+    // VideoOutput.mapRectToSource in QQrScanner.qml).
+    const QRect cropRect = m_captureRect.toRect();
+    if (!cropRect.isEmpty() && image.rect().intersects(cropRect)) {
+        image = image.copy(image.rect().intersected(cropRect));
+    }
 
-    emit captureRectChanged(m_captureRect);
+    // Run decode on a worker thread.
+    // IMPORTANT: capture shared-ptr copies, NOT `this`.  QBarcodeFilter may be
+    // destroyed (Loader teardown) while this lambda is still running.  The shared
+    // ptrs extend the lifetimes of decoder and processing flag independently of
+    // QBarcodeFilter's own lifetime, preventing use-after-free crashes.
+    auto decoder    = m_decoder;
+    auto processing = m_processing;
+    QtConcurrent::run([decoder, processing, image]() {
+        decoder->process(image, ZXing::BarcodeFormat::QRCode);
+        processing->storeRelease(0);
+    });
 }
 
-QBarcodeDecoder *QBarcodeFilter::getDecoder() const
+// ── Decoder relay ─────────────────────────────────────────────────────────────
+// Called on the main thread (QueuedConnection from worker thread).
+void QBarcodeFilter::onDecoderTagFound(const QString &tag)
 {
-    return m_decoder;
-}
-
-QFuture<void> QBarcodeFilter::getImageFuture() const
-{
-    return m_imageFuture;
+    if (!m_scanComplete) {
+        m_scanComplete = true;
+        emit scanCompleteChanged();
+    }
+    if (m_scanPercent != 100) {
+        m_scanPercent = 100;
+        emit scanPercentChanged();
+    }
+    emit tagFound(tag);
 }

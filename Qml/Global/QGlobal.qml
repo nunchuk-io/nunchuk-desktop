@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 pragma Singleton
-import QtQuick 2.4
+import QtQuick
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -29,42 +29,34 @@ QtObject {
     property string fingerPrint : ""
     property int    settingIndex: 0
     property bool   customMsgHealthcheck: false
-    property int    listFocusing: 0
+    // No HOME list owns focus until the loaded models are reconciled.
+    property int    listFocusing: -1
     property string recoverSoftwareType: "seed"
     property bool   showOthersKeyset: true
 
-    // Transient UI state for the "Confirm transaction" (QCreateTransaction.qml)
-    // fee-customization panel. This screen is destroyed/recreated whenever the
-    // user opens "Customize" coin selection (navigates to
-    // STATE_ID_SCR_COIN_DETAILS_CONTROL) and comes back - without persisting
-    // these here, the toggle/checkbox/typed fee rate silently reset because
-    // they were plain local QML properties with no backend binding.
-    //
-    // NOTE: restoring is gated on txManualFeeReturnPending, NOT on
-    // QMLHandle.onsRequester(). onsRequester() reflects the state-machine's
-    // "from" state for the event that triggered the transition, but the
-    // event that brings the user back from coin selection
-    // (EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST) is only
-    // registered in the ROOT-level trigger table (Views.h), not in
-    // STATE_ID_SCR_COIN_DETAILS_CONTROL's own table - so it is dispatched
-    // with "from" = STATE_ID_ROOT, never STATE_ID_SCR_COIN_DETAILS_CONTROL.
-    // Checking onsRequester() against STATE_ID_SCR_COIN_DETAILS_CONTROL is
-    // therefore always false and never restores. Instead, the "Customize"
-    // click itself sets txManualFeeReturnPending = true right before
-    // navigating away (see QCoinSelectionTransaction.qml), and
-    // QCreateTransaction.qml consumes (clears) it on next load - this is a
-    // self-owned signal, independent of how the state machine dispatches the
-    // return event.
+    // Session-scoped recents shared by all chat composers. Reassigning the
+    // array is intentional so QML bindings are notified after each update.
+    property var chatRecentEmojis: []
+
+    function rememberChatEmoji(emoji) {
+        var next = []
+        for (var i = 0; i < chatRecentEmojis.length; ++i) {
+            if (chatRecentEmojis[i] !== emoji) {
+                next.push(chatRecentEmojis[i])
+            }
+        }
+        next.unshift(emoji)
+        chatRecentEmojis = next.slice(0, 24)
+    }
+
+    // Transient manual-fee state while QCreateTransaction is destroyed and
+    // recreated during the coin-selection round trip.
     property bool   txManualFeeSettingOpen: false
     property bool   txManualFeeChecked: false
     property string txManualFeeRateText: ""
     property bool   txManualFeeReturnPending: false
-    // Identity of the draft transaction the pending state belongs to
-    // (walletId + destination address). Checked on restore so a stray/
-    // abandoned pending flag (e.g. user left coin selection some other way
-    // and later opens a completely different transaction) can't leak fee
-    // settings from one transaction into an unrelated one.
     property string txManualFeeContextKey: ""
+
     function resetTxManualFeeState() {
         txManualFeeSettingOpen = false
         txManualFeeChecked = false

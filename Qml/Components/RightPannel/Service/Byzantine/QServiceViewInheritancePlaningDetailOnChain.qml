@@ -17,12 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.1
-import QtQuick.Controls 1.4
-import QtGraphicalEffects 1.0
-import QtQuick.Controls.Styles 1.4
+import QtQuick
+import QtQuick.Controls
 import Qt.labs.platform 1.1
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -58,7 +56,7 @@ Item {
         labels: {
             var ls = []
             if(myRole === "MASTER" || myRole === "ADMIN"){
-                ls.push(STR.STR_QML_844)
+                ls.push(QSTR.STR_QML_844)
             }
             return ls
         }
@@ -110,7 +108,7 @@ Item {
                         font.pixelSize: 28
                         color: "#031F2B"
                         font.weight: Font.Bold
-                        text: STR.STR_QML_843
+                        text: QSTR.STR_QML_843
                     }
                     QIconButton{
                         width: 48
@@ -166,7 +164,7 @@ Item {
                 id: _save
                 width: 66
                 height: 48
-                label.text: STR.STR_QML_835
+                label.text: QSTR.STR_QML_835
                 label.font.pixelSize: 16
                 type: eTypeE
                 enabled: planInfo.edit_isChanged
@@ -180,7 +178,7 @@ Item {
             QTextButton {
                 width: 148
                 height: 48
-                label.text: STR.STR_QML_805
+                label.text: QSTR.STR_QML_805
                 label.font.pixelSize: 16
                 type: eTypeF
                 enabled: planInfo.edit_isChanged
@@ -223,7 +221,7 @@ Item {
                                 font.weight: Font.Bold
                                 font.pixelSize: 16
                                 color: "#FFFFFF"
-                                text: STR.STR_QML_845
+                                text: QSTR.STR_QML_845
                             }
                             QLato {
                                 color: "#FFFFFF"
@@ -238,7 +236,7 @@ Item {
                         QTextButton {
                             width: 162
                             height: 48
-                            label.text: STR.STR_QML_847
+                            label.text: QSTR.STR_QML_847
                             label.font.pixelSize: 16
                             anchors.verticalCenter: parent.verticalCenter
                             type: eTypeC
@@ -252,7 +250,7 @@ Item {
                             font.weight: Font.Bold
                             font.pixelSize: 16
                             color: "#FFFFFF"
-                            text: STR.STR_QML_846
+                            text: QSTR.STR_QML_846
                             anchors.verticalCenter: parent.verticalCenter
                             font.underline: false
                             onTextClicked: {
@@ -267,7 +265,7 @@ Item {
                     QLato {
                         font.pixelSize: 16
                         color: "#FFFFFF"
-                        text: STR.STR_QML_1983
+                        text: QSTR.STR_QML_1983
                     }
                     Column {
                         width: parent.width
@@ -290,7 +288,7 @@ Item {
                                     QLato {
                                         font.pixelSize: 16
                                         color: "#1C1C1C"
-                                        text: STR.STR_QML_749
+                                        text: QSTR.STR_QML_749
                                         font.weight: Font.Bold
                                     }
                                     QLato {
@@ -306,7 +304,7 @@ Item {
                             height: row_key.height
                             contentWidth: row_key.width
                             clip: true
-                            ScrollBar.vertical: ScrollBar { active: true }
+                            ScrollBar.vertical: QScrollBar { }
                             flickDeceleration : Flickable.HorizontalFlick
                             Row {
                                 id: row_key
@@ -331,13 +329,13 @@ Item {
                                                 QLato {
                                                     font.pixelSize: 16
                                                     color: "#1C1C1C"
-                                                    text:  planInfo.inheritance_keys.length > 1 ? STR.STR_QML_2038.arg(index+1).arg(planInfo.inheritance_keys[index].xfp.toUpperCase()) : STR.STR_QML_1984.arg(planInfo.inheritance_keys[0].xfp.toUpperCase())
+                                                    text:  planInfo.inheritance_keys.length > 1 ? QSTR.STR_QML_2038.arg(index+1).arg(planInfo.inheritance_keys[index].xfp.toUpperCase()) : QSTR.STR_QML_1984.arg(planInfo.inheritance_keys[0].xfp.toUpperCase())
                                                     textFormat: Text.RichText
                                                 }
                                                 QLato {
                                                     font.pixelSize: 16
                                                     color: "#1C1C1C"
-                                                    text: planInfo.inheritance_keys.length > 1 ? STR.STR_QML_2039.arg(index+1) : STR.STR_QML_1986
+                                                    text: planInfo.inheritance_keys.length > 1 ? QSTR.STR_QML_2039.arg(index+1) : QSTR.STR_QML_1986
                                                     width: 290
                                                     wrapMode: Text.WordWrap
                                                 }
@@ -353,7 +351,7 @@ Item {
                         QLato {
                             font.pixelSize: 16
                             color: "#FFFFFF"
-                            text: STR.STR_QML_2101
+                            text: QSTR.STR_QML_2101
                         }
                         Rectangle {
                             width: 393
@@ -375,7 +373,7 @@ Item {
                                     QLato {
                                         font.pixelSize: 12
                                         color: "#FFFFFF"
-                                        text: STR.STR_QML_188
+                                        text: QSTR.STR_QML_188
                                     }
                                 }
                                 Rectangle {
@@ -432,15 +430,15 @@ Item {
                 height: parent.height
                 contentWidth: width
                 contentHeight: _colum.childrenRect.height + 48
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: _colum
-                    width: parent.width
+                    width: parent.width - 8
                     spacing: 24
                     QTextAreaBoxTypeB {
                         width: 651
                         height: 128
-                        label.text: STR.STR_QML_850
+                        label.text: QSTR.STR_QML_850
                         input.text: planInfo.note
                         input.backgroundColor: "#F5F5F5"
                         input.verticalAlignment: Text.AlignTop

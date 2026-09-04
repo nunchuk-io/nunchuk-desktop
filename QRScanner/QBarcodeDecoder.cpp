@@ -122,84 +122,133 @@ bool QBarcodeDecoder::  isDecoding() const
 
 void QBarcodeDecoder::process(const QImage& capturedImage, ZXing::BarcodeFormats formats)
 {
-    // This will set the "isDecoding" to false automatically
-    auto decodeGuard = qScopeGuard([=, this](){setIsDecoding(false);});
+    auto decodeGuard = qScopeGuard([=, this](){ setIsDecoding(false); });
     setIsDecoding(true);
-    const auto readerOptions = ReaderOptions()
-                                   .setFormats(formats)
-                                   .setTryHarder(true)
-                                   .setTryRotate(true)
-                                   .setIsPure(false)
-                                   .setBinarizer(Binarizer::LocalAverage);
 
-    try{
-        QImage improvedImage = smoothTransformation(capturedImage);
-        auto result = ReadBarcode(improvedImage, readerOptions);
+    if (capturedImage.isNull())
+        return;
+
+    // Base options shared by all passes.
+    // tryHarder + tryRotate cover most orientation/damage cases.
+    const auto base = ReaderOptions()
+        .setFormats(formats)
+        .setTryHarder(true)
+        .setTryRotate(true)
+        .setIsPure(false);
+
+    try {
+        // Normalize resolution and pixel format once — reused across passes.
+        const QImage work = prepareImage(capturedImage);
+
+        // ── Pass 1: LocalAverage binarizer ──────────────────────────────────
+        // Best for normal lighting and reasonable contrast. Fast path.
+        auto result = ReadBarcode(work, ReaderOptions(base)
+            .setBinarizer(Binarizer::LocalAverage));
+
+        // ── Pass 2: GlobalHistogram binarizer ───────────────────────────────
+        // Better for low-contrast QR codes, faded prints, glossy surfaces,
+        // or scenes with very uneven ambient lighting.
         if (!result.isValid()) {
-            result = ReadBarcode(improvedImage, readerOptions);
-            if (!result.isValid()) {
-                result = ReadBarcode(improvedImage, readerOptions);
-            }
+            result = ReadBarcode(work, ReaderOptions(base)
+                .setBinarizer(Binarizer::GlobalHistogram));
         }
-        if(result.isValid()){
+
+        // ── Pass 3: Grayscale + LocalAverage ────────────────────────────────
+        // Strips colour information that can mislead binarization on images
+        // with reflections, coloured backgrounds, or strong colour casts.
+        if (!result.isValid()) {
+            const QImage gray = work.convertToFormat(QImage::Format_Grayscale8);
+            result = ReadBarcode(gray, ReaderOptions(base)
+                .setBinarizer(Binarizer::LocalAverage));
+        }
+
+        if (result.isValid())
             emit tagFound(result.text());
-        }
     }
-    catch(std::exception& e) {
+    catch (std::exception& e) {
         emit errorOccured("ZXing exception: " + QString::fromLocal8Bit(e.what()));
     }
 }
 
 QImage QBarcodeDecoder::videoFrameToImage(const QVideoFrame &videoFrame, const QRect &captureRect) const
 {
-    auto handleType = videoFrame.handleType();
-    if (handleType == QAbstractVideoBuffer::NoHandle) {
-        QImage image = videoFrame.image();
-        if (image.isNull()) {
-            return QImage();
-        }
-        if (image.format() != QImage::Format_ARGB32) {
-            image = image.convertToFormat(QImage::Format_ARGB32);
-        }
-        return image.copy(captureRect);
+    if (!videoFrame.isValid()) {
+        return QImage();
     }
 
-    if (handleType == QAbstractVideoBuffer::GLTextureHandle) {
-        QImage image(videoFrame.width(), videoFrame.height(), QImage::Format_ARGB32);
-        GLuint textureId = static_cast<GLuint>(videoFrame.handle().toInt());
-        QOpenGLContext *ctx = QOpenGLContext::currentContext();
-        QOpenGLFunctions *f = ctx->functions();
-        GLuint fbo;
-        f->glGenFramebuffers(1, &fbo);
-        GLint prevFbo;
-        f->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFbo);
-        f->glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-        f->glReadPixels(0, 0, videoFrame.width(), videoFrame.height(), GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        f->glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>( prevFbo ) );
-        f->glDeleteFramebuffers(1,&fbo);
-        return image.rgbSwapped().copy(captureRect);
-    }
-    return QImage();
-}
+    QVideoFrame frame(videoFrame);
 
-QImage QBarcodeDecoder::smoothTransformation(const QImage &image) const
-{
-    // "Maximum image width/height is 65535" error will be thrown if the image is too large
+    if (!frame.map(QVideoFrame::ReadOnly)) {
+        return QImage();
+    }
+
+    QImage image = frame.toImage();
+
+    frame.unmap();
+
     if (image.isNull()) {
         return QImage();
     }
+
+    if (image.format() != QImage::Format_ARGB32) {
+        image = image.convertToFormat(QImage::Format_ARGB32);
+    }
+
+    return image.copy(captureRect);
+}
+
+// ── prepareImage ─────────────────────────────────────────────────────────────
+// Normalises the image before handing it to ZXing:
+//   1. Downscales to at most MAX_DECODE_DIM on the long edge.
+//      ZXing complexity is O(area); a 4× downscale cuts time by 16×.
+//      640 px is enough for QR version 40 (177×177 modules → ~3.6 px/module).
+//   2. Converts to RGBX8888 if not already in a ZXing-native format, so
+//      ZXing's internal conversion is a no-op.
+QImage QBarcodeDecoder::prepareImage(const QImage &image) const
+{
+    if (image.isNull())
+        return image;
+
+    constexpr int MAX_DECODE_DIM = 640;
+
+    QImage result = (image.width() > MAX_DECODE_DIM || image.height() > MAX_DECODE_DIM)
+        ? image.scaled(MAX_DECODE_DIM, MAX_DECODE_DIM,
+                       Qt::KeepAspectRatio, Qt::SmoothTransformation)
+        : image;
+
+    // Ensure pixel format is one ZXing handles natively (avoids internal copy).
+    const auto fmt = result.format();
+    if (fmt != QImage::Format_Grayscale8 &&
+        fmt != QImage::Format_RGB888     &&
+        fmt != QImage::Format_RGBX8888   &&
+        fmt != QImage::Format_RGBA8888)
+    {
+        result = result.convertToFormat(QImage::Format_RGBX8888);
+    }
+
+    return result;
+}
+
+// ── smoothTransformation ──────────────────────────────────────────────────────
+// Legacy entry-point kept for source compatibility.
+// Without QR_DFS_IMPROVE the old code scaled to the same size (no-op).
+// Now delegates to prepareImage so callers get the same normalisation.
+QImage QBarcodeDecoder::smoothTransformation(const QImage &image) const
+{
+    if (image.isNull())
+        return QImage();
+
 #ifdef QR_DFS_IMPROVE
     QImage result = deepFocusSharpen(image);
 #ifdef QR_DFS_IMPROVE_TEST
-    QString fileName = QString("/Users/barontong/Desktop/qra/%1.png").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz"));
+    QString fileName = QString("/Users/barontong/Desktop/qra/%1.png")
+        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz"));
     result.save(fileName);
 #endif
-
-#else
-    QImage result = image.scaled(image.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-#endif
     return result;
+#else
+    return prepareImage(image);
+#endif
 }
 
 #ifdef QR_DFS_IMPROVE

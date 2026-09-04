@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -55,9 +55,9 @@ QOnScreenContentTypeB {
     property string typeClear: "clear-all-filter-coin-collection"
     property bool isCurrency: false
     property var filterData
-    RegExpValidator { id: satValidator;   regExp: /^[1-9][0-9]*$/ }
-    RegExpValidator { id: currencyValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,2})?$/ }
-    RegExpValidator { id: btcValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
+    RegularExpressionValidator { id: satValidator;   regularExpression: /^[1-9][0-9]*$/ }
+    RegularExpressionValidator { id: currencyValidator;   regularExpression: /^(?:0|[1-9][0-9]*)(\.\d{1,2})?$/ }
+    RegularExpressionValidator { id: btcValidator;   regularExpression: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
     property string amountUnit: (isCurrency ? AppSetting.currency : RoomWalletData.unitValue).replace(" ", "")
 
     function getBalanceUnit() {
@@ -87,14 +87,14 @@ QOnScreenContentTypeB {
         clip: true
         contentWidth: _item.width
         contentHeight: _column.childrenRect.height
-        ScrollBar.vertical: ScrollBar { active: true }
+        ScrollBar.vertical: QScrollBar { }
         interactive: true
         Column {
             id: _column
-            width: _item.width
+            width: _item.width - 8
             spacing: 24
             QFilterCoinTextBox {
-                boxWidth: 727
+                boxWidth: _column.width
                 boxHeight: 48
                 label: STR.STR_QML_1417
                 input.placeholderText: coinTags.selectedCount === 0 ? STR.STR_QML_1457 : ""
@@ -110,11 +110,11 @@ QOnScreenContentTypeB {
             }
 
             QLine {
-                width: 727
+                width: _column.width
             }
 
             QFilterCoinTextBox {
-                boxWidth: 727
+                boxWidth: _column.width
                 boxHeight: 48
                 label: STR.STR_QML_1418
                 input.placeholderText: coinCollections.selectedCount === 0 ? STR.STR_QML_1457 : ""
@@ -129,13 +129,13 @@ QOnScreenContentTypeB {
             }
 
             QLine {
-                width: 727
+                width: _column.width
             }
             Column {
                 width: parent.width
                 spacing: 16
                 QLato {
-                    width: 727
+                    width: _column.width
                     height: 20
                     font.weight: Font.Bold
                     text: STR.STR_QML_214
@@ -144,26 +144,26 @@ QOnScreenContentTypeB {
                 }
 
                 QFilterAmountCoinTextBox {
-                    boxWidth: 727
+                    boxWidth: _column.width
                     boxHeight: 48
                     label: STR.STR_QML_1458
                     input.placeholderText: getBalanceUnit()
                     textInputted: minAmount
                     validator: getValidator()
-                    onTypingFinished: {
+                    onTypingFinished: (currentText) => {
                         isCleared = false
                         minAmount = currentText
                     }
                 }
 
                 QFilterAmountCoinTextBox {
-                    boxWidth: 727
+                    boxWidth: _column.width
                     boxHeight: 48
                     label: STR.STR_QML_1459
                     input.placeholderText: getBalanceUnit()
                     textInputted: maxAmount
                     validator: getValidator()
-                    onTypingFinished: {
+                    onTypingFinished: (currentText) => {
                         isCleared = false
                         maxAmount = currentText
                     }
@@ -171,14 +171,14 @@ QOnScreenContentTypeB {
             }
 
             QLine {
-                width: 727
+                width: _column.width
             }
 
             Column {
                 width: parent.width
                 spacing: 16
                 QLato {
-                    width: 727
+                    width: _column.width
                     height: 20
                     font.weight: Font.Bold
                     text: STR.STR_QML_1463
@@ -186,12 +186,12 @@ QOnScreenContentTypeB {
                     verticalAlignment: Text.AlignVCenter
                 }
                 Item {
-                    width: 727
+                    width: _column.width
                     height: 72
                     QTextInputBoxTypeB {
                         id: _from
                         label: STR.STR_QML_1461
-                        boxWidth: 727
+                        boxWidth: _column.width
                         boxHeight: 48
                         textInputted: _calendarFrom.dateString
                         input.placeholderText: "MM/DD/YYYY"
@@ -215,12 +215,12 @@ QOnScreenContentTypeB {
                     }
                 }
                 Item {
-                    width: 727
+                    width: _column.width
                     height: 72
                     QTextInputBoxTypeB {
                         id: _to
                         label: STR.STR_QML_1462
-                        boxWidth: 727
+                        boxWidth: _column.width
                         boxHeight: 48
                         textInputted: _calendarTo.dateString
                         input.placeholderText: "MM/DD/YYYY"
@@ -246,7 +246,7 @@ QOnScreenContentTypeB {
             }
 
             QLine {
-                width: 727
+                width: _column.width
                 visible: includeLockedCoins
             }
 
@@ -255,7 +255,7 @@ QOnScreenContentTypeB {
                 spacing: 16
                 visible: includeLockedCoins
                 QLato {
-                    width: 727
+                    width: _column.width
                     height: 20
                     font.weight: Font.Bold
                     text: STR.STR_QML_1464
@@ -266,7 +266,7 @@ QOnScreenContentTypeB {
                     width: parent.width
                     QCheckBoxButton{
                         id: _locked
-                        width: 727
+                        width: _column.width
                         height: 48
                         label: STR.STR_QML_1465
                         onButtonClicked: {
@@ -275,7 +275,7 @@ QOnScreenContentTypeB {
                     }
                     QCheckBoxButton{
                         id: _unlocked
-                        width: 727
+                        width: _column.width
                         height: 48
                         label: STR.STR_QML_1466
                         onButtonClicked: {
@@ -286,14 +286,14 @@ QOnScreenContentTypeB {
             }
 
             QLine {
-                width: 727
+                width: _column.width
             }
 
             Column {
                 width: parent.width
                 spacing: 16
                 QLato {
-                    width: 727
+                    width: _column.width
                     height: 20
                     font.weight: Font.Bold
                     text: STR.STR_QML_1137
@@ -303,7 +303,7 @@ QOnScreenContentTypeB {
                 Column {
                     width: parent.width
                     QRadioButtonTypeA {
-                        width: 727
+                        width: _column.width
                         height: 48
                         layoutDirection: Qt.LeftToRight
                         label: STR.STR_QML_1467
@@ -314,7 +314,7 @@ QOnScreenContentTypeB {
                         }
                     }
                     QRadioButtonTypeA {
-                        width: 727
+                        width: _column.width
                         height: 48
                         layoutDirection: Qt.LeftToRight
                         label: STR.STR_QML_1468
@@ -328,7 +328,7 @@ QOnScreenContentTypeB {
                         visible: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
                         spacing: 0
                         QLato {
-                            width: 727-64
+                            width: _column.width - 64
                             text: STR.STR_QML_1880
                             color: "#031F2B"
                             font.pixelSize: 14
@@ -347,7 +347,7 @@ QOnScreenContentTypeB {
                     }
                 }
                 Item {
-                    width: 727
+                    width: _column.width
                     height: 24
                 }
             }

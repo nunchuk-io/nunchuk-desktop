@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../origins"
 import "../../../localization/STR_QML.js" as STR
 
@@ -65,14 +65,14 @@ Rectangle {
             verDeviceName: ""
             thisDevice: model.thisId
             rightText: STR.STR_QML_546
-            onSignOutClicked: {
+            onSignOutClicked: (id, name) => {
                 loggedDevicesBox.signOutClicked(model.id,model.name)
             }
-            onMarkClicked: {
+            onMarkClicked: (id, name) => {
                 loggedDevicesBox.markClicked(model.id,model.name)
 
             }
         }
-        ScrollBar.vertical: ScrollBar { }
+        ScrollBar.vertical: QScrollBar { }
     }
 }

@@ -1,7 +1,7 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -63,7 +63,7 @@ QOnScreenContentTypeA {
                     anchors.right: parent.right
                     width: 36
                     height: 19
-                    text: STR.STR_QML_246
+                    text: QSTR.STR_QML_246
                     onTextClicked: {
                         vm.deleteClicked()
                     }
@@ -73,7 +73,7 @@ QOnScreenContentTypeA {
                         left: parent.left
                         bottom: parent.bottom
                     }
-                    text: STR.STR_QML_2157 + ":"
+                    text: QSTR.STR_QML_2157 + ":"
                     font.pixelSize: 14
                     font.weight: Font.Bold
                     color: "#031F2B"
@@ -99,7 +99,7 @@ QOnScreenContentTypeA {
                     QLato {
                         width: parent.width
                         height: paintedHeight
-                        text: STR.STR_QML_2205
+                        text: QSTR.STR_QML_2205
                         font.pixelSize: 16
                         wrapMode: Text.WordWrap
                         lineHeight: 20
@@ -108,7 +108,7 @@ QOnScreenContentTypeA {
                     
                     QLato {
                         id: noteText
-                        text: STR.STR_QML_2206
+                        text: QSTR.STR_QML_2206
                         font.pixelSize: 16
                     }
                 }
@@ -128,7 +128,7 @@ QOnScreenContentTypeA {
                         height: 68
                         QTextInputBoxTypeB {
                             id: _input_date
-                            label: STR.STR_QML_1463
+                            label: QSTR.STR_QML_1463
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -175,7 +175,7 @@ QOnScreenContentTypeA {
                         height: _input_time.height
                         QTextInputBoxTypeB {
                             id: _input_time
-                            label: STR.STR_QML_1989
+                            label: QSTR.STR_QML_1989
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -227,7 +227,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.implicitWidth + 32
             height: 48
-            label.text: STR.STR_QML_097  // "Continue"
+            label.text: QSTR.STR_QML_097  // "Continue"
             label.font.pixelSize: 14
             type: eTypeE
             onButtonClicked: {

@@ -96,6 +96,7 @@ public:
     void addMessage(const Conversation data);
     void addHistoryMessage(const Conversation data);
     void insertMessage(int index, const Conversation data);
+    bool replaceMessage(const QString& eventId, const Conversation& data);
     void requestSortByTimeAscending(bool ui_update = true);
     bool isWalletCreator(const QString& init_event_id);
     int currentIndex() const;
@@ -116,6 +117,7 @@ public:
     int count() const;
     void clear();
     int unreadLastIndex() const;
+    Q_INVOKABLE QString eventIdAt(int row) const;
 
     bool initConsShow() const;
     void setInitConsShow(bool initConsShow);

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/customizes/Texts"
 import "../../../Components/origins"
 
@@ -47,7 +47,7 @@ Column {
     QLato {
         width: parent.width
         height: paintedHeight
-        text: STR.STR_QML_2151
+        text: QSTR.STR_QML_2151
         font.weight: Font.Bold
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter

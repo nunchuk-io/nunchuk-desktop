@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -91,13 +91,26 @@ Item {
             }
             QListView {
                 id: signerlist
-                anchors.fill: parent
-                anchors.margins: 12
+                anchors {
+                    fill: parent
+                    topMargin: 12
+                    leftMargin: 12
+                    bottomMargin: 12
+                    // rightMargin: 0 — scrollbar sits at the Rectangle's right border,
+                    // matching the left panel (QSendAddressArea) scrollbar position.
+                }
                 spacing: 16
                 model: transactionInfo.singleSignersAssigned
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar {
+                    // topPadding keeps the track/thumb past the corner arc (radius 12).
+                    // QListView.top is already at y=12 (topMargin) inside the Rectangle,
+                    // so topPadding: 4 ensures track starts at y=16 in Rectangle coords
+                    // — clearly past the 12px corner arc where OpacityMask clips.
+                    topPadding: 4
+                    bottomPadding: 4
+                }
                 delegate: QMemberKeysDelegate {
-                    width: signerlist.width
+                    width: signerlist.width - 8  // leave room for QScrollBar (8px)
                     alreadySigned: model.single_signer_signed_status
                     signername: model.singleSigner_name
                     signerxfp: model.singleSigner_masterFingerPrint

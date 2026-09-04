@@ -8,7 +8,7 @@
 namespace app {
     void registerContextProperty() {
         QEventProcessor::instance()->setContextProperty("FlowManager", QVariant::fromValue(AppContext::instance()->flowManager()));
-        QEventProcessor::instance()->setContextProperty("STR", QVariant::fromValue(&Strings));
+        QEventProcessor::instance()->setContextProperty("QSTR", QVariant::fromValue(&Strings));
 
         AppContext::instance()->subScreenManager()->onInitialized(QEventProcessor::instance()->getQuickWindow());
     }

@@ -68,6 +68,7 @@
         <file>Qml/Screens/OnlineMode/SCR_HOME_ONLINE.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_LOGIN_ONLINE.qml</file>
         <file>Qml/Components/customizes/Chats/QConversationPage.qml</file>
+        <file>Qml/Components/customizes/Chats/QEmojiPicker.qml</file>
         <file>Qml/Components/customizes/QMenuBar.qml</file>
         <file>Qml/Components/customizes/QMenuBarItem.qml</file>
         <file>Qml/Components/customizes/Chats/QContactReceivedDelegate.qml</file>
@@ -268,6 +269,7 @@
         <file>Qml/Components/customizes/Popups/QPopupToast.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoVertical.qml</file>
         <file>Qml/Components/customizes/Popups/QPopup.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupHomeReminder.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoTwoButtons.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoThreeButtons.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupEnterPreimageInHex.qml</file>
@@ -811,6 +813,7 @@
         <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeAScrollable.qml</file>
         <file>Qml/features/signers/QEditPlatformKeyPolicies.qml</file>
         <file>Qml/features/draftwallets/QGroupSandboxInvites.qml</file>
+        <file>Qml/Components/origins/QScrollBar.qml</file>
         <file>Qml/features/inheritance/components/QInheritanceOverview.qml</file>
         <file>Qml/features/inheritance/components/QAssetAllocation.qml</file>
         <file>Qml/features/inheritance/components/QBeneficiaryAllocation.qml</file>

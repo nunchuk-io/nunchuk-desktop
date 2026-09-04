@@ -58,6 +58,37 @@ class QRest : public QObject
 {
     Q_OBJECT
 public:
+    // Optional/background requests can opt out of global network-error toasts.
+    // ShowToast remains the default to preserve all existing GET behavior.
+    enum class NetworkErrorPolicy {
+        ShowToast,
+        Silent,
+    };
+
+    enum class AuthenticationPolicy {
+        CurrentToken,
+        Anonymous,
+    };
+
+    enum class VerificationTokenPolicy {
+        Include,
+        Exclude,
+    };
+
+    struct GetRequestOptions {
+        constexpr GetRequestOptions(
+            NetworkErrorPolicy networkError = NetworkErrorPolicy::ShowToast,
+            AuthenticationPolicy authentication = AuthenticationPolicy::CurrentToken,
+            VerificationTokenPolicy verificationToken = VerificationTokenPolicy::Include)
+            : networkErrorPolicy(networkError),
+              authenticationPolicy(authentication),
+              verificationTokenPolicy(verificationToken) {}
+
+        NetworkErrorPolicy networkErrorPolicy;
+        AuthenticationPolicy authenticationPolicy;
+        VerificationTokenPolicy verificationTokenPolicy;
+    };
+
     QRest();
     ~QRest();
 
@@ -74,8 +105,10 @@ public:
     QJsonObject postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
     QJsonObject postMultiPartSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
-    QJsonObject getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
-    QJsonObject getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
+    QJsonObject getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg,
+                        GetRequestOptions options = GetRequestOptions());
+    QJsonObject getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg,
+                        GetRequestOptions options = GetRequestOptions());
     QJsonObject putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject putSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
@@ -97,8 +130,9 @@ private:
     QJsonObject doPostSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject doPostMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
     QJsonObject doPostMultiPartSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
-    QJsonObject doGetSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
-    QJsonObject doGetSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
+    QJsonObject doGetSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg, GetRequestOptions options);
+    QJsonObject doGetSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg,
+                          GetRequestOptions options);
     QJsonObject doPutSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject doPutSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject doDeleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);

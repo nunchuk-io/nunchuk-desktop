@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -60,7 +60,7 @@ Rectangle {
             ls.push("#031F2B")
             return ls
         }
-        onItemClicked: {
+        onItemClicked: (index) => {
             var _input = {}
             switch(index){
             case 0:
@@ -388,9 +388,9 @@ Rectangle {
                     clip: true
                     model: walletInfo.utxoList
                     interactive: true
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     delegate: QSingleCoinDetailDelegate {
-                        width: _listView.width
+                        width: _listView.width - 8  // leave room for QScrollBar (8px)
                         amount: utxo_amount
                         currency: qsTr("%1").arg(RoomWalletData.unitValue)
                         amount_currency: utxo_amount_currency

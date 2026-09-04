@@ -28,9 +28,9 @@ import EWARNING 1.0
 import Features.Inheritance.Common.ViewModels 1.0
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
-import QtGraphicalEffects 1.12
-import QtQuick 2.12
-import QtQuick.Controls 2.3
+import Qt5Compat.GraphicalEffects
+import QtQuick
+import QtQuick.Controls
 
 QOnScreenContentTypeA {
     id: root
@@ -45,7 +45,7 @@ QOnScreenContentTypeA {
     label.text: vm.title
     extraHeader: Item {}
     onCloseClicked: vm.close()
-    property string title: STR.STR_QML_1036.arg(vm.requester_user.name).arg(vm.requester_user.email).arg(vm.walletName).replace("()","")
+    property string title: QSTR.STR_QML_1036.arg(vm.requester_user.name).arg(vm.requester_user.email).arg(vm.walletName).replace("()","")
     content: Item {
         id: _item
         Column {
@@ -65,7 +65,7 @@ QOnScreenContentTypeA {
                 width: 656 + 12
                 height: 452
                 contentHeight: _col.childrenRect.height + 12
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 clip: true
                 Column {
                     id: _col
@@ -123,7 +123,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: 252
         height: 48
-        label.text: STR.STR_QML_1011.arg(vm.pending_signatures).arg(vm.pending_signatures > 1 ? "s":"")
+        label.text: QSTR.STR_QML_1011.arg(vm.pending_signatures).arg(vm.pending_signatures > 1 ? "s":"")
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {

@@ -59,8 +59,7 @@ Result<DownloadBackupResult> DownloadBackupUseCase::execute(const DownloadBackup
 std::optional<nunchuk::SingleSigner> DownloadBackupUseCase::downloadKey(const QJsonObject &key, const QString &backup_key, const QString &key_name) {
     QWarningMessage msg;
     QString base64 = key.value("key_backup_base64").toString();
-    QByteArray ba;
-    ba.append(base64);
+    QByteArray ba = base64.toUtf8();
     QByteArray base64bin = QByteArray::fromBase64(ba);
     std::vector<unsigned char> base64vec(base64bin.begin(), base64bin.end());
     QString derivation_path = key.value("derivation_path").toString();

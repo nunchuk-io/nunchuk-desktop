@@ -265,6 +265,7 @@ enum CMD_IDX {
     VERIFY_CONFIRMATION_CODE,
     COUNTRY_CODE_LIST,
     ONBOARDING_NO_ADVISOR,
+    HOME_REMINDER_V2,
     CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL,
     CHANGING_EMAIL,
 
@@ -695,6 +696,7 @@ const QMap<int, QString> commands{
 
     {Premium::CMD_IDX::COUNTRY_CODE_LIST, QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/countries")},
     {Premium::CMD_IDX::ONBOARDING_NO_ADVISOR, QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/no-advisor")},
+    {Premium::CMD_IDX::HOME_REMINDER_V2, QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("reminders/home_v2")},
     {Premium::CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL,
      QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/calculate-required-signatures")},
     {Premium::CHANGING_EMAIL, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/change")},

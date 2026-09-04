@@ -20,78 +20,75 @@
 #ifndef QBARCODEFILTER_H
 #define QBARCODEFILTER_H
 
-#include <QAbstractVideoFilter>
-#include <QtConcurrent/QtConcurrent>
-#include <qqml.h>
+#include <QObject>
+#include <QRectF>
+#include <QAtomicInt>
+#include <QPointer>
+#include <QSharedPointer>
+#include <QVideoSink>
+#include <QVideoFrame>
+#include <QtConcurrent>
+#include <QVariant>
 
 #include "QBarcodeDecoder.h"
 #include "BarcodeFormat.h"
 
-void processImage(QBarcodeDecoder *decoder, const QImage &image, ZXing::BarcodeFormats formats);
-
-class QBarcodeFilter : public QAbstractVideoFilter
+class QBarcodeFilter : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QRectF   captureRect     READ captureRect WRITE setCaptureRect   NOTIFY captureRectChanged)
-    Q_PROPERTY(int      scanPercent     READ scanPercent                        NOTIFY scanPercentChanged)
-    Q_PROPERTY(bool     scanComplete    READ scanComplete                       NOTIFY scanCompleteChanged)
+
+    // Qt6: videoSink is owned by this object; QML / CaptureSession reads it
+    Q_PROPERTY(QVideoSink* videoSink  READ videoSink  CONSTANT)
+    // Declarative binding to a QML VideoOutput item.
+    // Setting this property wires the VideoOutput's internal QVideoSink to the
+    // barcode decoder automatically — no connectToVideoOutput() call needed.
+    Q_PROPERTY(QObject* videoOutput   READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
+    // Crop rect in camera-source coordinates (set from QML via VideoOutput.mapRectToSource)
+    Q_PROPERTY(QRectF captureRect     READ captureRect     WRITE setCaptureRect NOTIFY captureRectChanged)
+    // Scan progress: 0..100 (100 = tag found).  Consumed by QQrScanner / QQrImportScanner.
+    Q_PROPERTY(int  scanPercent       READ scanPercent      NOTIFY scanPercentChanged)
+    Q_PROPERTY(bool scanComplete      READ scanComplete     NOTIFY scanCompleteChanged)
 
 public:
     explicit QBarcodeFilter(QObject *parent = nullptr);
-    virtual ~QBarcodeFilter();
+
+    QVideoSink* videoSink();
+
+    QObject* videoOutput() const;
+    void     setVideoOutput(QObject* videoOutputItem);
 
     QRectF captureRect() const;
-    void setCaptureRect(const QRectF &captureRect);
+    void   setCaptureRect(const QRectF &rect);
 
-    QBarcodeDecoder *getDecoder() const;
-    QFuture<void> getImageFuture() const;
-    QVideoFilterRunnable *createFilterRunnable() override;
-    ZXing::BarcodeFormat format() const;
-
-    int scanPercent() const;
-    void setScanPercent(int newScanPercent);
-    void resetTags();
-
+    int  scanPercent() const;
     bool scanComplete() const;
-    void setScanComplete(bool newScanComplete);
 
 signals:
-    void captureRectChanged(const QRectF &captureRect);
     void tagFound(const QString &tag);
+    void videoOutputChanged();
+    void captureRectChanged();
     void scanPercentChanged();
     void scanCompleteChanged();
 
 private slots:
-    void calculateTags(const QString &tag);
+    void processFrame(const QVideoFrame &frame);
+    void onDecoderTagFound(const QString &tag);  // relay from decoder (may arrive on worker thread)
 
 private:
-    QRectF          m_captureRect;
-    QBarcodeDecoder *m_decoder;
-    QFuture<void>   m_imageFuture;
-    ZXing::BarcodeFormat m_format;
-    int             m_scanPercent;
-    bool            m_scanComplete;
-    QStringList     m_tags;
-};
+    QVideoSink*              m_videoSink;
+    QPointer<QVideoSink>    m_connectedSink;       // QPointer: auto-nulls if VideoOutput destroyed first
+    QObject*                m_videoOutput = nullptr;
 
-class QBarcodeFilterRunnable : public QVideoFilterRunnable
-{
-public:
-    QBarcodeFilterRunnable(QBarcodeFilter *filter);
+    // Both decoder and processing flag are shared with QtConcurrent lambdas.
+    // This prevents use-after-free when QBarcodeFilter is destroyed while a
+    // worker is still running: the lambda holds its own shared-ptr copy, keeping
+    // both objects alive until the task finishes.
+    QSharedPointer<QBarcodeDecoder> m_decoder;
+    QSharedPointer<QAtomicInt>      m_processing;
 
-    /*!
-     * \fn QVideoFrame run(QVideoFrame *input, const QVideoSurfaceFormat &surfaceFormat, QVideoFilterRunnable::RunFlags flags) override
-     * \brief Run method in order to asynchronously process the input video frame.
-     * \param QVideoFrame *input - a pointer to frame of video data.
-     * \param const QVideoSurfaceFormat &surfaceFormat - the stream format of a video presentation surface.
-     * \param QVideoFilterRunnable::RunFlags flags - typedef for QFlags<RunFlag>.
-     */
-    QVideoFrame run(QVideoFrame *    input,
-                    const QVideoSurfaceFormat      &surfaceFormat,
-                    QVideoFilterRunnable::RunFlags flags) override;
-
-private:
-    QBarcodeFilter *m_filter;
+    QRectF m_captureRect;
+    int    m_scanPercent  = 0;
+    bool   m_scanComplete = false;
 };
 
 #endif // QBARCODEFILTER_H

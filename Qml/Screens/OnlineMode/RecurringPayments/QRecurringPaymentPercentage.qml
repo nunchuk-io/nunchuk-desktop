@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -46,7 +46,7 @@ QOnScreenContentTypeA {
              !isNaN(parseFloat(str)) &&  // ...and ensure strings of whitespace fail
               parseFloat(str) >= 0 && parseFloat(str) <= 100
     }
-    RegExpValidator { id: percentValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,4})?$/ }
+    RegularExpressionValidator { id: percentValidator;   regularExpression: /^(?:0|[1-9][0-9]*)(\.\d{1,4})?$/ }
     content: Item {
         Column {
             anchors.fill: parent
@@ -68,7 +68,7 @@ QOnScreenContentTypeA {
                 boxHeight: 48
                 input.placeholderText: "0.00%"
                 input.validator: percentValidator
-                onTypingFinished: {
+                onTypingFinished: (currentText) => {
                     if(!_percent.isValid){
                         _percent.isValid = true
                         _percent.errorText = ""

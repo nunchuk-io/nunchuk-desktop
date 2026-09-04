@@ -19,9 +19,12 @@
  **************************************************************************/
 #include <QApplication>
 #include <QGuiApplication>
+#include <QMessageBox>
 #include <QQmlApplicationEngine>
+#include <QQuickStyle>
 #include <QScreen>
 #include <QDir>
+#include <QThreadPool>
 #include "QEventProcessor.h"
 #include "Servers/QCaptchaVerification.h"
 #include "Views/Views.h"
@@ -45,6 +48,7 @@
 #include "QPDFPrinter.h"
 #include "app/AppRegister.h"
 
+#include <clocale>
 #include <cstdio>
 #include <cstdlib>
 
@@ -209,6 +213,14 @@ int main(int argc, char* argv[])
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
+#if defined(Q_OS_WIN) && defined(_MSC_VER)
+    // QString::toStdString() returns UTF-8 in Qt 6. Configure the MSVC CRT
+    // conversion used by std::filesystem before any worker threads or path
+    // conversions are created. LC_CTYPE is sufficient and avoids changing
+    // numeric/date formatting for the rest of the process.
+    const bool isUtf8FilesystemLocaleConfigured =
+        std::setlocale(LC_CTYPE, ".UTF8") != nullptr;
+#endif
 #ifdef ENABLE_BACKTRACE
     signal(SIGSEGV, signalHandler);  // Segmentation fault
     signal(SIGABRT, signalHandler);  // Abort signal
@@ -221,7 +233,8 @@ int main(int argc, char* argv[])
             "--disable-web-bluetooth "
             "--disable-features=WebBluetooth,WebBluetoothNewPermissionsBackend");
 
-    qputenv("QTWEBENGINE_REMOTE_DEBUGGING", "9222");
+    // Remote debugging is opt-in. Set QTWEBENGINE_REMOTE_DEBUGGING externally
+    // when Chromium DevTools or WebEngineDriver access is needed.
 
     // Application identity first (static setters, no app instance needed):
     // every log from here on — including inside calculateScaleFactor() — makes
@@ -229,7 +242,7 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationName("nunchuk");
     QCoreApplication::setOrganizationDomain("nunchuk.io");
     QCoreApplication::setApplicationName("NunchukClient");
-    QCoreApplication::setApplicationVersion("2.6.6");
+    QCoreApplication::setApplicationVersion("2.6.7");
 
     double scale_factor = calculateScaleFactor();
     // static char  qt_arg[] = "";
@@ -243,6 +256,29 @@ int main(int argc, char* argv[])
 
     appNunchuk.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
     appNunchuk.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(appNunchuk.applicationVersion()));
+
+    // One startup record is enough to distinguish a stale/running app bundle
+    // from the executable that was just built. Never include user/session data.
+    DBG_INFO << "[APP_RUNTIME_TRACE]"
+             << "pid:" << QCoreApplication::applicationPid()
+             << "executable:" << QCoreApplication::applicationFilePath()
+             << "appVersion:" << QCoreApplication::applicationVersion()
+             << "qtRuntime:" << qVersion();
+
+#if defined(Q_OS_WIN) && defined(_MSC_VER)
+    if (isUtf8FilesystemLocaleConfigured) {
+        DBG_INFO << "Windows filesystem locale configured for UTF-8";
+    } else {
+        DBG_ERROR << "Failed to configure Windows filesystem locale for UTF-8";
+        QMessageBox::critical(
+            nullptr, QStringLiteral("Nunchuk"),
+            QStringLiteral(
+                "Unable to initialize UTF-8 filesystem support. Nunchuk "
+                "cannot safely open its data directory. Please update "
+                "Windows and try again."));
+        return EXIT_FAILURE;
+    }
+#endif
 
     // Logged AFTER the application identity is set so the (lazily created) log
     // file resolves to the app-specific directory; QSslSocket::supportsSsl()
@@ -285,6 +321,14 @@ int main(int argc, char* argv[])
     qmlRegisterType<AlertEnum>("NUNCHUCKTYPE", 1, 0, "AlertType");
     qmlRegisterType<QBarcodeFilter>("QBarcodeFilter", 1, 0, "QBarcodeFilter");
     qmlRegisterType<ScriptNodeHelper>("NUNCHUCKTYPE", 1, 0, "ScriptNodeHelper");
+
+    // Qt6: the macOS native style refuses background/contentItem customization
+    // on TextField, TextArea, ScrollBar, etc. — emitting runtime warnings for every
+    // instance and silently ignoring the custom visual.  "Basic" is the non-native
+    // cross-platform style; it honours all QML background/contentItem overrides,
+    // which is what the entire Nunchuk QML UI relies on.
+    // Must be set before the QML engine is created (QEventProcessor::initialized()).
+    QQuickStyle::setStyle("Basic");
 
     QEventProcessor::instance()->addImageProvider("nunchuk", CLIENT_INSTANCE->imageprovider());
     QEventProcessor::instance()->initialized();
@@ -349,18 +393,30 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),
-        [](int result, const QString& title, const QString& message, const QString& doItLaterCTALbl, const QString& downloadUrl, const QString& primaryCTALbl)->void {
+        [](int result, const QString& title, const QString& message,
+           const QString& doItLaterCTALbl, const QString& downloadUrl,
+           const QString& primaryCTALbl)->void {
             QObject* obj = QEventProcessor::instance()->getQuickWindow()->rootObject();
             if(obj){
                 if (result == 2) // Forced update
                 {
-                    QMetaObject::invokeMethod(obj, "funcUpdateRequired", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl), Q_ARG(QVariant, downloadUrl), Q_ARG(QVariant, primaryCTALbl));
+                    QMetaObject::invokeMethod(obj, "funcUpdateRequired",
+                                              Q_ARG(QVariant, title),
+                                              Q_ARG(QVariant, message),
+                                              Q_ARG(QVariant, doItLaterCTALbl),
+                                              Q_ARG(QVariant, downloadUrl),
+                                              Q_ARG(QVariant, primaryCTALbl));
                 }
                 else if (result == 1) { // Recommended update
                     static bool sendOneTime = false;
                     if (sendOneTime == false) {
                         sendOneTime = true;
-                        QMetaObject::invokeMethod(obj, "funcUpdateAvailable", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl), Q_ARG(QVariant, downloadUrl), Q_ARG(QVariant, primaryCTALbl));
+                        QMetaObject::invokeMethod(obj, "funcUpdateAvailable",
+                                                  Q_ARG(QVariant, title),
+                                                  Q_ARG(QVariant, message),
+                                                  Q_ARG(QVariant, doItLaterCTALbl),
+                                                  Q_ARG(QVariant, downloadUrl),
+                                                  Q_ARG(QVariant, primaryCTALbl));
                     }
                 }
             }
@@ -380,23 +436,18 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->show();
 
 
-    int execResult = appNunchuk.exec();
+    const int execResult = appNunchuk.exec();
+    DBG_INFO << "[SHUTDOWN] app.exec RETURNED"
+             << "result:" << execResult
+             << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
 
-    // Explicitly tear down wallet/model data now, while QGuiApplication and
-    // the QQuickView (QEventProcessor::instance()) are still alive. AppModel
-    // is a function-local-static singleton, so without this its destructor
-    // only runs later, during process exit()'s static-teardown cascade -
-    // after QGuiApplication/QQuickView (locals of this function) have already
-    // been destroyed. Destroying Wallet/its QML-exposed child models at that
-    // point can trigger a QML binding re-evaluation (e.g. a "visible:"
-    // binding) that touches already-torn-down QtQuick internals and crashes.
-    AppModel::instance()->shutdownCleanup();
-
-    // QEventProcessor is also a function-local-static singleton, but owns the
-    // QQuickView and cached QQmlComponents. Destroy those now, while the local
-    // QApplication and the QML runtime are still valid. Its destructor later
-    // becomes a no-op because shutdown() is idempotent.
+    // QEventProcessor is a function-local-static singleton. Tear down the
+    // QQuickView and cached QQmlComponents before QApplication is destroyed.
+    DBG_INFO << "[SHUTDOWN] QEventProcessor::shutdown BEGIN"
+             << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
     QEventProcessor::instance()->shutdown();
+    DBG_INFO << "[SHUTDOWN] QEventProcessor::shutdown END"
+             << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
 
     return execResult;
 }

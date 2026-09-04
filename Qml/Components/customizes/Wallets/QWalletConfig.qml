@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -103,7 +103,7 @@ QOnScreenContentTypeA {
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
                 othersContextMenu.x = 20
-                othersContextMenu.y = 20 - othersContextMenu.height
+                othersContextMenu.y = 20 - othersContextMenu.implicitHeight
                 othersContextMenu.open()
             }
             QMultiContextMenu {
@@ -119,6 +119,13 @@ QOnScreenContentTypeA {
                     }
                 }
                 property bool isCanDeleted: !walletInfo.isAssistedWallet || isAssisted
+                // isAssistedWallet becomes false after replacement, so retain the
+                // underlying assisted-account identity through the service type.
+                property bool isAssistedAccount: walletInfo.isUserWallet || walletInfo.isGroupWallet
+                property bool canToggleArchive: walletInfo.isArchived
+                                                || !isAssistedAccount
+                                                || ((walletInfo.isReplaced || walletInfo.isLocked)
+                                                    && walletInfo.walletBalanceSats === 0)
                 property bool isPrimaryOwner: (myRole === "MASTER" || myRole === "ADMIN") && (walletInfo.ownerMembers.length > 0)
                 menuWidth: 300
                 property var exportMenu: [
@@ -305,16 +312,19 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: !walletInfo.isAssistedWallet,
+                        visible: canToggleArchive,
                         label: (walletInfo.isArchived ? STR.STR_QML_1728 : STR.STR_QML_1727),
                         icon: (walletInfo.isArchived ? "qrc:/Images/Images/Archived1.png" : "qrc:/Images/Images/Archived2.png"),
                         iconRight: "",
                         color: "#031F2B",
-                        enable: !walletInfo.isAssistedWallet,
+                        enable: canToggleArchive,
                         subMenu: null,
                         action: function(){
+                            if (!canToggleArchive) {
+                                return
+                            }
                             othersContextMenu.close()
-                            walletInfo.isArchived = !walletInfo.isArchived
+                            walletInfo.handleArchiveWallet()
                         }
                     },
                     {
@@ -352,7 +362,7 @@ QOnScreenContentTypeA {
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
                 exportContextMenu.x = 20
-                exportContextMenu.y = 20 - exportContextMenu.height
+                exportContextMenu.y = 20 - exportContextMenu.implicitHeight
                 exportContextMenu.open()
             }
 

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import "./../../../origins"
 import "./../../../customizes"

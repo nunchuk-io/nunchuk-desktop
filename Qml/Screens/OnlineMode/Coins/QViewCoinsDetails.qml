@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -97,7 +97,7 @@ QOnScreenContentTypeB {
                     flickableDirection: Flickable.VerticalFlick
                     clip: true
                     contentHeight: contentDispLeft.height + 16
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     Column {
                         id: contentDispLeft
                         width: parent.width - 32
@@ -338,12 +338,13 @@ QOnScreenContentTypeB {
                                 visible: coinTags.count > 0
                                 anchors.fill: parent
                                 anchors.margins: 12
+                                anchors.rightMargin: 20  // 12 (base margin) + 8 (QScrollBar width)
                                 clip: true
                                 contentHeight: _flow.implicitHeight
                                 interactive: contentHeight > height
                                 flickableDirection: Flickable.VerticalFlick
                                 contentY : contentHeight > height ? contentHeight - height : 0
-                                ScrollBar.vertical: ScrollBar { active: true }
+                                ScrollBar.vertical: QScrollBar { }
                                 Item {
                                     width: parent.width
                                     height: _flow.childrenRect.height
@@ -447,12 +448,13 @@ QOnScreenContentTypeB {
                                 visible: coinCollections.count > 0
                                 anchors.fill: parent
                                 anchors.margins: 12
+                                anchors.rightMargin: 20  // 12 (base margin) + 8 (QScrollBar width)
                                 clip: true
                                 contentHeight: _flowCollect.implicitHeight
                                 interactive: contentHeight > height
                                 flickableDirection: Flickable.VerticalFlick
                                 contentY : contentHeight > height ? contentHeight - height : 0
-                                ScrollBar.vertical: ScrollBar { active: true }
+                                ScrollBar.vertical: QScrollBar { }
                                 Item {
                                     width: parent.width
                                     height: _flowCollect.childrenRect.height
@@ -463,6 +465,7 @@ QOnScreenContentTypeB {
                                         Repeater {
                                             model: coinCollections
                                             QCoinText {
+                                                width: _flowCollect.width
                                                 label: coin_collection_name
                                                 onCoinClicked: {
                                                     var input = {

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -283,14 +283,15 @@ QOnScreenContentTypeA {
                 value: newWalletInfo.newWalletM
 
                 minusEnabled: newWalletInfo.newWalletM > 1
-                plusEnabled: newWalletInfo.newWalletM < newWalletInfo.walletM - 1
+                plusEnabled: newWalletInfo.newWalletM < maxN - 1
 
                 onValueUpdated: (newValue) => {
-                                    const clampedValue = Math.max(1, Math.min(newValue, newWalletInfo.walletM - 1))
-                                    newWalletInfo.newWalletM = clampedValue
-
-                                    if (clampedValue >= newWalletInfo.walletM) {
-                                        newWalletInfo.walletM = clampedValue + 1
+                                    newWalletInfo.newWalletM = newValue
+                                    if (newValue >= newWalletInfo.walletM) {
+                                        newWalletInfo.walletM = newValue + 1
+                                        if (newWalletInfo.walletN < newWalletInfo.walletM) {
+                                            newWalletInfo.walletN = newWalletInfo.walletM
+                                        }
                                     }
                                 }
             }
@@ -345,7 +346,7 @@ QOnScreenContentTypeA {
             flickableDirection: Flickable.VerticalFlick
             interactive: true
             contentHeight: timelockEditComponent.height
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             QMiniscriptEditTimelock {
                 id: timelockEditComponent
                 anchors.horizontalCenter: parent.horizontalCenter

@@ -54,21 +54,27 @@ QVariant QConversationModel::data(const QModelIndex &index, int role) const
     Conversation cons = m_data.at(index.row());
     switch (role) {
     case role_sender:{
-        QString name = cons.sender;
+        QString sendername = cons.sender;
         if(m_room){
-        User* sender = m_room->user(cons.senderId);
-            if(sender) name = sender->displayname(m_room) != "" ? sender->displayname(m_room) : sender->id();
+        RoomMember sender = m_room->member(cons.senderId);
+            sendername = sender.displayName() != "" ? sender.displayName() : sender.id();
         }
-        return name;
+        return sendername;
     }
     case role_receiver:
         return cons.receiver;
     case role_timestamp:
-        return QDateTime::fromTime_t(cons.timestamp).toString( "dd-MMM-yyyy hh:mm AP");
+        if(cons.timestamp <= 0){
+            return "";
+        }
+        return QDateTime::fromMSecsSinceEpoch(cons.timestamp).toString("dd-MMM-yyyy hh:mm AP");
     case role_timesection:{
+        if(cons.timestamp <= 0 || cons.messageType == (int)ENUNCHUCK::ROOM_EVT::INITIALIZE){
+            return "";
+        }
         if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::EXCEPTION && !AppSetting::instance()->enableDebug()) return "";
         QDateTime today = QDateTime::currentDateTime();
-        QDateTime day = QDateTime::fromTime_t(cons.timestamp);
+        QDateTime day = QDateTime::fromMSecsSinceEpoch(cons.timestamp);
         if(today.date().year() == day.date().year()){
             qint64 numberDay = day.daysTo(today);
             if(numberDay == 0){
@@ -105,11 +111,9 @@ QVariant QConversationModel::data(const QModelIndex &index, int role) const
         case (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL:
         case (int)ENUNCHUCK::ROOM_EVT::STATE_EVT:{
             if(m_room){
-                User* sender = m_room->user(cons.senderId);
-                if(sender) {
-                    QString picName = sender->displayname(m_room) != "" ? sender->displayname(m_room) : sender->id();
-                    message = QString("<b>%1</b> %2").arg(picName).arg(cons.message);
-                }
+                RoomMember sender = m_room->member(cons.senderId);
+                QString picName = sender.displayName() != "" ? sender.displayName() : sender.id();
+                message = QString("<b>%1</b> %2").arg(picName).arg(cons.message);
             }
             break;
         }
@@ -163,38 +167,104 @@ QHash<int, QByteArray> QConversationModel::roleNames() const
     return names;
 }
 
+QString QConversationModel::eventIdAt(int row) const
+{
+    return row >= 0 && row < m_data.count() ? m_data.at(row).evtId : QString{};
+}
+
+bool QConversationModel::replaceMessage(const QString& eventId,
+                                        const Conversation& data)
+{
+    if(eventId.isEmpty()){
+        return false;
+    }
+    for(int row = 0; row < m_data.count(); ++row){
+        if(m_data.at(row).evtId == eventId){
+            const auto removeEncryptedPlaceholder = [this, row] {
+                m_firstToday.removeOne(m_data.at(row).timestamp);
+                beginRemoveRows(QModelIndex(), row, row);
+                m_data.removeAt(row);
+                endRemoveRows();
+                emit countChanged();
+            };
+            if(data.messageType == (int)ENUNCHUCK::ROOM_EVT::INVALID
+                    || needIgnoreInSupportRoom(data)){
+                removeEncryptedPlaceholder();
+                return true;
+            }
+            // A live event can already be present when hydration replays its
+            // copied JSON. Refresh it in place without re-running the special
+            // insert semantics below.
+            if(m_data.at(row).messageType == data.messageType
+                    && m_data.at(row).matrixType == data.matrixType){
+                m_data[row] = data;
+                emit dataChanged(index(row), index(row));
+                return true;
+            }
+            // Keep the same de-duplication semantics as addMessage() when an
+            // encrypted placeholder turns into a READY event.
+            if((data.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_READY
+                    && containsTxReadyMessage(data))
+                    || (data.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_READY
+                        && containsWalletReadyMessage(data))){
+                removeEncryptedPlaceholder();
+                return true;
+            }
+
+            m_data[row] = data;
+            emit dataChanged(index(row), index(row));
+            // addMessage() creates this local companion row; late decryption
+            // must preserve that behaviour as well.
+            if(data.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_CREATE){
+                Conversation backup;
+                backup.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_BACKUP;
+                backup.message = STR_CPP_001;
+                backup.timestamp = data.timestamp + 1;
+                backup.init_event_id = data.init_event_id;
+                beginInsertRows(QModelIndex(), row + 1, row + 1);
+                m_data.insert(row + 1, backup);
+                endInsertRows();
+                emit countChanged();
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 void QConversationModel::addMessage(const Conversation data)
 {
     if(needIgnoreInSupportRoom(data)){
         return;
     }
+    if(data.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_READY
+            && containsTxReadyMessage(data)){
+        return;
+    }
+    if(data.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_READY
+            && containsWalletReadyMessage(data)){
+        return;
+    }
+
     QDateTime today = QDateTime::currentDateTime();
-    QDateTime day = QDateTime::fromTime_t(data.timestamp);
+    QDateTime day = QDateTime::fromMSecsSinceEpoch(data.timestamp);
     qint64 numberDay = day.daysTo(today);
     if(numberDay == 0){
         m_firstToday.push_back(data.timestamp);
     }
-    beginInsertRows(QModelIndex(), m_data.size(), m_data.size());
-    if(data.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_READY){
-        if(!containsTxReadyMessage(data)){
-            m_data.append(data);
-        }
-    }
-    else if(data.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_READY){
-        if(!containsWalletReadyMessage(data)){
-            m_data.append(data);
-        }
-    }
-    else{
-        m_data.append(data);
-        if((int)ENUNCHUCK::ROOM_EVT::WALLET_CREATE == data.messageType){
-            Conversation backup;
-            backup.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_BACKUP;
-            backup.message = STR_CPP_001;
-            backup.timestamp = data.timestamp+1;
-            backup.init_event_id = data.init_event_id;
-            m_data.append(backup);
-        }
+    const bool addWalletBackup =
+            data.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_CREATE;
+    const int firstRow = m_data.size();
+    const int lastRow = firstRow + (addWalletBackup ? 1 : 0);
+    beginInsertRows(QModelIndex(), firstRow, lastRow);
+    m_data.append(data);
+    if(addWalletBackup){
+        Conversation backup;
+        backup.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_BACKUP;
+        backup.message = STR_CPP_001;
+        backup.timestamp = data.timestamp+1;
+        backup.init_event_id = data.init_event_id;
+        m_data.append(backup);
     }
     endInsertRows();
     setCurrentIndex(lastIndex());
@@ -207,7 +277,7 @@ void QConversationModel::addHistoryMessage(const Conversation data)
         return;
     }
     QDateTime today = QDateTime::currentDateTime();
-    QDateTime day = QDateTime::fromTime_t(data.timestamp);
+    QDateTime day = QDateTime::fromMSecsSinceEpoch(data.timestamp);
     qint64 numberDay = day.daysTo(today);
     if(numberDay == 0){
         m_firstToday.push_back(data.timestamp);
@@ -268,12 +338,12 @@ void QConversationModel::requestSortByTimeAscending(bool ui_update)
         beginResetModel();
     }
     if(m_data.size() > 1){
-        qSort(m_data.begin(), m_data.end(), sortConversationByTimeAscending);
+        std::sort(m_data.begin(), m_data.end(), sortConversationByTimeAscending);
     }
     if(m_firstToday.size() > 1){
-        qSort(m_firstToday.begin(), m_firstToday.end(), [](const time_t &t1,const time_t &t2)->bool{
-                  return t1 < t2;
-              });
+        std::sort(m_firstToday.begin(), m_firstToday.end(), [](const time_t &t1,const time_t &t2)->bool{
+            return t1 < t2;
+        });
     }
     if(ui_update){
         endResetModel();
@@ -458,6 +528,7 @@ Conversation QConversationModel::lastMessage()
         lastMessage = m_data.at(i);
         if(lastMessage.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_PAST
                 || lastMessage.messageType == (int)ENUNCHUCK::ROOM_EVT::INVALID
+                || lastMessage.messageType == (int)ENUNCHUCK::ROOM_EVT::INITIALIZE
                 || lastMessage.messageType == (int)ENUNCHUCK::ROOM_EVT::EXCEPTION ) {
             continue;
         }
@@ -470,16 +541,16 @@ Conversation QConversationModel::lastMessage()
 
 Conversation QConversationModel::lastTime()
 {
-    Conversation lastTime;
     for(int i = m_data.size() - 1; i >= 0; i--){
-        lastTime = m_data.at(i);
+        const Conversation &lastTime = m_data.at(i);
         if(lastTime.messageType != (int)ENUNCHUCK::ROOM_EVT::INVALID &&
+                lastTime.messageType != (int)ENUNCHUCK::ROOM_EVT::INITIALIZE &&
                 lastTime.messageType != (int)ENUNCHUCK::ROOM_EVT::EXCEPTION)
         {
-            break;
+            return lastTime;
         }
     }
-    return lastTime;
+    return Conversation();
 }
 
 QRoomTransactionPtr QConversationModel::pinTransaction()
@@ -519,7 +590,7 @@ void QConversationModel::clear()
 int QConversationModel::unreadLastIndex() const
 {
     if(m_room){
-        int maxUnread = m_room->unreadCount();
+        int maxUnread = m_room->notificationCount();
         for(int i = m_data.count() - 1; i > 0 ; i--){
             Conversation cons = m_data.at(i);
             if(maxUnread > 0 && cons.messageType == (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT){
@@ -604,7 +675,46 @@ bool QConversationModel::needIgnoreInSupportRoom(const Conversation data)
 bool QConversationModel::isSupportRoom()
 {
     QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
-    return m_room ? (m_room->tagNames().contains(tagname)) : false;
+    if(!m_room){
+        return false;
+    }
+    const QString otherTag = qUtils::strCompare(tagname, NUNCHUK_ROOM_SUPPORT)
+            ? NUNCHUK_ROOM_SUPPORTTESTNET : NUNCHUK_ROOM_SUPPORT;
+    const StateEvent* markerEvent = m_room->currentState().get(
+            "io.nunchuk.support_room");
+    const QJsonObject marker = markerEvent ? markerEvent->contentJson()
+                                           : QJsonObject{};
+    const QString markerTag = markerEvent
+            && marker.value("version").toInt() == 1
+            && m_room->creation()
+            && m_room->creation()->senderId() == m_room->connection()->userId()
+            && markerEvent->senderId() == m_room->connection()->userId()
+            ? marker.value("tag").toString() : QString{};
+    const bool isSupportDirectChat = m_room->isDirectChat()
+            && m_room->connection()->directChatMemberIds(m_room).contains("@support:nunchuk.io");
+    if(m_room->property("nunchukSupportSuppressedTag").toString() == tagname){
+        return false;
+    }
+    if(markerTag == tagname){
+        return true;
+    }
+    if(markerTag == otherTag){
+        return false;
+    }
+    if(m_room->tagNames().contains(tagname)){
+        return true;
+    }
+    if(m_room->tagNames().contains(otherTag)){
+        return false;
+    }
+    for(const Quotient::Room* taggedRoom : m_room->connection()->roomsWithTag(tagname)){
+        if(taggedRoom && taggedRoom->joinState() != JoinState::Leave
+                && taggedRoom->property("nunchukSupportSuppressedTag").toString() != tagname){
+            return false;
+        }
+    }
+    return isSupportDirectChat
+            && m_room->property("nunchukSupportCanonicalTag").toString() == tagname;
 }
 
 qint64 QConversationModel::maxLifeTime() const
@@ -636,7 +746,7 @@ void QConversationModel::processingRetentionMessage()
         QVector<int> indicesToRemove;
         for (int i = 0; i < m_data.count(); i++) {
             Conversation cons = m_data.at(i);
-            qint64 timestamp_milisec = QDateTime::fromTime_t(cons.timestamp).toMSecsSinceEpoch();
+            qint64 timestamp_milisec = cons.timestamp; // already milliseconds — no conversion needed
             qint64 time_msg_age = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() - timestamp_milisec;
             if(time_msg_age > m_maxLifeTime){
                 indicesToRemove.append(i);

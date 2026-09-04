@@ -118,6 +118,7 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain() {
     }
     input.signer_tags = tags;
     m_supportedSignersUC.addParameter(appModel).executeAsync(input, [this](core::usecase::Result<SupportedSignersResult> result) {
+        qApp->restoreOverrideCursor();
         continueOffChain(result.isSuccess());
     });
 }

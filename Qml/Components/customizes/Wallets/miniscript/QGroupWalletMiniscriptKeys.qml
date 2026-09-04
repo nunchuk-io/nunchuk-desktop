@@ -18,9 +18,9 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -35,7 +35,7 @@ import "../../../../../localization/STR_QML.js" as STR
 Column {
     id: miniGroupKeyComp
     width: widthHalf
-    readonly property int widthHalf: 352
+    readonly property int widthHalf: 344  // 352 - 8 (QScrollBar width) to avoid overlap in QSetupGroupWallet Flickable
     readonly property var tmpColors: [
         {colorStr: "#9EC063",           url: "qrc:/Images/Images/User-dark.svg" },
         {colorStr: "#2F466C",           url: "qrc:/Images/Images/User-dark.svg" },
@@ -149,8 +149,7 @@ Column {
             height: 16
             text: STR.STR_QML_1858
             fontColor: "#FFFFFF"
-            color: "#031F2B"
-            opacity: 0.4
+            color: "#66031F2B"
             font.pixelSize: 10
             font.weight: Font.Black
             anchors.bottom: parent.bottom

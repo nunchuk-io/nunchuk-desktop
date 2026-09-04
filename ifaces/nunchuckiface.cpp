@@ -78,6 +78,7 @@ void nunchukiface::makeNunchukInstance(const nunchuk::AppSettings& appsettings,
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION " << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         nunchuk_instance_[LOCAL_MODE] = NULL;
     }
 }
@@ -103,6 +104,7 @@ void nunchukiface::makeNunchukInstanceForAccount(const nunchuk::AppSettings &app
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION " << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         nunchuk_instance_[ONLINE_MODE] = NULL;
     }
 }
@@ -2253,22 +2255,12 @@ nunchuk::Transaction nunchukiface::ImportPassportTransaction(const std::string &
 
 void nunchukiface::killHwiProcessAllInstance()
 {
-    // Best-effort mitigation for a shutdown-time race: if a worker thread is
-    // still blocked inside HWIService::RunCmd() (e.g. device enumerate/sign)
-    // when we reset the Nunchuk instance below, that thread ends up touching
-    // memory owned by the instance we just destroyed -> SIGSEGV (observed in
-    // crash reports on GetDevices()/Enumerate()). We cannot fix the missing
-    // synchronization inside libnunchuk's RunCmd() (out of scope for this
-    // codebase), but terminating any in-flight HWI child process here makes
-    // RunCmd()'s blocking wait() return almost immediately instead of
-    // whatever duration the external hwi command would otherwise take -
-    // shrinking the unsynchronized race window rather than eliminating it.
     for (int i = 0; i < 2; ++i) {
         if (nunchuk_instance_[i]) {
             try {
                 nunchuk_instance_[i]->KillHwiProcess();
             } catch (...) {
-                // Best-effort only; never let cleanup throw.
+                // Shutdown is best-effort and must not throw.
             }
         }
     }
@@ -2276,13 +2268,23 @@ void nunchukiface::killHwiProcessAllInstance()
 
 void nunchukiface::stopOneInstance()
 {
-    if(nunchuk_instance_[nunchukMode()]){
+    stopInstance(nunchukMode());
+}
+
+void nunchukiface::stopInstance(int mode)
+{
+    if (mode < LOCAL_MODE || mode > ONLINE_MODE) {
+        DBG_ERROR << "Invalid Nunchuk instance mode:" << mode;
+        return;
+    }
+    if(nunchuk_instance_[mode]){
         try {
-            nunchuk_instance_[nunchukMode()]->KillHwiProcess();
+            nunchuk_instance_[mode]->KillHwiProcess();
         } catch (...) {
+            // Shutdown is best-effort and must not throw.
         }
-        nunchuk_instance_[nunchukMode()].reset();
-        nunchuk_instance_[nunchukMode()] = NULL;
+        nunchuk_instance_[mode].reset();
+        nunchuk_instance_[mode] = NULL;
     }
 }
 

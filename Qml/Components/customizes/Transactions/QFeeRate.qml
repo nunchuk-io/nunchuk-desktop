@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -128,8 +128,8 @@ Item {
                         label: ""
                         boxWidth: 252
                         boxHeight: 48
-                        validator: RegExpValidator {
-                            regExp: /^[0-9]+(\.[0-9]{1,3})?$/
+                        validator: RegularExpressionValidator {
+                            regularExpression: /^[0-9]+(\.[0-9]{1,3})?$/
                         }
                         textInputted: ""
                         onTextInputtedChanged: {
@@ -140,7 +140,7 @@ Item {
                             input_fee.isValid = (parseFloat(input_fee.textInputted) > parseFloat(transactionInfo.feeRate))
                             input_fee.showError = !input_fee.isValid
                         }
-                        onTypingFinished: {
+                        onTypingFinished: (currentText) => {
                             console.log(parseFloat(input_fee.textInputted) , parseFloat(transactionInfo.feeRate))
                             if(input_fee.textInputted !== "" && input_fee.isValid){
                                 _item.typingFinished(input_fee.textInputted)

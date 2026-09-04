@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -150,7 +150,7 @@ QOnScreenContentTypeA {
                 height: parent.height
                 contentHeight: col.childrenRect.height
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: col
                     spacing: 16
@@ -166,7 +166,7 @@ QOnScreenContentTypeA {
                             walletM: model.wallet_M
                             walletN: model.wallet_N
                             isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
-                            visible: model.wallet_dashboard ? !model.wallet_isReplaced : false
+                            visible: model.wallet_dashboard ? (!model.wallet_isReplaced && model.wallet_id !== AppModel.walletInfo.walletId) : false
                             walletType: model.wallet_walletType
                             onButtonClicked: {
                                 var _input = {

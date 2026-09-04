@@ -17,11 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.1
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../../origins"
 import "../../../customizes/Texts"
 import "../../../../../localization/STR_QML.js" as STR
@@ -74,7 +73,7 @@ Rectangle {
                 clip: true
                 contentHeight: infoColumn.implicitHeight
                 flickableDirection: Flickable.VerticalFlick
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: infoColumn
                     anchors {
@@ -84,7 +83,7 @@ Rectangle {
                     Repeater {
                         model: magicPhrases
                         Rectangle {
-                            width: 283
+                            width: parent.width - 8  // leave room for QScrollBar (8px) — was 283
                             height: 64
                             color: "#FFFFFF"
                             Column {

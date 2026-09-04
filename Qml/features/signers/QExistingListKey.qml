@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
@@ -46,10 +46,10 @@ Item {
             QListView {
                 model: vm.signerList
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 anchors.fill: parent
                 delegate: Item {
-                    width: widthList - 12
+                    width: widthList - 20  // widthList - 12 (leftMargin) - 8 (QScrollBar width)
                     height: visible ? 92 : 0
                     anchors{
                         left: parent.left

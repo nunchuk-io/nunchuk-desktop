@@ -465,6 +465,7 @@ public:
     nunchuk::Transaction ImportPassportTransaction(const std::string& wallet_id,
                                                    const std::vector<std::string>& qr_data,
                                                    QWarningMessage& msg);
+    void stopInstance(int mode);
     void stopOneInstance();
     void stopAllInstance();
     void killHwiProcessAllInstance();

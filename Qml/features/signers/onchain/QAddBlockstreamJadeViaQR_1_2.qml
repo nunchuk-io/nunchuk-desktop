@@ -19,8 +19,8 @@
  **************************************************************************/
 
 QAddBlockstreamJadeViaQR {
-    label.text: isFlowClamOrAddKeyClaim() ? STR.STR_QML_2067 : STR.STR_QML_1925.arg(1)
-    guideDescriptionOne: isFlowClamOrAddKeyClaim() ? STR.STR_QML_817 : STR.STR_QML_1926
-    guideDescriptionTwo: isFlowClamOrAddKeyClaim() ? "" : STR.STR_QML_1927
-    guideExportString: STR.STR_QML_2044.arg("0")
+    label.text: isFlowClamOrAddKeyClaim() ? QSTR.STR_QML_2067 : QSTR.STR_QML_1925.arg(1)
+    guideDescriptionOne: isFlowClamOrAddKeyClaim() ? QSTR.STR_QML_817 : QSTR.STR_QML_1926
+    guideDescriptionTwo: isFlowClamOrAddKeyClaim() ? "" : QSTR.STR_QML_1927
+    guideExportString: QSTR.STR_QML_2044.arg("0")
 }

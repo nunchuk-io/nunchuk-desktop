@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
+import QtQuick
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Buttons"
@@ -107,7 +107,7 @@ Rectangle {
                 id: _edit
                 width: _edit.paintedWidth
                 height: 20
-                text: STR.STR_QML_849
+                text: QSTR.STR_QML_849
                 font.weight: Font.Normal
                 anchors {
                     right: parent.right
@@ -132,7 +132,7 @@ Rectangle {
 
                 QLato {
                     width: parent.width - coSigningDelaySwitch.width
-                    text: STR.STR_QML_795
+                    text: QSTR.STR_QML_795
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     verticalAlignment: Text.AlignVCenter
@@ -147,7 +147,7 @@ Rectangle {
                     id: coSigningDelaySwitch
                     width: 84
                     height: 48
-                    text: root.enableCoSigningDelay ? STR.STR_QML_2134 : STR.STR_QML_2135
+                    text: root.enableCoSigningDelay ? QSTR.STR_QML_2134 : QSTR.STR_QML_2135
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     color: root.coSigningDelayChanged ? "#CF4018" : "#031F2B"
@@ -166,7 +166,7 @@ Rectangle {
                 QLato {
                     width: parent.width
                     anchors.left: parent.left
-                    text: STR.STR_QML_2125
+                    text: QSTR.STR_QML_2125
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     verticalAlignment: Text.AlignVCenter
@@ -181,7 +181,7 @@ Rectangle {
                     id: autoBroadcastSwitch
                     width: 84
                     height: 48
-                    text: root.autoBroadcast ? STR.STR_QML_2134 : STR.STR_QML_2135
+                    text: root.autoBroadcast ? QSTR.STR_QML_2134 : QSTR.STR_QML_2135
                     color: root.autoBroadcastChanged ? "#CF4018" : "#031F2B"
                     font.pixelSize: 16
                     font.weight: Font.Bold

@@ -17,11 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.3
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -58,24 +56,20 @@ Item {
         id:_checkforupdate
         z:100
     }
-    function funcUpdateAvailable(title,message,doItLaterCTALbl,downloadUrl,primaryCTALbl) {
+    function funcUpdateAvailable(title, message, doItLaterCTALbl, downloadUrl, primaryCTALbl) {
         _checkforupdate.title = title
         _checkforupdate.contentText = message
         _checkforupdate.btnLabel = doItLaterCTALbl
         _checkforupdate.downloadUrl = downloadUrl
-        // _checkforupdate is a single reused popup instance, so always set
-        // primaryCTALabel explicitly (falling back to "Learn more" if the
-        // backend omits primaryCTA) instead of skipping the assignment -
-        // skipping would leave a stale value from a previous call.
-        _checkforupdate.primaryCTALabel = (primaryCTALbl !== "") ? primaryCTALbl : STR.STR_QML_2226
+        _checkforupdate.primaryCTALabel = primaryCTALbl !== "" ? primaryCTALbl : STR.STR_QML_2254
         _checkforupdate.open()
     }
-    function funcUpdateRequired(title,message,doItLaterCTALbl,downloadUrl,primaryCTALbl) {
+    function funcUpdateRequired(title, message, doItLaterCTALbl, downloadUrl, primaryCTALbl) {
         _checkforupdate.title = title
         _checkforupdate.contentText = message
         _checkforupdate.btnLabel = doItLaterCTALbl
         _checkforupdate.downloadUrl = downloadUrl
-        if (primaryCTALbl !== "") _checkforupdate.primaryCTALabel = primaryCTALbl
+        _checkforupdate.primaryCTALabel = primaryCTALbl !== "" ? primaryCTALbl : STR.STR_QML_2254
         _checkforupdate.open()
     }
 

@@ -12,7 +12,7 @@ Result<ScanDeviceResult> ScanDeviceUsecase::execute(const ScanDeviceInput &input
     if (input.isLoginRequired) {
         deviceList_result = bridge::nunchukGetOriginDevices(msg);
     } else {
-        deviceList_result = qUtils::GetDevices(bridge::hwiPath(), msg);
+        deviceList_result = qUtils::GetDevices(bridge::hwiCommand(), msg);
     }
     if (!input.deviceType.isEmpty()) {
         std::vector<nunchuk::Device> filteredDevices;

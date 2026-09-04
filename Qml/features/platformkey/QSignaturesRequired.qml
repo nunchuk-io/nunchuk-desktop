@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -41,7 +41,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2161
+    label.text: QSTR.STR_QML_2161
     extraHeader: Item {}
     onCloseClicked: vm.close()
     property string description_top: vm.describeOne
@@ -75,7 +75,7 @@ QOnScreenContentTypeA {
 
     onPrevClicked: vm.back()
     function str_QML_220(m) {
-        return m === 1 ? STR.STR_QML_220_S : STR.STR_QML_220_M.arg(m)
+        return m === 1 ? QSTR.STR_QML_220_S : QSTR.STR_QML_220_M.arg(m)
     }
     bottomRight: Row {
         spacing: 12
@@ -87,7 +87,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: 137
             height: 48
-            label.text: STR.STR_QML_572
+            label.text: QSTR.STR_QML_572
             label.font.pixelSize: 16
             type: eTypeR
             onButtonClicked: vm.doThisLater()
@@ -95,7 +95,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: 204
             height: 48
-            label.text: STR.STR_QML_981
+            label.text: QSTR.STR_QML_981
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: vm.signDummyTransaction()

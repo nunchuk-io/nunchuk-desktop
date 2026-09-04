@@ -2206,7 +2206,7 @@ bool Byzantine::DeleteKeyHealthReminder(const QString &group_id, const QString &
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     QMap<QString, QString> paramsQuery;
     for (int i = 0; i < xfps.count(); i++) {
-        paramsQuery.insertMulti("xfps", xfps.at(i));
+        paramsQuery.insert("xfps", xfps.at(i));
     }
     QJsonObject jsonObj = m_rest->deleteSync(cmd, paramsQuery, {}, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {

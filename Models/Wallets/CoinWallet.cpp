@@ -615,6 +615,8 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
             RequestUpdateCoins();
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
             AppModel::instance()->showToast(0, "Coin updated", EWARNING::WarningType::SUCCESS_MSG);
+        } else {
+            AppModel::instance()->showToast(0, "No coins were updated. Please select coins before saving.", EWARNING::WarningType::WARNING_MSG);
         }
         return true;
     }
@@ -702,6 +704,8 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
             RequestUpdateCoins();
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
             AppModel::instance()->showToast(0, "Coin updated", EWARNING::WarningType::SUCCESS_MSG);
+        } else {
+            AppModel::instance()->showToast(0, "No coins were updated. Please select coins before saving.", EWARNING::WarningType::WARNING_MSG);
         }
         return true;
     }
@@ -805,13 +809,13 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
                 // int  feeRate                = draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
                 // bool manualFee              = draftTransactionInput.value("manualFee").toBool();
                 // bool manualOutput           = draftTransactionInput.value("manualOutput").toBool();
-                // Coin set is now user-fixed for the rest of this transaction's
-                // prep session — subsequent re-drafts (e.g. custom fee edits on
-                // QCreateTransaction.qml, which always sends manualOutput:false)
-                // must not fall back to the wallet-wide coin pool.
                 wallet->setFixedInputCoins(true);
                 wallet->UpdateDraftTransaction(draft_data);
-                QEventProcessor::instance()->sendEvent(E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {});
+                QVariantMap returnContext;
+                returnContext["preserveFixedInputCoins"] = true;
+                QEventProcessor::instance()->sendEvent(
+                    E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST,
+                    returnContext);
                 AppModel::instance()->showToast(0, "Coin selection updated", EWARNING::WarningType::SUCCESS_MSG);
             }
         });
@@ -852,6 +856,14 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
                type == "edit-locked-multi-coin-collections") {
         m_previousViewCollection = type;
     }
+    // Preserve UTXO selection when entering multi-coin edit flows.
+    // Background wallet sync (slotFinishSyncWalletDb → GetCoinControlFromServer →
+    // RequestGetCoins) may fire while user is on the edit screen. Without m_reuse=true,
+    // RequestGetCoins replaces m_utxoList with fresh objects (all selected=false),
+    // causing Save to see no selected coins and silently do nothing.
+    if (type == "edit-multi-coin-tags" || type == "edit-multi-coin-collections") {
+        setReuse(true);
+    }
     setCoinFlow(type);
     DBG_INFO << "coin-flow" << coinFlow();
     return true;
@@ -872,6 +884,11 @@ void CoinWallet::GetCoinControlUserWallet()
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             if(ret){
                 DBG_INFO << "Success: > Request get new UTXOs";
+                // If user is actively editing multi-coin assignments, preserve their
+                // UTXO selections across this background-triggered RequestGetCoins().
+                if (coinFlow() == "edit-multi-coin-tags" || coinFlow() == "edit-multi-coin-collections") {
+                    setReuse(true);
+                }
                 RequestGetCoins();
             }
             else{
@@ -901,6 +918,11 @@ void CoinWallet::GetCoinControlGroupWallet()
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             if(ret){
                 DBG_INFO << "Success: > Request get new UTXOs";
+                // If user is actively editing multi-coin assignments, preserve their
+                // UTXO selections across this background-triggered RequestGetCoins().
+                if (coinFlow() == "edit-multi-coin-tags" || coinFlow() == "edit-multi-coin-collections") {
+                    setReuse(true);
+                }
                 RequestGetCoins();
             }
             else{
@@ -1249,8 +1271,7 @@ bool CoinWallet::ExportCoinControlData(const QString &filePath)
     QWarningMessage msg;
     QString data = bridge::nunchukExportCoinControlData(wallet_id, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        qUtils::ExportDataViaFile(file_path, data);
-        return true;
+        return qUtils::ExportDataViaFile(file_path, data);
     }
     return false;
 }
@@ -1262,8 +1283,7 @@ bool CoinWallet::ExportBIP329(const QString &filePath)
     QWarningMessage msg;
     QString data = bridge::nunchukExportBIP329(wallet_id, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        qUtils::ExportDataViaFile(file_path, data);
-        return true;
+        return qUtils::ExportDataViaFile(file_path, data);
     }
     return false;
 }
@@ -1502,19 +1522,11 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
     QUTXOListModelPtr inputs = NULL;
     if (auto trans = AppModel::instance()->transactionInfo()){
         if (m_fixedInputCoins) {
-            // Coin set was fixed earlier in this session (e.g. "select coin from
-            // coin list" via use-selected-coins-create-transaction). Re-derive
-            // from the transaction's ACTUAL current inputs instead of
-            // GetUtxoListSelected(), which rebuilds from every unlocked UTXO in
-            // the wallet and would silently re-pull coins already committed to
-            // other in-progress unsigned transactions (they aren't locked just
-            // by being drafted).
-            QUTXOListModelPtr fixedInputs = QUTXOListModelPtr(new QUTXOListModel(trans->walletId()));
-            if (auto input_coins = trans->inputCoins()) {
-                for (int i = 0; i < input_coins->rowCount(); i++) {
-                    QUTXOPtr it = input_coins->getUTXOByIndex(i);
-                    if (it.data()) {
-                        fixedInputs->addUTXO(it.data()->getUnspentOutput());
+            QUTXOListModelPtr fixedInputs(new QUTXOListModel(trans->walletId()));
+            if (auto inputCoins = trans->inputCoins()) {
+                for (int i = 0; i < inputCoins->rowCount(); ++i) {
+                    if (QUTXOPtr input = inputCoins->getUTXOByIndex(i)) {
+                        fixedInputs->addUTXO(input->getUnspentOutput());
                     }
                 }
             }
@@ -1643,7 +1655,7 @@ bool CoinWallet::UpdateDraftRBFransaction(const QVariant &msg)
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 draftrans.set_status((nunchuk::TransactionStatus)current_status); // Keep status is pending confirm while drafting, if not it change to pending signature
-                draftrans.set_fee_rate(current_fee_rate);
+                draftrans.set_fee_rate(std::max(current_fee_rate, (qint64)0));
                 draftrans.set_memo(memo.toStdString());
                 draftrans.set_txid(current_tx_id.toStdString());
                 draftrans.set_subtract_fee_from_amount(subtractFromFeeAmout);

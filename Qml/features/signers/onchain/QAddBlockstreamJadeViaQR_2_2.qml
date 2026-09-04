@@ -19,7 +19,7 @@
  **************************************************************************/
 
 QAddBlockstreamJadeViaQR {
-    label.text: STR.STR_QML_1925.arg(2)
-    guideDescriptionTwo: STR.STR_QML_1937.arg("1")
-    guideExportString: STR.STR_QML_2044.arg("1")
+    label.text: QSTR.STR_QML_1925.arg(2)
+    guideDescriptionTwo: QSTR.STR_QML_1937.arg("1")
+    guideExportString: QSTR.STR_QML_2044.arg("1")
 }

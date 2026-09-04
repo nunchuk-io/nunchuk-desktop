@@ -90,7 +90,9 @@ nunchuk::Wallet ParseKeystoneWallet(nunchuk::Chain chain, const QStringList qrta
 
 QString ParseQRTransaction(const QStringList &qrtags, QWarningMessage &msg);
 
-std::vector<nunchuk::PrimaryKey> GetPrimaryKeys(const QString &storage_path, nunchuk::Chain chain);
+std::vector<nunchuk::PrimaryKey> GetPrimaryKeys(const QString &storage_path,
+                                                nunchuk::Chain chain,
+                                                QWarningMessage &msg);
 QString GetMasterFingerprint(const QString &mnemonic, const QString &passphrase);
 QString GetPrimaryKeyAddress(const QString &mnemonic, const QString &passphrase);
 QString SignLoginMessage(const QString &mnemonic, const QString &passphrase, const QString &message);
@@ -174,7 +176,7 @@ QString SignPsbt(const QString &hwi_path, const nunchuk::Device &device, const Q
 
 QString ImportDataViaFile(const QString &filepath);
 
-void ExportDataViaFile(const QString &filepath, const QString &data);
+bool ExportDataViaFile(const QString &filepath, const QString &data);
 
 bool isValidXPRV(const QString &xprv, QWarningMessage &msg);
 
@@ -263,6 +265,7 @@ int getIndexAt(const QString &path, int pos);
 nunchuk::SingleSigner toSingleSigner(const nunchuk::MasterSigner &master);
 
 QString formatMiniscript(const QString &input, int indentSize = 2, int maxInlineLen = 40);
+bool isMiniscriptContent(const QString &content);
 
 std::string bytesToHex(const std::vector<uint8_t> &data);
 std::vector<uint8_t> hexToBytes(const std::string &hex);

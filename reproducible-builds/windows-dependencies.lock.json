@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "platform": "windows-x64-msvc2022",
+  "toolchain": {
+    "cmake": {
+      "version": "3.31.0",
+      "url": "https://github.com/Kitware/CMake/releases/download/v3.31.0/cmake-3.31.0-windows-x86_64.zip",
+      "sha256": "f4b499f71cf44115a1d711d4867da3c6bd2f3f4d7121c213ace979757640385c"
+    },
+    "ninja": {
+      "version": "1.12.1",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip",
+      "sha256": "f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a"
+    },
+    "aqt": {
+      "version": "3.3.0",
+      "url": "https://github.com/miurahr/aqtinstall/releases/download/v3.3.0/aqt_x64.exe",
+      "sha256": "4f74d4c95c464d238d7e17ec2d9b7f22a7c333f0f5270a62584e2b47fc765150"
+    },
+    "innoSetup": {
+      "version": "6.7.3",
+      "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe",
+      "sha256": "9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732"
+    }
+  },
+  "qt": {
+    "version": "6.11.1",
+    "host": "windows",
+    "target": "desktop",
+    "architecture": "win64_msvc2022_64",
+    "directoryName": "msvc2022_64",
+    "modules": [
+      "qt5compat",
+      "qtmultimedia",
+      "qtnetworkauth",
+      "qtpositioning",
+      "qtshadertools",
+      "qtwebchannel",
+      "qtwebengine"
+    ]
+  },
+  "sources": {
+    "vcpkg": {
+      "repository": "https://github.com/microsoft/vcpkg.git",
+      "commit": "f523208df4ae467436dc2d2eeab594fed240d552",
+      "triplet": "x64-windows-static-md"
+    },
+    "olm": {
+      "repository": "https://gitlab.matrix.org/matrix-org/olm.git",
+      "tag": "3.2.16",
+      "commit": "7e0c8277032e40308987257b711b38af8d77cc69"
+    },
+    "qtKeychain": {
+      "repository": "https://github.com/frankosterfeld/qtkeychain.git",
+      "tag": "0.15.0",
+      "commit": "ad7344c45a86a4f66cbafc4b081b5f7b876cb0b7"
+    }
+  },
+  "runtime": {
+    "qtTlsOpenSsl": {
+      "version": "3.5.7",
+      "provider": "openssl.org",
+      "url": "https://github.com/openssl/openssl/releases/download/openssl-3.5.7/openssl-3.5.7.tar.gz",
+      "sha256": "a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8",
+      "configureTarget": "VC-WIN64A",
+      "builds": [
+        "no-shared",
+        "shared"
+      ],
+      "files": [
+        "libcrypto-3-x64.dll",
+        "libssl-3-x64.dll"
+      ]
+    },
+    "hwi": {
+      "version": "3.2.0-displayaddress",
+      "url": "https://github.com/nogibi/HWI/releases/download/3.2.0-displayaddress/hwi-3.2.0-windows-x86_64.zip",
+      "sha256": "936b57ed68d6f949fbade7b6e4352c6fef5a851d341052ceaefd050abf317644"
+    }
+  },
+  "actions": {
+    "checkout": "11bd71901bbe5b1630ceea73d27597364c9af683",
+    "uploadArtifact": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+    "downloadArtifact": "d3f86a106a0bac45b974a628896c90dbdf5c8093",
+    "msvcDevCmd": "a102174a2b586eec2ea151a69e6fd14404a8ce7c",
+    "azureArtifactSigning": "c7ab2a863ab5f9a846ddb8265964877ef296ee82",
+    "attest": "a1948c3f048ba23858d222213b7c278aabede763"
+  }
+}

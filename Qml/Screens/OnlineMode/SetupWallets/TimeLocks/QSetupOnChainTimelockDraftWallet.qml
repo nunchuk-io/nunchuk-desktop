@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.15
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import Features.Draftwallets.OnChain.ViewModels 1.0
 import "../../../../Components/origins"

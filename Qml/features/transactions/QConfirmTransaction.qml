@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Features.Transactions.ViewModels 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
@@ -34,12 +34,12 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_211
+    label.text: QSTR.STR_QML_211
     onCloseClicked: vm.close()
     onPrevClicked: vm.back()
     QConfirmYesNoPopup {
         id: confirmLowFee
-        contentText: STR.STR_QML_809
+        contentText: QSTR.STR_QML_809
         onConfirmNo: close()
         onConfirmYes: {
             close();
@@ -73,13 +73,13 @@ QOnScreenContentTypeA {
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.pixelSize: 16
                     font.weight: Font.Bold
-                    text: STR.STR_QML_122
+                    text: QSTR.STR_QML_122
                 }
                 QLato {
                     width: 252
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.pixelSize: 16
-                    text: STR.STR_QML_1800
+                    text: QSTR.STR_QML_1800
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                 }
@@ -127,7 +127,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: 249
         height: 48
-        label.text: STR.STR_QML_784
+        label.text: QSTR.STR_QML_784
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {

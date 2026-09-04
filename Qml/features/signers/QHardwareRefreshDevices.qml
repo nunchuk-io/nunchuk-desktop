@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
@@ -62,7 +62,7 @@ Item {
                         leftMargin: 12
                         verticalCenter: parent.verticalCenter
                     }
-                    text: STR.STR_QML_999
+                    text: QSTR.STR_QML_999
                     color: "#757575"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -70,7 +70,7 @@ Item {
                 QRefreshButtonB {
                     width: 174
                     height: 48
-                    label: STR.STR_QML_105
+                    label: QSTR.STR_QML_105
                     fontPixelSize: 16
                     color: "transparent"
                     border.color: "transparent"
@@ -92,7 +92,7 @@ Item {
                 QRefreshButtonB {
                     width: 174
                     height: 48
-                    label: STR.STR_QML_105
+                    label: QSTR.STR_QML_105
                     fontPixelSize: 16
                     color: "transparent"
                     border.color: "transparent"
@@ -121,7 +121,7 @@ Item {
                     currentIndex: -1
                     clip: true
                     interactive: devicelist.count > 3
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     delegate: Item {
                         width: 342
                         height: 44
@@ -188,8 +188,8 @@ Item {
     }
     QPopupInfoTwoButtons {
         id: _info
-        title: STR.STR_QML_661
-        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        title: QSTR.STR_QML_661
+        labels: [QSTR.STR_QML_433,QSTR.STR_QML_432]
         funcs: [
             function() { vm.requestCreateSigner() },
             function() {}
@@ -197,12 +197,12 @@ Item {
     }
     function showPopupInfo(isSoftware, fingerPrint){
         if (isSoftware) {
-            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
-            _info.contentTextTwo = STR.STR_QML_1284
+            _info.contentText = QSTR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = QSTR.STR_QML_1284
             _info.open()
         }
         else {
-            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentText = QSTR.STR_QML_1283.arg(fingerPrint.toUpperCase())
             _info.contentTextTwo = ""
             _info.open()
         }

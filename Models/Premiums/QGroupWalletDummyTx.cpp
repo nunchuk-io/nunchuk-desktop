@@ -82,8 +82,6 @@ bool QGroupWalletDummyTx::requestSignTx(const QString &xfp) {
             QString request_body = m_tx["request_body"].toString();
             warningmsg.resetWarningMessage();
             QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, request_body, warningmsg);
-            DBG_INFO << "tx:" << tx_to_sign << xfp;
-            DBG_INFO << "body:" << request_body;
             if ((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()) {
                 nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(),
                                                              [xfp](const nunchuk::SingleSigner &s) { return s.get_master_fingerprint() == xfp.toStdString(); });
@@ -91,22 +89,22 @@ bool QGroupWalletDummyTx::requestSignTx(const QString &xfp) {
                 QMap<QString, QString> signatures;
                 QString signature = "";
 
-                DBG_INFO << (int)signer.get_type() << QString::fromStdString(signer.get_master_fingerprint())
-                         << QString::fromStdString(signer.get_master_signer_id());
+                DBG_INFO << "Preparing dummy transaction signature with signer type:"
+                         << (int)signer.get_type();
                 switch (signer.get_type()) {
                 case nunchuk::SignerType::SOFTWARE: {
                     auto software = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
                     if (!software) {
-                        DBG_INFO << "Software signer not found for fingerprint: " << xfp;
+                        DBG_INFO << "Software signer not found for dummy transaction";
                         break;
                     }
                     auto device = software->devicePtr();
                     if (!device) {
-                        DBG_INFO << "Software signer device not found for fingerprint: " << xfp;
+                        DBG_INFO << "Software signer device not found for dummy transaction";
                         break;
                     }
                     warningmsg.resetWarningMessage();
-                    DBG_INFO << "Signing tx via software for xfp:" << xfp;
+                    DBG_INFO << "Signing dummy transaction via software";
                     signature = bridge::SignHealthCheckMessage(wallet, device->originDevice(), signer, tx_to_sign, warningmsg);
                     if ((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()) {
                         signatures[xfp] = signature;
@@ -118,11 +116,11 @@ bool QGroupWalletDummyTx::requestSignTx(const QString &xfp) {
                 case nunchuk::SignerType::COLDCARD_NFC: {
                     auto device = AppModel::instance()->deviceListPtr()->getDeviceByXfp(xfp);
                     if (!device) {
-                        DBG_INFO << "Device not found for xfp:" << xfp;
+                        DBG_INFO << "Device not found for dummy transaction";
                         break;
                     }
                     warningmsg.resetWarningMessage();
-                    DBG_INFO << "Signing tx via HWI for xfp:" << xfp;
+                    DBG_INFO << "Signing dummy transaction via HWI";
                     signature = bridge::SignHealthCheckMessage(wallet, device->originDevice(), signer, tx_to_sign, warningmsg);
                     if ((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()) {
                         signatures[xfp] = signature;
@@ -226,114 +224,128 @@ bool QGroupWalletDummyTx::requestSignTxViaFile(const QString &filepath) {
 }
 
 void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &signatures, const QMap<QString, QString> &signers) {
-    if (auto dashboard = dashBoardPtr()) {
-        QStringList authorizations;
-        authorizations.clear();
-        QWarningMessage msg;
-        QJsonObject output;
-        QString errormsg = "";
-        QString group_id = dashboard->groupId();
-        QString wallet_id = dashboard->wallet_id();
-        QString txid = tx_id();
-        QStringList xfps = signatures.keys();
-        for (QString xfp : xfps) {
-            QString signature = signatures[xfp];
-            QString authorization = qUtils::CreateRequestToken(signature, xfp, msg);
-            authorizations.append(authorization);
-        }
-        DBG_INFO << authorizations;
-        bool ret{false};
-        if (isUserWallet()) {
-            ret = Draco::instance()->UpdateDummyTransaction(wallet_id, authorizations, txid, output, errormsg);
-        } else {
-            ret = Byzantine::instance()->UpdateDummyTransaction(group_id, wallet_id, authorizations, txid, output, errormsg);
-        }
-        if (ret) {
-            DBG_INFO << output;
-            dashboard->GetAlertsInfo();
-            dashboard->GetHealthCheckInfo();
-            // GO TO KEY STATUS SCREEN
-            QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
-            transactionPtr()->setTxJson(dummy_transaction);
-            emit transactionPtr() -> nunchukTransactionChanged();
-            QString type = dummy_transaction["type"].toString();
-            int pending_signatures = dummy_transaction["pending_signatures"].toInt();
-            int flow = StringToInt(type);
-            switch ((AlertEnum::E_Alert_t)flow) {
-            case AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST:
-            case AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING:
-            case AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS: {
-                if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
-                    dashboard->setConfigFlow("accessing-wallet-configuration");
-                    dashboard->registerKeyDone();
-                    QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
-                    AppModel::instance()->showToast(0, "The key has been claimed", EWARNING::WarningType::SUCCESS_MSG);
-                } else {
-                    QEventProcessor::instance()->sendEvent(E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST);
-                    QString keyName = QString("%1 %2 healthy").arg(signers.values().join(", ")).arg(signers.count() > 1 ? "are" : "is");
-                    AppModel::instance()->showToast(0, keyName, EWARNING::WarningType::SUCCESS_MSG);
-                }
-                break;
-            }
-            case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
-            case AlertEnum::E_Alert_t::UPDATE_SERVER_KEY:
-            case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:
-            case AlertEnum::E_Alert_t::UPDATE_INHERITANCE_PLAN:
-            case AlertEnum::E_Alert_t::CANCEL_INHERITANCE_PLAN:
-            case AlertEnum::E_Alert_t::REQUEST_INHERITANCE_PLANNING: {
-                DBG_INFO << dashBoardPtr()->flow();
-                if (dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_POLICY_UPDATE ||
-                    dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_UPDATE ||
-                    dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL ||
-                    dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_UPDATE_SECURITY_QUESTION) {
-                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
-                    int wallet_index = AppModel::instance()->walletListPtr()->getWalletIndexById(dashBoardPtr()->wallet_id());
-                    AppModel::instance()->setWalletListCurrentIndex(wallet_index);
-                    dashBoardPtr()->setShowDashBoard(true);
-                } else {
-                    QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
-                }
-                QString msg_name = QString("Transaction updated");
-                if (pending_signatures > 0) {
-                    AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
-                } else {
-                    QString msg_approved = textForToast(flow);
-                    AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
-                    AppModel::instance()->showToast(0, msg_approved, EWARNING::WarningType::SUCCESS_MSG);
-                }
-                break;
-            }
+    auto dashboard = dashBoardPtr();
+    if (!dashboard) return;
 
-            case AlertEnum::E_Alert_t::KEY_RECOVERY_REQUEST:
-            case AlertEnum::E_Alert_t::KEY_RECOVERY_APPROVED: {
-                dashBoardPtr()->setFlow(flow);
-                QEventProcessor::instance()->sendEvent(E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST);
-                break;
-            }
-            case AlertEnum::E_Alert_t::CANCEL_RECURRING_PAYMENT:
-            case AlertEnum::E_Alert_t::CREATE_RECURRING_PAYMENT: {
-                QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
-                QString msg_name = QString("Transaction updated");
-                if (pending_signatures > 0) {
-                    AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
-                } else {
-                    QString msg_approved = textForToast(flow);
-                    AppModel::instance()->showToast(0, msg_approved, EWARNING::WarningType::SUCCESS_MSG);
-                }
-                break;
-            }
-            case AlertEnum::E_Alert_t::CHANGE_EMAIL: {
-                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
-                emit requestSignout();
-                QString msg_name = QString("Email has been changed. Please sign in again.");
-                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
-                break;
-            }
-            default:
-                break;
-            }
-        }
+    // ── I/O section ────────────────────────────────────────────────────────
+    // Safe to run on any thread (pool thread included): only plain data and
+    // blocking network calls here, no QObject parenting or UI mutations.
+    QStringList authorizations;
+    QWarningMessage msg;
+    QJsonObject output;
+    QString errormsg = "";
+    QString group_id = dashboard->groupId();
+    QString wallet_id = dashboard->wallet_id();
+    QString txid = tx_id();
+    for (const QString &xfp : signatures.keys()) {
+        authorizations.append(qUtils::CreateRequestToken(signatures[xfp], xfp, msg));
     }
+    DBG_INFO << "Updating dummy transaction with authorization count:" << authorizations.size();
+    bool ret{false};
+    if (isUserWallet()) {
+        ret = Draco::instance()->UpdateDummyTransaction(wallet_id, authorizations, txid, output, errormsg);
+    } else {
+        ret = Byzantine::instance()->UpdateDummyTransaction(group_id, wallet_id, authorizations, txid, output, errormsg);
+    }
+    if (!ret) return;
+
+    // ── UI section ─────────────────────────────────────────────────────────
+    // This function may be called from a QtConcurrent pool thread
+    // (e.g. via requestSignTx in STATE_ID_SCR_DUMMY_TRANSACTION_INFO.cpp).
+    // All QObject/UI work must run on the main thread. Dispatch via
+    // QueuedConnection so the lambda executes in qApp's event loop.
+    QJsonObject outputCopy   = output;
+    QMap<QString, QString> signersCopy = signers;
+    QPointer<QGroupWalletDummyTx> safeThis(this);
+    QGroupDashboardPtr            safeDash(dashboard); // shared ptr — manages lifetime directly
+
+    QMetaObject::invokeMethod(qApp, [safeThis, safeDash, outputCopy, signersCopy]() {
+        if (!safeThis || !safeDash) return;
+
+        safeDash->GetAlertsInfo();
+        safeDash->GetHealthCheckInfo();
+
+        // GO TO KEY STATUS SCREEN
+        QJsonObject dummy_transaction = outputCopy["dummy_transaction"].toObject();
+        if (const auto transaction = safeThis->transactionPtr()) {
+            transaction->setTxJson(dummy_transaction);
+            emit transaction->nunchukTransactionChanged();
+        }
+        const QString type          = dummy_transaction["type"].toString();
+        const int pending_signatures = dummy_transaction["pending_signatures"].toInt();
+        const int flow              = StringToInt(type);
+        switch ((AlertEnum::E_Alert_t)flow) {
+        case AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST:
+        case AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING:
+        case AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS: {
+            if (safeDash->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
+                safeDash->setConfigFlow("accessing-wallet-configuration");
+                safeDash->registerKeyDone();
+                QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+                AppModel::instance()->showToast(0, "The key has been claimed", EWARNING::WarningType::SUCCESS_MSG);
+            } else {
+                QEventProcessor::instance()->sendEvent(E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST);
+                QString keyName = QString("%1 %2 healthy")
+                                      .arg(signersCopy.values().join(", "))
+                                      .arg(signersCopy.count() > 1 ? "are" : "is");
+                AppModel::instance()->showToast(0, keyName, EWARNING::WarningType::SUCCESS_MSG);
+            }
+            break;
+        }
+        case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
+        case AlertEnum::E_Alert_t::UPDATE_SERVER_KEY:
+        case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:
+        case AlertEnum::E_Alert_t::UPDATE_INHERITANCE_PLAN:
+        case AlertEnum::E_Alert_t::CANCEL_INHERITANCE_PLAN:
+        case AlertEnum::E_Alert_t::REQUEST_INHERITANCE_PLANNING: {
+            DBG_INFO << safeDash->flow();
+            if (safeDash->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_POLICY_UPDATE ||
+                safeDash->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_UPDATE ||
+                safeDash->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL ||
+                safeDash->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_UPDATE_SECURITY_QUESTION) {
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                int wallet_index = AppModel::instance()->walletListPtr()->getWalletIndexById(safeDash->wallet_id());
+                AppModel::instance()->setWalletListCurrentIndex(wallet_index);
+                safeDash->setShowDashBoard(true);
+            } else {
+                QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
+            }
+            const QString msg_name = QString("Transaction updated");
+            if (pending_signatures > 0) {
+                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+            } else {
+                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+                AppModel::instance()->showToast(0, safeThis->textForToast(flow), EWARNING::WarningType::SUCCESS_MSG);
+            }
+            break;
+        }
+        case AlertEnum::E_Alert_t::KEY_RECOVERY_REQUEST:
+        case AlertEnum::E_Alert_t::KEY_RECOVERY_APPROVED: {
+            safeDash->setFlow(flow);
+            QEventProcessor::instance()->sendEvent(E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST);
+            break;
+        }
+        case AlertEnum::E_Alert_t::CANCEL_RECURRING_PAYMENT:
+        case AlertEnum::E_Alert_t::CREATE_RECURRING_PAYMENT: {
+            QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
+            const QString msg_name = QString("Transaction updated");
+            if (pending_signatures > 0) {
+                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+            } else {
+                AppModel::instance()->showToast(0, safeThis->textForToast(flow), EWARNING::WarningType::SUCCESS_MSG);
+            }
+            break;
+        }
+        case AlertEnum::E_Alert_t::CHANGE_EMAIL: {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            emit safeThis->requestSignout();
+            AppModel::instance()->showToast(0, "Email has been changed. Please sign in again.", EWARNING::WarningType::SUCCESS_MSG);
+            break;
+        }
+        default:
+            break;
+        }
+    }, Qt::QueuedConnection);
 }
 
 void QGroupWalletDummyTx::finishScanDevices() {

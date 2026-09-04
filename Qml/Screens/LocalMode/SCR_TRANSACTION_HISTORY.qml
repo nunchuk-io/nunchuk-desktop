@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -89,7 +89,7 @@ QScreen {
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex == 0
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 0
                         var sortData = { "sortRole"    : tabparent.transaction_txid_role,
                                          "sortOrder"   : sortOrder}
@@ -106,7 +106,7 @@ QScreen {
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex == 1
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 1
                         var sortData = { "sortRole"    : tabparent.transaction_status_role,
                                          "sortOrder"   : sortOrder}
@@ -123,7 +123,7 @@ QScreen {
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex == 2
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 2
                         var sortData = { "sortRole"    : tabparent.transaction_blocktime_role,
                                          "sortOrder"   : sortOrder}
@@ -140,7 +140,7 @@ QScreen {
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex == 3
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 3
                         var sortData = { "sortRole"    : tabparent.transaction_memo_role,
                                          "sortOrder"   : sortOrder}
@@ -157,7 +157,7 @@ QScreen {
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex == 4
                     horizontalAlignment: Text.AlignRight
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 4
                         var sortData = { "sortRole"    : tabparent.transaction_total_role,
                                          "sortOrder"   : sortOrder}

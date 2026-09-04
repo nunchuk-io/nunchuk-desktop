@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
@@ -33,14 +33,14 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2087
+    label.text: QSTR.STR_QML_2087
     onCloseClicked: vm.close()
     content: Item {
         Column {
             spacing: 24
             QLato {
                 width: 540
-                text: STR.STR_QML_644
+                text: QSTR.STR_QML_644
                 anchors.left: parent.left
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignLeft
@@ -201,7 +201,7 @@ QOnScreenContentTypeA {
                     height: suggestionList.visible ? Math.min(sglst.contentHeight, 240): 0
                     model: modelSearch
                     clip: true
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     delegate: Rectangle {
                         width: sglst.width
                         property bool shown: textsuggest.visible
@@ -246,8 +246,8 @@ QOnScreenContentTypeA {
     }
     QPopupInfoTwoButtons {
         id: _info
-        title: STR.STR_QML_661
-        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        title: QSTR.STR_QML_661
+        labels: [QSTR.STR_QML_433,QSTR.STR_QML_432]
         funcs: [
             function() { vm.requestCreateSigner() },
             function() {}
@@ -255,12 +255,12 @@ QOnScreenContentTypeA {
     }
     function showPopupInfo(isSoftware, fingerPrint){
         if (isSoftware) {
-            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
-            _info.contentTextTwo = STR.STR_QML_1284
+            _info.contentText = QSTR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = QSTR.STR_QML_1284
             _info.open()
         }
         else {
-            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentText = QSTR.STR_QML_1283.arg(fingerPrint.toUpperCase())
             _info.contentTextTwo = ""
             _info.open()
         }

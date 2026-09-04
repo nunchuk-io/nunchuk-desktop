@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -80,6 +80,9 @@ Rectangle {
             color: dataMaster.master_needBackup ? "#FFCB2E" : "#F1FAFE"
             text: {
                 if (dataMaster.master_type === NUNCHUCKTYPE.NFC) {
+                    if (!dataMaster.master_device) {
+                        return ""
+                    }
                     var card_id = dataMaster.master_device.cardId
                     var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
                     return "Card ID: ••" + textR

@@ -992,7 +992,7 @@ var STR_QML_830 = qsTr("Connect your Trezor device. If it's not listed, click 'R
 var STR_QML_831 = qsTr("Adding Trezor... Please keep your device connected.")
 var STR_QML_832 = qsTr("Trezor added successfully")
 var STR_QML_833 = qsTr("Gap limit has been updated")
-var STR_QML_834 = qsTr("Gap limit cannot exceed %1.")
+var STR_QML_834 = qsTr("Gap limit cannot exceed 100.")
 
 var STR_QML_835 = qsTr("Save")
 var STR_QML_836 = qsTr("Effective package fee rate: <b>%1 sat/vB</b>")
@@ -2375,5 +2375,6 @@ var STR_QML_2138 = qsTr("Continue (%1 signature%2 pending)")
 var STR_QML_2139 = qsTr("Set a maximum amount for a specific period. When disabled, your spending limit will be unlimited.")
 
 var STR_QML_2225 = qsTr("Total stage allocation cannot exceed 100%.")
-
-var STR_QML_2226 = qsTr("Learn more")
+var STR_QML_2226 = qsTr("Failed to read data or script has invalid syntax")
+var STR_QML_2227 = qsTr("Add beneficiaries and decide how the asset is shared between them. <b>The total across all beneficiaries must be 100%.</b>")
+var STR_QML_2254 = qsTr("Learn more")

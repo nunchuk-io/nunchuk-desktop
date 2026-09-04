@@ -33,7 +33,8 @@ class GroupSandboxModel : public QAbstractListModel {
     QGroupSandboxPtr GetGroup(const QString &sandbox_id);
 
     void updateSandox(const nunchuk::GroupSandbox sandbox);
-    bool contains(const QString &sandbox_id);
+    Q_INVOKABLE bool contains(const QString &sandbox_id) const;
+    Q_INVOKABLE int indexOf(const QString &sandbox_id) const;
     void clearOccupied();
     void cleardata();
 

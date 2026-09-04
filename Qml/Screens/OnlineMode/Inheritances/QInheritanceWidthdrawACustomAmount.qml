@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import Features.Claiming.ViewModels 1.0
@@ -36,7 +36,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1736
+    label.text: QSTR.STR_QML_1736
     onCloseClicked: vm.close()
     content: Item {
         Column {
@@ -51,7 +51,7 @@ QOnScreenContentTypeB {
                     spacing: 6
                     QLato {
                         height: parent.height
-                        text: STR.STR_QML_259
+                        text: QSTR.STR_QML_259
                         font.weight: Font.Bold
                         font.pixelSize: 16
                         verticalAlignment: Text.AlignVCenter
@@ -119,15 +119,15 @@ QOnScreenContentTypeB {
     onPrevClicked: vm.close()
     onNextClicked: {
         imExContextMenu.x = _customAmount.width - imExContextMenu.width
-        imExContextMenu.y = _customAmount.height - 102 - imExContextMenu.height
+        imExContextMenu.y = _customAmount.height - 102 - imExContextMenu.implicitHeight
         imExContextMenu.open()
     }
     QContextMenu {
         id: imExContextMenu
         menuWidth: 320
         labels: [
-            STR.STR_QML_779,
-            STR.STR_QML_780,
+            QSTR.STR_QML_779,
+            QSTR.STR_QML_780,
         ]
         icons: [
             "qrc:/Images/Images/wallet-dark.svg",

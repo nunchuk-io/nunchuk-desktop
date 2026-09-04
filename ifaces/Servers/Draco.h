@@ -62,6 +62,8 @@ class Draco : public QObject {
     Q_INVOKABLE bool signout();
     void exchangeRates(const QString &currency);
     Q_INVOKABLE void feeRates();
+    QJsonObject fetchFeeRates(int primaryServer, int &replyCode);
+    void applyFeeRates(const QJsonObject &feeRates, int replyCode);
     Q_INVOKABLE void verifyNewDevice(const QString &pin);
     Q_INVOKABLE void resendVerifyNewDeviceCode();
     Q_INVOKABLE void inviteFriends(const QStringList &emails);
@@ -124,8 +126,8 @@ class Draco : public QObject {
 
     // USER_SUBSCRIPTION
     bool getUserSubscriptions();
-    bool getUserSubscriptionsMainnet();
-    bool getUserSubscriptionsTestnet();
+    bool getUserSubscriptionsMainnet(QJsonArray &subscriptions);
+    bool getUserSubscriptionsTestnet(QJsonArray &subscriptions);
 
     // ASSISTED_WALLETS
     bool getAssistedWallets(QJsonObject &output, QString &errormsg);
@@ -256,6 +258,8 @@ class Draco : public QObject {
 
     bool GetCountryCodeList(QJsonObject &output, QString &errormsg);
     bool RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note, QString &errormsg);
+    // A successful response with no current reminder returns true and leaves reminder empty.
+    bool GetHomeReminder(bool anonymous, QJsonObject &reminder, QString &errormsg);
 
     bool GetElectrumServers(QJsonObject &output, QString &errormsg);
     bool ChangeEmail(const QJsonObject &request_body, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken,
@@ -412,7 +416,9 @@ class Draco : public QObject {
     void resendVerifyNewDeviceCodeResult(int https_code, int error_code, QString error_msg);
     void loggedInDeviceChanged(int https_code, int error_code, QString error_msg);
     void updateProfileResult(int https_code, int error_code, QString error_msg);
-    void startCheckForUpdate(int result, const QString &title, const QString &message, const QString &doItLaterCTALbl, const QString &downloadUrl, const QString &primaryCTALbl);
+    void startCheckForUpdate(int result, const QString &title, const QString &message,
+                             const QString &doItLaterCTALbl, const QString &downloadUrl,
+                             const QString &primaryCTALbl);
     void signalpkey_signup(int https_code, int error_code, QString error_msg);
     void signalpkey_signin(int https_code, int error_code, QString error_msg);
     void stayLoggedInChanged();

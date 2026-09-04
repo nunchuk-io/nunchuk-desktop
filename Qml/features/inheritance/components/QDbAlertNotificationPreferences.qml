@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/origins"
 import "../../../Components/customizes/Texts"
 
@@ -32,7 +32,7 @@ Column {
     QLato {
         width: parent.width
         height: paintedHeight
-        text: STR.STR_QML_865
+        text: QSTR.STR_QML_865
         font.weight: Font.Bold
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
@@ -57,7 +57,7 @@ Column {
                     width: 302
                     height: 40
                     anchors.left: parent.left
-                    text: STR.STR_QML_867
+                    text: QSTR.STR_QML_867
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 28
                     wrapMode: Text.WordWrap
@@ -103,14 +103,14 @@ Column {
                     width: 245
                     height: 20
                     anchors.left: parent.left
-                    text: STR.STR_QML_868
+                    text: QSTR.STR_QML_868
                 }
                 QLato {
                     width: 245
                     height: 20
                     font.weight: Font.Bold
                     anchors.right: parent.right
-                    text: notifyEnabled ? STR.STR_QML_433 : STR.STR_QML_432
+                    text: notifyEnabled ? QSTR.STR_QML_433 : QSTR.STR_QML_432
                     color: notifyEnabledChanged ? "#CF4018" : "#031F2B"
                     horizontalAlignment: Text.AlignRight
                 }

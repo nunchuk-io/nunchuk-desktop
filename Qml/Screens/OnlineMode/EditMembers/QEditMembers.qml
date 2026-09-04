@@ -17,11 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtQuick.Controls 1.4
-import QtGraphicalEffects 1.12
-import QtQuick.Controls.Styles 1.4
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -59,7 +57,7 @@ QOnScreenContentTypeB {
             height: 506
             model: dashboardInfo.editMembers
             clip: true
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             spacing: 25
             delegate: Loader {
                 sourceComponent: modelData.isNew ? _editNew : _edit

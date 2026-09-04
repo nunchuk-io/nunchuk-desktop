@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -159,11 +159,11 @@ QScreen {
                     flickableDirection: Flickable.VerticalFlick
                     clip: true
                     contentHeight: destColumn.height
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     interactive: contentHeight > height
                     Column {
                         id: destColumn
-                        width: parent.width
+                        width: parent.width - 8
                         spacing: 16
                         Repeater {
                             id: destination
@@ -303,7 +303,7 @@ QScreen {
     QQrImportScanner {
         id: qrscaner
         property int addressRequestIndex: -1
-        onTagFound: {
+        onTagFound: (tag) => {
             if(qrscaner.addressRequestIndex === -2){
                 favValueEdit.textInputted = tag
             }
@@ -464,11 +464,11 @@ QScreen {
                 flickableDirection: Flickable.VerticalFlick
                 clip: true
                 contentHeight: favColumn.height
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 interactive: contentHeight > height
                 Column {
                     id: favColumn
-                    width: parent.width
+                    width: parent.width - 8
                     spacing: 16
                     Item {
                         width: parent.width
@@ -498,6 +498,7 @@ QScreen {
                             btnText.font.underline: true
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
+                            anchors.rightMargin: 8
                             onButtonClicked: {
                                 if(savedAddressList.count > 0){
                                     savedAddress.open()

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.1
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -171,7 +171,7 @@ Rectangle {
                     font.family: "Lato"
                     font.pixelSize: 12
                     color: "#A66800"
-                    text:  is_cosigning ? STR.STR_QML_1002 : serverkeyMessage
+                    text:  is_cosigning ? QSTR.STR_QML_1002 : serverkeyMessage
                 }
                 QText {
                     height: 16
@@ -234,7 +234,7 @@ Rectangle {
                 font.family: "Lato"
                 color: signerReadyToSign ? "#031F2B" : "#A66800"
                 font.pixelSize: 12
-                text: signerReadyToSign ? STR.STR_QML_983 : STR.STR_QML_506
+                text: signerReadyToSign ? QSTR.STR_QML_983 : QSTR.STR_QML_506
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -251,9 +251,9 @@ Rectangle {
                 source: "qrc:/Images/Images/help_outline_24px.svg"
                 toolTip: {
                     switch(signerType){
-                    case NUNCHUCKTYPE.AIRGAP: return STR.STR_QML_507
-                    case NUNCHUCKTYPE.NFC: return STR.STR_QML_688
-                    default: return STR.STR_QML_508
+                    case NUNCHUCKTYPE.AIRGAP: return QSTR.STR_QML_507
+                    case NUNCHUCKTYPE.NFC: return QSTR.STR_QML_688
+                    default: return QSTR.STR_QML_508
                     }
                 }
                 rightOfParent: true
@@ -277,7 +277,7 @@ Rectangle {
             QTextButton {
                 width: 57
                 height: 36
-                label.text: STR.STR_QML_509
+                label.text: QSTR.STR_QML_509
                 label.font.pixelSize: 12
                 label.font.family: "Lato"
                 type: eTypeE
@@ -297,7 +297,7 @@ Rectangle {
                 height: 36
                 iconSize: 18
                 iconSpacing: 4
-                label: STR.STR_QML_510
+                label: QSTR.STR_QML_510
                 fontPixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
@@ -313,7 +313,7 @@ Rectangle {
             QTextButton {
                 width: 57
                 height: 36
-                label.text: STR.STR_QML_509
+                label.text: QSTR.STR_QML_509
                 label.font.pixelSize: 12
                 label.font.family: "Lato"
                 type: eTypeE
@@ -321,7 +321,7 @@ Rectangle {
                 anchors.right: parent.right
                 onButtonClicked: {
                     signOptionMenu.x = 20
-                    signOptionMenu.y = 20 - signOptionMenu.height
+                    signOptionMenu.y = 20 - signOptionMenu.implicitHeight
                     signOptionMenu.open()
                 }
             }
@@ -332,7 +332,7 @@ Rectangle {
                 property var exportMessage: [
                     {
                         visible: true,
-                        label: STR.STR_QML_114,
+                        label: QSTR.STR_QML_114,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -345,7 +345,7 @@ Rectangle {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_1531,
+                        label: QSTR.STR_QML_1531,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -358,7 +358,7 @@ Rectangle {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_2097,
+                        label: QSTR.STR_QML_2097,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -373,7 +373,7 @@ Rectangle {
                 property var importMessage: [
                     {
                         visible: true,
-                        label: STR.STR_QML_302,
+                        label: QSTR.STR_QML_302,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -386,7 +386,7 @@ Rectangle {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_677,
+                        label: QSTR.STR_QML_677,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "",
                         color: "#031F2B",
@@ -401,7 +401,7 @@ Rectangle {
                 mapMenu: [
                     {
                         visible: true,
-                        label: STR.STR_QML_294,
+                        label: QSTR.STR_QML_294,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                         color: "#031F2B",
@@ -412,7 +412,7 @@ Rectangle {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_252,
+                        label: QSTR.STR_QML_252,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                         color: "#031F2B",

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -60,10 +60,10 @@ Item {
                 clip: true
                 interactive: contentHeight > height
                 contentHeight: contentDisp.height
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: contentDisp
-                    width: parent.width
+                    width: parent.width - 8
                     spacing: 12
                     anchors.horizontalCenter: parent.horizontalCenter
                     QSendToAddressBlock {
@@ -88,7 +88,7 @@ Item {
                     id: manualfeesetting
                     width: parent.width
                     height: 36
-                    label: STR.STR_QML_225
+                    label: QSTR.STR_QML_225
                     icon: "qrc:/Images/Images/signing-policy-dark.svg"
                     enabled: false
                     value: true
@@ -100,8 +100,8 @@ Item {
                     QCheckboxTooltip {
                         id: subtract
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: STR.STR_QML_226
-                        tooltip: STR.STR_QML_227
+                        text: QSTR.STR_QML_226
+                        tooltip: QSTR.STR_QML_227
                         checked: transactionInfo.subtractFromFeeAmount
                         rightOfParent: true
                         pointerPositionIndex: 6
@@ -117,8 +117,8 @@ Item {
                     QCheckboxTooltip {
                         id: antisnipfee
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: STR.STR_QML_1729
-                        tooltip: STR.STR_QML_1730
+                        text: QSTR.STR_QML_1729
+                        tooltip: QSTR.STR_QML_1730
                         pointerPositionIndex: 6
                         pointerPositionRatio: 10
                         checked: AppSetting.enableAntiFeeSniping

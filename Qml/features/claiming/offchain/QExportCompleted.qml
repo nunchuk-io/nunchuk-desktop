@@ -18,9 +18,9 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
@@ -34,7 +34,7 @@ QOnScreenContent {
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
-    property string title: STR.STR_QML_2098
+    property string title: QSTR.STR_QML_2098
     onCloseClicked: vm.close()
     Item {
         anchors.fill: parent
@@ -73,7 +73,7 @@ QOnScreenContent {
                 QLato {
                     width: parent.width
                     height: 110
-                    text: STR.STR_QML_2099
+                    text: QSTR.STR_QML_2099
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 30
                     font.pixelSize: 18
@@ -88,7 +88,7 @@ QOnScreenContent {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_1977
+            label.text: QSTR.STR_QML_1977
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: vm.next()

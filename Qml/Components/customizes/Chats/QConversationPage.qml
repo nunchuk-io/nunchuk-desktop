@@ -17,11 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.1
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -40,13 +39,78 @@ Row {
     spacing: 0
     property bool  createRoom: false
     property alias modelCoversation: listView.model
+    property bool chatInfoOpen: false
+    property bool creationPending: false
+    property int selectedRecipientCount: 0
+    property string pendingCreatedRoomId: ""
     readonly property bool attachmentSupported: ClientController.attachmentEnable
+    readonly property bool canShowChatInfo: !createRoom && RoomWalletData.currentRoom !== null
+    readonly property real chatInfoWidth: chatInfoOpen && canShowChatInfo ? 266 : 0
+
+    onCanShowChatInfoChanged: {
+        if (!canShowChatInfo) {
+            chatInfoOpen = false
+        }
+    }
 
     signal createRoomDone()
     signal triggerEditGroupName()
     signal triggerAddMembers()
     signal triggerLeaveGroup()
+    signal triggerRemoveMember(string memberId, string memberName)
     signal requestCancelWallet()
+    function completeRoomCreationIfSelected() {
+        var rooms = ClientController.rooms
+        if (!conversationPageRoot.createRoom
+                || conversationPageRoot.pendingCreatedRoomId === ""
+                || !rooms
+                || !rooms.currentRoom
+                || rooms.currentRoom.roomid !== conversationPageRoot.pendingCreatedRoomId
+                || rooms.getIndex(conversationPageRoot.pendingCreatedRoomId) < 0) {
+            return
+        }
+
+        conversationPageRoot.creationPending = false
+        conversationPageRoot.pendingCreatedRoomId = ""
+        roomSelectionTimeout.stop()
+        conversationPageRoot.createRoomDone()
+    }
+    Timer {
+        id: roomSelectionTimeout
+        interval: 30000
+        repeat: false
+        onTriggered: {
+            if (!conversationPageRoot.createRoom
+                    || conversationPageRoot.pendingCreatedRoomId === "") {
+                return
+            }
+            conversationPageRoot.creationPending = false
+            AppModel.showToast(
+                        -1,
+                        qsTr("The room was created but is still syncing. Select it from the room list when it appears."),
+                        EWARNING.EXCEPTION_MSG)
+        }
+    }
+    Connections {
+        target: ClientController.rooms
+        function onRoomCreationSucceeded(roomId) {
+            if (conversationPageRoot.createRoom && conversationPageRoot.creationPending) {
+                conversationPageRoot.pendingCreatedRoomId = roomId
+                roomSelectionTimeout.restart()
+                conversationPageRoot.completeRoomCreationIfSelected()
+            }
+        }
+        function onRoomCreationFailed(error) {
+            if (conversationPageRoot.createRoom) {
+                roomSelectionTimeout.stop()
+                conversationPageRoot.pendingCreatedRoomId = ""
+                conversationPageRoot.creationPending = false
+            }
+        }
+        function onCurrentRoomChanged() {
+            conversationPageRoot.completeRoomCreationIfSelected()
+        }
+    }
     Column {
         id: panelColumn
         width: parent.width - conversationInfo.width
@@ -107,7 +171,7 @@ Row {
                             interactive: contentHeight > height
                             flickableDirection: Flickable.VerticalFlick
                             contentY : contentHeight > height ? contentHeight - height : 0
-                            ScrollBar.vertical: ScrollBar { active: true }
+                            ScrollBar.vertical: QScrollBar { }
                             Flow {
                                 id: flowuser
                                 spacing: 6
@@ -155,6 +219,7 @@ Row {
                                                         userlistItem.requestlist.splice(index, 1)
                                                         userlistItem.requestlistChatId.splice(index, 1)
                                                         userrepeat.model = userlistItem.requestlist.length
+                                                        conversationPageRoot.selectedRecipientCount = userrepeat.model
                                                     }
                                                 }
                                             }
@@ -163,11 +228,15 @@ Row {
                                 }
                                 QTextField {
                                     id: input
+                                    width: Math.min(flowuser.width,
+                                                    Math.max(320, flowuser.width * 0.5))
                                     height: 36
                                     verticalAlignment: Text.AlignVCenter
                                     font.family: "Lato"
                                     color: "#031F2B"
                                     font.pixelSize: 20
+                                    wrapMode: Text.NoWrap
+                                    clip: true
                                     placeholderText: "Name or email"
                                     background: Rectangle {color: "transparent"}
                                     visible: focus ? true : userlistItem.requestlist.length > 0 ? false : true
@@ -176,14 +245,21 @@ Row {
                                         suggestItems.visible = (text !== "")
                                         suggestItems.searchUser(text)
                                     }
-                                    Keys.onReturnPressed: {userlistItem.processCreateRoom()}
-                                    Keys.onEnterPressed:  {userlistItem.processCreateRoom("")}
+                                    Keys.onReturnPressed: {
+                                        if (userlistItem.requestlistChatId.length > 0)
+                                            userlistItem.processCreateRoom("")
+                                    }
+                                    Keys.onEnterPressed: {
+                                        if (userlistItem.requestlistChatId.length > 0)
+                                            userlistItem.processCreateRoom("")
+                                    }
                                     function finishInputUser(index){
                                         if(index >= 0) {
                                             userlistItem.requestlist[userlistItem.requestlist.length] = suggestModel.get(index).name
                                             userlistItem.requestlistChatId[userlistItem.requestlistChatId.length] = suggestModel.get(index).chat_id
                                             suggestModel.setProperty(index, "selected", true)
                                             userrepeat.model = userlistItem.requestlist.length
+                                            conversationPageRoot.selectedRecipientCount = userrepeat.model
                                         }
                                         input.text = ""
                                     }
@@ -297,20 +373,26 @@ Row {
                         }
                         Component.onCompleted: { suggestItems.friends = ClientController.contactsByStringList() }
                         function processCreateRoom(firstMessage){
+                            if (userlistItem.requestlistChatId.length === 0
+                                    || conversationPageRoot.creationPending
+                                    || conversationPageRoot.pendingCreatedRoomId !== ""
+                                    || (ClientController.rooms
+                                        && ClientController.rooms.roomCreationInProgress)) {
+                                return
+                            }
+                            conversationPageRoot.creationPending = true
                             if(userlistItem.requestlistChatId.length == 1){
                                 ClientController.createRoomDirectChat(userlistItem.requestlistChatId[0], userlistItem.requestlist[0], firstMessage)
                             }
                             else{
                                 ClientController.createRoomChat(userlistItem.requestlistChatId, userlistItem.requestlist, firstMessage)
                             }
-                            createRoomDone()
                         }
                     }
                 }
                 Component {
                     id: roomtitle
-                    Row {
-                        spacing: 12
+                    Item {
                         anchors {
                             fill: parent
                             leftMargin: 22
@@ -322,6 +404,7 @@ Row {
                         Row {
                             id: avartarArray
                             spacing: -8
+                            anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             Repeater {
                                 model: (RoomWalletData.currentRoom !== null) ? RoomWalletData.currentRoom.talkersName : 0
@@ -336,29 +419,38 @@ Row {
                             }
                         }
                         QText {
-                            width: parent.width - 48 - avartarArray.width
                             elide: Text.ElideRight
                             color: "#000000"
                             font.family: "Lato"
                             font.weight: Font.Bold
                             font.pixelSize: 20
                             text: RoomWalletData.currentRoom ? RoomWalletData.currentRoom.roomName : STR.STR_QML_502
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors {
+                                left: avartarArray.right
+                                leftMargin: 12
+                                right: chatinfoMouse.left
+                                rightMargin: 12
+                                verticalCenter: parent.verticalCenter
+                            }
                         }
                         MouseArea {
                             id: chatinfoMouse
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            enabled: ClientController.rooms ? ClientController.rooms.count > 0 : false
-                            visible: RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM)
+                            // currentRoom is the single source of truth for both
+                            // visibility and interaction; rooms.count may be transiently
+                            // zero while the model is being reset or hydrated.
+                            enabled: conversationPageRoot.canShowChatInfo
+                            visible: conversationPageRoot.canShowChatInfo
                             onEnabledChanged: {
                                 if(chatinfoMouse.enabled === false){
-                                    conversationInfo.width = 0
+                                    conversationPageRoot.chatInfoOpen = false
                                 }
                             }
 
                             width: ico.width
                             height: ico.height
+                            anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             QIcon {
                                 iconSize: 24
@@ -366,14 +458,14 @@ Row {
                                 scale: chatinfoMouse.containsMouse ? 1.1 : 1
                                 transformOrigin: Item.Center
                                 source: "qrc:/Images/Images/tooltip.png"
-                                layer.enabled: ClientController.rooms ? ClientController.rooms.count === 0 : false
+                                layer.enabled: !conversationPageRoot.canShowChatInfo
                                 layer.effect: Desaturate {
                                     anchors.fill: ico
                                     source: ico
                                     desaturation: 1.0
                                 }
                             }
-                            onClicked:  { conversationInfo.width = 266 }
+                            onClicked:  { conversationPageRoot.chatInfoOpen = true }
                         }
                     }
                 }
@@ -383,6 +475,7 @@ Row {
         QListView {
             id: listView
             property bool instantiated: false
+            property bool followLatest: true
             readonly property bool noNeedMoreContent: RoomWalletData.currentRoom === null ? true : RoomWalletData.currentRoom.allHisLoaded
             readonly property int indicatorY: (contentY-originY) * (height/contentHeight)
             readonly property int indicatorMaxY: height-scrollContact.size*height
@@ -423,8 +516,19 @@ Row {
                     }
                 }
             }
-            onCountChanged: { if(instantiated) positionViewAtEnd() }
-            onContentYChanged: ensurePreviousContent()
+            onCountChanged: {
+                if(instantiated && followLatest) {
+                    Qt.callLater(function() {
+                        listView.positionViewAtEnd()
+                        listView.markVisibleMessagesRead()
+                    })
+                }
+            }
+            onContentYChanged: {
+                ensurePreviousContent()
+                if (moving || dragging || flicking)
+                    followLatest = !showSrollBottom
+            }
             Component.onCompleted: {
                 positionViewAtEnd()
                 instantiated = true;
@@ -439,6 +543,29 @@ Row {
                 if (lastIndex >= 0) {
                     listView.positionViewAtIndex(lastIndex, ListView.End)
                 }
+                followLatest = true
+            }
+            function markVisibleMessagesRead() {
+                var room = RoomWalletData.currentRoom
+                if (!room || count <= 0)
+                    return
+                if (!showSrollBottom) {
+                    room.markAllMessagesAsRead()
+                    return
+                }
+                var y = contentY + height - 1
+                var visibleIndex = -1
+                for (var offset = 0; offset < height && visibleIndex < 0; offset += 8)
+                    visibleIndex = indexAt(width / 2, y - offset)
+                if (visibleIndex >= 0 && model) {
+                    for (var row = visibleIndex; row >= 0; --row) {
+                        var eventId = model.eventIdAt(row)
+                        if (eventId !== "") {
+                            room.markMessagesAsRead(eventId)
+                            break
+                        }
+                    }
+                }
             }
             section
             {
@@ -446,7 +573,8 @@ Row {
                 criteria: ViewSection.FullString
                 delegate: Item {
                     width: listView.width
-                    height: 36
+                    height: section.length > 0 ? 36 : 0
+                    visible: section.length > 0
                     QText {
                         text: section
                         font.pixelSize: 12
@@ -456,23 +584,22 @@ Row {
                     }
                 }
             }
-            ScrollBar.vertical: ScrollBar { id: scrollContact;
-                active: true;
+            ScrollBar.vertical: QScrollBar {
+                id: scrollContact;
                 function wheel(up)
                 {
                     if(up){
                         //                        decrease();
                     }else{
                         //                        increase();
-                        RoomWalletData.currentRoom.markFiveMessagesAsRead()
+                        listView.markVisibleMessagesRead()
                     }
                 }
             }
 
             onFlickEnded: {
-                if (listView.verticalVelocity > 0) {
-                    RoomWalletData.currentRoom.markFiveMessagesAsRead()
-                }
+                listView.followLatest = !listView.showSrollBottom
+                listView.markVisibleMessagesRead()
             }
 
             Item {
@@ -489,13 +616,6 @@ Row {
                     color: "#595959"
                 }
             }
-            Connections{
-                target: RoomWalletData.currentRoom
-                function onUnreadCountChanged(){
-                    RoomWalletData.currentRoom.markAllMessagesAsRead()
-                }
-            }
-
             MouseArea {
                 id: btnScrollTopMouse
                 hoverEnabled: true
@@ -542,8 +662,9 @@ Row {
                 }
 
                 onClicked:  {
-                    RoomWalletData.currentRoom.markAllMessagesAsRead()
                     listView.positionViewAtIndex(listView.count - 1, ListView.End)
+                    listView.followLatest = true
+                    listView.markVisibleMessagesRead()
                 }
             }
 
@@ -565,13 +686,31 @@ Row {
                     transformOrigin: Item.Center
                     source: "qrc:/Images/Images/downend.png"
                 }
-                onClicked:  { listView.positionViewAtEnd()}
+                onClicked:  {
+                    listView.positionViewAtEnd()
+                    listView.markVisibleMessagesRead()
+                }
             }
         }
         Item {
             id: conversationfooter
             width: parent.width
             height: 80
+            readonly property bool hasMessageContent: messageField.text.length > 0
+                                                       || messageField.preeditText.length > 0
+            readonly property bool hasAttachment: !conversationPageRoot.createRoom
+                                                   && attachmentSupported
+                                                   && attachedFile.fileLocalPath !== ""
+            readonly property bool canCreateRoom: conversationPageRoot.createRoom
+                                                  && conversationPageRoot.selectedRecipientCount > 0
+                                                  && !conversationPageRoot.creationPending
+                                                  && conversationPageRoot.pendingCreatedRoomId === ""
+                                                  && !(ClientController.rooms
+                                                       && ClientController.rooms.roomCreationInProgress)
+            readonly property bool canSend: conversationPageRoot.createRoom
+                                             ? canCreateRoom
+                                             : RoomWalletData.currentRoom !== null
+                                               && (hasMessageContent || hasAttachment)
             Item {
                 anchors.fill: parent
                 anchors.margins: 15
@@ -579,30 +718,48 @@ Row {
                     anchors.fill: parent
                     spacing: 12
                     Item {
-                        width: parent.width - (selectFileBtn.visible ? (selectFileBtn.width+12) : 0) - (collabWalletBtn.visible ? (collabWalletBtn.width+12) : 0)
+                        width: parent.width - emojiPicker.width - 12
+                               - (selectFileBtn.visible ? (selectFileBtn.width+12) : 0)
+                               - (collabWalletBtn.visible ? (collabWalletBtn.width+12) : 0)
+                               - sendMessageBtn.width - 12
                         height: parent.height
                         QTextField {
                             id: messageField
                             anchors.fill: parent
                             placeholderText: "Type your message..."
-                            Keys.onReturnPressed: { conversationfooter.sendMessage() }
-                            Keys.onEnterPressed:  { conversationfooter.sendMessage() }
+                            inputMethodHints: Qt.ImhNone
+                            Keys.onReturnPressed: function(event) { messageField.handleSendKey(event) }
+                            Keys.onEnterPressed: function(event) { messageField.handleSendKey(event) }
                             clip: true
                             color: "#031F2B"
                             font.pixelSize: 16
                             selectByMouse: true
+                            onTextEdited: {
+                                emojiPicker.replaceCompletedEmoticon()
+                                if (!conversationPageRoot.createRoom && RoomWalletData.currentRoom)
+                                    RoomWalletData.currentRoom.setTyping(text.length > 0)
+                            }
                             background: Rectangle {
                                 anchors.fill: parent
                                 radius: 8
                                 border.color: attachedFile.containsDrag ? "red" : "#DEDEDE"
                                 color: "#FFFFFF"
                             }
-                            onActiveFocusChanged:{ if(activeFocus){RoomWalletData.currentRoom.markFiveMessagesAsRead()}}
+                            onActiveFocusChanged: {
+                                if (conversationPageRoot.createRoom || !RoomWalletData.currentRoom)
+                                    return
+                                if (activeFocus)
+                                    listView.markVisibleMessagesRead()
+                                else
+                                    RoomWalletData.currentRoom.setTyping(false)
+                            }
                             DropArea {
                                 id: attachedFile
                                 property string fileLocalPath: ""
                                 property int    file_mimType: filePlaceHolder._FILE_OTHER
                                 enabled: attachmentSupported
+                                         && !conversationPageRoot.createRoom
+                                         && RoomWalletData.currentRoom !== null
                                 anchors.fill: parent
                                 onDropped: {
                                     attachedFile.fileLocalPath = ""
@@ -622,6 +779,14 @@ Row {
                                     else if(filters_video.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_VIDEO}
                                     else{ attachedFile.file_mimType = filePlaceHolder._FILE_OTHER }
                                 }
+                            }
+                            function handleSendKey(event) {
+                                if (inputMethodComposing) {
+                                    event.accepted = false
+                                    return
+                                }
+                                event.accepted = true
+                                conversationfooter.sendMessage()
                             }
                         }
                         Rectangle {
@@ -687,13 +852,21 @@ Row {
                             }
                         }
                     }
+                    QEmojiPicker {
+                        id: emojiPicker
+                        targetInput: messageField
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                     MouseArea {
                         id: selectFileBtn
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         width: childrenRect.width
                         height: childrenRect.height
-                        visible: (attachmentSupported && RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM))
+                        visible: (!conversationPageRoot.createRoom
+                                  && attachmentSupported
+                                  && RoomWalletData.currentRoom
+                                  && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM))
                         enabled: visible
                         anchors.verticalCenter: parent.verticalCenter
                         QIcon {
@@ -705,7 +878,7 @@ Row {
                         onClicked:{
                             console.log(selectFileBtn.mouseX, selectFileBtn.mouseY, " | " , selectFileBtn.x, selectFileBtn.y)
                             fileContextMenu.x = selectFileBtn.mouseX - fileContextMenu.menuWidth
-                            fileContextMenu.y = selectFileBtn.mouseY - fileContextMenu.height
+                            fileContextMenu.y = selectFileBtn.mouseY - fileContextMenu.implicitHeight
                             fileContextMenu.open()
                         }
                         QContextMenu {
@@ -745,42 +918,93 @@ Row {
                         height: childrenRect.height
                         sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : (AppSetting.enableColab ? btnCreateSharedWallet : null)
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: RoomWalletData.roomWalletCreated ? (RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM)) : AppSetting.enableColab
+                        visible: !conversationPageRoot.createRoom
+                                 && (RoomWalletData.roomWalletCreated
+                                     ? (RoomWalletData.currentRoom
+                                        && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM))
+                                     : AppSetting.enableColab)
+                    }
+                    MouseArea {
+                        id: sendMessageBtn
+                        width: 40
+                        height: 40
+                        anchors.verticalCenter: parent.verticalCenter
+                        enabled: conversationfooter.canSend
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        ToolTip.visible: enabled && containsMouse
+                        ToolTip.delay: 500
+                        ToolTip.text: STR.STR_QML_002
+                        QIcon {
+                            anchors.centerIn: parent
+                            iconSize: 24
+                            scale: sendMessageBtn.pressed
+                                   ? 0.9
+                                   : (sendMessageBtn.containsMouse && sendMessageBtn.enabled ? 1.1 : 1)
+                            source: sendMessageBtn.enabled
+                                    ? "qrc:/Images/Images/SendMessage-dark.png"
+                                    : "qrc:/Images/Images/SendMessage.png"
+                        }
+                        onClicked: {
+                            var creatingRoom = conversationPageRoot.createRoom
+                            messageField.forceActiveFocus()
+                            Qt.inputMethod.commit()
+                            Qt.callLater(function() {
+                                conversationfooter.sendMessage()
+                                if (!creatingRoom)
+                                    messageField.forceActiveFocus()
+                            })
+                        }
                     }
                 }
             }
             Connections{
                 target: ClientController.rooms
-                function currentIndexChanged() {
+                function onCurrentRoomChanged() {
                     attachedFile.fileLocalPath = ""
-                    messageField.text = "";
-                    if(RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM)){
-                        conversationInfo.width = 0
+                    emojiPicker.closePicker()
+                    messageField.clear()
+                    listView.followLatest = true
+                    if (!conversationPageRoot.canShowChatInfo) {
+                        conversationPageRoot.chatInfoOpen = false
                     }
                 }
             }
             function sendMessage(){
+                emojiPicker.closePicker()
+                var outgoingText = emojiPicker.convertEmoticons(messageField.text)
                 if(createRoom){
-                    headerLoader.item.processCreateRoom(messageField.text)
+                    if (!conversationfooter.canCreateRoom)
+                        return
+                    headerLoader.item.processCreateRoom(outgoingText)
+                    return
+                }
+
+                var room = RoomWalletData.currentRoom
+                if (!room || (outgoingText === "" && !conversationfooter.hasAttachment))
+                    return
+
+                if(conversationfooter.hasAttachment){
+                    room.sendFile(outgoingText, attachedFile.fileLocalPath)
+                    attachedFile.fileLocalPath = ""
                 }
                 else{
-                    if(attachmentSupported && (attachedFile.fileLocalPath !== "")){
-                        RoomWalletData.currentRoom.sendFile(messageField.text, attachedFile.fileLocalPath)
-                        attachedFile.fileLocalPath = ""
-                    }
-                    else{
-                        if(RoomWalletData.currentRoom !== null && messageField.text !== "") {RoomWalletData.currentRoom.sendMessage(messageField.text)}
-                    }
-                    messageField.text = "";
+                    room.sendMessage(outgoingText)
                 }
+                messageField.clear()
+                room.setTyping(false)
             }
         }
     }
     QConversationInfo{
         id: conversationInfo
-        width: 0
+        width: conversationPageRoot.chatInfoWidth
         height: parent.height
-        visible: RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM) && (width !== 0)
+        visible: width > 0
+        onCloseRequested: conversationPageRoot.chatInfoOpen = false
+        onRequestRemoveMember: function(memberId, memberName) {
+            conversationPageRoot.triggerRemoveMember(memberId, memberName)
+        }
     }
     Component {
         id: btnCreateSharedWallet

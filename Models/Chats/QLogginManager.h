@@ -80,7 +80,8 @@ public:
     QLogginManager(Connection *c);
     ~QLogginManager();
     Quotient::Connection *connection();
-    void invokeLogin(const QString &userid, const QString &password);
+    void invokeLogin(const QString &userid, const QString &password,
+                     bool forcePasswordLogin = false);
     void requestLogout();
     void requestLogin();
     void loginWithPassword();
@@ -96,6 +97,8 @@ private:
     QString m_password;
     Quotient::Connection* m_connection;
     QString m_devicename;
+    bool m_forcePasswordLogin {false};
+    bool m_initialSyncCompleted {false};
 
     QString generateDeviceName();
 public slots:

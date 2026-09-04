@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -51,13 +51,26 @@ Item {
     anchors.margins: 24
     function getWalletTypeDes() {
         if (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) {
-            return STR.STR_QML_1801
+            return QSTR.STR_QML_1801
         } else {
-            return (walletInfo.walletN === 1) ? STR.STR_QML_070 : 
-                            qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069)
+            return (walletInfo.walletN === 1) ? QSTR.STR_QML_070 :
+                            qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(QSTR.STR_QML_069)
         }
     }
+    // Height consumed by visible top banners + 24px spacing below them.
+    // Drives wallet-card height so it shrinks proportionally when banners appear.
+    readonly property int _bannersConsumedHeight: topBanners.height + (topBanners.height > 0 ? 24 : 0)
+
+    // All conditional warning banners grouped here.
+    // Column.height auto-reflects only the visible children, so _bannersConsumedHeight
+    // is always accurate regardless of which banners are showing.
     Column {
+        id: topBanners
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
         spacing: 24
         QWalletWarningInfo {
             visible: {
@@ -73,11 +86,11 @@ Item {
             useDoItNow: true
             content: {
                 if (walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG) {
-                    return STR.STR_QML_1861
+                    return QSTR.STR_QML_1861
                 } else if (walletNeedBackup) {
-                    return STR.STR_QML_1860
+                    return QSTR.STR_QML_1860
                 } else if (walletRegistered) {
-                    return STR.STR_QML_1862
+                    return QSTR.STR_QML_1862
                 } else {
                     return ""
                 }
@@ -94,11 +107,11 @@ Item {
             visible: walletKeyNeedBackup && !forceClose && !walletIsReplaced
             width: _item.width
             height: 60
-            content: STR.STR_QML_1265
+            content: QSTR.STR_QML_1265
             onHyperlinkClicked: {
                 if(walletInfo.allowBackup()) {
-                    _info2.contentText = STR.STR_QML_1268
-                    _info2.labels = [STR.STR_QML_097,STR.STR_QML_1276]
+                    _info2.contentText = QSTR.STR_QML_1268
+                    _info2.labels = [QSTR.STR_QML_097,QSTR.STR_QML_1276]
                     _info2.funcs = [
                                 function() {
                                     OnBoarding.screenFlow = "seedPhrase"
@@ -110,8 +123,8 @@ Item {
                             ]
                     _info2.open();                            
                 } else {
-                    _info1.title = STR.STR_QML_339
-                    _info1.contentText = STR.STR_QML_1773
+                    _info1.title = QSTR.STR_QML_339
+                    _info1.contentText = QSTR.STR_QML_1773
                     _info1.open()
                 }                
             }
@@ -147,14 +160,14 @@ Item {
                                     height: 20
                                     font.weight: Font.Bold
                                     font.pixelSize: 18
-                                    text: STR.STR_QML_1706
+                                    text: QSTR.STR_QML_1706
                                     verticalAlignment: Text.AlignVCenter
                                     horizontalAlignment: Text.AlignLeft
                                 }
                                 QLato {
                                     width: parent.width
                                     height: 28
-                                    text: STR.STR_QML_1707
+                                    text: QSTR.STR_QML_1707
                                     verticalAlignment: Text.AlignVCenter
                                     horizontalAlignment: Text.AlignLeft
                                 }
@@ -166,7 +179,7 @@ Item {
                                     width: label.paintedWidth + 2*16
                                     height: 36
                                     type: eTypeB
-                                    label.text: STR.STR_QML_946
+                                    label.text: QSTR.STR_QML_946
                                     label.font.pixelSize: 12
                                     onButtonClicked: {
                                         walletInfo.requestDeclineReplaceGroup(modelData.group_id)
@@ -175,7 +188,7 @@ Item {
                                 QTextButton {
                                     width: label.paintedWidth + 2*16
                                     height: 36
-                                    label.text: STR.STR_QML_468
+                                    label.text: QSTR.STR_QML_468
                                     label.font.pixelSize: 12
                                     type: eTypeE
                                     onButtonClicked: {
@@ -203,14 +216,14 @@ Item {
                                 height: 20
                                 font.weight: Font.Bold
                                 font.pixelSize: 18
-                                text: STR.STR_QML_1708
+                                text: QSTR.STR_QML_1708
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignLeft
                             }
                             QLato {
                                 width: parent.width
                                 height: 28
-                                text: STR.STR_QML_1707
+                                text: QSTR.STR_QML_1707
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignLeft
                             }
@@ -236,10 +249,20 @@ Item {
                 }
             }
         }
-        QAreaWalletDetail{
-            id: _walletDes
-            width: _item.width
-            height: (_item.height * 0.49)
+    }   // end topBanners
+
+    // Wallet card: 49% of the height remaining after top banners.
+    // When no banners are visible, this equals the original _item.height * 0.49.
+    QAreaWalletDetail{
+        id: _walletDes
+        anchors {
+            top: topBanners.bottom
+            topMargin: topBanners.height > 0 ? 24 : 0
+            left: parent.left
+            right: parent.right
+        }
+        width: _item.width
+        height: (_item.height - _bannersConsumedHeight) * 0.49
             isAssisted: walletIsAssisted
             isHotWallet: walletKeyNeedBackup
             isLocked: walletIsLocked
@@ -334,10 +357,10 @@ Item {
                                          else if (walletIsSandboxWallet && !_walletDes.isReplaced) return "qrc:/Images/Images/sandboxGroup.svg"
                                          else if (_walletDes.isAssisted && !_walletDes.isReplaced) return "qrc:/Images/Images/collab-wallet-dark.svg"
                                          else return ""
-                            label.text: if (walletIsShared) return STR.STR_QML_438
-                                        else if (walletIsSandboxWallet && !_walletDes.isReplaced) return STR.STR_QML_1675
-                                        else if (_walletDes.isAssisted && !_walletDes.isReplaced) return (myRole === "FACILITATOR_ADMIN") ? "••••••" : STR.STR_QML_679
-                                        else if (_walletDes.isReplaced) return STR.STR_QML_1345
+                            label.text: if (walletIsShared) return QSTR.STR_QML_438
+                                        else if (walletIsSandboxWallet && !_walletDes.isReplaced) return QSTR.STR_QML_1675
+                                        else if (_walletDes.isAssisted && !_walletDes.isReplaced) return (myRole === "FACILITATOR_ADMIN") ? "••••••" : QSTR.STR_QML_679
+                                        else if (_walletDes.isReplaced) return QSTR.STR_QML_1345
                                         else return ""
                             label.font.weight: Font.Bold
                             label.font.pixelSize: 10
@@ -376,7 +399,7 @@ Item {
                     }
                     QButtonTextLink {
                         height: 24
-                        label: STR.STR_QML_574
+                        label: QSTR.STR_QML_574
                         icon: [
                             "qrc:/Images/Images/right-arrow-light.svg",
                             "qrc:/Images/Images/right-arrow-light.svg",
@@ -412,7 +435,7 @@ Item {
                         QIconTextButton {
                             width: 132
                             height: 48
-                            label: STR.STR_QML_002
+                            label: QSTR.STR_QML_002
                             icons: ["spend-dark.svg", "spend-light.svg", "spend-dark.svg","spend-light.svg"]
                             fontPixelSize: 16
                             iconSize: 24
@@ -432,7 +455,7 @@ Item {
                         QIconTextButton {
                             width: 132
                             height: 48
-                            label: STR.STR_QML_003
+                            label: QSTR.STR_QML_003
                             icons: ["received-dark.svg", "received-light.svg", "received-dark.svg", "received-light.svg"]
                             fontPixelSize: 16
                             iconSize: 24
@@ -443,7 +466,7 @@ Item {
                         QIconTextButton {
                             width: 132
                             height: 48
-                            label: STR.STR_QML_1407
+                            label: QSTR.STR_QML_1407
                             icons: ["bitcoin-dark.svg", "bitcoin-light.svg", "bitcoin-disabled.svg", "bitcoin-light.svg"]
                             fontPixelSize: 16
                             iconSize: 24
@@ -462,7 +485,7 @@ Item {
                         property var exportMenu: [
                             {
                                 visible: true,
-                                label: STR.STR_QML_1713,
+                                label: QSTR.STR_QML_1713,
                                 icon: "",
                                 iconRight: "",
                                 color: "#031F2B",
@@ -489,7 +512,7 @@ Item {
                             },
                             {
                                 visible: true,
-                                label: STR.STR_QML_1714,
+                                label: QSTR.STR_QML_1714,
                                 icon: "",
                                 iconRight: "",
                                 color: "#031F2B",
@@ -518,7 +541,7 @@ Item {
                         mapMenu: [
                             {
                                 visible: true,
-                                label: STR.STR_QML_532,
+                                label: QSTR.STR_QML_532,
                                 icon: "qrc:/Images/Images/import_031F2B.png",
                                 iconRight: "",
                                 color: "#031F2B",
@@ -530,7 +553,7 @@ Item {
                             },
                             {
                                 visible: true,
-                                label: STR.STR_QML_347,
+                                label: QSTR.STR_QML_347,
                                 icon: "qrc:/Images/Images/Backup.png",
                                 iconRight: "",
                                 color: "#031F2B",
@@ -547,7 +570,7 @@ Item {
                             },
                             {
                                 visible: (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
-                                label: STR.STR_QML_1490,
+                                label: QSTR.STR_QML_1490,
                                 icon: "qrc:/Images/Images/export_invoices.png",
                                 iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                                 color: "#031F2B",
@@ -564,7 +587,7 @@ Item {
                             },
                             {
                                 visible: walletIsSandboxWallet,
-                                label: STR.STR_QML_970,
+                                label: QSTR.STR_QML_970,
                                 icon: "qrc:/Images/Images/export_invoices.png",
                                 iconRight: "",
                                 color: "#031F2B",
@@ -596,7 +619,7 @@ Item {
                             font.weight: Font.Bold
                             font.pixelSize: 16
                             color: "#031F2B";
-                            text: STR.STR_QML_004
+                            text: QSTR.STR_QML_004
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                         Rectangle {
@@ -659,7 +682,7 @@ Item {
                             QIconTextButton {
                                 width: 97
                                 height: 48
-                                label: STR.STR_QML_005
+                                label: QSTR.STR_QML_005
                                 icons: ["copy-dark.svg", "copy-light.svg", "copy-dark.svg","copy-light.svg"]
                                 fontPixelSize: 16
                                 iconSize: 24
@@ -672,7 +695,7 @@ Item {
                             QIconTextButton {
                                 width: 175
                                 height: 48
-                                label: STR.STR_QML_006
+                                label: QSTR.STR_QML_006
                                 icons: [
                                     "visibility-dark.svg",
                                     "visibility-light.svg",
@@ -689,7 +712,7 @@ Item {
                                 width: 20
                                 height: 20
                                 anchors.verticalCenter: parent.verticalCenter
-                                toolTip: STR.STR_QML_007
+                                toolTip: QSTR.STR_QML_007
                                 rightOfParent: true
                             }
                         }
@@ -697,14 +720,23 @@ Item {
                 }
             }
         }
-        Rectangle {
-            id: timelockNoti
-            property bool needTobeVisibleWarning: walletInfo.timelockInfo.valueNeedVisibleWarning
+    // Timelock notification bar — conditional, anchored below the wallet card.
+    Rectangle {
+        id: timelockNoti
+        property bool needTobeVisibleWarning: walletInfo.timelockInfo.valueNeedVisibleWarning
 
-            width: _item.width
-            height: 60
-            radius: 8
-            color:  timelockNoti.needTobeVisibleWarning? "#FDEBD2" : "#EAEAEA"
+        anchors {
+            top: _walletDes.bottom
+            topMargin: 24
+            left: parent.left
+            right: parent.right
+        }
+        width: _item.width
+        // Collapse to 0 when hidden so transactionSection can always anchor to timelockNoti.bottom.
+        // This avoids a ternary anchor-target expression which is unreliable in Qt6.
+        height: visible ? 60 : 0
+        radius: 8
+        color:  timelockNoti.needTobeVisibleWarning? "#FDEBD2" : "#EAEAEA"
             visible: (walletInfo.walletBalanceSats > 0)
                      && (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
                      /*&& walletInfo.timeLocked*/
@@ -728,7 +760,7 @@ Item {
                     wrapMode: Text.WordWrap
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignLeft
-                    text: STR.STR_QML_2078.arg(walletInfo.timelockInfo.valueRemainingString)
+                    text: QSTR.STR_QML_2078.arg(walletInfo.timelockInfo.valueRemainingString)
                     textFormat: Text.RichText
                     onLinkActivated: {
                         if(walletInfo.utxoList.count > 0){
@@ -738,9 +770,21 @@ Item {
                 }
             }
         }
-        Item {
-            width: _item.width
-            height: (_item.visible ? (_item.height - timelockNoti.height - 24) : _item.height) * 0.49
+    // Transaction section: fills ALL remaining space dynamically.
+    // anchors.bottom: parent.bottom means height auto-adjusts as banners appear/disappear.
+    Item {
+        id: transactionSection
+        anchors {
+            // timelockNoti collapses to height:0 when not visible, so .bottom == its y position.
+            // topMargin:0 when timelock hidden → gap = _walletDes.bottom + 24 (timelockNoti.y itself).
+            // topMargin:24 when timelock visible → gap adds 24 below the 60px bar.
+            top: timelockNoti.bottom
+            topMargin: timelockNoti.visible ? 24 : 0
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        width: _item.width
             Row {
                 id: trans_lbl
                 height: 24
@@ -752,7 +796,7 @@ Item {
                     font.pixelSize: 20
                     color: "#031F2B";
                     font.family: "Lato"
-                    text: STR.STR_QML_010
+                    text: QSTR.STR_QML_010
                     verticalAlignment: Text.AlignVCenter
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -762,14 +806,14 @@ Item {
                     font.pixelSize: 12
                     color: "#757575";
                     font.family: "Lato"
-                    text: STR.STR_QML_010_number.arg(AppModel.walletInfo && walletInfo.transactionHistory ? walletInfo.transactionHistory.count : 0)
+                    text: QSTR.STR_QML_010_number.arg(AppModel.walletInfo && walletInfo.transactionHistory ? walletInfo.transactionHistory.count : 0)
                     verticalAlignment: Text.AlignVCenter
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
             QButtonTextLink {
                 height: 24
-                label: STR.STR_QML_011
+                label: QSTR.STR_QML_011
                 direction: eRIGHT
                 enabled: transaction_lst.count > 0
                 anchors {
@@ -791,23 +835,26 @@ Item {
                 font.pixelSize: 14
                 color: "#323E4A";
                 font.family: "Montserrat"
-                text: STR.STR_QML_692
+                text: QSTR.STR_QML_692
                 visible: transaction_lst.count == 0
             }
             QListView {
                 id: transaction_lst
                 width: parent.width
-                height: parent.height*(walletKeyNeedBackup ? 0.6 : 0.9)
                 model: walletInfo.transactionHistory
-                ScrollBar.vertical: ScrollBar { active: transaction_lst.contentHeight > transaction_lst.height }
+                ScrollBar.vertical: QScrollBar { }
+                // Anchored to fill from below the header row to the bottom of transactionSection.
+                // Height is fully dynamic — no fixed percentage needed.
                 anchors {
-                    right: parent.right
                     top: trans_lbl.bottom
                     topMargin: 12
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
                 }
                 clip: true
                 delegate: QTransactionDelegate {
-                    width: transaction_lst.width
+                    width: transaction_lst.width - 8  // leave room for QScrollBar (8px)
                     height: 64
                     parentList: transaction_lst
                     transactionisReceiveTx: transaction_isReceiveTx
@@ -845,7 +892,6 @@ Item {
                 }
             }
         }
-    }
 
     Loader {
         anchors.right: parent.right

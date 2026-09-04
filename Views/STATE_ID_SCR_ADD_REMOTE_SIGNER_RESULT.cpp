@@ -36,8 +36,10 @@ void SCR_REMOTE_SIGNER_RESULT_Exit(QVariant msg) {
 
 void EVT_REMOTE_SIGNER_RESULT_HEALTH_CHECK_HANDLER(QVariant msg) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-        if (dashboard->healthPtr()->HealthCheckAddReminderClicked(msg)) {
-            return;
+        if (auto health = dashboard->healthPtr()) {
+            if (health->HealthCheckAddReminderClicked(msg)) {
+                return;
+            }
         }
     }
     if(AppModel::instance()->singleSignerInfo()){
@@ -64,15 +66,19 @@ void EVT_REMOTE_SIGNER_RESULT_IMPORT_SIGNATURE_HANDLER(QVariant msg) {
     }
 }
 
-void EVT_REMOTE_SIGNER_RESULT_EXPORT_MESSAGE_HANDLER(QVariant msg) {
+void EVT_REMOTE_SIGNER_RESULT_EXPORT_MESSAGE_HANDLER(QVariant msg)
+{
     QString file_txt = msg.toMap().value("file").toString();
-    QString signature    = msg.toMap().value("signature").toString();
+    QString signature = msg.toMap().value("signature").toString();
+
     QString file_path = qUtils::QGetFilePath(file_txt);
+
     QFile file(file_path);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream st(&file);
-        st.setCodec("UTF-8");
-        st << signature << endl;
+
+        st << signature << Qt::endl;
+
         st.flush();
         file.close();
     }
@@ -81,8 +87,6 @@ void EVT_REMOTE_SIGNER_RESULT_EXPORT_MESSAGE_HANDLER(QVariant msg) {
 void EVT_REMOTE_SIGNER_RESULT_GET_XPUBS_HANDLER(QVariant msg) {
 
 }
-
-
 
 void EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST_HANDLER(QVariant msg) {
     QString master_fingerprint = msg.toMap().value("master_fingerprint").toString();

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -55,18 +55,19 @@ QOnScreenContentTypeA {
             width: 728
             height: 480
             contentHeight: _col.childrenRect.height
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             clip: true
             Column {
                 id: _col
                 spacing: 24
                 Rectangle {
-                    width: parent.width
+                    width: parent.width - 8
                     height: 80
                     color:"#EAEAEA"
                     radius: 8
                     Row {
                         anchors.fill: parent
+                        anchors.rightMargin: 8
                         anchors.margins: 12
                         spacing: 8
                         QIcon {
@@ -135,7 +136,7 @@ QOnScreenContentTypeA {
                                     }
                                     else {
                                         var per = payment.payment_payload.valuePercent
-                                        return qsTr("%1% of wallet balance (*)").arg(per.toFixed(4))
+                                        return qsTr("%1% of wallet balance (*)").arg(String(parseFloat(per.toFixed(2))))
                                     }
                                 }
                                 enabled: false

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import "../../origins"
@@ -31,7 +31,7 @@ QLinearGradient {
     width: 304
     height: 92
     property string walletName      : "Name"
-    property real   walletBalance   : 0.0000000
+    property string walletBalance   : "0"
     property real   walletCurrency  : 0.0000000
     property real   walletM: 0
     property real   walletN: 0

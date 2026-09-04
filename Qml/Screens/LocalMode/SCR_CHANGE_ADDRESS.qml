@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
@@ -124,9 +124,9 @@ QScreen {
                     topMargin: 121
                 }
                 model: AppModel.walletInfo.walletunUsedChangedAddressList
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: Rectangle {
-                    width: 301
+                    width: unUsed.width - 8  // leave room for QScrollBar (8px) — was 301
                     height: 40
                     color:  mouse1.containsMouse ? Qt.rgba(255, 255, 255, 1) : ((unUsed.currentIndex == index) && (unUsed.focus) ? Qt.rgba(255, 255, 255, 0.5) : "#F1FAFE" )
                     Rectangle {
@@ -184,9 +184,9 @@ QScreen {
                     topMargin: 450
                 }
                 model: AppModel.walletInfo.walletusedChangedAddressList
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: Rectangle {
-                    width: 301
+                    width: used.width - 8  // leave room for QScrollBar (8px) — was 301
                     height: 40
                     color:  mouse2.containsMouse ? Qt.rgba(255, 255, 255, 1) : (used.currentIndex == index) && (used.focus) ? Qt.rgba(255, 255, 255, 0.5) : "#F1FAFE"
                     Rectangle {

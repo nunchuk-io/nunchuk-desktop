@@ -1,98 +1,223 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
 
-ENV DEBIAN_FRONTEND=noninteractive
-# Deterministic fallback for dependencies built into the builder image.
-ENV SOURCE_DATE_EPOCH=1604304302
-ARG QT_VERSION=5.15.2
-ENV QT_INSTALL_DIR=/opt/Qt
-ENV QT5_DIR=$QT_INSTALL_DIR/$QT_VERSION/gcc_64/lib/cmake/Qt5
-ENV QT_INSTALLED_PREFIX=$QT_INSTALL_DIR/$QT_VERSION/gcc_64
+ARG QT_VERSION=6.11.1
+ARG AQT_VERSION=3.3.0
+ARG QTKEYCHAIN_VERSION=0.15.0
+ARG QTKEYCHAIN_COMMIT=ad7344c45a86a4f66cbafc4b081b5f7b876cb0b7
+ARG OLM_VERSION=3.2.16
+ARG OLM_COMMIT=7e0c8277032e40308987257b711b38af8d77cc69
+ARG LINUXDEPLOY_COMMIT=07333c6e942c7d71782b66be924c5d867f9dfdfc
+ARG LINUXDEPLOY_SHA256=421ca71d5c69ea97c6309276232990d43df1dcece0edfaa26bbf926ff96ed12e
+ARG LINUXDEPLOY_QT_COMMIT=409307dd1614ff2120e748fdc3442601432c9c3f
+ARG LINUXDEPLOY_QT_SHA256=be1b7e166bf9975cfb694ebe6759ba40502ffc6196440d3e64aa90c4dbd67e9f
+ARG OPENSSL_VERSION=3.5.7
+ARG OPENSSL_SHA256=a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8
+ARG APPIMAGETOOL_VERSION=1.9.1
+ARG APPIMAGETOOL_SHA256=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
+ARG APPIMAGE_RUNTIME_VERSION=20251108
+ARG APPIMAGE_RUNTIME_SHA256=2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d
+ARG BUILDER_SOURCE_DATE_EPOCH=1780963200
 
-# Install core dependencies (build tools and basic libs)
-RUN apt update && apt install -y \
-        cmake g++ make ninja-build \
-        libboost-all-dev libzmq3-dev libevent-dev libdb++-dev \
-        sqlite3 libsqlite3-dev libsecret-1-dev \
-        git dpkg-dev python3-pip wget unzip curl patchelf p7zip-full \
-        binutils file ca-certificates desktop-file-utils \
-        xvfb xauth dbus-x11 \
-        libgl1-mesa-dev
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    TZ=UTC \
+    SOURCE_DATE_EPOCH=${BUILDER_SOURCE_DATE_EPOCH} \
+    ZERO_AR_DATE=1 \
+    QT_INSTALL_DIR=/opt/Qt \
+    QT_VERSION=${QT_VERSION} \
+    QT_INSTALLED_PREFIX=/opt/Qt/${QT_VERSION}/gcc_64 \
+    QT6_DIR=/opt/Qt/${QT_VERSION}/gcc_64/lib/cmake/Qt6 \
+    OPENSSL_VERSION=${OPENSSL_VERSION} \
+    OPENSSL_ROOT_DIR=/opt/openssl-${OPENSSL_VERSION} \
+    LINUXDEPLOY_COMMIT=${LINUXDEPLOY_COMMIT} \
+    LINUXDEPLOY_QT_COMMIT=${LINUXDEPLOY_QT_COMMIT} \
+    APPIMAGE_RUNTIME_FILE=/usr/local/lib/appimage-runtime
 
-# Install system libraries, FUSE, and squashfuse for AppImage support
-RUN apt update && apt install -y \
-        fuse libfuse2 squashfuse \
-        mesa-common-dev libglu1-mesa-dev \
-        libpulse-dev libxcb-xinerama0 software-properties-common \
-        libnss3-dev libasound2-dev libxrandr-dev libxcomposite-dev \
-        libxcursor-dev libxi-dev libxdamage-dev libxtst-dev libxss-dev \
-        libx11-xcb-dev libxt-dev libdbus-1-dev libegl1-mesa-dev \
-        libegl1 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
-        libgstreamer-plugins-bad1.0-0 libnss3 libx11-xcb1 \
-        libxcb-cursor0 libxcb-glx0 libxcb-icccm4 libxcb-image0 \
-        libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 \
-        libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 \
-        libxcb-xfixes0 libxcb-xinput0 libxcb-xkb1 libxkbcommon0 \
-        libxkbcommon-x11-0
+ENV PATH=${QT_INSTALLED_PREFIX}/bin:${PATH} \
+    CC=/usr/bin/gcc-14 \
+    CXX=/usr/bin/g++-14 \
+    AR=/usr/bin/gcc-ar-14 \
+    NM=/usr/bin/gcc-nm-14 \
+    RANLIB=/usr/bin/gcc-ranlib-14 \
+    APPIMAGE_EXTRACT_AND_RUN=1
 
-# Install GCC 14
-RUN add-apt-repository ppa:ubuntu-toolchain-r/ppa -y && \
-    apt update && apt install -y gcc-14 g++-14 && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        cmake \
+        curl \
+        dbus-x11 \
+        desktop-file-utils \
+        dpkg-dev \
+        file \
+        fuse \
+        g++ \
+        git \
+        libasound2-dev \
+        libboost-all-dev \
+        libdb++-dev \
+        libdbus-1-dev \
+        libegl1-mesa-dev \
+        libevent-dev \
+        libfuse2 \
+        libgbm1 \
+        libgl1-mesa-dev \
+        libgl1-mesa-dri \
+        libglu1-mesa-dev \
+        libminizip-dev \
+        libnss3-dev \
+        libpulse-dev \
+        libsecret-1-dev \
+        libsqlite3-dev \
+        libudev-dev \
+        libusb-1.0-0-dev \
+        libx11-xcb-dev \
+        libxcomposite-dev \
+        libxcursor-dev \
+        libxdamage-dev \
+        libxi-dev \
+        libxkbcommon-x11-0 \
+        libxrandr-dev \
+        libxss-dev \
+        libxt-dev \
+        libxtst-dev \
+        libxcb-cursor0 \
+        libxcb-icccm4 \
+        libxcb-image0 \
+        libxcb-keysyms1 \
+        libxcb-randr0 \
+        libxcb-render-util0 \
+        libxcb-shape0 \
+        libxcb-sync1 \
+        libxcb-util1 \
+        libxcb-xfixes0 \
+        libxcb-xinerama0 \
+        libxcb-xkb1 \
+        libzmq3-dev \
+        make \
+        mesa-common-dev \
+        ninja-build \
+        p7zip-full \
+        patchelf \
+        python3-pip \
+        software-properties-common \
+        sqlite3 \
+        squashfuse \
+        unzip \
+        wget \
+        xauth \
+        xdotool \
+        xvfb \
+        zip \
+    && add-apt-repository ppa:ubuntu-toolchain-r/ppa -y \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gcc-14 g++-14 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100 \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV CC=gcc-14
-ENV CXX=g++-14
+RUN python3 -m pip install --break-system-packages --no-cache-dir "aqtinstall==${AQT_VERSION}" \
+    && aqt install-qt linux desktop "${QT_VERSION}" linux_gcc_64 \
+        --outputdir "${QT_INSTALL_DIR}" \
+        --modules \
+            qt5compat \
+            qtmultimedia \
+            qtnetworkauth \
+            qtpositioning \
+            qtshadertools \
+            qtwebchannel \
+            qtwebengine
 
-# Install aqtinstall and Qt
-RUN pip3 install --break-system-packages aqtinstall && \
-    aqt install-qt linux desktop $QT_VERSION gcc_64 --outputdir "$QT_INSTALL_DIR" && \
-    aqt install-qt linux desktop $QT_VERSION gcc_64 --outputdir "$QT_INSTALL_DIR" \
-        --modules qtcharts qtdatavis3d qtlottie qtnetworkauth qtpurchasing qtquick3d \
-                  qtquicktimeline qtscript qtvirtualkeyboard qtwaylandcompositor \
-                  qtwebengine qtwebglplugin debug_info
+# Fail while creating the builder image when the Qt archive is internally
+# incomplete or linked against an incompatible host minizip/XCB runtime. These
+# are the two most common late failures for Qt WebEngine AppImages.
+RUN set -eux; \
+    qmake_path="$(command -v qmake6 || command -v qmake)"; \
+    qt_qml_path="$(${qmake_path} -query QT_INSTALL_QML)"; \
+    shader_tools="${QT_INSTALLED_PREFIX}/lib/libQt6ShaderTools.so.6"; \
+    graphical_effects="${qt_qml_path}/Qt5Compat/GraphicalEffects/private/libqtgraphicaleffectsprivateplugin.so"; \
+    webengine_core="$(find "${QT_INSTALLED_PREFIX}/lib" -maxdepth 1 -type f -name 'libQt6WebEngineCore.so.*' -print -quit)"; \
+    qxcb_plugin="${QT_INSTALLED_PREFIX}/plugins/platforms/libqxcb.so"; \
+    test -e "${shader_tools}"; \
+    test -f "${graphical_effects}"; \
+    test -n "${webengine_core}"; \
+    test -f "${qxcb_plugin}"; \
+    file -L "${webengine_core}" "${qxcb_plugin}"; \
+    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${graphical_effects}" | grep -q 'not found'; \
+    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${webengine_core}" | grep -q 'not found'; \
+    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${qxcb_plugin}" | grep -q 'not found'; \
+    minizip_library="$(ldconfig -p | awk '$1 == "libminizip.so.1" { print $NF }' | sort -u)"; \
+    test "$(printf '%s\n' "${minizip_library}" | sed '/^$/d' | wc -l)" -eq 1; \
+    test -f "${minizip_library}"; \
+    ${NM} -D --defined-only "${minizip_library}" | awk '{ sub(/@.*/, "", $3); print $3 }' > /tmp/minizip-symbols; \
+    for symbol in fill_fopen64_filefunc zipWriteInFileInZip zipOpenNewFileInZip4_64 zipOpen2_64 zipClose zipCloseFileInZip; do \
+        grep -qx "${symbol}" /tmp/minizip-symbols; \
+    done; \
+    rm /tmp/minizip-symbols
 
-# Build and install qtkeychain
-RUN git clone --depth 1 --branch 0.15.0 https://github.com/frankosterfeld/qtkeychain.git /tmp/qtkeychain && \
-    cd /tmp/qtkeychain && mkdir build && cd build && \
-    cmake .. -DBUILD_WITH_QT5=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DQt5_DIR=$QT5_DIR && \
-    make -j$(nproc) && make install && ldconfig
+RUN git clone --branch "${QTKEYCHAIN_VERSION}" --depth 1 https://github.com/frankosterfeld/qtkeychain.git /tmp/qtkeychain \
+    && test "$(git -C /tmp/qtkeychain rev-parse HEAD)" = "${QTKEYCHAIN_COMMIT}" \
+    && cmake -S /tmp/qtkeychain -B /tmp/qtkeychain-build -G Ninja \
+        -DBUILD_WITH_QT6=ON \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_TEST_APPLICATION=OFF \
+        -DBUILD_TRANSLATIONS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_PREFIX_PATH="${QT_INSTALLED_PREFIX}" \
+        -DQt6_DIR="${QT6_DIR}" \
+    && cmake --build /tmp/qtkeychain-build \
+    && cmake --install /tmp/qtkeychain-build \
+    && ldconfig \
+    && rm -rf /tmp/qtkeychain /tmp/qtkeychain-build
 
-# Build and install Olm
-RUN git clone https://gitlab.matrix.org/matrix-org/olm.git /tmp/olm && \
-    cd /tmp/olm && git checkout 3.2.16 && mkdir build && cd build && \
-    cmake .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && make -j$(nproc) && \
-    make install && ldconfig
+RUN git clone --branch "${OLM_VERSION}" --depth 1 https://gitlab.matrix.org/matrix-org/olm.git /tmp/olm \
+    && test "$(git -C /tmp/olm rev-parse HEAD)" = "${OLM_COMMIT}" \
+    && cmake -S /tmp/olm -B /tmp/olm-build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+    && cmake --build /tmp/olm-build \
+    && cmake --install /tmp/olm-build \
+    && ldconfig \
+    && rm -rf /tmp/olm /tmp/olm-build
 
-# Install CQtDeployer
-RUN wget -q https://github.com/QuasarApp/CQtDeployer/releases/download/v1.6.2365/CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb && \
-    echo "a183850a0814e80cc184dea52e4123fcd7826d439c98ab2a20924e07a1b67298  CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb" | sha256sum --check --strict && \
-    dpkg -i CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb && \
-    rm CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb
+RUN curl --fail --location --show-error \
+        --output /usr/local/bin/linuxdeploy \
+        "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage" \
+    && echo "${LINUXDEPLOY_SHA256}  /usr/local/bin/linuxdeploy" | sha256sum --check --strict \
+    && curl --fail --location --show-error \
+        --output /usr/local/bin/linuxdeploy-plugin-qt \
+        "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage" \
+    && echo "${LINUXDEPLOY_QT_SHA256}  /usr/local/bin/linuxdeploy-plugin-qt" | sha256sum --check --strict \
+    && chmod 0755 /usr/local/bin/linuxdeploy /usr/local/bin/linuxdeploy-plugin-qt
 
-# Install OpenSSL 1.1.1g
-RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1g/openssl-1.1.1g.tar.gz && \
-    tar xzf openssl-1.1.1g.tar.gz && \
-    cd openssl-1.1.1g && ./config --prefix=/opt/openssl-1.1.1g && \
-    make -j$(nproc) && make install_dev
+RUN curl --fail --location --show-error \
+        --output /tmp/openssl.tar.gz \
+        "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+    && echo "${OPENSSL_SHA256}  /tmp/openssl.tar.gz" | sha256sum --check --strict \
+    && tar -xzf /tmp/openssl.tar.gz -C /tmp \
+    && cd "/tmp/openssl-${OPENSSL_VERSION}" \
+    && ./config \
+        --prefix="${OPENSSL_ROOT_DIR}" \
+        --openssldir="${OPENSSL_ROOT_DIR}" \
+        --libdir=lib \
+        shared \
+    && make -j"$(nproc)" \
+    && make install_sw \
+    && rm -rf /tmp/openssl.tar.gz "/tmp/openssl-${OPENSSL_VERSION}"
 
-ENV OPENSSL_ROOT_DIR=/opt/openssl-1.1.1g
-
-# Pin both the AppImage tool and runtime. The explicit runtime avoids silently
-# changing the produced AppImage when the upstream continuous release moves.
-ENV APPIMAGETOOL=/usr/local/bin/appimagetool
-ENV APPIMAGE_RUNTIME=/usr/local/lib/appimage/runtime-x86_64
-RUN mkdir -p /usr/local/lib/appimage && \
-    curl --fail --location --silent --show-error \
-        --retry 5 --retry-delay 2 --retry-all-errors \
-        https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage \
-        --output "$APPIMAGETOOL" && \
-    curl --fail --location --silent --show-error \
-        --retry 5 --retry-delay 2 --retry-all-errors \
-        https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64 \
-        --output "$APPIMAGE_RUNTIME" && \
-    echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $APPIMAGETOOL" | sha256sum --check --strict && \
-    echo "2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  $APPIMAGE_RUNTIME" | sha256sum --check --strict && \
-    chmod 0755 "$APPIMAGETOOL" "$APPIMAGE_RUNTIME"
+RUN curl --fail --location --show-error \
+        --output /usr/local/bin/appimagetool \
+        "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage" \
+    && echo "${APPIMAGETOOL_SHA256}  /usr/local/bin/appimagetool" | sha256sum --check --strict \
+    && chmod 0755 /usr/local/bin/appimagetool \
+    && curl --fail --location --show-error \
+        --output "${APPIMAGE_RUNTIME_FILE}" \
+        "https://github.com/AppImage/type2-runtime/releases/download/${APPIMAGE_RUNTIME_VERSION}/runtime-x86_64" \
+    && echo "${APPIMAGE_RUNTIME_SHA256}  ${APPIMAGE_RUNTIME_FILE}" | sha256sum --check --strict \
+    && chmod 0644 "${APPIMAGE_RUNTIME_FILE}"
 
 WORKDIR /project
+
 CMD ["bash"]

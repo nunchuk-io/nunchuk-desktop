@@ -66,13 +66,13 @@ QVariant TransactionListModel::data(const QModelIndex &index, int role) const {
     case transaction_hasChange_role:
         return m_data[index.row()]->hasChange();
     case transaction_destinationList_role:
-        return qVariantFromValue(m_data[index.row()]->destinationList());
+        return QVariant::fromValue(m_data[index.row()]->destinationList());
     case transaction_destinationDisp_role:
         return m_data[index.row()]->destination();
     case transaction_change_role:
-        return qVariantFromValue(m_data[index.row()]->change());
+        return QVariant::fromValue(m_data[index.row()]->change());
     case transaction_singleSignersAssigned_role:
-        return qVariantFromValue(m_data[index.row()]->singleSignersAssigned());
+        return QVariant::fromValue(m_data[index.row()]->singleSignersAssigned());
     case transaction_subtotal_role:
         return m_data[index.row()]->subtotalDisplay();
     case transaction_total_role:
@@ -226,31 +226,31 @@ void TransactionListModel::requestSort(int role, int order) {
             break;
         case transaction_memo_role: {
             if (Qt::DescendingOrder == order) {
-                qSort(m_data.begin(), m_data.end(), sortTXsByMemoDescending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByMemoDescending);
             } else {
-                qSort(m_data.begin(), m_data.end(), sortTXsByMemoAscending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByMemoAscending);
             }
         } break;
         case transaction_status_role: {
             if (Qt::DescendingOrder == order) {
-                qSort(m_data.begin(), m_data.end(), sortTXsByStatusDescending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByStatusDescending);
             } else {
-                qSort(m_data.begin(), m_data.end(), sortTXsByStatusAscending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByStatusAscending);
             }
         } break;
         case transaction_subtotal_role:
         case transaction_total_role: {
             if (Qt::DescendingOrder == order) {
-                qSort(m_data.begin(), m_data.end(), sortTXsByAmountDescending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByAmountDescending);
             } else {
-                qSort(m_data.begin(), m_data.end(), sortTXsByAmountAscending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByAmountAscending);
             }
         } break;
         case transaction_blocktime_role: {
             if (Qt::DescendingOrder == order) {
-                qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeDescending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByBlocktimeDescending);
             } else {
-                qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeAscending);
+                std::sort(m_data.begin(), m_data.end(), sortTXsByBlocktimeAscending);
             }
             linkingReplacedTransactions();
         } break;

@@ -100,16 +100,9 @@ public:
     bool UpdateDraftTransaction(const QVariant &msg);
     bool UpdateDraftRBFransaction(const QVariant &msg);
     void setReuse(bool newReuse);
-    void RequestSyncSelectCoinForMakeTransaction(const QVariant &msg);
-
-    // Marks that the coin set for the transaction currently being prepared was
-    // fixed by the user (e.g. via "select coin from coin list"), so re-drafting
-    // (custom fee, etc.) must keep using that exact input set (inputCoins())
-    // instead of re-deriving from the wallet-wide unlocked-coin pool
-    // (GetUtxoListSelected()/manualCoins), which would silently pull in coins
-    // already committed to other in-progress unsigned transactions.
     bool fixedInputCoins() const;
     void setFixedInputCoins(bool fixed);
+    void RequestSyncSelectCoinForMakeTransaction(const QVariant &msg);
 
     QUTXOListModelPtr GetUtxoListSelected();
     bool AssignTagsToTxChange();

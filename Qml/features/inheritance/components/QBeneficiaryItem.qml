@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.3
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/origins"
@@ -74,7 +74,7 @@ Rectangle {
 
         QTextInputBoxTypeB {
             id: _input_email
-            label: STR.STR_QML_2177 + " " + (beneficiaryIndex + 1)
+            label: QSTR.STR_QML_2177 + " " + (beneficiaryIndex + 1)
             labelComponent.textFormat: Text.RichText
             labelComponent.font.pixelSize: 12
             boxWidth: parent.width

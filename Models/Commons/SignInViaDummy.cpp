@@ -167,7 +167,7 @@ void SignInViaDummy::SignInCreateDummyTransaction()
 bool SignInViaDummy::SignInRequestSignTx(const QString &xfp)
 {
     QWarningMessage warningmsg;
-    std::vector<nunchuk::Device> devices = qUtils::GetDevices(bridge::hwiPath(), warningmsg);
+    std::vector<nunchuk::Device> devices = qUtils::GetDevices(bridge::hwiCommand(), warningmsg);
     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
 
         QMap<QString, QString> signatures;
@@ -198,7 +198,7 @@ bool SignInViaDummy::SignInRequestSignTx(const QString &xfp)
             QString psbt = dummy_transaction["psbt"].toString();
 
             warningmsg.resetWarningMessage();
-            QString psbt_signed = qUtils::SignPsbt(bridge::hwiPath(), device, psbt, warningmsg);
+            QString psbt_signed = qUtils::SignPsbt(bridge::hwiCommand(), device, psbt, warningmsg);
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                 signature = qUtils::GetPartialSignature(signer, psbt_signed);
                 if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){

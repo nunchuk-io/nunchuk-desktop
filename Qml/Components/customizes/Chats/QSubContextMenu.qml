@@ -17,49 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.0
-import QtQuick.Controls 2.3
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
 import "../../../Components/customizes/Chats"
 import "../../../../localization/STR_QML.js" as STR
 
-Menu {
+// Qt6: Rewritten as Popup (was Menu+Repeater which breaks in Qt6).
+Popup {
     id: subOptionsMenu
+    padding: 0
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
     implicitWidth: menuWidth
     implicitHeight: {
-        if (mapMenu == null) return 0
-        var cnt = 0;
-        for(var i=0; i< mapMenu.length; i++){
-            var show = mapMenu[i].visible
-            if(show){cnt++}
+        if (mapMenu === null) return 0
+        var cnt = 0
+        for (var i = 0; i < mapMenu.length; i++) {
+            if (mapMenu[i].visible) cnt++
         }
-        return cnt*menuHeight
+        return cnt * menuHeight
     }
+
     property int menuWidth: 250
     property int menuHeight: 48
-    property var mapMenu: [
-        {
-            visible: true,
-            label: qsTr("menu1"),
-            icon: "",
-            iconRight: "",
-            color: "#031F2B",
-            enable: true,
-            subMenu: null,
-            action: function(){
-                console.log("menu1")
-            }
-        },
-    ]
-
+    property var mapMenu: null
+    property bool _openRight: true  // set by QMultiContextMenu.onEntered; drives transformOrigin
+    // Position is pre-calculated by QMultiContextMenu.onEntered before createObject,
+    // so no onAboutToShow repositioning is needed here.
 
     background: Rectangle {
-        implicitWidth: menuWidth
-        implicitHeight: mapMenu == null ? 0: mapMenu.length*menuHeight
         radius: 8
         color: "#FFFFFF"
         layer.enabled: true
@@ -72,17 +62,87 @@ Menu {
         }
     }
 
-    Repeater {
-        model: mapMenu
-        QMenuDelegate {
-            itemMenu: modelData
-            onItemClicked: {
-                var _item = subOptionsMenu.mapMenu[index]
-                console.log("Menu clicked: " + _item.label + " - " + _item.action)
-                if (_item.action()) {
-                    console.log("Menu clicked: " + _item.label)
+    // ── Enter: scale from the edge attached to the parent menu item ──
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: _subContentWrapper; property: "scale"; from: 0.82; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
+        }
+    }
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 120; easing.type: Easing.InCubic }
+            NumberAnimation { target: _subContentWrapper; property: "scale"; from: 1.0; to: 0.82; duration: 120; easing.type: Easing.InCubic }
+        }
+    }
+
+    contentItem: Item {
+        id: _subContentWrapper
+        implicitWidth: subOptionsMenu.menuWidth
+        implicitHeight: subOptionsMenu.implicitHeight
+        // Scale origin: Left when submenu opens right of parent, Right when flipped
+        transformOrigin: subOptionsMenu._openRight ? Item.Left : Item.Right
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                width: _subContentWrapper.width
+                height: _subContentWrapper.height
+                radius: 8
+            }
+        }
+        Column {
+        Repeater {
+            model: subOptionsMenu.mapMenu
+            delegate: Item {
+                required property var modelData
+                required property int index
+                width: subOptionsMenu.menuWidth
+                height: modelData.visible ? subOptionsMenu.menuHeight : 0
+                visible: modelData.visible
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: _sarea.containsMouse && modelData.enable ? "#F5F5F5" : "#FFFFFF"
+                }
+
+                QIcon {
+                    id: _sicon
+                    iconSize: modelData.icon !== "" ? 24 : 0
+                    anchors {
+                        left: parent.left
+                        leftMargin: 12
+                        verticalCenter: parent.verticalCenter
+                    }
+                    source: modelData.icon
+                    opacity: modelData.enable ? 1.0 : 0.7
+                }
+
+                QText {
+                    text: modelData.label
+                    color: modelData.enable ? modelData.color : "#595959"
+                    anchors.left: _sicon.right
+                    anchors.leftMargin: modelData.icon !== "" ? 11 : 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.family: "Lato"
+                    font.weight: Font.Normal
+                    font.pixelSize: 16
+                    opacity: modelData.enable ? 1.0 : 0.7
+                }
+
+                MouseArea {
+                    id: _sarea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: modelData.enable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (modelData.enable) {
+                            modelData.action()
+                            subOptionsMenu.close()
+                        }
+                    }
                 }
             }
         }
-    }
+        } // Column
+    } // Rectangle
 }

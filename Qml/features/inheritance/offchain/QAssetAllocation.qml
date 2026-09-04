@@ -28,9 +28,9 @@ import EWARNING 1.0
 import Features.Inheritance.OffChain.ViewModels 1.0
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
-import QtGraphicalEffects 1.12
-import QtQuick 2.12
-import QtQuick.Controls 2.3
+import Qt5Compat.GraphicalEffects
+import QtQuick
+import QtQuick.Controls
 
 QOnScreenContentTypeA {
     id: root
@@ -42,7 +42,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2181
+    label.text: QSTR.STR_QML_2181
     extraHeader: Item {}
     onCloseClicked: vm.close()
     
@@ -60,7 +60,7 @@ QOnScreenContentTypeA {
             QLato {
                 width: parent.width
                 height: implicitHeight
-                text: STR.STR_QML_2227
+                text: QSTR.STR_QML_2227
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
                 lineHeight: 20
@@ -88,7 +88,7 @@ QOnScreenContentTypeA {
                         anchors.margins: 12
                         contentHeight: beneficiariesColumn.implicitHeight
                         clip: true
-                        ScrollBar.vertical: ScrollBar { active: true }
+                        ScrollBar.vertical: QScrollBar { }
                         
                         Column {
                             id: beneficiariesColumn
@@ -161,7 +161,7 @@ QOnScreenContentTypeA {
                                     }
                                     
                                     QLato {
-                                        text: STR.STR_QML_2177 + " " + (index + 1) + ": " + modelData.asset_percentage + "%"
+                                        text: QSTR.STR_QML_2177 + " " + (index + 1) + ": " + modelData.asset_percentage + "%"
                                         font.pixelSize: 12
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -181,7 +181,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.implicitWidth + 32
             height: 48
-            label.text: STR.STR_QML_245
+            label.text: QSTR.STR_QML_245
             label.font.pixelSize: 14
             type: eTypeF
             onButtonClicked: vm.close()
@@ -190,7 +190,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.implicitWidth + 32
             height: 48
-            label.text: "+  " + STR.STR_QML_2180
+            label.text: "+  " + QSTR.STR_QML_2180
             label.font.pixelSize: 14
             type: eTypeR
             onButtonClicked: vm.addBeneficiary()
@@ -199,7 +199,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.implicitWidth + 32
             height: 48
-            label.text: STR.STR_QML_835
+            label.text: QSTR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
             enabled: vm.isValidData

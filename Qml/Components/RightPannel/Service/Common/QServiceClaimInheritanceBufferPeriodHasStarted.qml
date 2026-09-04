@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
 import "./../../../customizes"
@@ -42,7 +42,8 @@ Item {
             radius: 24
             color: "#D0E2FF"
             QPicture {
-                anchors.centerIn: parent
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
                 source: "qrc:/Images/Images/buffer-period-illustration.svg"
             }
         }
@@ -53,14 +54,14 @@ Item {
                 width: parent.width
                 spacing: 16
                 QText {
-                    text: STR.STR_QML_773
+                    text: QSTR.STR_QML_773
                     color: "#031F2B"
                     font.family: "Montserrat"
                     font.pixelSize: 32
                     font.weight: Font.DemiBold
                 }
                 QText {
-                    text: STR.STR_QML_774
+                    text: QSTR.STR_QML_774
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 16
@@ -72,7 +73,7 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                 }
                 QText {
-                    text: STR.STR_QML_774_.arg(vm.remaining_display_name)
+                    text: QSTR.STR_QML_774_.arg(vm.remaining_display_name)
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 16
@@ -92,7 +93,7 @@ Item {
                     bottom: parent.bottom
                     bottomMargin: 16
                 }
-                label.text: STR.STR_QML_341
+                label.text: QSTR.STR_QML_341
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {

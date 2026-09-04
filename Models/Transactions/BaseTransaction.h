@@ -282,6 +282,8 @@ class BaseTransaction : public QStateFlow {
     bool isClaimTx() const;
     void setIsClaimTx(bool is_claim_tx);
 
+    void setSignerWallet(const QWalletPtr &wallet);
+
     bool useScriptPath();
     void setUseScriptPath(bool data, bool cached = false);
 
@@ -298,8 +300,23 @@ class BaseTransaction : public QStateFlow {
 
     virtual void refreshScanDevices();
 
+    struct GroupTransactionStateRefreshContext {
+        qint64 deadline{0};
+        qint64 cosignAt{0};
+        int lastStatus{static_cast<int>(nunchuk::GroupTransactionStatus::UNKNOWN)};
+        int requestCount{0};
+        int failureCount{0};
+        int activePollCount{0};
+        QString message;
+        bool observedState{false};
+        bool syncRequested{false};
+    };
+
     QString groupTransactionState();
     void createGroupTransactionState();
+    void startGroupTransactionStateRefresh();
+    void startGroupTransactionStateRefresh(const GroupTransactionStateRefreshContext &context);
+    GroupTransactionStateRefreshContext groupTransactionStateRefreshContext() const;
 
   public slots:
     bool parseQRTransaction(const QStringList &qrtags);
@@ -314,6 +331,20 @@ class BaseTransaction : public QStateFlow {
     bool ImportQRTransaction(const QStringList &qrtags);
 
   private:
+    bool canRefreshGroupTransactionState(const QString &walletIdSnapshot, const QString &txidSnapshot) const;
+    void scheduleGroupTransactionStateRefresh(quint64 generation, int delayMs);
+    void fetchGroupTransactionState(quint64 generation);
+    void handleGroupTransactionStateResult(quint64 generation,
+                                           const QString &walletIdSnapshot,
+                                           const QString &txidSnapshot,
+                                           bool success,
+                                           int groupStatus,
+                                           const QString &message,
+                                           qint64 cosignAt);
+    void finishGroupTransactionStateRefresh(quint64 generation);
+    void stopGroupTransactionStateRefresh();
+    void requestGroupTransactionFinalSync();
+
     QDestinationListModelPtr m_destinations;
     QSingleSignerListModelPtr m_signers;
     QSingleSignerListModelPtr m_keysets;
@@ -336,11 +367,24 @@ class BaseTransaction : public QStateFlow {
     bool    m_hasMoreBtn{true};
     QString m_txidReplacing{""};
     bool    m_isClaimTx{false};
+    QWalletPtr m_signerWallet;
     bool    m_useScriptPath{false};
     qint64  m_fee_otherKeyset{0};
     int     m_keysetSelected{-1};
     int     m_pendingSignatures{-1};
     QString m_platformKeyMessage{""};
+    quint64 m_groupTransactionRefreshGeneration{0};
+    quint64 m_groupTransactionRefreshTimerToken{0};
+    quint64 m_groupTransactionRefreshInFlightGeneration{0};
+    int     m_groupTransactionRefreshRequestCount{0};
+    int     m_groupTransactionRefreshFailureCount{0};
+    int     m_groupTransactionRefreshActivePollCount{0};
+    int     m_groupTransactionRefreshLastStatus{static_cast<int>(nunchuk::GroupTransactionStatus::UNKNOWN)};
+    qint64  m_groupTransactionRefreshDeadline{0};
+    qint64  m_groupTransactionRefreshCosignAt{0};
+    bool    m_groupTransactionRefreshInFlight{false};
+    bool    m_groupTransactionRefreshObservedState{false};
+    bool    m_groupTransactionRefreshSyncRequested{false};
 
   signals:
     void nunchukTransactionChanged();

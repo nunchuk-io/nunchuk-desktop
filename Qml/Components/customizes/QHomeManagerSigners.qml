@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -90,7 +90,9 @@ Rectangle {
         }
         Item {
             width: parent.width
-            height: parent.height - 24
+            // Column.spacing: 12 → content starts at y=36 (24 header + 12 spacing).
+            // Subtract both so the Flickable's height matches its actual visible area.
+            height: parent.height - 36
             Loader {
                 anchors.fill: parent
                 sourceComponent: flickerSignerList.signerReady ? null : loadingSignerBusy
@@ -104,10 +106,10 @@ Rectangle {
                 flickableDirection: Flickable.VerticalFlick
                 interactive: true
                 contentHeight: contentDisplay.height + 12
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: contentDisplay
-                    width: parent.width
+                    width: parent.width - 8
                     spacing: 4
                     QListView {
                         id: userKeys

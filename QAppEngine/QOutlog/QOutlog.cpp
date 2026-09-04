@@ -18,8 +18,8 @@
  *                                                                        *
  **************************************************************************/
 #include "QOutlog.h"
-#include <iostream>
 #include <QFileInfo>
+#include <iostream>
 #ifdef Q_OS_UNIX
 #include <unistd.h>
 #endif
@@ -27,8 +27,7 @@
 #ifdef ENABLE_OUTLOG
 const char *debugForDev = "debugForDev";
 
-static QString computeLogfilePath()
-{
+static QString computeLogfilePath() {
     QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(logDir);
 
@@ -46,22 +45,19 @@ static QString computeLogfilePath()
 //    (application/organization name is already set by then), and
 //  - a DBG_* call from another TU's static constructor can no longer touch
 //    the writer before it is constructed (static-init-order fiasco).
-static LogWriteToFile& logWriter()
-{
+static LogWriteToFile &logWriter() {
     static LogWriteToFile writer(computeLogfilePath());
     return writer;
 }
 #endif
 
-QOutlog::QOutlog()
-{
+QOutlog::QOutlog() {
     mStream.setString(&mLogString);
 }
 
-QOutlog::~QOutlog()
-{
+QOutlog::~QOutlog() {
 #ifdef ENABLE_OUTLOG
-    if(mLogString.endsWith(QLatin1Char(' '))) {
+    if (mLogString.endsWith(QLatin1Char(' '))) {
         mLogString.chop(1);
     }
     if (!mLogString.contains("QCoreApplication")) {
@@ -71,8 +67,7 @@ QOutlog::~QOutlog()
 #endif
 }
 
-QOutlog &QOutlog::begin(LOG_LEVEL level)
-{
+QOutlog &QOutlog::begin(LOG_LEVEL level) {
     m_level = level;
 #ifdef USE_3RD_DEBUG
     // To request write log to the 3rd party of debuger (such as dlt)
@@ -82,35 +77,47 @@ QOutlog &QOutlog::begin(LOG_LEVEL level)
     return *this;
 }
 
-LogVerbose::LogVerbose()
-{
+LogVerbose::LogVerbose() {
 #ifdef USE_3RD_DEBUG
     // To request write log to the 3rd party of debuger (such as dlt)
 #else
-    // qInstallMessageHandler(this->verboseMessageHandler); // Comment tempo
-    qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& msg) {
-        const char* level = "";
+#ifdef Q_OS_WIN
+    // WIN32 subsystem app has no console, so stderr goes nowhere on Windows;
+    // route Qt/QML warnings through verboseMessageHandler so they still land
+    // in logfile_nunchuck-client-qt.log.
+    qInstallMessageHandler(this->verboseMessageHandler);
+#else
+    qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+        const char *level = "";
         switch (type) {
-        case QtDebugMsg:    level = "Debug"; break;
-        case QtInfoMsg:     level = "Info"; break;
-        case QtWarningMsg:  level = "Warning"; break;
-        case QtCriticalMsg: level = "Critical"; break;
-        case QtFatalMsg:    level = "Fatal"; break;
+        case QtDebugMsg:
+            level = "Debug";
+            break;
+        case QtInfoMsg:
+            level = "Info";
+            break;
+        case QtWarningMsg:
+            level = "Warning";
+            break;
+        case QtCriticalMsg:
+            level = "Critical";
+            break;
+        case QtFatalMsg:
+            level = "Fatal";
+            break;
         }
 
         fprintf(stderr, "[Qt][%s] %s\n", level, msg.toUtf8().constData());
 
         if (context.file || context.line || context.function) {
-            fprintf(stderr, "  at %s:%d (%s)\n",
-                    context.file ? context.file : "unknown",
-                    context.line,
-                    context.function ? context.function : "unknown");
+            fprintf(stderr, "  at %s:%d (%s)\n", context.file ? context.file : "unknown", context.line, context.function ? context.function : "unknown");
         }
 
         if (context.category) {
             fprintf(stderr, "  category: %s\n", context.category);
         }
     });
+#endif
 
     // backtrace info
     // qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& msg) {
@@ -134,55 +141,48 @@ LogVerbose::LogVerbose()
 #endif
 }
 
-LogVerbose::~LogVerbose()
-{
+LogVerbose::~LogVerbose() {}
 
-}
-
-void LogVerbose::verboseMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &_msg)
-{
-    DBG_QT_MSG << QString("[%1][%2] %5").arg(context.function).arg(context.line).arg(_msg) ;
+void LogVerbose::verboseMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &_msg) {
+    DBG_QT_MSG << QString("[%1][%2] %5").arg(context.function).arg(context.line).arg(_msg);
 }
 
 LogVerbose g_verbose;
 
-void LogWriteToFile::writeLog(const QString &log)
-{
+void LogWriteToFile::writeLog(const QString &log) {
     // RAII lock: if the stream write throws (e.g. bad_alloc), the mutex is
     // still released; the old manual lock()/unlock() would leave it locked
     // forever and deadlock every subsequent logging thread.
     QMutexLocker locker(&mutex);
     QTextStream st(logfile.data());
-    st.setCodec("UTF-8");
-    st << log << endl;
+    st << log << Qt::endl;
+
     st.flush();
 }
 
-LogWriteToFile::LogWriteToFile(const QString &file)
-{
+LogWriteToFile::LogWriteToFile(const QString &file) {
 #ifdef ENABLE_OUTLOG
     QFile::remove(file);
     logfile = QSharedPointer<QFile>(new QFile(file));
+    // Must not go through qDebug()/qWarning() here: the installed Qt message
+    // handler (verboseMessageHandler) routes those back into logWriter(),
+    // which is this very function-local static still under construction on
+    // this thread -> recursive re-entry into a magic static -> deadlock.
     if (!logfile->open(QIODevice::WriteOnly)) {
-        qWarning() << "Cannot open log file" << file << logfile->errorString();
+        fprintf(stderr, "Cannot open log file %s: %s\n", file.toUtf8().constData(), logfile->errorString().toUtf8().constData());
     } else {
-        qDebug() << "Log file created fresh:" << file;
+        fprintf(stderr, "Log file created fresh: %s\n", file.toUtf8().constData());
     }
 #endif
 }
 
-LogWriteToFile::~LogWriteToFile()
-{
+LogWriteToFile::~LogWriteToFile() {}
 
-}
-
-QFunctionTime::QFunctionTime(QString _func) : mFunc(_func)
-{
+QFunctionTime::QFunctionTime(QString _func) : mFunc(_func) {
     mTime.start();
 }
 
-QFunctionTime::~QFunctionTime()
-{
+QFunctionTime::~QFunctionTime() {
 #ifdef ENABLE_OUTLOG
     DBG_FUNCTION_TIME_INFO << QString("%1 takes %2 ms").arg(mFunc).arg(mTime.elapsed());
 #endif

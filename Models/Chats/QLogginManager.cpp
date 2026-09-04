@@ -20,6 +20,8 @@
 #include "QLogginManager.h"
 #include <QQmlEngine>
 #include <QHostInfo>
+#include <QPointer>
+#include <QTimer>
 #include "qt_connection_util.h"
 #include "room.h"
 #include <connection.h>
@@ -54,9 +56,12 @@ Connection *QLogginManager::connection()
     return m_connection;
 }
 
-void QLogginManager::invokeLogin(const QString &userid, const QString &password)
+void QLogginManager::invokeLogin(const QString &userid, const QString &password,
+                                 bool forcePasswordLogin)
 {
-    DBG_INFO << "invokeLogin" << userid << password;
+    DBG_INFO << "invokeLogin" << userid;
+    m_forcePasswordLogin = forcePasswordLogin;
+    m_initialSyncCompleted = false;
     if(connection()){
         auto url = QUrl::fromUserInput(HOME_SERVER);
         url.setScheme("https"); // Qt defaults to http (or even ftp for some)
@@ -83,6 +88,7 @@ void QLogginManager::invokeLogin(const QString &userid, const QString &password)
 void QLogginManager::requestLogout()
 {
     DBG_INFO << "DO NOT SIGNOUT FROM MATRIX - E2EE REQUIRED";
+    CLIENT_INSTANCE->setReadySupport(false);
     if(connection()){
         if(AppSetting::instance()->enableMultiDeviceSync()){
             AppModel::instance()->startMultiDeviceSync(false);
@@ -93,40 +99,125 @@ void QLogginManager::requestLogout()
 
 void QLogginManager::requestLogin()
 {
+    CLIENT_INSTANCE->setReadySupport(false);
     if(connection()){
+        const QPointer<Connection> loginConnection = connection();
+        const QPointer<QLogginManager> loginManager = this;
+        const QString loginUserId = userid();
+        if(!CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                loginConnection.data(), loginManager.data())){
+            return;
+        }
         connection()->setCacheState(false); // FIXME
-        connectSingleShot(connection(), &Connection::connected, this, [this]{
-            connection()->loadState();
-            connection()->sync();
-            if (!CLIENT_INSTANCE->saveDataToKeyChain(userid(), connection()->accessToken())){
-                DBG_INFO << "Couldn't save access token";
+        connectSingleShot(loginConnection.data(), &Connection::connected, this,
+                          [this, loginConnection]{
+            if(!CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                    loginConnection.data(), this)){
+                return;
             }
-            connect(connection()->user(), &User::defaultAvatarChanged, CLIENT_INSTANCE, &ClientController::onUserAvatarChanged );
-            connect(connection()->user(), &User::defaultNameChanged, CLIENT_INSTANCE, &ClientController::onUserDisplaynameChanged );
-            connectSingleShot(connection(), &Connection::syncDone, this, [this] {
-                if(CLIENT_INSTANCE->rooms()){
-                    CLIENT_INSTANCE->rooms()->downloadRooms();
+            loginConnection->loadState();
+            connect(loginConnection->user(), &User::defaultAvatarChanged,
+                    this, [this, loginConnection] {
+                if(CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                        loginConnection.data(), this)){
+                    CLIENT_INSTANCE->onUserAvatarChanged();
                 }
-                connection()->syncLoop();
             });
+            connect(loginConnection->user(), &User::defaultNameChanged,
+                    this, [this, loginConnection] {
+                if(CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                        loginConnection.data(), this)){
+                    CLIENT_INSTANCE->onUserDisplaynameChanged();
+                }
+            });
+            connectSingleShot(loginConnection.data(), &Connection::syncDone, this,
+                              [this, loginConnection] {
+                if(!CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                        loginConnection.data(), this)){
+                    return;
+                }
+                m_initialSyncCompleted = true;
+                const QPointer<QLogginManager> loginManager = this;
+                const QString loginUserId = userid();
+                // Persist only a token that has completed an authenticated
+                // sync; assumeIdentity emits connected before token validation.
+                const bool enteredCriticalSection =
+                        CLIENT_INSTANCE->beginMatrixLoginCriticalSection(
+                            loginConnection.data(), loginManager.data());
+                const bool tokenSaved = CLIENT_INSTANCE->saveDataToKeyChain(
+                    loginUserId, loginConnection->accessToken());
+                CLIENT_INSTANCE->endMatrixLoginCriticalSection(
+                        enteredCriticalSection);
+                // Keychain APIs may run a nested event loop. Recheck the login
+                // manager and attempt before dereferencing either again.
+                if(!CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                        loginConnection.data(), loginManager.data())
+                        || CLIENT_INSTANCE->hasPendingMatrixLoginReplacement(
+                            loginConnection.data(), loginManager.data())){
+                    return;
+                }
+                if(!tokenSaved){
+                    DBG_INFO << "Couldn't save access token";
+                }
+                QNunchukRoomListModel* currentRooms = CLIENT_INSTANCE->rooms();
+                if(currentRooms && currentRooms->connection() == loginConnection){
+                    currentRooms->downloadRooms();
+                }
+                loginConnection->syncLoop();
+            });
+            // Install the first-sync handler before starting the request so a
+            // very fast response can never leave room hydration untriggered.
+            loginConnection->sync();
             CLIENT_INSTANCE->refreshContacts();
             CLIENT_INSTANCE->refreshDevices();
             AppSetting::instance()->setIsStarted(true,true);
             emit CLIENT_INSTANCE->userChanged();
         });
-        QByteArray actk = CLIENT_INSTANCE->readDataFromKeyChain(userid());
+        const bool forcePasswordLogin = m_forcePasswordLogin;
+        m_forcePasswordLogin = false;
+        QByteArray actk;
+        if(!forcePasswordLogin){
+            const bool enteredCriticalSection =
+                    CLIENT_INSTANCE->beginMatrixLoginCriticalSection(
+                        loginConnection.data(), loginManager.data());
+            actk = CLIENT_INSTANCE->readDataFromKeyChain(loginUserId);
+            CLIENT_INSTANCE->endMatrixLoginCriticalSection(
+                    enteredCriticalSection);
+            // readDataFromKeyChain runs a nested event loop; a relogin can
+            // be requested while it is active. The controller queues that
+            // request until this critical section exits.
+            if(!loginManager
+                    || CLIENT_INSTANCE->loginHandler() != loginManager.data()
+                    || !loginConnection
+                    || CLIENT_INSTANCE->connection() != loginConnection
+                    || !CLIENT_INSTANCE->isNunchukLoggedIn()
+                    || CLIENT_INSTANCE->hasPendingMatrixLoginReplacement(
+                        loginConnection.data(), loginManager.data())){
+                return;
+            }
+        }
+        // Apply the same account/attempt guard to both token and forced
+        // password branches. loginFlowsChanged and keychain APIs can complete
+        // after logout or after another Nunchuk account becomes active.
+        if(!CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                loginConnection.data(), loginManager.data())
+                || CLIENT_INSTANCE->hasPendingMatrixLoginReplacement(
+                    loginConnection.data(), loginManager.data())){
+            return;
+        }
         if(actk.isNull() || actk.isEmpty()){
-            loginWithPassword();
+            loginManager->loginWithPassword();
         }
         else{
-            assumeIdentity(actk);
+            loginManager->assumeIdentity(actk);
         }
     }
 }
 
 void QLogginManager::loginWithPassword()
 {
-    if(connection()){
+    if(connection()
+            && CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(connection(), this)){
         QString device_id = QString("%1%2").arg(Draco::instance()->deviceId()).arg(userid());
         QString device_name = devicename();
         connection()->loginWithPassword(userid(),
@@ -138,16 +229,46 @@ void QLogginManager::loginWithPassword()
 
 void QLogginManager::assumeIdentity(QByteArray actk)
 {
+    if(!CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(connection(), this)){
+        return;
+    }
     DBG_INFO << "Already has accesstoken, resume connection" << userid();
     QString device_id = QString("%1%2").arg(Draco::instance()->deviceId()).arg(userid());
-    QString device_name = devicename();
-    connectSingleShot(m_connection, &Connection::loginError, this, [=](QString message, QString details){
-        DBG_INFO << "Can not login by assumeidentity ::::" << message << details << QString(actk) << QString(connection()->accessToken());
-        loginWithPassword();
+    const QPointer<Connection> loginConnection = connection();
+    connectSingleShot(loginConnection.data(), &Connection::loginError, this,
+                      [this, loginConnection](QString message, QString details){
+        if(m_initialSyncCompleted
+                || !CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                    loginConnection.data(), this)){
+            return;
+        }
+        // Never print access tokens. A failed cached-token login has already
+        // consumed the one-shot connected handler, so reset the attempt and
+        // re-arm the complete password-login lifecycle instead of calling
+        // loginWithPassword() directly.
+        DBG_INFO << "Can not login by assumeidentity:" << message << details;
+        CLIENT_INSTANCE->setReadySupport(false);
+        CLIENT_INSTANCE->setMatrixLoginTransitioning(true);
+        const QString failedUserId = userid();
+        const QPointer<QLogginManager> loginManager = this;
+        loginConnection->stopSync();
+        QObject::disconnect(loginConnection, nullptr, this, nullptr);
+        // Do not delete the cached entry here: the keychain helper runs a
+        // nested event loop and a stale callback could erase a newer token.
+        // The forced password login bypasses it, and the first successful sync
+        // overwrites it with the validated token.
+        QTimer::singleShot(0, CLIENT_INSTANCE,
+                          [failedUserId, loginConnection, loginManager] {
+            if(CLIENT_INSTANCE->isCurrentMatrixLoginAttempt(
+                    loginConnection.data(), loginManager.data())
+                    && Draco::instance()->chatId() == failedUserId){
+                CLIENT_INSTANCE->requestLogin(true);
+            }
+        });
     }, Qt::QueuedConnection);
-    connection()->assumeIdentity(userid(),
-                                 QString(actk),
-                                 device_id);
+    loginConnection->assumeIdentity(userid(),
+                                    device_id,
+                                    QString::fromUtf8(actk));
 }
 
 QString QLogginManager::devicename()

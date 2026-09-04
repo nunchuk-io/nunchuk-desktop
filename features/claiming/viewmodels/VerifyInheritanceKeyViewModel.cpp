@@ -75,9 +75,12 @@ void VerifyInheritanceKeyViewModel::exportFileSignMessage(const QString &filenam
     QString data = qUtils::GenerateColdCardHealthCheckMessage(QString::fromStdString(currentSigner().get_derivation_path()), message(), addressType(), msg);
     if (msg.isSuccess()) {
         QString file_path = qUtils::QGetFilePath(filename);
-        qUtils::ExportDataViaFile(file_path, data);
-        GUARD_SUB_SCREEN_MANAGER()
-        subMng->show(qml::features::claiming::offchain::qexportcompleted);
+        if (qUtils::ExportDataViaFile(file_path, data)) {
+            GUARD_SUB_SCREEN_MANAGER()
+            subMng->show(qml::features::claiming::offchain::qexportcompleted);
+        } else {
+            emit showToast(-1, "Unable to write the signed message file.", EWARNING::WarningType::ERROR_MSG);
+        }
     } else {
         emit showToast(-1, msg.what(), EWARNING::WarningType::ERROR_MSG);
     }

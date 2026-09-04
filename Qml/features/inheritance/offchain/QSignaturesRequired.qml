@@ -1,5 +1,5 @@
-import QtQuick 2.4
-import QtQuick.Controls 2.3
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/customizes"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"

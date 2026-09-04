@@ -165,8 +165,7 @@ bool QGroupWalletHealthCheck::HealthCheckPendingForTx(const QString &dummy_trans
             // dummy transaction is not a phrase-rollout variant, so callback(false) is
             // semantically correct: "not a phrase rollout → fall back to markRead".
             if (callback) {
-                bool is_phrase_rollout = !distribution_method.isEmpty() &&
-                                         qUtils::strCompare(distribution_method, "CUSTOMIZE");
+                bool is_phrase_rollout = !distribution_method.isEmpty() && qUtils::strCompare(distribution_method, "CUSTOMIZE");
                 callback(is_phrase_rollout);
             }
         }
@@ -195,7 +194,7 @@ double QGroupWalletHealthCheck::CurrentTimeToMillis() const {
 
 QString QGroupWalletHealthCheck::dateToday() const {
     long int current_time = qUtils::GetCurrentTimeSecond();
-    return QDateTime::fromTime_t(current_time).date().toString("MM/dd/yyyy");
+    return QDateTime::fromSecsSinceEpoch(current_time).date().toString("MM/dd/yyyy");
 }
 
 void QGroupWalletHealthCheck::viewHistoryClicked(const QString &xfp) {
@@ -235,7 +234,7 @@ void QGroupWalletHealthCheck::setReminderKeys(const QList<QVariant> &newReminder
     emit reminderKeysChanged();
 }
 
-void QGroupWalletHealthCheck::GetKeyHealthReminder() {
+void QGroupWalletHealthCheck::GetKeyHealthReminder(std::function<void()> onComplete) {
     const bool isUser = isUserWallet();
     const QString walletId = wallet_id();
     const QString gid = groupId();
@@ -258,12 +257,21 @@ void QGroupWalletHealthCheck::GetKeyHealthReminder() {
             DBG_INFO << output;
             return output.value("reminders").toArray();
         },
-        [safeThis](QJsonArray reminders) {
+        [safeThis, onComplete](QJsonArray reminders) {
             if (!safeThis) {
                 return;
             }
 
             safeThis->m_reminders = reminders;
+            emit safeThis->healthStatusesChanged();
+            // Call optional post-completion hook before chaining GetStatuses.
+            // This allows callers (e.g. AddOrUpdateKeyHealthReminder) to trigger
+            // UI transitions (setFlow / toast) only AFTER m_reminders is fresh,
+            // so the badge is populated on first evaluation by the new Loader component.
+            if (onComplete) {
+                onComplete();
+            }
+            safeThis->GetStatuses();
         });
 }
 
@@ -298,11 +306,12 @@ void QGroupWalletHealthCheck::AddOrUpdateKeyHealthReminder(const QStringList xfp
             [safeThis, dashboard](bool ret) {
                 SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
                 if (ret) {
-                    ptrLamda->GetKeyHealthReminder();
-                    ptrLamda->GetStatuses();
                     emit ptrLamda->isAllReminderChanged();
-                    dashboard->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_REMINDER_POPULATED);
                     AppModel::instance()->showToast(0, "Reminders updated", EWARNING::WarningType::SUCCESS_MSG);
+                    // GET after PUT to get authoritative server state.
+                    // setFlow is inside onComplete so _keyInfo is created only
+                    // after m_reminders is refreshed — badge is populated on first render.
+                    ptrLamda->GetKeyHealthReminder([dashboard]() { dashboard->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_REMINDER_POPULATED); });
                 }
             });
     }
@@ -321,7 +330,6 @@ bool QGroupWalletHealthCheck::DeleteKeyHealthReminder(const QStringList &xfps) {
         if (ret) {
             DBG_INFO << ret << output;
             GetKeyHealthReminder();
-            GetStatuses();
             emit isAllReminderChanged();
         }
         return ret;
@@ -374,8 +382,11 @@ QVariantList QGroupWalletHealthCheck::healthStatuses() const {
     // Guard dashBoardPtr() — it can return null after QWalletManagement::clear() if
     // this object is kept alive only by QGroupDashboard::m_healthRef while mActivedWallets
     // has already been cleared.  Dereferencing a null shared pointer crashes unconditionally.
+    QString walletName = walletInfo() ? walletInfo()->walletName() : "";
+    DBG_INFO << "walletName:" << walletName << "count:" << m_healthStatuses;
     auto board = dashBoardPtr();
-    if (!board) return {};
+    if (!board)
+        return {};
     if (qUtils::strCompare(board->myRole(), "FACILITATOR_ADMIN")) {
         return m_healthStatuses.toVariantList();
     } else {
@@ -395,18 +406,44 @@ QVariantList QGroupWalletHealthCheck::healthStatuses() const {
     }
 }
 
+QVariantList QGroupWalletHealthCheck::claimKeys() const {
+    if (!dashBoardPtr())
+        return {};
+    QJsonArray list;
+    QSet<QString> xfps;
+    for (auto js : m_healthStatuses) {
+        QJsonObject obj = js.toObject();
+        QJsonObject keyinfo = obj["keyinfo"].toObject();
+        QString xfp = obj["xfp"].toString();
+        if (keyinfo["type"].toString() == "SERVER" || xfps.contains(xfp))
+            continue;
+        list.append(js);
+        xfps.insert(xfp);
+    }
+    return list.toVariantList();
+}
+
 QVariant QGroupWalletHealthCheck::aKeyStatus() const {
     if (auto dashboard = dashBoardPtr()) {
+        // Always read reminder directly from m_reminders so that UI reflects
+        // the latest data from GetKeyHealthReminder() without waiting for
+        // GetStatuses() to complete and embed it into m_healthStatuses.
+        auto reminder = GetReminder(m_keyXfp);
         for (auto status : m_healthStatuses) {
-            if (status.toObject()["xfp"].toString() == m_keyXfp) {
-                return status;
+            QJsonObject statusObj = status.toObject();
+            if (statusObj["xfp"].toString() == m_keyXfp) {
+                if (reminder.isEmpty()) {
+                    statusObj["reminder"] = {};
+                } else {
+                    statusObj["reminder"] = reminder;
+                }
+                return QVariant::fromValue(statusObj);
             }
         }
         QJsonObject obj;
         obj["xfp"] = m_keyXfp;
         obj["lastState"] = "NotCheckedYet";
         obj["keyinfo"] = dashboard->GetSigner(m_keyXfp);
-        auto reminder = GetReminder(m_keyXfp);
         if (reminder.isEmpty()) {
             obj["reminder"] = {};
         } else {
@@ -483,6 +520,7 @@ bool QGroupWalletHealthCheck::HealthCheckAddReminderClicked(const QVariant &msg)
             DBG_INFO << xfp;
             xfps.clear();
             xfps.append(xfp);
+            setEditReminder(GetReminder(xfp).value("frequency").toString());
             dashboard->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_FREQUENCY_REPEAT);
         } else if (type == "health-check-add-reminders-no-reminder") {
             if (DeleteKeyHealthReminder(xfps)) {
@@ -540,4 +578,20 @@ bool QGroupWalletHealthCheck::currentReminderState() {
         }
     }
     return false;
+}
+
+void QGroupWalletHealthCheck::refreshKeyInfo() {
+    if (m_healthStatuses.isEmpty())
+        return;
+    auto board = dashBoardPtr();
+    if (!board)
+        return;
+    QJsonArray updated;
+    for (const auto &item : m_healthStatuses) {
+        QJsonObject status = item.toObject();
+        status["keyinfo"] = board->GetSigner(status["xfp"].toString());
+        updated.append(status);
+    }
+    m_healthStatuses = updated;
+    emit healthStatusesChanged();
 }

@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import QtQuick.Layouts 1.3
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
+import QtQuick.Layouts
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
 import DataPool 1.0
+import Features.Home.ViewModels 1.0
 import "../../Components/customizes"
 import "../../Components/origins"
 import "../../Components/customizes/Texts"
@@ -36,6 +37,25 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: homeroot
+
+    function hasBlockingPopup() {
+        return displayAddressBusybox.opened
+                || _info1.opened
+                || _info2.opened
+                || _confirm.opened
+                || syncProgressBox.opened
+                || chatHistorySandbox.opened
+    }
+
+    function tryOpenHomeReminder() {
+        if (isOnTop
+                && HomeReminderViewModel.reminderId.length > 0
+                && !homeReminderPopup.visible
+                && !hasBlockingPopup()) {
+            homeReminderPopup.open()
+        }
+    }
+
     Component {
         id: step1
         QHomeInitialStep1 {
@@ -139,10 +159,9 @@ QScreen {
                     spacing: 8
                     QHomeManagerWallets {
                         id: walletmanagerlst
-                        height: parent.height/2
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        onAskDeny: {
+                        Layout.fillHeight: true  // chia đều phần còn lại với Keys section
+                        onAskDeny: (deny) => {
                             _confirm.data = deny
                             _confirm.contentText = STR.STR_QML_963
                             _confirm.open()
@@ -150,9 +169,8 @@ QScreen {
                     }
                     QHomeManagerSigners {
                         id: mastersignerlist
-                        height: parent.height/2
                         Layout.fillWidth: true
-                        Layout.preferredHeight: (parent.height - 150)/2
+                        Layout.fillHeight: true  // chia đều phần còn lại với Wallets section
                     }
                     QHomeFreeRate {
                         Layout.fillWidth: true
@@ -200,6 +218,7 @@ QScreen {
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape
+        onClosed: homeroot.tryOpenHomeReminder()
         background: Item{}
         property string addrToVerify: ""
         Rectangle {
@@ -287,6 +306,7 @@ QScreen {
         id:_info1
         title: STR.STR_QML_339
         contentText: STR.STR_QML_1048
+        onClosed: homeroot.tryOpenHomeReminder()
     }
 
     QPopupInfoTwoButtons {
@@ -301,16 +321,64 @@ QScreen {
                 _content.signalChangeDate()
             }
         ]
+        onClosed: homeroot.tryOpenHomeReminder()
     }
 
-     Component.onCompleted: {
-         if (ClientController.isNunchukLoggedIn === false) {
+    QPopupHomeReminder {
+        id: homeReminderPopup
+        title: HomeReminderViewModel.title
+        description: HomeReminderViewModel.description
+        imageUrl: HomeReminderViewModel.imageUrl
+        actions: HomeReminderViewModel.actions
+        property string presentedReminderId: ""
+        property string closingReminderId: ""
+
+        onOpened: {
+            presentedReminderId = HomeReminderViewModel.reminderId
+            HomeReminderViewModel.markShown()
+        }
+        onAboutToHide: closingReminderId = presentedReminderId
+        onClosed: {
+            HomeReminderViewModel.dismiss(closingReminderId)
+            presentedReminderId = ""
+            closingReminderId = ""
+            homeroot.tryOpenHomeReminder()
+        }
+        onActionTriggered: (action) => HomeReminderViewModel.triggerAction(action)
+    }
+
+    Connections {
+        target: HomeReminderViewModel
+
+        function onReminderReady() {
+            homeroot.tryOpenHomeReminder()
+        }
+
+        function onReminderChanged() {
+            if (HomeReminderViewModel.reminderId.length === 0 && homeReminderPopup.visible) {
+                homeReminderPopup.close()
+            }
+        }
+    }
+
+    onIsOnTopChanged: {
+        if (isOnTop) {
+            HomeReminderViewModel.fetch()
+        } else if (homeReminderPopup.visible) {
+            homeReminderPopup.close()
+        }
+    }
+
+    Component.onCompleted: {
+        if (ClientController.isNunchukLoggedIn === false) {
             if (AppSetting.isFirstTimeOnboarding === false) {
                 OnBoarding.screenFlow = "onboarding"
                 QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+                return
             }
-         }
-     }
+        }
+        HomeReminderViewModel.fetch()
+    }
 
     QConfirmYesNoPopup{
         id:_confirm
@@ -321,15 +389,16 @@ QScreen {
             close()
             QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, data)
         }
+        onClosed: homeroot.tryOpenHomeReminder()
     }
 
     /*=========================================SYNC=========================================*/
     Connections {
         target: AppModel
-        onOpenPromtNunchukSync: {
+        function onOpenPromtNunchukSync() {
             syncProgressBox.open()
         }
-        onClosePromtNunchukSync: {
+        function onClosePromtNunchukSync() {
             syncProgressBox.close()
         }
     }
@@ -372,6 +441,7 @@ QScreen {
         onClosed: {
             boxmask.sourceComponent = null
             timer4s.stop()
+            homeroot.tryOpenHomeReminder()
         }
         Timer {
             id: timer4s
@@ -473,5 +543,6 @@ QScreen {
 
     QPopupKeepGroupChatHistorySandBox {
         id: chatHistorySandbox
+        onClosed: homeroot.tryOpenHomeReminder()
     }
 }

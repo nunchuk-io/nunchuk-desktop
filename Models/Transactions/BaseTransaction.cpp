@@ -23,13 +23,64 @@
 #include "Chats/matrixbrigde.h"
 #include "Models/TransactionModel.h"
 #include "Premiums/QGroupDashboard.h"
+#include "QAppEngine/QEventProcessor/Common/WorkerThread.h"
 #include "QOutlog.h"
 #include "QtGui/qclipboard.h"
 #include "Servers/Byzantine.h"
 #include "bridgeifaces.h"
+#include "core/common/resources/AppStrings.h"
 #include "qUtils.h"
+#include <QDateTime>
+#include <QPointer>
 #include <QQmlEngine>
+#include <QThread>
+#include <array>
 #include <nunchukmatrix.h>
+
+namespace {
+constexpr int GROUP_STATE_REFRESH_MAX_REQUESTS = 30;
+constexpr qint64 GROUP_STATE_REFRESH_WINDOW_MS = 120000;
+constexpr int GROUP_STATE_REFRESH_ACTIVE_FAST_MS = 2000;
+constexpr int GROUP_STATE_REFRESH_ACTIVE_SLOW_MS = 5000;
+constexpr int GROUP_STATE_REFRESH_MAX_DELAY_CHUNK_MS = 30000;
+constexpr int GROUP_STATE_REFRESH_FINAL_SYNC_GRACE_MS = 3000;
+constexpr std::array<int, 4> GROUP_STATE_REFRESH_RETRY_MS{750, 1500, 3000, 5000};
+
+struct GroupTransactionStateRefreshResult {
+    bool success{false};
+    nunchuk::GroupTransactionStatus status{nunchuk::GroupTransactionStatus::UNKNOWN};
+    QString message;
+    qint64 cosignAt{0};
+};
+
+bool isGroupTransactionStateOneShotEligible(int status) {
+    return status == static_cast<int>(nunchuk::TransactionStatus::PENDING_SIGNATURES) ||
+           status == static_cast<int>(nunchuk::TransactionStatus::PENDING_NONCE);
+}
+
+bool isGroupTransactionStateRefreshEligible(int status) {
+    return isGroupTransactionStateOneShotEligible(status);
+}
+
+bool groupTransactionStateMessage(nunchuk::GroupTransactionStatus status,
+                                  const QString &backendMessage,
+                                  qint64 cosignAt,
+                                  QString &displayMessage) {
+    if (status == nunchuk::GroupTransactionStatus::COSIGNING) {
+        displayMessage = backendMessage.isEmpty() ? Strings.STR_QML_1002() : backendMessage;
+        return true;
+    }
+    if (status == nunchuk::GroupTransactionStatus::BLOCKED) {
+        displayMessage = backendMessage;
+        return true;
+    }
+    if (status == nunchuk::GroupTransactionStatus::PENDING_DELAY) {
+        displayMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(cosignAt).toString("hh:mm AP MMM d"));
+        return true;
+    }
+    return false;
+}
+} // namespace
 
 Destination::Destination() : address_(""), amount_(0) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -201,12 +252,11 @@ BaseTransaction::BaseTransaction(const nunchuk::Transaction &tx)
     : m_destinations(QDestinationListModelPtr(new DestinationListModel())), m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
       m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))), m_change(QDestinationPtr(new Destination())), m_transaction(tx), m_walletId(""),
       m_roomId(""), m_initEventId(""), m_createByMe(true), m_serverKeyMessage("") {
-    QMetaObject::invokeMethod(this, [this, tx]{
-        setNunchukTransaction(tx);
-    }, Qt::DirectConnection);
+    QMetaObject::invokeMethod(this, [this, tx] { setNunchukTransaction(tx); }, Qt::DirectConnection);
 }
 
 BaseTransaction::~BaseTransaction() {
+    stopGroupTransactionStateRefresh();
     m_destinations.clear();
     m_keysets.clear();
     m_signers.clear();
@@ -477,6 +527,10 @@ void BaseTransaction::setIsClaimTx(bool is_claim_tx) {
     m_isClaimTx = is_claim_tx;
 }
 
+void BaseTransaction::setSignerWallet(const QWalletPtr &wallet) {
+    m_signerWallet = wallet;
+}
+
 QUTXOListModel *BaseTransaction::inputCoins() {
     if (!m_inputCoins) {
         m_inputCoins = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
@@ -673,7 +727,7 @@ QString BaseTransaction::blocktimeDisplay() const {
     if (0 >= m_transaction.get_blocktime()) {
         return "--/--/----"; // There is no time
     } else {
-        return QDateTime::fromTime_t(m_transaction.get_blocktime()).toString("MM/dd/yyyy hh:mm AP");
+        return QDateTime::fromMSecsSinceEpoch(m_transaction.get_blocktime()).toString("MM/dd/yyyy hh:mm AP");
     }
 }
 
@@ -693,12 +747,17 @@ void BaseTransaction::setWalletId(const QString &walletId) {
 }
 
 SingleSignerListModel *BaseTransaction::singleSignersAssigned() {
-    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
-    if (!qUtils::strCompare(walletId(), wallet ? wallet->walletId() : "")) {
-        if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
-            wallet = AppModel::instance()->walletInfoPtr();
-        } else {
-            wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
+    QWalletPtr wallet;
+    if (m_signerWallet) {
+        wallet = m_signerWallet;
+    } else {
+        wallet = AppModel::instance()->walletInfoPtr();
+        if (!qUtils::strCompare(walletId(), wallet ? wallet->walletId() : "")) {
+            if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
+                wallet = AppModel::instance()->walletInfoPtr();
+            } else {
+                wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
+            }
         }
     }
     if (wallet) {
@@ -813,7 +872,7 @@ SingleSignerListModel *BaseTransaction::allFinalSigners() {
 void BaseTransaction::updateSignaturesForDummyTx() {
     if (m_signers.isNull())
         return;
-    DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
+    DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount() << dummyXfp();
     if (!m_txJson.isEmpty() || isDummyTx()) { // Use for dummy transaction
         if (!m_txJson.isEmpty()) {
             QJsonArray signatures = m_txJson["signatures"].toArray();
@@ -823,7 +882,7 @@ void BaseTransaction::updateSignaturesForDummyTx() {
                 m_signers.data()->updateSignatures(xfp, true, signature);
             }
         } else if (m_signatures.size() > 0) {
-            for (auto xfp : m_signatures.uniqueKeys()) {
+            for (auto xfp : m_signatures.keys()) {
                 QString signature = m_signatures.value(xfp);
                 m_signers.data()->updateSignatures(xfp, true, signature);
             }
@@ -967,6 +1026,9 @@ nunchuk::Transaction BaseTransaction::nunchukTransaction() const {
 
 void BaseTransaction::setNunchukTransaction(const nunchuk::Transaction &tx) {
     m_transaction = tx;
+    if (!isGroupTransactionStateRefreshEligible(status())) {
+        stopGroupTransactionStateRefresh();
+    }
     createDestinationList();
     if (!isDummyTx()) {
         createGroupTransactionState();
@@ -1026,26 +1088,23 @@ void BaseTransaction::setServerKeyMessage(const QJsonObject &data) {
             QString message = spending_limit_reached.value("message").toString();
             if (!message.isEmpty()) {
                 m_serverKeyMessage = message;
-            }
-            else if (time != 0) {
+            } else if (time != 0) {
                 m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm AP MMM d"));
             }
-        }
-        else if (time != 0) {
+        } else if (time != 0) {
             m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm AP MMM d"));
         }
         bool is_cosigning = data.contains("is_cosigning") ? data.value("is_cosigning").toBool() : false;
         setIsCosigning(is_cosigning);
         emit nunchukTransactionChanged();
-    }
-    else {
+    } else {
         DBG_INFO << "FIXME Hide is_cosigning" << m_is_cosigning << m_serverKeyMessage;
         setIsCosigning(false);
     }
 }
 
 void BaseTransaction::setServerKeyMessage(const QString &data) {
-    if(data != m_serverKeyMessage){
+    if (data != m_serverKeyMessage) {
         m_serverKeyMessage = data;
         emit nunchukTransactionChanged();
     }
@@ -1122,20 +1181,12 @@ void BaseTransaction::refreshScanDevices() {
     emit nunchukTransactionChanged();
 }
 
-QString BaseTransaction::groupTransactionState()
-{
+QString BaseTransaction::groupTransactionState() {
     return m_platformKeyMessage;
 }
 
 void BaseTransaction::createGroupTransactionState() {
-    // Reset up front (not after the if-block): previously this line ran
-    // unconditionally at the end of the function and wiped out whatever was
-    // just computed below, so the cosigning/blocked message and the
-    // "Co-sign at ..." countdown never actually reached the UI.
-    m_platformKeyMessage = "";
-
-    const bool isPending = (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES ||
-                            status() == (int)nunchuk::TransactionStatus::PENDING_NONCE);
+    const bool isPending = isGroupTransactionStateOneShotEligible(status());
     // GetGroupTransactionState() performs a synchronous HTTP call (see
     // GroupService::GetGroupTransactionState). This function is invoked for
     // every transaction built via BaseTransaction(tx)/setNunchukTransaction()
@@ -1147,24 +1198,290 @@ void BaseTransaction::createGroupTransactionState() {
     // actually the transaction currently open in that screen; AppModel::
     // setTransactionInfo() re-invokes this once for whichever transaction
     // becomes current, so freshness there is preserved.
-    const bool isCurrentlyViewed = AppModel::instance()->transactionInfo() &&
-        qUtils::strCompare(txid(), AppModel::instance()->transactionInfo()->txid());
+    const bool isCurrentlyViewed = AppModel::instance()->transactionInfo() == this;
 
-    if (isPending && isCurrentlyViewed)
-    {
-        QWarningMessage msg;
-        nunchuk::GroupTransactionState group_state = bridge::GetGroupTransactionState(walletId(), txid(), msg);
-        if(msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
-            const auto group_status = group_state.get_status();
-            DBG_INFO << "Group Transaction State: " << static_cast<int>(group_status);
-            if(group_status == nunchuk::GroupTransactionStatus::COSIGNING || group_status == nunchuk::GroupTransactionStatus::BLOCKED){
-                m_platformKeyMessage = QString::fromStdString(group_state.get_message());
-            }
-            else if(group_status == nunchuk::GroupTransactionStatus::PENDING_DELAY){
-                time_t co_signing_at = group_state.get_cosign_at();
-                QString co_signing_at_str = QDateTime::fromTime_t(co_signing_at).toString("hh:mm AP MMM d");
-                m_platformKeyMessage = QString("Co-sign at %1").arg(co_signing_at_str);
-            }
+    if (!isPending || !isCurrentlyViewed) {
+        m_platformKeyMessage.clear();
+        return;
+    }
+
+    QWarningMessage msg;
+    nunchuk::GroupTransactionState groupState = bridge::GetGroupTransactionState(walletId(), txid(), msg);
+    if (msg.type() == static_cast<int>(EWARNING::WarningType::NONE_MSG)) {
+        const auto groupStatus = groupState.get_status();
+        DBG_INFO << "Group Transaction State: " << static_cast<int>(groupStatus);
+        QString displayMessage;
+        if (groupTransactionStateMessage(groupStatus,
+                                         QString::fromStdString(groupState.get_message()),
+                                         groupState.get_cosign_at(),
+                                         displayMessage)) {
+            m_platformKeyMessage = displayMessage;
+        } else {
+            m_platformKeyMessage.clear();
         }
     }
+}
+
+void BaseTransaction::startGroupTransactionStateRefresh() {
+    startGroupTransactionStateRefresh(GroupTransactionStateRefreshContext{});
+}
+
+void BaseTransaction::startGroupTransactionStateRefresh(const GroupTransactionStateRefreshContext &context) {
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(
+            this,
+            [this, context]() { startGroupTransactionStateRefresh(context); },
+            Qt::QueuedConnection);
+        return;
+    }
+
+    const QString walletIdSnapshot = walletId();
+    const QString txidSnapshot = txid();
+    if (!canRefreshGroupTransactionState(walletIdSnapshot, txidSnapshot)) {
+        return;
+    }
+
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (context.deadline > 0 && context.deadline <= now) {
+        return;
+    }
+    if (m_platformKeyMessage.isEmpty() && !context.message.isEmpty()) {
+        m_platformKeyMessage = context.message;
+    }
+
+    const quint64 generation = ++m_groupTransactionRefreshGeneration;
+    ++m_groupTransactionRefreshTimerToken;
+    m_groupTransactionRefreshRequestCount = context.requestCount;
+    m_groupTransactionRefreshFailureCount = context.failureCount;
+    m_groupTransactionRefreshActivePollCount = context.activePollCount;
+    m_groupTransactionRefreshLastStatus = context.lastStatus;
+    m_groupTransactionRefreshDeadline = context.deadline > 0 ? context.deadline : now + GROUP_STATE_REFRESH_WINDOW_MS;
+    m_groupTransactionRefreshCosignAt = context.cosignAt;
+    m_groupTransactionRefreshObservedState = context.observedState;
+    m_groupTransactionRefreshSyncRequested = context.syncRequested;
+    const int initialDelayMs = context.observedState && context.syncRequested && context.failureCount == 1
+                                   ? GROUP_STATE_REFRESH_FINAL_SYNC_GRACE_MS
+                                   : 0;
+    scheduleGroupTransactionStateRefresh(generation, initialDelayMs);
+}
+
+BaseTransaction::GroupTransactionStateRefreshContext BaseTransaction::groupTransactionStateRefreshContext() const {
+    GroupTransactionStateRefreshContext context;
+    if (m_groupTransactionRefreshDeadline <= QDateTime::currentMSecsSinceEpoch()) {
+        return context;
+    }
+    context.deadline = m_groupTransactionRefreshDeadline;
+    context.cosignAt = m_groupTransactionRefreshCosignAt;
+    context.lastStatus = m_groupTransactionRefreshLastStatus;
+    context.requestCount = m_groupTransactionRefreshRequestCount;
+    context.failureCount = m_groupTransactionRefreshFailureCount;
+    context.activePollCount = m_groupTransactionRefreshActivePollCount;
+    context.message = m_platformKeyMessage;
+    context.observedState = m_groupTransactionRefreshObservedState;
+    context.syncRequested = m_groupTransactionRefreshSyncRequested;
+    return context;
+}
+
+bool BaseTransaction::canRefreshGroupTransactionState(const QString &walletIdSnapshot, const QString &txidSnapshot) const {
+    const auto currentTransaction = AppModel::instance()->transactionInfo();
+    return currentTransaction == this &&
+           qUtils::strCompare(walletId(), walletIdSnapshot) &&
+           qUtils::strCompare(txid(), txidSnapshot) &&
+           isGroupTransactionStateRefreshEligible(status());
+}
+
+void BaseTransaction::scheduleGroupTransactionStateRefresh(quint64 generation, int delayMs) {
+    if (generation != m_groupTransactionRefreshGeneration || m_groupTransactionRefreshDeadline == 0) {
+        return;
+    }
+
+    const quint64 timerToken = ++m_groupTransactionRefreshTimerToken;
+    QTimer::singleShot(qMax(0, delayMs), this, [this, generation, timerToken]() {
+        if (generation != m_groupTransactionRefreshGeneration ||
+            timerToken != m_groupTransactionRefreshTimerToken ||
+            m_groupTransactionRefreshDeadline == 0) {
+            return;
+        }
+
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if (now >= m_groupTransactionRefreshDeadline ||
+            m_groupTransactionRefreshRequestCount >= GROUP_STATE_REFRESH_MAX_REQUESTS) {
+            finishGroupTransactionStateRefresh(generation);
+            return;
+        }
+
+        const QString walletIdSnapshot = walletId();
+        const QString txidSnapshot = txid();
+        if (!canRefreshGroupTransactionState(walletIdSnapshot, txidSnapshot)) {
+            stopGroupTransactionStateRefresh();
+            return;
+        }
+
+        if (m_groupTransactionRefreshInFlight) {
+            scheduleGroupTransactionStateRefresh(generation, 250);
+            return;
+        }
+        fetchGroupTransactionState(generation);
+    });
+}
+
+void BaseTransaction::fetchGroupTransactionState(quint64 generation) {
+    const QString walletIdSnapshot = walletId();
+    const QString txidSnapshot = txid();
+    if (!canRefreshGroupTransactionState(walletIdSnapshot, txidSnapshot)) {
+        stopGroupTransactionStateRefresh();
+        return;
+    }
+
+    m_groupTransactionRefreshInFlight = true;
+    m_groupTransactionRefreshInFlightGeneration = generation;
+    ++m_groupTransactionRefreshRequestCount;
+    QPointer<BaseTransaction> guard(this);
+
+    runInThread(
+        this,
+        [walletIdSnapshot, txidSnapshot]() -> GroupTransactionStateRefreshResult {
+            GroupTransactionStateRefreshResult result;
+            try {
+                QWarningMessage msg;
+                const auto state = bridge::GetGroupTransactionState(walletIdSnapshot, txidSnapshot, msg);
+                result.success = msg.type() == static_cast<int>(EWARNING::WarningType::NONE_MSG);
+                if (result.success) {
+                    result.status = state.get_status();
+                    result.message = QString::fromStdString(state.get_message());
+                    result.cosignAt = state.get_cosign_at();
+                }
+            } catch (const std::exception &exception) {
+                DBG_ERROR << "GetGroupTransactionState failed:" << exception.what();
+            } catch (...) {
+                DBG_ERROR << "GetGroupTransactionState failed with an unknown exception";
+            }
+            return result;
+        },
+        [guard, generation, walletIdSnapshot, txidSnapshot](GroupTransactionStateRefreshResult result) {
+            if (!guard) {
+                return;
+            }
+            guard->handleGroupTransactionStateResult(generation,
+                                                     walletIdSnapshot,
+                                                     txidSnapshot,
+                                                     result.success,
+                                                     static_cast<int>(result.status),
+                                                     result.message,
+                                                     result.cosignAt);
+        });
+}
+
+void BaseTransaction::handleGroupTransactionStateResult(quint64 generation,
+                                                        const QString &walletIdSnapshot,
+                                                        const QString &txidSnapshot,
+                                                        bool success,
+                                                        int groupStatus,
+                                                        const QString &message,
+                                                        qint64 cosignAt) {
+    if (m_groupTransactionRefreshInFlightGeneration == generation) {
+        m_groupTransactionRefreshInFlight = false;
+    }
+    if (generation != m_groupTransactionRefreshGeneration ||
+        !canRefreshGroupTransactionState(walletIdSnapshot, txidSnapshot)) {
+        return;
+    }
+
+    const auto status = static_cast<nunchuk::GroupTransactionStatus>(groupStatus);
+    if (!success || status == nunchuk::GroupTransactionStatus::UNKNOWN) {
+        ++m_groupTransactionRefreshFailureCount;
+        if (success && m_groupTransactionRefreshObservedState) {
+            requestGroupTransactionFinalSync();
+            if (m_groupTransactionRefreshSyncRequested && m_groupTransactionRefreshFailureCount == 1) {
+                scheduleGroupTransactionStateRefresh(generation, GROUP_STATE_REFRESH_FINAL_SYNC_GRACE_MS);
+            } else {
+                if (!m_platformKeyMessage.isEmpty()) {
+                    m_platformKeyMessage.clear();
+                    emit nunchukTransactionChanged();
+                }
+                stopGroupTransactionStateRefresh();
+            }
+            return;
+        }
+
+        const int retryIndex = m_groupTransactionRefreshFailureCount - 1;
+        if (retryIndex >= 0 && retryIndex < static_cast<int>(GROUP_STATE_REFRESH_RETRY_MS.size())) {
+            scheduleGroupTransactionStateRefresh(generation, GROUP_STATE_REFRESH_RETRY_MS.at(retryIndex));
+        } else if (m_groupTransactionRefreshRequestCount < GROUP_STATE_REFRESH_MAX_REQUESTS) {
+            scheduleGroupTransactionStateRefresh(generation, GROUP_STATE_REFRESH_RETRY_MS.back());
+        } else {
+            finishGroupTransactionStateRefresh(generation);
+        }
+        return;
+    }
+
+    m_groupTransactionRefreshFailureCount = 0;
+    m_groupTransactionRefreshObservedState = true;
+    m_groupTransactionRefreshLastStatus = groupStatus;
+    m_groupTransactionRefreshCosignAt = cosignAt;
+
+    QString displayMessage;
+    if (groupTransactionStateMessage(status, message, cosignAt, displayMessage) &&
+        displayMessage != m_platformKeyMessage) {
+        m_platformKeyMessage = displayMessage;
+        emit nunchukTransactionChanged();
+    }
+
+    if (status == nunchuk::GroupTransactionStatus::BLOCKED) {
+        stopGroupTransactionStateRefresh();
+        return;
+    }
+
+    ++m_groupTransactionRefreshActivePollCount;
+    if (status == nunchuk::GroupTransactionStatus::PENDING_DELAY &&
+        cosignAt > QDateTime::currentMSecsSinceEpoch()) {
+        const qint64 untilCosign = cosignAt - QDateTime::currentMSecsSinceEpoch() + 1000;
+        scheduleGroupTransactionStateRefresh(
+            generation,
+            static_cast<int>(qBound<qint64>(qint64{1000},
+                                            untilCosign,
+                                            qint64{GROUP_STATE_REFRESH_MAX_DELAY_CHUNK_MS})));
+        return;
+    }
+
+    const int nextDelay = m_groupTransactionRefreshActivePollCount <= 5
+                              ? GROUP_STATE_REFRESH_ACTIVE_FAST_MS
+                              : GROUP_STATE_REFRESH_ACTIVE_SLOW_MS;
+    scheduleGroupTransactionStateRefresh(generation, nextDelay);
+}
+
+void BaseTransaction::finishGroupTransactionStateRefresh(quint64 generation) {
+    if (generation != m_groupTransactionRefreshGeneration) {
+        return;
+    }
+
+    const auto lastStatus = static_cast<nunchuk::GroupTransactionStatus>(m_groupTransactionRefreshLastStatus);
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (m_groupTransactionRefreshObservedState &&
+        (lastStatus == nunchuk::GroupTransactionStatus::COSIGNING ||
+         (lastStatus == nunchuk::GroupTransactionStatus::PENDING_DELAY && m_groupTransactionRefreshCosignAt <= now))) {
+        requestGroupTransactionFinalSync();
+    }
+    stopGroupTransactionStateRefresh();
+}
+
+void BaseTransaction::stopGroupTransactionStateRefresh() {
+    ++m_groupTransactionRefreshGeneration;
+    ++m_groupTransactionRefreshTimerToken;
+    m_groupTransactionRefreshRequestCount = 0;
+    m_groupTransactionRefreshFailureCount = 0;
+    m_groupTransactionRefreshActivePollCount = 0;
+    m_groupTransactionRefreshLastStatus = static_cast<int>(nunchuk::GroupTransactionStatus::UNKNOWN);
+    m_groupTransactionRefreshDeadline = 0;
+    m_groupTransactionRefreshCosignAt = 0;
+    m_groupTransactionRefreshObservedState = false;
+    m_groupTransactionRefreshSyncRequested = false;
+}
+
+void BaseTransaction::requestGroupTransactionFinalSync() {
+    if (m_groupTransactionRefreshSyncRequested) {
+        return;
+    }
+    m_groupTransactionRefreshSyncRequested = true;
+    AppModel::instance()->requestSyncWalletDb(walletId());
 }

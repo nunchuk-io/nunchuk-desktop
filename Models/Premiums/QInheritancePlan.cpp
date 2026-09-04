@@ -146,9 +146,10 @@ QString QInheritancePlan::formatDateTime() const {
 }
 
 QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data) {
-    long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble() / 1000);
-    if (activation_time_milis > 0) {
-        data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).toString(formatDateTime());
+    // API field is milliseconds; divide by 1000 → seconds, then use fromSecsSinceEpoch.
+    long int activation_time_secs = static_cast<long int>(data.value("activation_time_milis").toDouble() / 1000);
+    if (activation_time_secs > 0) {
+        data["activation_date"] = QDateTime::fromSecsSinceEpoch(activation_time_secs).toString(formatDateTime());
     } else {
         data["activation_date"] = "";
     }
@@ -251,10 +252,11 @@ QJsonObject QInheritancePlan::JsBody() {
     body["notification_emails"] = arrays;
     body["notify_today"] = m_planInfo["buffer_period"].toObject()["enabled"].toBool();
     QString activation_date = m_planInfo["activation_date"].toString();
-    long int t = qUtils::GetTimeSecond(activation_date);
+    long int t = qUtils::GetTimeSecond(activation_date); // seconds
     double activation_time_milis = m_planInfoCurrent["activation_time_milis"].toDouble();
-    long int old_activeTime = static_cast<long int>(activation_time_milis / 1000);
-    if (QDateTime::fromTime_t(old_activeTime).date() == QDateTime::fromTime_t(t).date()) {
+    long int old_activeTime = static_cast<long int>(activation_time_milis / 1000); // ms → seconds
+    // Both t and old_activeTime are in seconds — use fromSecsSinceEpoch for correct date display.
+    if (QDateTime::fromSecsSinceEpoch(old_activeTime).date() == QDateTime::fromSecsSinceEpoch(t).date()) {
         body["activation_time_milis"] = activation_time_milis;
     } else {
         body["activation_time_milis"] = (double)t * 1000;
@@ -383,10 +385,11 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
         return false;
     }
     QString activation_date = m_planInfo["activation_date"].toString();
-    long int activeTime = qUtils::GetTimeSecond(activation_date);
-    long int old_activeTime = static_cast<long int>(m_planInfoCurrent["activation_time_milis"].toDouble() / 1000);
-    long int currentTime = qUtils::GetCurrentTimeSecond();
-    if (QDateTime::fromTime_t(old_activeTime).date() != QDateTime::fromTime_t(activeTime).date() && activeTime < currentTime) {
+    long int activeTime = qUtils::GetTimeSecond(activation_date);                                                  // seconds
+    long int old_activeTime = static_cast<long int>(m_planInfoCurrent["activation_time_milis"].toDouble() / 1000); // ms → seconds
+    long int currentTime = qUtils::GetCurrentTimeSecond();                                                         // seconds
+    // All three values are in seconds — use fromSecsSinceEpoch for correct date comparison.
+    if (!isCancel && QDateTime::fromSecsSinceEpoch(old_activeTime).date() != QDateTime::fromSecsSinceEpoch(activeTime).date() && activeTime < currentTime) {
         AppModel::instance()->showToast(0, STR_CPP_120, EWARNING::WarningType::ERROR_MSG);
         return false;
     }
@@ -579,10 +582,13 @@ void QInheritancePlan::editPlanInfo(const QVariant &info) {
         }
     }
 
-    // activation_date (accept only valid )
+    // activation_date (accept only valid dates)
     if (_new.contains("activation_date")) {
         QString newDate = _new["activation_date"].toString().trimmed();
-        QDate d = QDate::fromString(newDate, formatDateTime());
+        // Qt6 strict mode: QDate::fromString rejects format strings that contain
+        // time specifiers (e.g. "MM/dd/yyyy hh:mm" used for Miniscript wallets).
+        // Use QDateTime::fromString and extract the date — works for both formats.
+        QDate d = QDateTime::fromString(newDate, formatDateTime()).date();
         if (d.isValid()) {
             QString oldDate = original.value("activation_date").toString();
             if (newDate != oldDate) {

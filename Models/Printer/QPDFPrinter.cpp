@@ -20,6 +20,8 @@
 #include <QQmlEngine>
 #include <QQuickItemGrabResult>
 #include <QtConcurrent/qtconcurrentrun.h>
+#include <thread>
+#include <chrono>
 #include "QPDFPrinter.h"
 #include "QtGui/qpainter.h"
 #include "QOutlog.h"

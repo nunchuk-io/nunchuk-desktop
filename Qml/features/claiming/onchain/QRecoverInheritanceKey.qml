@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
@@ -31,10 +31,10 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2007
+    label.text: QSTR.STR_QML_2007
     readonly property var optionList: [
-        {id: "hardware-device",     textWidth: 152,     display_name: STR.STR_QML_2010, is_recommended: true},
-        {id: "seed-phrase-backup",  textWidth: 271,     display_name: STR.STR_QML_2011, is_recommended: false},
+        {id: "hardware-device",     textWidth: 152,     display_name: QSTR.STR_QML_2010, is_recommended: true},
+        {id: "seed-phrase-backup",  textWidth: 271,     display_name: QSTR.STR_QML_2011, is_recommended: false},
     ]
     property string key_option: vm.key_option
     content: Item {
@@ -54,7 +54,7 @@ QOnScreenContentTypeA {
                     spacing: 24
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_2008 + "\n\n" + STR.STR_QML_2009
+                        text: QSTR.STR_QML_2008 + "\n\n" + QSTR.STR_QML_2009
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -78,7 +78,7 @@ QOnScreenContentTypeA {
                             fontPixelSize: 16                            
                             fontWeight: btn.selected ? Font.ExtraBold : Font.DemiBold
                             selected: key_option === modelData.id
-                            textBadge: modelData.is_recommended ? STR.STR_QML_879 : ""
+                            textBadge: modelData.is_recommended ? QSTR.STR_QML_879 : ""
                             onButtonClicked: {
                                 vm.key_option = modelData.id
                             }

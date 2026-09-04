@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
@@ -49,7 +49,7 @@ Item {
                 spacing: 12
                 QLato {
                     width: parent.width
-                    text: STR.STR_QML_775
+                    text: QSTR.STR_QML_775
                     font.pixelSize: 20
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignHCenter
@@ -78,7 +78,7 @@ Item {
                 spacing: 16
                 QText {
                     width: 700
-                    text: STR.STR_QML_776
+                    text: QSTR.STR_QML_776
                     color: "#031F2B"
                     font.family: "Montserrat"
                     font.pixelSize: 32
@@ -87,7 +87,7 @@ Item {
                 }
                 QText {
                     width: 343
-                    text: STR.STR_QML_781
+                    text: QSTR.STR_QML_781
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 20
@@ -127,7 +127,7 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 32
                     height: 48
-                    label.text: STR.STR_QML_2105
+                    label.text: QSTR.STR_QML_2105
                     label.font.pixelSize: 16
                     type: eTypeB
                     visible: !vm.isOffClaim
@@ -138,7 +138,7 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 32
                     height: 48
-                    label.text: STR.STR_QML_2236
+                    label.text: QSTR.STR_QML_2236
                     label.font.pixelSize: 16
                     type: eTypeE
                     visible: vm.hasReleaseSchedule && vm.isOffClaim
@@ -149,7 +149,7 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 32
                     height: 48
-                    label.text: STR.STR_QML_1735
+                    label.text: QSTR.STR_QML_1735
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {

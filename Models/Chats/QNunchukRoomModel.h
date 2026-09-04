@@ -22,6 +22,9 @@
 #define QNUNCHUKROOM_H
 
 #include <QObject>
+#include <QSet>
+#include <QElapsedTimer>
+#include <QTimer>
 #include <QRegularExpression>
 #include <QtConcurrent>
 #include <room.h>
@@ -78,6 +81,16 @@ public:
     };
 };
 
+struct NunchukEventBackendResolution
+{
+    bool txReceiveLookupAttempted{false};
+    bool txReceiveHasRoomWallet{false};
+    bool txReceiveTransactionIdAccepted{false};
+    QString txReceiveTransactionId;
+    bool walletLeaveLookupAttempted{false};
+    QString walletLeaveFingerprint;
+};
+
 class QNunchukRoom: public QObject
 {
     Q_OBJECT
@@ -97,7 +110,13 @@ class QNunchukRoom: public QObject
     Q_PROPERTY(int                  unreadCount             READ unreadCount                                    NOTIFY unreadCountChanged)
     Q_PROPERTY(QRoomTransaction*    pinTransaction          READ pinTransaction                                 NOTIFY pinTransactionChanged)
     Q_PROPERTY(QString              roomAvatar              READ roomAvatar                                     NOTIFY usersChanged)
-    Q_PROPERTY(int                  roomType                READ roomType                                       CONSTANT)
+    Q_PROPERTY(int                  roomType                READ roomType                                       NOTIFY roomTypeChanged)
+    Q_PROPERTY(bool                 isAnySupportRoom        READ isAnySupportRoom                               NOTIFY roomTypeChanged)
+    Q_PROPERTY(bool                 canRenameRoom           READ canRenameRoom                                  NOTIFY permissionsChanged)
+    Q_PROPERTY(bool                 canInviteMembers        READ canInviteMembers                               NOTIFY permissionsChanged)
+    Q_PROPERTY(bool                 canKickMembers          READ canKickMembers                                 NOTIFY permissionsChanged)
+    Q_PROPERTY(bool                 roomNameChangeInProgress READ roomNameChangeInProgress                       NOTIFY roomNameChangeInProgressChanged)
+    Q_PROPERTY(QString              localUserId             READ localUserId                                    CONSTANT)
     Q_PROPERTY(QStringList          talkersName             READ talkersName                                    NOTIFY usersChanged)
     Q_PROPERTY(QStringList          talkersAvatar           READ talkersAvatar                                  NOTIFY usersChanged)
     Q_PROPERTY(bool                 isIgnoredCollabWallet   READ isIgnoredCollabWallet                          NOTIFY isIgnoredCollabWalletChanged)
@@ -118,10 +137,16 @@ public:
     bool isServerNoticeRoom() const;
     bool isNunchukSyncRoom() const;
     bool isSupportRoom() const;
+    bool isAnySupportRoom() const;
     bool isDirectChat() const;
     bool isByzantineRoom() const;
     QString byzantineRoomGroupId();
     QString localUserName() const;
+    QString localUserId() const;
+    bool canRenameRoom() const;
+    bool canInviteMembers() const;
+    bool canKickMembers() const;
+    bool roomNameChangeInProgress() const;
     QString id() const;
     QStringList aliases() const;
     QString status() const;
@@ -167,6 +192,9 @@ public:
     Q_INVOKABLE void getMoreContents(const int limit = PAGINATION_NUMBER);
     Q_INVOKABLE void markAllMessagesAsRead();
     Q_INVOKABLE void markFiveMessagesAsRead();
+    Q_INVOKABLE void markMessagesAsRead(const QString& eventId);
+    Q_INVOKABLE void setTyping(bool typing);
+    Q_INVOKABLE bool canKickMember(const QString& memberId) const;
     Q_INVOKABLE void joinAndLeaveWallet();
     Q_INVOKABLE bool leaveWallet(const QString& xfp);
     Q_INVOKABLE bool getXpub(const QString& id);
@@ -198,9 +226,20 @@ public:
     void updateCancelTransaction(const Conversation cons);
     bool isDownloaded() const;
     bool extractNunchukEvent(const QString &matrixType, const QString &init_event_id, const QJsonObject& json, Conversation &cons) ;
+    bool extractNunchukEvent(const QString &matrixType,
+                             const QString &init_event_id,
+                             const QJsonObject &json,
+                             Conversation &cons,
+                             const NunchukEventBackendResolution &resolution);
+    static NunchukEventBackendResolution resolveNunchukEventBackend(
+            const QString &roomId,
+            const QString &matrixType,
+            const QString &eventId,
+            const QJsonObject &json);
     nunchuk::Wallet walletImport() const;
     void setWalletImport(const nunchuk::Wallet &walletImport);
     int roomType();
+    void notifySupportClassificationChanged();
     void synchonizesUserData();
 
     // Message retention
@@ -226,12 +265,30 @@ private:
     nunchuk::Wallet         m_walletImport;
     bool                    m_IsEncrypted;
     qint64                  m_maxLifeTime;
+    QSet<QString>           m_memberOperations;
+    bool                    m_roomNameChangeInProgress {false};
+    bool                    m_localTyping {false};
+    bool                    m_roomSignalsConnected {false};
+    QElapsedTimer           m_typingSentAt;
+    QTimer                  m_typingIdleTimer;
+    QVector<QJsonObject>    m_pendingDecryptedEvents;
 private:
+    void downloadTransactionThreadOnMain(Conversation cons, const QString &roomid);
+    void startGetPendingTxsOnMain();
     bool validatePendingEvent(const QString& txnId);
     bool extractNunchukEvent(const RoomEvent& evt, Conversation &cons) ;
+    bool extractNunchukEventImpl(const QString &matrixType,
+                                 const QString &init_event_id,
+                                 const QJsonObject &json,
+                                 Conversation &cons,
+                                 const NunchukEventBackendResolution *resolution);
     void eventToConversation(const RoomEvent& evt, Conversation &result, Qt::TextFormat format = Qt::RichText);
     void receiveMessage(int fromIndex, int toIndex);
+    void sendTypingState(bool typing);
+    bool applyDecryptedEvent(const QJsonObject& eventJson);
     Conversation createConversation(const RoomEvent& evt);
+    Conversation createConversation(const RoomEvent &evt,
+                                    const NunchukEventBackendResolution *resolution);
     void nunchukConsumeEvent(const RoomEvent& evt);
     void nunchukConsumeSyncEvent(const RoomEvent& evt);
     void nunchukNoticeEvent(const RoomEvent& evt);
@@ -247,8 +304,10 @@ public slots:
     void messageSent(QString txnId, QString eventId);
     void aboutToAddNewMessages(RoomEventsRange events);
     void addedMessages(int fromIndex, int toIndex);
+    void replacedEvent(const Quotient::RoomEvent* newEvent,
+                       const Quotient::RoomEvent* oldEvent);
     void aboutToAddHistoricalMessages(RoomEventsRange events);
-    void unreadMessagesChanged(Quotient::Room* room);
+    void unreadMessagesChanged();
     void typingChanged();
     void roomWalletCreated(const QString &roomId);
     QString postEvent(const QString& eventType, const QJsonObject& content);
@@ -262,6 +321,15 @@ signals:
     void userCountChanged();
     void userNamesChanged();
     void roomNameChanged();
+    void permissionsChanged();
+    void roomNameChangeInProgressChanged();
+    void roomNameChangeSucceeded();
+    void roomNameChangeFailed(QString error);
+    void memberInviteSucceeded(QString memberId);
+    void memberInviteFailed(QString memberId, QString error);
+    void memberKickSucceeded(QString memberId);
+    void memberKickFailed(QString memberId, QString error);
+    void roomTypeChanged();
     void conversationChanged();
     void lasttimestampChanged();
     void usersChanged();
@@ -300,6 +368,7 @@ class QNunchukRoomListModel : public QAbstractListModel
     Q_PROPERTY(QNunchukRoom*    currentRoom     READ currentRoom                            NOTIFY currentRoomChanged)
     Q_PROPERTY(int              totalUnread     READ totalUnread                            NOTIFY totalUnreadChanged)
     Q_PROPERTY(int              count           READ count                                  NOTIFY countChanged)
+    Q_PROPERTY(bool             roomCreationInProgress READ roomCreationInProgress          NOTIFY roomCreationInProgressChanged)
 public:
     QNunchukRoomListModel(Connection *c);
     ~QNunchukRoomListModel();
@@ -337,7 +406,8 @@ public:
         room_wallet_ready,
         room_avatar_url,
         room_users_count,
-        room_is_encrypted
+        room_is_encrypted,
+        room_is_any_support
     };
 
     bool containsRoomId(const QString& id);
@@ -351,12 +421,15 @@ public:
     void forgetRoom(const int index);
     void leaveCurrentRoom();
     void leaveRoom(const int index);
+    void leaveRoomById(const QString &roomId);
     void joinRoom(QString roomAliasOrId);
     void createRoomChat(const QStringList invitees_id, const QString &room_name, QVariant firstMessage = QVariant());
     void createRoomDirectChat(const QString invitee_id, const QString &invitee_name, QVariant firstMessage = QVariant());
     void createRoomByzantineChat(const QStringList invitees_id, const QString &room_name, const QString &group_id, QVariant firstMessage = QVariant());
     void createSupportRoom();
+    bool hasPendingSupportRoomRequest() const;
     bool allHisLoaded();
+    bool roomCreationInProgress() const;
 
     // Room wallets
     QList<QRoomWalletPtr> getRoomWallets() const;
@@ -374,7 +447,20 @@ private:
     QList<QNunchukRoomPtr>  m_data;
     QList<QNunchukRoomPtr>  m_servive;
     QList<QRoomWalletPtr>   m_roomWallets;
-    QTimer                  m_time;
+    quint64                 m_supportRequestId {0};
+    quint64                 m_supportCreateRequestId {0};
+    quint64                 m_supportReconciliationRequestId {0};
+    quint64                 m_supportWatchdogId {0};
+    bool                    m_supportRequestInProgress {false};
+    bool                    m_supportRoomRequestPending {false};
+    QSet<QString>           m_supportRoomsLeaving;
+    QSet<QString>           m_roomsLeaving;
+    QSet<QString>           m_locallyCreatedRoomIds;
+    QSet<QString>           m_byzantineRoomsCreating;
+    bool                    m_roomCreationInProgress {false};
+    bool                    m_roomsHydrated {false};
+    quint64                 m_roomHydrationGeneration {0};
+    quint64                 m_roomOperationGeneration {0};
 
     //Watcher for syncing
     QFutureWatcher<void>    m_watcherSync;
@@ -382,6 +468,28 @@ private:
     bool containsServiceRoom(const QString& id);
     bool containsSyncRoom();
     bool containsSupportRoom(const QString &tagname);
+    quint64 beginSupportRequest();
+    void armSupportRequestWatchdog(quint64 requestId);
+    bool isSupportRequestActive(quint64 requestId) const;
+    bool ensureSupportRequestActive(quint64 requestId, const QString &tagname);
+    void finishSupportRequest(quint64 requestId);
+    void trySupportRoomCandidates(QStringList candidateIds, const QString &tagname,
+                                  const QString &otherTag, quint64 requestId,
+                                  const QString &repairCandidateId = {});
+    void verifySupportRoomCandidate(Quotient::Room *room, const QString &tagname,
+                                    const QString &otherTag, QStringList remainingCandidateIds,
+                                    quint64 requestId, const QString &repairCandidateId);
+    void activateSupportRoom(Quotient::Room *room, const QString &tagname,
+                             quint64 requestId, bool setTagOnServer);
+    void reconcileSupportRoomCreation(const QString &tagname, quint64 requestId,
+                                      int errorCode, const QString &errorString);
+    void doCreateSupportRoom(const QString &tagname, quint64 requestId);
+    void setRoomCreationInProgress(bool inProgress);
+    void trackLocallyCreatedRoom(const QString& roomId);
+    void postInitialMessageWhenStateReady(const QString& roomId, const QVariant& firstMessage,
+                                          quint64 operationGeneration);
+    void leaveSupportRoom(const QNunchukRoomPtr &roomPtr);
+    void resumePendingSupportRoomRequest();
     void synchonizesUserData();
 signals:
     void currentIndexChanged();
@@ -393,6 +501,9 @@ signals:
     void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
     void byzantineRoomRenamed(QString room_id, QString group_id);
+    void roomCreationInProgressChanged();
+    void roomCreationSucceeded(QString roomId);
+    void roomCreationFailed(QString error);
     void refreshRoomList();
 public slots:
     bool hasContact(const QString &id);

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
+import QtQuick
+import QtQuick.Controls
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import Features.Draftwallets.OnChain.ViewModels 1.0
@@ -106,10 +106,10 @@ QOnScreenContentTypeB {
                     anchors.fill: parent
                     contentHeight: _contentColumn.height
                     clip: true
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     Column {
                         id: _contentColumn
-                        width: 346
+                        width: parent.width - 8  // leave room for QScrollBar (8px) — was 346
                         spacing: 4
                         QLato {
                             width: parent.width
@@ -128,7 +128,7 @@ QOnScreenContentTypeB {
                                 id: signers
                                 model: dashInfo.keys
                                 QAddRequestKey {
-                                    width: 346
+                                    width: parent.width  // = _contentColumn.width - 8 = 338
                                     onTapsignerClicked: {
                                         dashInfo.startAddKeyAtIndex(index)
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
@@ -216,10 +216,10 @@ QOnScreenContentTypeB {
                             Component {
                                 id: _blockHeightLock
                                 Rectangle {
-                                    width: 346
+                                    width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
                                     height: 72
                                     radius: 8
-                                    color: "#A7F0BA"                                    
+                                    color: "#A7F0BA"
                                     Row {
                                         anchors {
                                             fill: parent
@@ -278,10 +278,10 @@ QOnScreenContentTypeB {
                             Component {
                                 id: _timeLock
                                 Rectangle {
-                                    width: 346
+                                    width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
                                     height: 72
                                     radius: 8
-                                    color: "#A7F0BA"                                    
+                                    color: "#A7F0BA"
                                     Row {
                                         anchors {
                                             fill: parent

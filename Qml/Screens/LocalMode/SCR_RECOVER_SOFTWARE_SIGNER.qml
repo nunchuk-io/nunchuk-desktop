@@ -17,11 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.1
-import QtQuick.Controls 2.3
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -193,7 +191,7 @@ QScreen {
                             height: suggestionList.visible ? Math.min(sglst.contentHeight, 240): 0
                             model: modelSearch
                             clip: true
-                            ScrollBar.vertical: ScrollBar { active: true }
+                            ScrollBar.vertical: QScrollBar { }
                             delegate: Rectangle {
                                 width: sglst.width
                                 property bool shown: textsuggest.visible
@@ -335,7 +333,7 @@ QScreen {
                     showError: true
                     maxLength: 280
                     input.verticalAlignment: TextInput.AlignTop
-                    onTypingFinished:  {
+                    onTypingFinished: (currentText) => {
                         xprvInput.isValid = true
                         xprvInput.errorText = ""
                     }

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Signers.ViewModels 1.0
 import "../../../Components/origins"
@@ -33,7 +33,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     onCloseClicked: vm.close()
-    label.text: STR.STR_QML_2066
+    label.text: QSTR.STR_QML_2066
     content: Item {
         Row {
             spacing: 36
@@ -57,7 +57,7 @@ QOnScreenContentTypeA {
                     spacing: 0
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_2082
+                        text: QSTR.STR_QML_2082
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -75,8 +75,8 @@ QOnScreenContentTypeA {
                             id: _guide
                             width: parent.width
                             readonly property var content_map: [
-                                {height: 48,  headline:STR.STR_QML_907, content: STR.STR_QML_908 , icon: "qrc:/Images/Images/1.Active.svg" },
-                                {height: 68,  headline:STR.STR_QML_909, content: STR.STR_QML_910 , icon: "qrc:/Images/Images/2.Active.svg" },
+                                {height: 48,  headline:QSTR.STR_QML_907, content: QSTR.STR_QML_908 , icon: "qrc:/Images/Images/1.Active.svg" },
+                                {height: 68,  headline:QSTR.STR_QML_909, content: QSTR.STR_QML_910 , icon: "qrc:/Images/Images/2.Active.svg" },
                             ]
                             model: content_map.length
                             Rectangle {
@@ -132,7 +132,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: 120
         height: 48
-        label.text: STR.STR_QML_1165
+        label.text: QSTR.STR_QML_1165
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {

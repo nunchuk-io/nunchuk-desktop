@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -36,7 +36,7 @@ Column {
     spacing: 8
     QLato {
         width: parent.width
-        text: STR.STR_QML_1817
+        text: QSTR.STR_QML_1817
         font.weight: Font.Bold
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
@@ -48,7 +48,7 @@ Column {
             width: parent.width
             QLato {
                 width: parent.width
-                text: STR.STR_QML_1830
+                text: QSTR.STR_QML_1830
                 font.pixelSize: 12
                 font.weight: Font.Bold
                 horizontalAlignment: Text.AlignLeft
@@ -57,8 +57,8 @@ Column {
             QEditTimelockSelectRadio {
                 width: parent.width
                 height: 62
-                headline: STR.STR_QML_1831
-                description: STR.STR_QML_1832
+                headline: QSTR.STR_QML_1831
+                description: QSTR.STR_QML_1832
                 selected: newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE
                 onButtonClicked: {
                     newWalletInfo.timelockType = ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE
@@ -68,8 +68,8 @@ Column {
             QEditTimelockSelectRadio {
                 width: parent.width
                 height: 94
-                headline: STR.STR_QML_1833
-                description: STR.STR_QML_1834
+                headline: QSTR.STR_QML_1833
+                description: QSTR.STR_QML_1834
                 selected: newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE
                 onButtonClicked: {
                     newWalletInfo.timelockType = ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE
@@ -85,7 +85,7 @@ Column {
             width: parent.width
             QLato {
                 width: parent.width
-                text: STR.STR_QML_1835
+                text: QSTR.STR_QML_1835
                 font.pixelSize: 12
                 font.weight: Font.Bold
                 horizontalAlignment: Text.AlignLeft
@@ -94,8 +94,8 @@ Column {
             QEditTimelockSelectRadio {
                 width: parent.width
                 height: 62
-                headline: STR.STR_QML_1836
-                description: STR.STR_QML_1837
+                headline: QSTR.STR_QML_1836
+                description: QSTR.STR_QML_1837
                 selected: newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.TIME_LOCK
                 onButtonClicked: {
                     newWalletInfo.timeUnit = ScriptNodeHelper.TimelockBased.TIME_LOCK
@@ -104,8 +104,8 @@ Column {
             QEditTimelockSelectRadio {
                 width: parent.width
                 height: 62
-                headline: STR.STR_QML_1838
-                description: STR.STR_QML_1839
+                headline: QSTR.STR_QML_1838
+                description: QSTR.STR_QML_1839
                 selected: newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK
                 onButtonClicked: {
                     newWalletInfo.timeUnit = ScriptNodeHelper.TimelockBased.HEIGHT_LOCK
@@ -144,13 +144,13 @@ Column {
                 // Handle absolute time lock case (if needed)
             } else if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE &&
                        newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
-                AppModel.showToast(0, STR.STR_QML_1887, EWARNING.ERROR_MSG);
+                AppModel.showToast(0, QSTR.STR_QML_1887, EWARNING.ERROR_MSG);
             } else if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE &&
                        newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
-                AppModel.showToast(0, STR.STR_QML_2102, EWARNING.ERROR_MSG);
+                AppModel.showToast(0, QSTR.STR_QML_2102, EWARNING.ERROR_MSG);
             } else if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE &&
                        newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
-                AppModel.showToast(0, STR.STR_QML_1888, EWARNING.ERROR_MSG);
+                AppModel.showToast(0, QSTR.STR_QML_1888, EWARNING.ERROR_MSG);
             }
         }
         return isValid;
@@ -166,7 +166,7 @@ Column {
             spacing: 12
             QLato {
                 width: parent.width
-                text: STR.STR_QML_1840
+                text: QSTR.STR_QML_1840
                 font.pixelSize: 12
                 textFormat: Text.RichText
                 horizontalAlignment: Text.AlignLeft
@@ -216,7 +216,7 @@ Column {
                     height: _input_date.height
                     QTextInputBoxTypeB {
                         id: _input_date
-                        label: STR.STR_QML_1463
+                        label: QSTR.STR_QML_1463
                         labelComponent.textFormat: Text.RichText
                         labelComponent.font.pixelSize: 12
                         boxWidth: parent.width
@@ -267,7 +267,7 @@ Column {
                     height: _input_time.height
                     QTextInputBoxTypeB {
                         id: _input_time
-                        label: STR.STR_QML_1989
+                        label: QSTR.STR_QML_1989
                         labelComponent.textFormat: Text.RichText
                         labelComponent.font.pixelSize: 12
                         boxWidth: parent.width
@@ -323,7 +323,7 @@ Column {
                 spacing: 4
                 QTextInputBoxTypeB {
                     id: _inputblockAbs
-                    label: STR.STR_QML_1841
+                    label: QSTR.STR_QML_1841
                     labelComponent.textFormat: Text.RichText
                     labelComponent.font.pixelSize: 12
                     boxWidth: parent.width
@@ -331,18 +331,18 @@ Column {
                     textInputted: newWalletInfo.timeMini.absoluteBlockheight
                     input.placeholderText: AppModel.blockHeight + 4320
                     isValid: (textInputted !== "") && _inputblockAbs.isValidBlockHeight(_inputblockAbs.textInputted)
-                    errorText: STR.STR_QML_1887
-                    validator: RegExpValidator {
-                        regExp: /^$|^[0-9]+$/
+                    errorText: QSTR.STR_QML_1887
+                    validator: RegularExpressionValidator {
+                        regularExpression: /^$|^[0-9]+$/
                     }
-                    onTypingFinished: {
+                    onTypingFinished: (currentText) => {
                         if(_inputblockAbs.isValidBlockHeight(_inputblockAbs.textInputted)){
                             newWalletInfo.updateTimeMiniscript("absoluteBlockheight", parseInt(_inputblockAbs.textInputted));
                         }
                     }
                     onIsValidChanged: {
                         if(!isValid){
-                            AppModel.showToast(0, STR.STR_QML_1887, EWARNING.ERROR_MSG);
+                            AppModel.showToast(0, QSTR.STR_QML_1887, EWARNING.ERROR_MSG);
                         }
                     }
                     function isValidBlockHeight(input) {
@@ -352,7 +352,7 @@ Column {
                 }
                 QLato {
                     width: parent.width
-                    text: STR.STR_QML_1843.arg(AppModel.blockHeight)
+                    text: QSTR.STR_QML_1843.arg(AppModel.blockHeight)
                     font.pixelSize: 12
                     font.weight: Font.Normal
                     color: "#757575"
@@ -374,7 +374,7 @@ Column {
                 spacing: 1
                 QLato {
                     width: parent.width
-                    text: STR.STR_QML_1840
+                    text: QSTR.STR_QML_1840
                     font.pixelSize: 12
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignLeft
@@ -393,11 +393,10 @@ Column {
                         textInputted: newWalletInfo.timeMini.relativeTimestamp.valueDay
                         input.placeholderText: "90"
                         isValid: textInputted !== "" && input_days.isValidDays(textInputted)
-                        validator: RegExpValidator {
-                            // Regex chỉ cho phép nhập số
-                            regExp: /^[0-9]*$/
+                        validator: RegularExpressionValidator {
+                            regularExpression: /^[0-9]*$/
                         }
-                        onTypingFinished: {
+                        onTypingFinished: (currentText) => {
                             if(input_days.isValidDays(input_days.textInputted)){
                                 var relative_time = {
                                     "valueDay"      : input_days.textInputted,
@@ -409,7 +408,7 @@ Column {
                         }
                         onIsValidChanged: {
                             if(!isValid){
-                                AppModel.showToast(0, STR.STR_QML_2102, EWARNING.ERROR_MSG);
+                                AppModel.showToast(0, QSTR.STR_QML_2102, EWARNING.ERROR_MSG);
                             }
                         }
                         function isValidDays(input) {
@@ -426,10 +425,10 @@ Column {
                         textInputted: newWalletInfo.timeMini.relativeTimestamp.valueHour
                         input.placeholderText: "0"
                         isValid: textInputted !== ""
-                        validator: RegExpValidator {
-                            regExp: /^(0?\d|1\d|2[0-3])$/
+                        validator: RegularExpressionValidator {
+                            regularExpression: /^(0?\d|1\d|2[0-3])$/
                         }
-                        onTypingFinished: {
+                        onTypingFinished: (currentText) => {
                             var relative_time = {
                                 "valueDay"      : input_days.textInputted,
                                 "valueHour"     : input_hours.textInputted,
@@ -447,10 +446,10 @@ Column {
                         textInputted: newWalletInfo.timeMini.relativeTimestamp.valueMinute
                         input.placeholderText: "0"
                         isValid: textInputted !== ""
-                        validator: RegExpValidator {
-                            regExp: /^(0?\d|[1-5]\d)$/
+                        validator: RegularExpressionValidator {
+                            regularExpression: /^(0?\d|[1-5]\d)$/
                         }
-                        onTypingFinished: {
+                        onTypingFinished: (currentText) => {
                             var relative_time = {
                                 "valueDay"      : input_days.textInputted,
                                 "valueHour"     : input_hours.textInputted,
@@ -473,7 +472,7 @@ Column {
             height: 72
             QTextInputBoxTypeB {
                 id: _inputblocks
-                label: STR.STR_QML_1841
+                label: QSTR.STR_QML_1841
                 labelComponent.textFormat: Text.RichText
                 labelComponent.font.pixelSize: 12
                 boxWidth: parent.width
@@ -481,18 +480,18 @@ Column {
                 textInputted: newWalletInfo.timeMini.relativeBlockheight
                 input.placeholderText: "4320"
                 isValid: (textInputted !== "") && _inputblocks.isValidBlockHeight(_inputblocks.textInputted)
-                errorText: STR.STR_QML_1888
-                validator: RegExpValidator {
-                    regExp: /^$|^[0-9]+$/
+                errorText: QSTR.STR_QML_1888
+                validator: RegularExpressionValidator {
+                    regularExpression: /^$|^[0-9]+$/
                 }
-                onTypingFinished: {
+                onTypingFinished: (currentText) => {
                     if(_inputblocks.isValidBlockHeight(_inputblocks.textInputted)){
                         newWalletInfo.updateTimeMiniscript("relativeBlockheight", parseInt(_inputblocks.textInputted));
                     }
                 }
                 onIsValidChanged: {
                     if(!isValid){
-                        AppModel.showToast(0, STR.STR_QML_1888, EWARNING.ERROR_MSG);
+                        AppModel.showToast(0, QSTR.STR_QML_1888, EWARNING.ERROR_MSG);
                     }
                 }
                 function isValidBlockHeight(input) {

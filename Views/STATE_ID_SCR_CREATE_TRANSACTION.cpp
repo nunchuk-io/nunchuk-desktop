@@ -28,14 +28,12 @@
 
 void SCR_CREATE_TRANSACTION_Entry(QVariant msg) {
     AppModel::instance()->startGetEstimatedFee();
-    // Reset per-session coin-selection state: default to the normal flow
-    // (auto/expandable coin selection). It gets flipped to true only if the
-    // user explicitly fixes the coin set later in this same session (e.g.
-    // "select coin from coin list" -> use-selected-coins-create-transaction).
-    if (auto w = AppModel::instance()->walletInfo()) {
-        w->setFixedInputCoins(false);
+    const bool preserveFixedInputs = msg.toMap().value("preserveFixedInputCoins").toBool();
+    if (!preserveFixedInputs) {
+        if (auto wallet = AppModel::instance()->walletInfo()) {
+            wallet->setFixedInputCoins(false);
+        }
     }
-    Q_UNUSED(msg);
 }
 
 void SCR_CREATE_TRANSACTION_Exit(QVariant msg) {
@@ -126,6 +124,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     DBG_INFO << "Fee Setting: ECONOMICAL";
                     feeRate = AppModel::instance()->hourFeeOrigin();
                 }
+                if (feeRate <= 0) feeRate = AppModel::instance()->minFeeOrigin();
             }
             DBG_INFO << "CREATE NEW TRANSACTION"
                      << "subtract:" << subtractFromFeeAmout
@@ -295,5 +294,3 @@ void EVR_CREATE_TRANSACTION_BACK_UTXO_CONSILIDATE_HANDLER(QVariant msg) {
 void EVT_CREATE_TRANSACTION_SIGN_SUCCEED_HANDLER(QVariant msg) {
 
 }
-
-

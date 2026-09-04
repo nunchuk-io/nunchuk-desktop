@@ -25,10 +25,19 @@ QString QWalletServicesTag::passwordToken() const {
 }
 
 bool QWalletServicesTag::requestVerifyPassword(const QString &password, const int action) {
+    return requestVerifyPasswordGuarded(password, action, []() { return true; });
+}
+
+bool QWalletServicesTag::requestVerifyPasswordGuarded(const QString &password,
+                                                      const int action,
+                                                      const std::function<bool()> &canCommit) {
     clearToken();
     QString token = "";
     QString errormsg = "";
     bool ret = Draco::instance()->verifyPasswordToken(password, action, token, errormsg);
+    if (canCommit && !canCommit()) {
+        return false;
+    }
     if (!ret) {
         ServiceSetting::instance()->verifyPasswordTokenAlert(errormsg);
     } else {
@@ -47,6 +56,14 @@ bool QWalletServicesTag::requestRecoverKeyVerifyPassword(const QString &password
 
 bool QWalletServicesTag::requestUpdateSecurityQuestionPassword(const QString &password) {
     return requestVerifyPassword(password, (int)TARGET_ACTION::UPDATE_SECURITY_QUESTIONS);
+}
+
+bool QWalletServicesTag::requestUpdateSecurityQuestionPasswordGuarded(
+    const QString &password,
+    const std::function<bool()> &canCommit) {
+    return requestVerifyPasswordGuarded(password,
+                                        (int)TARGET_ACTION::UPDATE_SECURITY_QUESTIONS,
+                                        canCommit);
 }
 
 bool QWalletServicesTag::requestServerKeyVerifyPassword(const QString &password) {
@@ -97,12 +114,18 @@ bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown() {
 }
 
 bool QWalletServicesTag::verifyConfirmationCode(const QString &code) {
-    DBG_INFO << "id: " << m_code_id << "code: " << code;
+    return verifyConfirmationCodeGuarded(code, []() { return true; });
+}
+
+bool QWalletServicesTag::verifyConfirmationCodeGuarded(const QString &code,
+                                                       const std::function<bool()> &canCommit) {
     QString errormsg;
     QJsonObject output;
     bool ret = Draco::instance()->VerifyConfirmationCode(m_code_id, code, output, errormsg);
+    if (canCommit && !canCommit()) {
+        return false;
+    }
     if (ret) {
-        DBG_INFO << output;
         m_confirmToken = output["token"].toString();
         emit confirmCodeVerified();
     } else {
@@ -112,7 +135,6 @@ bool QWalletServicesTag::verifyConfirmationCode(const QString &code) {
 }
 
 QVariantList QWalletServicesTag::securityQuestions() {
-    DBG_INFO << QString().sprintf("%p", this);
     return m_questions.toVariantList();
 }
 
@@ -122,9 +144,16 @@ void QWalletServicesTag::setQuestions(const QJsonArray &questions) {
 }
 
 bool QWalletServicesTag::CreateSecurityQuestionsAnswered() {
+    return CreateSecurityQuestionsAnsweredGuarded([]() { return true; });
+}
+
+bool QWalletServicesTag::CreateSecurityQuestionsAnsweredGuarded(const std::function<bool()> &canCommit) {
     QJsonObject output;
     QString errormsg;
     bool ret = Draco::instance()->secQuesGet(output, errormsg);
+    if (canCommit && !canCommit()) {
+        return false;
+    }
     if (ret) {
         QJsonArray questions_answered;
         for (auto q : output["questions"].toArray()) {
@@ -157,7 +186,6 @@ bool QWalletServicesTag::CreateSecurityQuestionsAnswered() {
             m_quesAnswers.append(answer);
             DBG_INFO << ques;
         }
-        DBG_INFO << QString().sprintf("%p", this) << questions_required;
         setQuestions(questions_required);
     }
     return ret;
@@ -175,10 +203,17 @@ void QWalletServicesTag::secQuesAnswer(const QString &id, const QString &answer)
 }
 
 bool QWalletServicesTag::secQuesAnswer() {
+    return secQuesAnswerGuarded([]() { return true; });
+}
+
+bool QWalletServicesTag::secQuesAnswerGuarded(const std::function<bool()> &canCommit) {
     int correct_answer = 0;
     QString errormsg = "";
     QString token = "";
     bool ret = Draco::instance()->secQuesAnswer(questionsAndAnswers(), token, correct_answer, errormsg);
+    if (canCommit && !canCommit()) {
+        return false;
+    }
     if (!ret) {
         emit answerErrorAlert(errormsg);
         return false;
@@ -201,6 +236,20 @@ QJsonArray QWalletServicesTag::questionsAndAnswers() const {
         questions.append(question);
     }
     return questions;
+}
+
+void QWalletServicesTag::clearSecurityQuestionAnswers() {
+    m_quesAnswers.clear();
+    setQuestions({});
+}
+
+void QWalletServicesTag::clearSecurityQuestionAuthorizationState() {
+    m_secQuesToken.clear();
+    m_confirmToken.clear();
+    m_code_id.clear();
+    m_confirmCodeRequestBody = {};
+    setReqiredSignatures({});
+    clearSecurityQuestionAnswers();
 }
 
 QVariantList QWalletServicesTag::periods() {
@@ -283,7 +332,6 @@ bool QWalletServicesTag::lockdownByConfirmationCode() {
     QString until_time;
     bool ret{false};
     if (w->isUserWallet()) {
-        DBG_INFO << m_passwordToken << m_period_id << w->walletId();
     } else if (w->isGroupWallet()) {
         ret = Byzantine::instance()->lockdownByConfirmationCode(m_passwordToken, confirmToken(), confirmCodeNonceBody(), until_time, errormsg);
     } else {
@@ -348,10 +396,10 @@ QJsonObject QWalletServicesTag::setupConfigJs() {
     return m_setupConfig;
 }
 
-void QWalletServicesTag::setSetupConfig(const QJsonObject& config) {
+void QWalletServicesTag::setSetupConfig(const QJsonObject &config) {
     if (m_setupConfig == config)
         return;
-        
+
     m_setupConfig = config;
     emit setupConfigChanged();
 }
@@ -501,6 +549,10 @@ void QWalletServicesTag::setList2FA() {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
             if (w->isReplaced())
                 continue;
+            if (auto server = w->serverKeyPtr()) {
+                if (!server->hasServerKey())
+                    continue;
+            }
             if (auto dash = w->dashboard()) {
                 if (w->isGroupWallet()) {
                     auto hasPermission = dash->role() == "MASTER";
@@ -515,6 +567,7 @@ void QWalletServicesTag::setList2FA() {
             }
         }
     }
+    DBG_INFO << setuped;
     if (m_list2FA == setuped)
         return;
     m_list2FA = setuped;

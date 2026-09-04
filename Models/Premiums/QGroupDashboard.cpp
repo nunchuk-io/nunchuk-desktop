@@ -1,4 +1,5 @@
 #include "QGroupDashboard.h"
+#include "AppSetting.h"
 #include "Chats/ClientController.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QInheritancePlan.h"
@@ -197,6 +198,10 @@ QJsonObject QGroupDashboard::walletDraftJson() const {
 }
 
 void QGroupDashboard::GetMemberInfo() {
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, &QGroupDashboard::GetMemberInfo, Qt::QueuedConnection);
+        return;
+    }
     if (isUserWallet() || isReplaced() || isUserDraftWallet()) {
         return;
     }
@@ -224,6 +229,15 @@ void QGroupDashboard::GetMemberInfo() {
 }
 
 void QGroupDashboard::GetAlertsInfo() {
+    // GetAlertsInfo may be called from pool threads (e.g. QtConcurrent::run blocks).
+    // runInThread() creates a child QFutureWatcher with `this` as parent — this is
+    // undefined behaviour when called from a thread other than this object's thread.
+    // Guard: re-dispatch to the correct thread and return immediately.
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, &QGroupDashboard::GetAlertsInfo, Qt::QueuedConnection);
+        return;
+    }
+
     if (isReplaced()) {
         return;
     }
@@ -364,6 +378,10 @@ bool QGroupDashboard::dismissAlert() {
 }
 
 void QGroupDashboard::GetWalletInfo() {
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, &QGroupDashboard::GetWalletInfo, Qt::QueuedConnection);
+        return;
+    }
     const bool isDraft = isUserDraftWallet();
     const bool isUser = isUserWallet();
     const QString walletId = wallet_id();
@@ -398,6 +416,9 @@ void QGroupDashboard::GetWalletInfo() {
             safeThis->m_signerInfo = wallet.value("signers").toArray();
             safeThis->checkInheritanceWallet();
             emit safeThis->groupInfoChanged();
+            if (auto health = safeThis->healthPtr()) {
+                health->refreshKeyInfo();
+            }
 
             if (auto info = safeThis->walletInfoPtr()) {
                 if (info->serverKeyPtr()) {
@@ -405,8 +426,12 @@ void QGroupDashboard::GetWalletInfo() {
                 }
                 // Auto-archive replaced wallets so they move to the archived list
                 // instead of remaining visible in the active wallet list.
+                // Skip if the user has explicitly unarchived this wallet (tracked in AppSetting).
                 if (safeThis->isReplaced() && !info->isArchived()) {
-                    info->setArchived(true);
+                    QStringList manuallyUnarchived = AppSetting::instance()->value("manually_unarchived_wallets").toStringList();
+                    if (!manuallyUnarchived.contains(info->walletId())) {
+                        info->setArchived(true);
+                    }
                 }
             }
         });
@@ -425,6 +450,10 @@ void QGroupDashboard::checkInheritanceWallet() {
 }
 
 void QGroupDashboard::GetDraftWalletInfo() {
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, &QGroupDashboard::GetDraftWalletInfo, Qt::QueuedConnection);
+        return;
+    }
     const bool isDraft = isUserDraftWallet();
     const bool isUser = isUserWallet();
     const QString gid = groupId();
@@ -451,17 +480,31 @@ void QGroupDashboard::GetDraftWalletInfo() {
             }
 
             DBG_INFO << draft_wallet;
-            safeThis->m_signerInfo = draft_wallet.value("signers").toArray();
+            auto draftSigners = draft_wallet.value("signers").toArray();
+            if (!draftSigners.isEmpty()) {
+                safeThis->m_signerInfo = draftSigners;
+                if (auto health = safeThis->healthPtr()) {
+                    health->refreshKeyInfo();
+                }
+            }
             safeThis->m_walletDraftInfo = draft_wallet;
             safeThis->UpdateKeys(draft_wallet);
         });
 }
 
 void QGroupDashboard::GetHealthCheckInfo() {
+    // GetHealthCheckInfo may be called from pool threads (e.g. QtConcurrent::run blocks,
+    // requestUpdateDummyTx). runInThread() inside GetKeyHealthReminder/GetStatuses creates
+    // a child QFutureWatcher with `this` as parent — undefined behaviour when not on
+    // this object's thread. Guard: re-dispatch to the correct thread and return immediately.
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, &QGroupDashboard::GetHealthCheckInfo, Qt::QueuedConnection);
+        return;
+    }
+
     if (!healthPtr() || wallet_id().isEmpty() || isReplaced())
         return;
     healthPtr()->GetKeyHealthReminder();
-    healthPtr()->GetStatuses();
 }
 
 QString QGroupDashboard::getOurId() const {
@@ -955,6 +998,7 @@ bool QGroupDashboard::canEntryClickAlert() {
         bool isClaimkey = payload["claim_key"].toBool();
         bool isRegisterkey = register_key_xfps.size() > 0;
         if (isClaimkey) {
+            GetHealthCheckInfo();
             this->setConfigFlow("register-claim");
             return true;
         } else if (isRegisterkey) {
@@ -1107,10 +1151,13 @@ void QGroupDashboard::setHistoryPeriodId(const QString &newHistoryPeriodId) {
 }
 
 void QGroupDashboard::getChatInfo() {
-    QtConcurrent::run([this]() {
+    QPointer<QGroupDashboard> safeThis(this);
+    QtConcurrent::run([safeThis]() {
+        if (!safeThis)
+            return;
         QJsonObject output;
         QString error_msg = "";
-        bool ret = Byzantine::instance()->GetCurrentGroupChat(groupId(), output, error_msg);
+        bool ret = Byzantine::instance()->GetCurrentGroupChat(safeThis->groupId(), output, error_msg);
         if (ret) {
             DBG_INFO << output;
             if (output.contains("chat")) {
@@ -1120,7 +1167,14 @@ void QGroupDashboard::getChatInfo() {
                 ret = (room_id != "");
             }
         }
-        setGroupChatExisted(ret);
+        // setGroupChatExisted emits a NOTIFY signal — must run on main thread.
+        QMetaObject::invokeMethod(
+            safeThis,
+            [safeThis, ret]() {
+                if (safeThis)
+                    safeThis->setGroupChatExisted(ret);
+            },
+            Qt::QueuedConnection);
     });
 }
 
@@ -1573,6 +1627,7 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const {
             auto key = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
             if (!key.isNull()) {
                 signer["signer_type"] = key->signerType();
+                signer["type"] = QString::fromStdString(SignerTypeToStr((nunchuk::SignerType)key->signerType()));
             } else {
                 auto key = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
                 if (!key.isNull()) {
@@ -1605,7 +1660,7 @@ QVariant QGroupDashboard::health() const {
     // Return QObject* null explicitly (not invalid QVariant) so QML sees JS null
     // rather than undefined — preserving the same falsy semantics as before while
     // all guards use truthiness checks.
-    return QVariant::fromValue<QObject*>(m_healthRef ? m_healthRef.data() : nullptr);
+    return QVariant::fromValue<QObject *>(m_healthRef ? m_healthRef.data() : nullptr);
 }
 
 void QGroupDashboard::setAlertId(const QString &alertId) {
@@ -1626,7 +1681,7 @@ void QGroupDashboard::setAlertId(const QJsonObject &alert) {
     }
     QJsonObject tmp_alert = alert;
     tmp_alert["payload"] = payload;
-    DBG_INFO << QString().sprintf("%p", this) << tmp_alert;
+    DBG_INFO << QString::asprintf("%p", this) << tmp_alert;
     m_currentAlertInfo = tmp_alert;
     emit alertInfoChanged();
 }

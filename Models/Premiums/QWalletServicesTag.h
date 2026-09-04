@@ -24,6 +24,7 @@
 #include <QObject>
 #include <QJsonArray>
 #include <QSharedPointer>
+#include <functional>
 #include "TransactionModel.h"
 #include "ServiceSetting.h"
 #include "WalletModel.h"
@@ -67,6 +68,8 @@ class QWalletServicesTag : public QInheritanceClaiming
 
     Q_PROPERTY(QVariant keyRecovery             READ keyRecovery            CONSTANT)
     Q_PROPERTY(QVariant setupConfig             READ setupConfig            NOTIFY setupConfigChanged)
+    Q_PROPERTY(QVariant reqiredSignatures       READ reqiredSignatures      NOTIFY reqiredSignaturesChanged)
+    Q_PROPERTY(QVariant walletConfig            READ walletConfig           NOTIFY walletConfigChanged)
 
 public:
     static QWalletServicesTagPtr instance();
@@ -75,9 +78,14 @@ public:
 
     QString passwordToken() const;
     bool requestVerifyPassword(const QString& password, const int action);
+    bool requestVerifyPasswordGuarded(const QString &password,
+                                      const int action,
+                                      const std::function<bool()> &canCommit);
     bool requestLockDownVerifyPassword(const QString &password);
     bool requestRecoverKeyVerifyPassword(const QString &password);
     bool requestUpdateSecurityQuestionPassword(const QString &password);
+    bool requestUpdateSecurityQuestionPasswordGuarded(const QString &password,
+                                                      const std::function<bool()> &canCommit);
     bool requestServerKeyVerifyPassword(const QString &password);
     bool requestInheritancePlanVerifyPassword(const QString &password);
     bool requestDeleteWalletVerifyPassword(const QString &password);
@@ -86,12 +94,17 @@ public:
     bool requestEditMemberVerifyPassword(const QString &password);
 
     Q_INVOKABLE bool verifyConfirmationCode(const QString &code);
+    bool verifyConfirmationCodeGuarded(const QString &code, const std::function<bool()> &canCommit);
     QVariantList securityQuestions();
     void setQuestions(const QJsonArray &questions);
     bool CreateSecurityQuestionsAnswered();
+    bool CreateSecurityQuestionsAnsweredGuarded(const std::function<bool()> &canCommit);
     Q_INVOKABLE void secQuesAnswer(const QString &id, const QString &answer);
     bool secQuesAnswer();
+    bool secQuesAnswerGuarded(const std::function<bool()> &canCommit);
     QJsonArray questionsAndAnswers() const;
+    void clearSecurityQuestionAnswers();
+    void clearSecurityQuestionAuthorizationState();
 
     // Emergency Lockdown
     bool RequestConfirmationCodeEmergencyLockdown();

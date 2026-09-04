@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License      *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import Features.Transactions.ViewModels 1.0
@@ -37,7 +37,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_785
+    label.text: QSTR.STR_QML_785
     readonly property int confirmations: Math.max(0, (AppModel.blockHeight - transactionInfo.height) + 1)
     extraHeader: QBadge {
         height: 24
@@ -54,11 +54,11 @@ QOnScreenContentTypeA {
     content: Item {
         QSendAddressAreaClaimInheritance {
             transactionInfo: vm.transactionInfo
-            onAddrToVerify: {
+            onAddrToVerify: (addr) => {
                 displayAddressBusybox.addrToVerify = addr
                 vm.verifyAddress(addr)
             }
-            onNewMemoNotify: {
+            onNewMemoNotify: (newMemo) => {
                 vm.setMemo(newMemo)
             }
         }
@@ -67,7 +67,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: 249
         height: 48
-        label.text: STR.STR_QML_783
+        label.text: QSTR.STR_QML_783
         label.font.pixelSize: 16
         type: eTypeB
         onButtonClicked: {
@@ -91,13 +91,18 @@ QOnScreenContentTypeA {
         }
         return activeLink;
     }
-    Component.onCompleted: {
-        _congra.open()
+    Connections {
+        target: vm
+        function onTransactionInfoChanged() {
+            if (vm.transactionInfo && !_congra.opened) {
+                _congra.open()
+            }
+        }
     }
     QPopupInfo{
         id:_congra
-        title: STR.STR_QML_788
-        contentText: STR.STR_QML_789
+        title: QSTR.STR_QML_788
+        contentText: QSTR.STR_QML_789
     }
     TransactionDetailsClaimedViewModel {
         id: vm

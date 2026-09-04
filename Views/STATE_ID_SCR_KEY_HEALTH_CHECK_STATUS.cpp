@@ -41,15 +41,21 @@ void EVT_KEY_HEALTH_CHECK_STATUS_ENTER_HANDLER(QVariant msg) {
             dashboard->setConfigFlow("health-check-procedure");
             QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
             QString xfp = maps["xfp"].toString();
-            dashboard->healthPtr()->HealthCheckForKey(xfp);
+            if (auto health = dashboard->healthPtr()) {
+                health->HealthCheckForKey(xfp);
+            }
         } else if (type == "request-health-check") {
             QString xfp = maps["xfp"].toString();
-            dashboard->healthPtr()->RequestHealthCheckForKey(xfp);
+            if (auto health = dashboard->healthPtr()) {
+                health->RequestHealthCheckForKey(xfp);
+            }
         } else if (type == "health-check-request-sent") {
             dashboard->setConfigFlow("health-check-request-sent");
             QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
         } else {
-            dashboard->healthPtr()->HealthCheckAddReminderClicked(msg);
+            if (auto health = dashboard->healthPtr()) {
+                health->HealthCheckAddReminderClicked(msg);
+            }
         }
     }
 }

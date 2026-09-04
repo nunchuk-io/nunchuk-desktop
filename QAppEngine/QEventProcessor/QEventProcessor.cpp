@@ -45,19 +45,28 @@ QEventProcessor::~QEventProcessor()
 
 void QEventProcessor::shutdown()
 {
-    // This singleton is destroyed during static teardown, after the local
-    // QApplication in main(). Do the QObject/QML teardown explicitly before
-    // QApplication is destroyed. deleteLater() is not suitable here because
-    // the event loop has already stopped when main calls this method.
-    disconnect();
+    if (m_shutdown) {
+        return;
+    }
+    m_shutdown = true;
+
+    // The singleton outlives the QApplication. Release QML-owned resources
+    // explicitly while QApplication and the QML runtime are still valid.
+    // Disconnect only the queued self-connections created by this class. A
+    // wildcard disconnect would also remove QObject::destroyed(), which the
+    // QQmlContext uses to track the QMLHandle context property.
+    QObject::disconnect(this, &QEventProcessor::signalNotifySendEvent,
+                        this, &QEventProcessor::sendEvent);
+    QObject::disconnect(this, &QEventProcessor::signalNotifyToastMessage,
+                        this, &QEventProcessor::slotNotifyToastMessage);
     m_qmlObj.clear();
     m_currentScreen = nullptr;
 
     delete m_popMng;
     m_popMng = nullptr;
 
-    // QScreenDelegate releases its static QQmlComponent cache here, before
-    // the QQuickView and its QQmlEngine are deleted.
+    // QScreenDelegate clears its static QQmlComponent cache before the
+    // QQuickView and its QQmlEngine are destroyed.
     delete m_scrMng;
     m_scrMng = nullptr;
 

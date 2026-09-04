@@ -1,7 +1,7 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -23,7 +23,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2154
+    label.text: QSTR.STR_QML_2154
     extraHeader: Item {}
     onCloseClicked: vm.close()
     content: Item {
@@ -43,7 +43,7 @@ QOnScreenContentTypeA {
                 QLato {
                     width: 500
                     height: 16
-                    text: STR.STR_QML_2153 + ":" + vm.release_method === "INDIVIDUAL" ? STR.STR_QML_2167 : STR.STR_QML_2182
+                    text: QSTR.STR_QML_2153 + ":" + vm.release_method === "INDIVIDUAL" ? QSTR.STR_QML_2167 : QSTR.STR_QML_2182
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     anchors {
@@ -61,7 +61,7 @@ QOnScreenContentTypeA {
                         rightMargin: 12
                         verticalCenter: parent.verticalCenter
                     }
-                    text: STR.STR_QML_849
+                    text: QSTR.STR_QML_849
                     color: "#031F2B"
                     onTextClicked: {
                         vm.onReleaseMethodEditClicked()
@@ -73,7 +73,7 @@ QOnScreenContentTypeA {
             QLato {
                 width: parent.width
                 height: paintedHeight
-                text: vm.hasEditBtn ? STR.STR_QML_2231: STR.STR_QML_2178
+                text: vm.hasEditBtn ? QSTR.STR_QML_2231: QSTR.STR_QML_2178
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
                 lineHeight: 20
@@ -102,7 +102,7 @@ QOnScreenContentTypeA {
                         anchors.margins: 12
                         contentHeight: contentDisp.implicitHeight
                         clip: true
-                        ScrollBar.vertical: ScrollBar { active: true }
+                        ScrollBar.vertical: QScrollBar { }
                         
                         Column {
                             id: contentDisp
@@ -226,7 +226,7 @@ QOnScreenContentTypeA {
                                     }
                                     
                                     QLato {
-                                        text: STR.STR_QML_2177 + " " + (index + 1) + ": " + (modelData.asset_percentage !== undefined ? modelData.asset_percentage + "%" : "Not set up yet")
+                                        text: QSTR.STR_QML_2177 + " " + (index + 1) + ": " + (modelData.asset_percentage !== undefined ? modelData.asset_percentage + "%" : "Not set up yet")
                                         color: modelData.asset_percentage !== undefined ? "#031F2B" : "#757575"
                                         font.pixelSize: 12
                                         anchors.verticalCenter: parent.verticalCenter
@@ -246,7 +246,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: 100
             height: 48
-            label.text: STR.STR_QML_835
+            label.text: QSTR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
             enabled: vm.isValidData

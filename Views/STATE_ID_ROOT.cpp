@@ -224,7 +224,9 @@ void EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER(QVariant msg) {
         if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
             QMap<QString, QVariant> maps = msg.toMap();
             QString xfp = maps["xfp"].toString();
-            QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
+            if (auto health = dashboard->healthPtr()) {
+                health->HealthCheckForKey(xfp);
+            }
         } else if (dashboard->flow() == (int)AlertEnum::E_Alert_t::WELCOME_SIGN_IN_SIGNATURE_XPUB) {
             // For sign dummy, so not implement in here
         } else {

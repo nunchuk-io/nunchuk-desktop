@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_779
+    label.text: QSTR.STR_QML_779
     extraHeader: Item {}
     property string walletId: ""
     property int currentSelect: -1
@@ -49,7 +49,7 @@ QOnScreenContentTypeB {
             anchors.fill: parent
             spacing: 24
             QLato {
-                text: STR.STR_QML_782
+                text: QSTR.STR_QML_782
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
             }
@@ -61,7 +61,7 @@ QOnScreenContentTypeB {
                 clip: true
                 interactive: true
                 contentHeight: _walletList.count * 92
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     spacing: 0
                     Repeater {
@@ -71,15 +71,15 @@ QOnScreenContentTypeB {
                             width: 443
                             height: 92
                             labelTop: model.wallet_name
-                            center1.text: (model.wallet_walletType === NUNCHUCKTYPE.MINISCRIPT) ? STR.STR_QML_1801
-                                                                                                : (model.wallet_M === 1) ? STR.STR_QML_070
-                                                                                                                         : qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(STR.STR_QML_069)
+                            center1.text: (model.wallet_walletType === NUNCHUCKTYPE.MINISCRIPT) ? QSTR.STR_QML_1801
+                                                                                                : (model.wallet_M === 1) ? QSTR.STR_QML_070
+                                                                                                                         : qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(QSTR.STR_QML_069)
                             labelBottom: model.wallet_Balance + RoomWalletData.unitValue
                             center2.icon: model.wallet_isSharedWallet ? "qrc:/Images/Images/collab-wallet-dark.svg" :
                                                                 model.wallet_isAssistedWallet ? "qrc:/Images/Images/collab-wallet-dark.svg" :
                                                                                                 model.wallet_Escrow ?  "qrc:/Images/Images/Escrow Wallet.png" : ""
-                            center2.text: model.wallet_isSharedWallet ? STR.STR_QML_438 :
-                                                                model.wallet_isAssistedWallet ? STR.STR_QML_679 : ""
+                            center2.text: model.wallet_isSharedWallet ? QSTR.STR_QML_438 :
+                                                                model.wallet_isAssistedWallet ? QSTR.STR_QML_679 : ""
                             selected: currentSelect === index
                             onButtonClicked: {
                                 currentSelect = index

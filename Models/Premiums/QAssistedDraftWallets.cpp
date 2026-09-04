@@ -88,7 +88,7 @@ void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray &groups)
                             QAssistedDraftWallets::addRequest(data.value("requests").toArray(), group_id);
 
                         for (auto it = tmps.begin(); it != tmps.end(); ++it) {
-                            requests.insertMulti(it.key(), it.value());
+                            requests.insert(it.key(), it.value());
                         }
                     }
                 }
@@ -163,7 +163,7 @@ QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray 
         QString request_id = requestObj.value("id").toString();
         int key_index = requestObj.value("key_index").toInt(-1);
         if (status == "PENDING") {
-            for (Key key : map_keys.uniqueKeys()) {
+            for (Key key : map_keys.keys()) {
                 StructAddHardware hardware = map_keys.value(key);
                 if (tags.contains(hardware.mTag) && status == "PENDING") {
                     hardware.mGroupId = group_id;

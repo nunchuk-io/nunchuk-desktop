@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../../Components/customizes/Texts"
 
 Rectangle {
@@ -59,7 +59,7 @@ Rectangle {
             QLato {
                 id: titleText
                 anchors.verticalCenter: parent.verticalCenter
-                text: STR.STR_QML_2166
+                text: QSTR.STR_QML_2166
                 font.pixelSize: 16
                 font.weight: Font.Bold
             }
@@ -68,7 +68,7 @@ Rectangle {
                 width: 29
                 height: 20
                 anchors.right: parent.right
-                text: STR.STR_QML_849
+                text: QSTR.STR_QML_849
                 color: "#031F2B"
                 anchors.verticalCenter: parent.verticalCenter
                 onTextClicked: {
@@ -153,7 +153,7 @@ Rectangle {
                 spacing: 2
                 QLato {
                     id: releaseTitle
-                    text: STR.STR_QML_2153
+                    text: QSTR.STR_QML_2153
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     verticalAlignment: Text.AlignVCenter
@@ -161,7 +161,7 @@ Rectangle {
                 }
 
                 QLato {
-                    text: releaseMethod === "INDIVIDUAL" ? STR.STR_QML_2167 : STR.STR_QML_2182
+                    text: releaseMethod === "INDIVIDUAL" ? QSTR.STR_QML_2167 : QSTR.STR_QML_2182
                     font.pixelSize: 16
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignLeft
@@ -172,7 +172,7 @@ Rectangle {
                 width: 29
                 height: 20
                 anchors.right: parent.right
-                text: STR.STR_QML_849
+                text: QSTR.STR_QML_849
                 color: "#031F2B"
                 onTextClicked: {
                     root.releaseMehodEditClicked()

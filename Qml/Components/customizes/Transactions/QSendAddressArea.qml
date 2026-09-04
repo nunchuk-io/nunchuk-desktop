@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -38,14 +38,9 @@ Rectangle {
     radius: 12
     border.color: "#EAEAEA"
     color: "#FFFFFF"
-    layer.enabled: true
-    layer.effect: OpacityMask {
-        maskSource: Rectangle {
-            width: 350
-            height: 480
-            radius: 12
-        }
-    }
+    // OpacityMask is applied to the Flickable (not this Rectangle) so the
+    // border rendered by this Rectangle is never consumed by the layer texture.
+    // The Flickable layer (content + scrollbar) is clipped to the rounded shape.
     property string myRole: ""
     property var    transactionInfo
     property bool   isDummy: false
@@ -54,22 +49,39 @@ Rectangle {
     signal addrToVerify(var addr)
     signal newMemoNotify(var newMemo)
     Flickable {
+        id: _flickable
         anchors.fill: parent
         flickableDirection: Flickable.VerticalFlick
         clip: true
         interactive: contentHeight > height
         contentHeight: contentDisp.height
-        ScrollBar.vertical: ScrollBar { active: true }
+        // Clip the Flickable layer (content + attached scrollbar) to the rounded
+        // corner shape of the outer Rectangle. The outer Rectangle's border is
+        // painted independently and remains fully visible.
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                width: _sendAddressArea.width
+                height: _sendAddressArea.height
+                radius: _sendAddressArea.radius  // 12px — matches outer border-radius
+            }
+        }
+        ScrollBar.vertical: QScrollBar {
+            // topPadding/bottomPadding keeps the track/thumb within the straight
+            // portion of the border (past the 12px corner arc) even before masking.
+            topPadding: 12
+            bottomPadding: 12
+        }
         Column {
             id: contentDisp
-            width: parent.width
+            width: parent.width - 8
             spacing: 12
             anchors.horizontalCenter: parent.horizontalCenter
             QSendToAddressBlock {
                 id: sendToAddress
                 useMouseArea: true
                 anchors.horizontalCenter: parent.horizontalCenter
-                onAddressClicked: {
+                onAddressClicked: (addr) => {
                     addrToVerify(addr)
                 }
             }
@@ -106,7 +118,7 @@ Rectangle {
             QTransactionNoteBlock {
                 id: transationNote
                 visible: !isDummy
-                onMemoNotify: {
+                onMemoNotify: (newMemo) => {
                     newMemoNotify(newMemo)
                 }
             }

@@ -3,8 +3,8 @@
 #include "core/common/resources/AppStrings.h"
 #include "core/ui/UiServices.inc"
 #include "features/signers/flows/KeySetupFlow.h"
-#include "generated_qml_keys.hpp"
 #include "features/signers/flows/SetupPlatformKeyPolicyFlow.h"
+#include "generated_qml_keys.hpp"
 
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
@@ -30,30 +30,29 @@ void AddAKeyViewModel::onAddPlatformKeyClicked() {
     GUARD_FLOW_MANAGER()
     GUARD_SHARE_WALLETS()
 
-    auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow*> (flowMng->currentFlow());
+    auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
     DBG_INFO << flow;
-    if (flow){
-        QString  groupId = flow->groupId();
+    if (flow) {
+        QString groupId = flow->groupId();
         QVariant indexOrKey = flow->indexOrKey();
         if (auto group_wallet = sharedWallets->sandboxListPtr()->GetGroup(groupId)) {
             int walletType = (int)group_wallet->sandbox().get_wallet_type();
             QVector<QString> keyslots = {};
-            if(walletType == (int)nunchuk::WalletType::MINISCRIPT){
+            if (walletType == (int)nunchuk::WalletType::MINISCRIPT) {
                 QString firstLine = indexOrKey.toString();
                 keyslots.append(firstLine);
             }
 
             QWarningMessage msg;
             nunchuk::GroupSandbox sanbox = bridge::EnableGroupPlatformKey(groupId, keyslots, msg);
-            if((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+            if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                 GUARD_APP_MODEL()
                 group_wallet->setScreenFlow("setup-group-wallet");
                 group_wallet->setSandbox(sanbox);
                 QJsonObject json;
                 json["type"] = "setup-group-wallet";
                 QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
-            }
-            else {
+            } else {
                 emit showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
             }
         }
@@ -71,7 +70,7 @@ void AddAKeyViewModel::updateHardwareKeyAvailability() {
     bool canAddHw;
     bool isPrimaryKey = (QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY) ||
                         (QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY);
-    if(auto newWalletInfo = appModel->newWalletInfo()){
+    if (auto newWalletInfo = appModel->newWalletInfo()) {
         if (isPrimaryKey) {
             canAddHw = false;
         } else {
@@ -90,9 +89,12 @@ void AddAKeyViewModel::updateSoftwareSignerLimitStatus() {
 }
 
 void AddAKeyViewModel::updatePlatformKeyAvailability() {
-    // Platform key availability depends on subscription and wallet type
-    // This will be set based on the application context and subscription status
-    setplatformKeyAvailable(true);
+    GUARD_APP_MODEL()
+    bool isGroupWallet = false;
+    if (auto gw = appModel->newWalletInfoPtr()) {
+        isGroupWallet = gw->walletOptType() == (int)ENUNCHUCK::WalletOptionType_t::E_GROUP_WALLET;
+    }
+    setplatformKeyAvailable(isGroupWallet);
 }
 
 } // namespace features::signers::viewmodels

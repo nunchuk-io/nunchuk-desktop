@@ -340,7 +340,7 @@ nunchuk::GroupMessage QGroupMessageModel::lastGroupMessage() {
 
 void QGroupMessageModel::requestSort()
 {
-    // qSort(m_messages.begin(), m_messages.end(), sortGroupMessageTime);
+    // std::sort(m_messages.begin(), m_messages.end(), sortGroupMessageTime);
     std::sort(m_messages.begin(), m_messages.end(), [](const nunchuk::GroupMessage &a, const nunchuk::GroupMessage &b) {
         return a.get_ts() < b.get_ts();
     });

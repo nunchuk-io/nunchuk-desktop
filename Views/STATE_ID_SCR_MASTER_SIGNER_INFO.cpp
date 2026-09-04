@@ -24,11 +24,23 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
+#include "Premiums/QGroupDashboard.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QGroupWalletHealthCheck.h"
 
 void SCR_MASTER_SIGNER_INFO_Entry(QVariant msg) {
-
+    // Refresh health/reminder data every time Key Info is opened so the badge
+    // always reflects the current server state and is not stale from a prior
+    // GetHealthCheckInfo() call that may have raced with the screen render.
+    if (auto wallet = AppModel::instance()->walletInfoPtr()) {
+        auto dashboard = QGroupDashboard::information<QGroupDashboardPtr>(wallet->walletId());
+        if (!dashboard) {
+            dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+        }
+        if (dashboard) {
+            dashboard->GetHealthCheckInfo();
+        }
+    }
 }
 
 void SCR_MASTER_SIGNER_INFO_Exit(QVariant msg) {
@@ -61,9 +73,24 @@ void EVT_MASTER_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
 }
 
 void EVT_MASTER_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
-    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-        if (dashboard->healthPtr()->HealthCheckAddReminderClicked(msg)) {
-            return;
+    // Prefer the dashboard that matches AppModel.walletInfo — it is the same object
+    // that QML's QRemiderAndHistory binds to via AppModel.walletInfo.dashboardInfo.health.
+    // dashboardInfoPtr() returns a cached mDashboard that may point to a different wallet
+    // when the user opens Key info from the Keys section without going through the HOME
+    // dashboard flow, causing healthStatusesChanged to fire on the wrong object and the
+    // badge never to appear.
+    QGroupDashboardPtr dashboard;
+    if (auto walletPtr = AppModel::instance()->walletInfoPtr()) {
+        dashboard = QGroupDashboard::information<QGroupDashboardPtr>(walletPtr->walletId());
+    }
+    if (!dashboard) {
+        dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+    }
+    if (dashboard) {
+        if (auto health = dashboard->healthPtr()) {
+            if (health->HealthCheckAddReminderClicked(msg)) {
+                return;
+            }
         }
     }
     if(AppModel::instance()->masterSignerInfo()){

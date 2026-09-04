@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick
 import "../../../Components/origins"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"

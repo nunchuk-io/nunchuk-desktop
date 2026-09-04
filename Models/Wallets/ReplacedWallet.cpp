@@ -47,7 +47,6 @@ void ReplacedWallet::setReplaceFlow(const QString &replaceFlow)
 {
     if (m_replaceFlow == replaceFlow)
         return;
-    DBG_INFO << QString().sprintf("%p", this) << replaceFlow;
     m_replaceFlow = replaceFlow;
     emit replaceFlowChanged();
 }

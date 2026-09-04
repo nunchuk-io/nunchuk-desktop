@@ -38,6 +38,8 @@ public:
     ~QUserWallets();
     static QUserWallets *instance();
     void GetDraftWallet();
+    static bool FetchDraftWallet(QJsonObject &output, QString &errorMessage);
+    void ApplyDraftWallet(bool fetched, const QJsonObject &output);
 
     QGroupDashboard* dashboardInfo();
     QGroupDashboardPtr dashboardInfoPtr();

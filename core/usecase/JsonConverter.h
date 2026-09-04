@@ -48,12 +48,12 @@ struct JsonConverter {
         return arr;
     }
 
-    template <typename T> static QJsonValue toJsonValue(const QVector<T> &list) {
-        QJsonArray arr;
-        for (const auto &v : list)
-            arr.append(toJsonValue(v));
-        return arr;
-    }
+    // template <typename T> static QJsonValue toJsonValue(const QVector<T> &list) {
+    //     QJsonArray arr;
+    //     for (const auto &v : list)
+    //         arr.append(toJsonValue(v));
+    //     return arr;
+    // }
 
     static QJsonValue toJsonValue(const QMap<QString, QString> &map) {
         QJsonObject obj;

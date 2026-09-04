@@ -231,7 +231,7 @@ private:
 
 signals:
     void nameChanged();
-    void requestResolveSignerName(QString& xfp);
+    void requestResolveSignerName(QString xfp);
     void xpubChanged();
     void publickeyChanged();
     void derivationPathChanged();
