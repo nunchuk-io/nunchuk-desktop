@@ -1,13 +1,385 @@
 name: Build windows release
+run-name: ${{ github.event_name != 'workflow_dispatch' && github.ref_name || format('{0}_manual', github.ref_name) }}
+
+# Wires reproducible-builds/build_windows.ps1 + package_windows.ps1 +
+# windows-dependencies.lock.json (Qt 6.11.1 / OpenSSL 3.5.7 / vcpkg / Olm /
+# QtKeychain, all hash- or commit-pinned) into CI, structured like
+# build-linux.yml: a tag push always builds once and publishes immediately
+# (no gate); a manual workflow_dispatch run can additionally tick
+# "check_reproducible_build" to rebuild the exact same commit a second time
+# in the same job and diff the two unsigned payloads byte-for-byte. That
+# check never runs for a tag push and never blocks publishing -- it exists
+# only to validate changes to this build/packaging pipeline itself, exactly
+# like build-linux.yml's own "check_reproducible_build" checkbox.
+#
+# A manual (workflow_dispatch) run always builds whatever the selected
+# ref's latest commit actually declares -- there is no "version" input to
+# fill in or get wrong. build_windows.ps1/package_windows.ps1 hard-require
+# ReleaseVersion to equal both CMakeLists.txt's project(... VERSION ...) and
+# app/main.cpp's QCoreApplication::setApplicationVersion(), so the "Resolve
+# build version" step below reads that same value straight out of
+# CMakeLists.txt instead of asking the person triggering the run to type a
+# version that has to happen to match the checked-out commit. A tag push
+# still uses the tag name itself (must be plain X.Y.Z), which is the actual
+# release-integrity check: it catches a tag pushed against a commit whose
+# source version was never bumped to match.
+#
+# Deliberately deferred (see reproducible-builds/README-windows.md
+# "Signing and publication"): Azure Artifact Signing / Authenticode.
+# sign_windows.ps1 already exists but is not invoked here. This workflow
+# only produces and publishes the UNSIGNED payload (filenames say
+# "-unsigned"), matching main's Linux release, which is also unsigned.
 
 on:
+  push:
+    tags: [ "*" ]
   workflow_dispatch:
+    inputs:
+      check_reproducible_build:
+        description: Check reproducible build
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
-    name: Build Windows x64 for Windows 1
+    name: Build Windows x64
     runs-on: windows-2022
 
     steps:
+      # Must run before checkout.
+      #
+      # core.longpaths: some recursive submodules (e.g. trezor-firmware's
+      # vendor/micropython -> lib/stm32lib) have deeply nested paths and tag
+      # names long enough that the combined ".git/modules/.../refs/tags/..."
+      # path exceeds Windows' legacy 260-char MAX_PATH, which fails as
+      # "cannot lock ref ...: Filename too long". This is git-for-Windows'
+      # own long-path support (independent of the OS "Enable Win32 long
+      # paths" policy) and must be set before `actions/checkout` runs
+      # `git submodule update --init --recursive`.
+      #
+      # core.autocrlf: build_windows.ps1 and package_windows.ps1 both refuse
+      # to run against a checkout `git status --porcelain` reports as dirty.
+      # Git for Windows defaults to converting LF -> CRLF on checkout; that
+      # alone would not normally leave the tree dirty, but disabling it
+      # removes an unnecessary source of platform-dependent bytes this
+      # native (non-Docker) pipeline does not need.
+      #
+      # core.symlinks: this checkout (via the trezor-firmware submodule)
+      # contains 143 git-tracked symlinks -- all inside trezor-firmware's
+      # embedded/legacy firmware and docs trees (e.g.
+      # core/embed/extmod/modtrezorui/qr-code-generator), none of them on the
+      # path of the Windows desktop CMake build. On a runner with symlink
+      # privilege, git for Windows checks these out as real NTFS
+      # symlinks/reparse points, which `robocopy /MIR` (used by
+      # build_windows.ps1 to make the deterministic build copy) cannot copy
+      # ("ERROR 5: Access is denied" -> "RETRY LIMIT EXCEEDED"). Disabling
+      # core.symlinks makes git check these out as plain text placeholder
+      # files (containing the link target string) instead, which robocopy
+      # copies like any other file.
+      - name: Configure git for a byte-faithful checkout
+        shell: pwsh
+        run: |
+          git config --global core.longpaths true
+          git config --global core.autocrlf false
+          git config --global core.symlinks false
+
+      # build_windows.ps1 mirrors the whole checkout (source + all recursive
+      # submodules) with `robocopy /MIR /R:1 /W:1` -- only one retry, one
+      # second apart. On a fresh windows-2022 runner, Windows Defender's
+      # real-time scanner is still actively scanning the thousands of files
+      # actions/checkout just wrote (this repo's submodule tree is large),
+      # and briefly locking files out from under robocopy is enough to
+      # exhaust that one retry -> "ERROR: RETRY LIMIT EXCEEDED" / exit code
+      # 9. This is an environment reliability fix, not a change to the
+      # pinned/reproducible build logic itself, so it lives here rather than
+      # in build_windows.ps1. Best-effort: some hosted-runner configurations
+      # restrict Defender cmdlets, so failures here are logged, not fatal.
+      - name: Exclude build paths from Windows Defender scanning
+        shell: pwsh
+        run: |
+          try {
+            Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE -ErrorAction Stop
+            Add-MpPreference -ExclusionPath "C:\nunchuk-repro" -ErrorAction Stop
+            Add-MpPreference -ExclusionPath "C:\nunchuk-repro-check" -ErrorAction Stop
+            Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction Stop
+            Write-Host "Windows Defender exclusions/real-time monitoring configured."
+          }
+          catch {
+            Write-Warning "Could not configure Windows Defender exclusions (continuing anyway): $_"
+          }
+
       - name: Check out repository
+        # actions/checkout, pinned per reproducible-builds/windows-dependencies.lock.json (actions.checkout).
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          submodules: recursive
+
+      - name: Resolve source commit and SOURCE_DATE_EPOCH
+        shell: pwsh
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          $epoch = (git show -s --format=%ct HEAD).Trim()
+          if ($commit -notmatch '^[0-9a-f]{40}$' -or [string]::IsNullOrWhiteSpace($epoch)) {
+            Write-Error "Could not resolve a valid commit/epoch for the checked-out ref."
+            exit 1
+          }
+          "EXPECTED_COMMIT=$commit" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SOURCE_DATE_EPOCH_VALUE=$epoch" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Building commit $commit (epoch $epoch)"
+
+      # A tag push must use the tag name (release-integrity check: catches a
+      # tag pushed against a commit whose source version was never bumped).
+      # A manual workflow_dispatch run has no version input to fill in --
+      # it always builds whatever version the checked-out commit's
+      # CMakeLists.txt already declares, matching "just build the latest
+      # commit" instead of requiring a guess that has to happen to match.
+      - name: Resolve build version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $version = $env:GITHUB_REF_NAME
+            $source = "release tag"
+          }
+          else {
+            $cmakeText = Get-Content -LiteralPath "CMakeLists.txt" -Raw
+            $found = @([regex]::Matches(
+              $cmakeText,
+              '(?im)^\s*project\s*\([^\)\r\n]*\bVERSION\s+([0-9]+\.[0-9]+\.[0-9]+)\b'
+            ) | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+            if ($found.Count -ne 1) {
+              Write-Error "Expected exactly one project(VERSION ...) in CMakeLists.txt; found $($found.Count): $($found -join ', ')"
+              exit 1
+            }
+            $version = $found[0]
+            $source = "CMakeLists.txt (auto-detected for this manual build)"
+          }
+          if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            Write-Error "Invalid build version resolved from ${source}: '$version' (build_windows.ps1/package_windows.ps1 require exactly X.Y.Z, no pre-release suffix)"
+            exit 1
+          }
+          "BUILD_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Resolved build version '$version' from $source"
+
+      - name: Setup MSVC developer environment
+        # ilammy/msvc-dev-cmd, pinned per windows-dependencies.lock.json (actions.msvcDevCmd).
+        # No exact toolset/SDK pin: build_windows.ps1 only requires an active
+        # x64 MSVC environment (cl/link/lib/dumpbin on PATH) and records the
+        # actual cl.exe file version into build-info.json for traceability.
+        # The windows-2022 image's MSVC/SDK version is an accepted external
+        # input, per reproducible-builds/README-windows.md
+        # "Remaining external inputs".
+        uses: ilammy/msvc-dev-cmd@a102174a2b586eec2ea151a69e6fd14404a8ce7c
+        with:
+          arch: x64
+
+      # build_windows.ps1 builds OpenSSL 3.5.7 from source with nmake and
+      # requires nasm.exe on PATH (Configure target VC-WIN64A). windows-2022
+      # ships Perl and nmake (via MSVC) but not NASM.
+      #
+      # Gap (needs confirmation / follow-up): unlike CMake/Ninja/aqt/Inno
+      # Setup, NASM is not yet part of windows-dependencies.lock.json's
+      # hash-pinned toolchain. This installs it via the Chocolatey client
+      # already on the runner, without a pinned version. Both the primary
+      # build and the optional reproducibility-check rebuild below (same
+      # job, same runner) resolve the same Chocolatey package, so a
+      # check_reproducible_build run stays meaningful -- but a rebuild on a
+      # different day/runner could resolve a different NASM version and
+      # produce different OpenSSL bytes. Recommended follow-up: add a
+      # hash-verified NASM entry to windows-dependencies.lock.json and have
+      # build_windows.ps1 fetch it the same way it fetches CMake/Ninja/aqt.
+      - name: Install NASM (unpinned -- see comment)
+        shell: pwsh
+        run: |
+          choco install nasm -y --no-progress
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $nasmDir = "$env:ProgramFiles\NASM"
+          $nasmExe = Join-Path $nasmDir "nasm.exe"
+          if (!(Test-Path -LiteralPath $nasmExe -PathType Leaf)) {
+            Write-Error "nasm.exe not found under $nasmDir after Chocolatey install."
+            exit 1
+          }
+          $nasmDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & $nasmExe -v
+
+      - name: Build application
+        shell: pwsh
+        run: |
+          & .\reproducible-builds\build_windows.ps1 `
+            -Replica a `
+            -ExpectedCommit $env:EXPECTED_COMMIT `
+            -ReleaseVersion $env:BUILD_VERSION `
+            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE)
+
+      - name: Package application (unsigned)
+        shell: pwsh
+        run: |
+          & .\reproducible-builds\package_windows.ps1 `
+            -ExpectedCommit $env:EXPECTED_COMMIT `
+            -ReleaseVersion $env:BUILD_VERSION `
+            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE) `
+            -ArtifactFlavor unsigned `
+            -ApplicationExe C:\nunchuk-repro\build-output\nunchuk-qt.exe `
+            -BuildInfoFile C:\nunchuk-repro\build-output\build-info.json `
+            -TlsProbeExe C:\nunchuk-repro\build-output\qt-tls-probe.exe `
+            -SmokeTest
+
+      - name: Upload build artifacts
+        # actions/upload-artifact, pinned per windows-dependencies.lock.json (actions.uploadArtifact).
+        # Uploaded unconditionally, before the optional reproducibility check
+        # below -- the check's outcome never affects this artifact.
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nunchuk-windows-x64-v${{ env.BUILD_VERSION }}
+          path: C:\nunchuk-repro\artifacts
+          if-no-files-found: error
+
+      # Everything below is opt-in, manual-build-only diagnostics, mirroring
+      # build-linux.yml's own "check_reproducible_build" steps: the checkbox
+      # only exists on the workflow_dispatch form, so a tag push never has
+      # it and these steps never run for a release -- a tag build is never
+      # gated on this comparison. It rebuilds the exact same commit a second
+      # time in the same job and compares the unsigned ZIP, installer and
+      # payload manifest byte-for-byte. This is a CI convenience for
+      # validating changes to the build/packaging pipeline; the artifact
+      # from the *first* build above has already been uploaded regardless
+      # of the outcome below.
+      - name: Save first build for reproducibility check
+        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
+        shell: pwsh
+        run: |
+          $checkDir = "C:\nunchuk-repro-check\build1"
+          New-Item -ItemType Directory -Path $checkDir -Force | Out-Null
+          # build_windows.ps1 resets its WorkDirectory (C:\nunchuk-repro) on
+          # every run, and package_windows.ps1's default OutputDirectory
+          # (C:\nunchuk-repro\artifacts) lives underneath it -- so the first
+          # build's packaged output must be copied *outside* C:\nunchuk-repro
+          # before rebuilding, or the rebuild below would delete it.
+          Copy-Item -Path "C:\nunchuk-repro\artifacts\*" -Destination $checkDir -Recurse -Force
+          Get-ChildItem $checkDir | Select-Object Name, Length
+
+      - name: Rebuild application for reproducibility check
+        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
+        shell: pwsh
+        run: |
+          & .\reproducible-builds\build_windows.ps1 `
+            -Replica b `
+            -ExpectedCommit $env:EXPECTED_COMMIT `
+            -ReleaseVersion $env:BUILD_VERSION `
+            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE)
+          & .\reproducible-builds\package_windows.ps1 `
+            -ExpectedCommit $env:EXPECTED_COMMIT `
+            -ReleaseVersion $env:BUILD_VERSION `
+            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE) `
+            -ArtifactFlavor unsigned `
+            -ApplicationExe C:\nunchuk-repro\build-output\nunchuk-qt.exe `
+            -BuildInfoFile C:\nunchuk-repro\build-output\build-info.json `
+            -TlsProbeExe C:\nunchuk-repro\build-output\qt-tls-probe.exe `
+            -SmokeTest
+
+      - name: Compare reproducibility check builds
+        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
+        shell: pwsh
+        run: |
+          $namePrefix = "nunchuk-windows-x64-v$env:BUILD_VERSION-unsigned"
+          $build1 = "C:\nunchuk-repro-check\build1"
+          $build2 = "C:\nunchuk-repro\artifacts"
+
+          $files = @("payload-manifest.sha256", "$namePrefix.zip", "$namePrefix-setup.exe")
+          $results = [ordered]@{}
+          $allMatch = $true
+          foreach ($file in $files) {
+            $path1 = Join-Path $build1 $file
+            $path2 = Join-Path $build2 $file
+            if (!(Test-Path -LiteralPath $path1) -or !(Test-Path -LiteralPath $path2)) {
+              Write-Error "Missing expected file for comparison: $file"
+              exit 1
+            }
+            $hash1 = (Get-FileHash -LiteralPath $path1 -Algorithm SHA256).Hash
+            $hash2 = (Get-FileHash -LiteralPath $path2 -Algorithm SHA256).Hash
+            $match = $hash1 -eq $hash2
+            $results[$file] = $match
+            if (!$match) { $allMatch = $false }
+          }
+
+          $summary = New-Object System.Collections.Generic.List[string]
+          $summary.Add("### Windows reproducible build check")
+          $summary.Add("")
+          $summary.Add("| File | Byte-identical |")
+          $summary.Add("| --- | --- |")
+          foreach ($entry in $results.GetEnumerator()) {
+            $summary.Add("| $($entry.Key) | $($entry.Value) |")
+          }
+          $summary.Add("")
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ($summary -join "`n")
+
+          if ($allMatch) {
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Reproducible build check: PASSED**"
+            Write-Host "Reproducible build check: PASSED"
+            exit 0
+          }
+
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Reproducible build check: NOT PASSED**"
+          Write-Host "::error::Reproducible build check NOT PASSED: the two builds produced different bytes."
+          exit 1
+
+  publish-release:
+    name: Publish Windows release assets (unsigned)
+    # Only runs for a real tag push, never for workflow_dispatch, matching
+    # build-linux.yml's publish-release job. A tag build is never gated on
+    # the optional check_reproducible_build comparison above.
+    needs: build
+    if: github.event_name != 'workflow_dispatch' && github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    # Shared with build-linux.yml and build-macos.yml's publish-release jobs
+    # (same group name) so a tag push cannot race two `gh release
+    # create`/`edit` calls for the same tag across the three platform
+    # workflows, per reproducible-builds/README.md's "All three publish jobs
+    # share one queued concurrency group".
+    concurrency:
+      group: release-publish-${{ github.ref_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        # This job only runs for a real tag push (see the job-level `if:`
+        # above), so github.ref_name is always the release version here --
+        # unlike the build job, there is no manual/auto-detected case to
+        # handle.
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: nunchuk-windows-x64-v${{ github.ref_name }}
+          path: release-assets
+
+      - name: Create or update GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(release-assets/*.zip release-assets/*.exe release-assets/*.sha256 release-assets/*.json)
+          if [[ "${#assets[@]}" -eq 0 ]]; then
+            echo "No release assets were downloaded" >&2
+            exit 1
+          fi
+
+          if gh release view "${BUILD_VERSION}" >/dev/null 2>&1; then
+            gh release edit "${BUILD_VERSION}" \
+              --title "${BUILD_VERSION}" \
+              --notes-file reproducible-builds/release-notes.md \
+              --draft=false \
+              --prerelease
+            gh release upload "${BUILD_VERSION}" "${assets[@]}" --clobber
+          else
+            gh release create "${BUILD_VERSION}" "${assets[@]}" \
+              --verify-tag \
+              --title "${BUILD_VERSION}" \
+              --notes-file reproducible-builds/release-notes.md \
+              --prerelease \
+              --latest=false
+          fi

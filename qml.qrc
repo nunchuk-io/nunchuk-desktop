@@ -617,6 +617,7 @@
         <file>Qml/Components/customizes/Lists/QRadioList.qml</file>
         <file>Qml/Components/customizes/Wallets/QDraftWalletReviewWallet.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletWarningInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QHomeReminderBanner.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletConfigDetails.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletConfigKeys.qml</file>
         <file>Qml/Components/customizes/Wallets/QTypeWallet.qml</file>

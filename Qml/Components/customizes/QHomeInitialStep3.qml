@@ -25,6 +25,7 @@ import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
 import DataPool 1.0
+import Features.Home.ViewModels 1.0
 import "../../Components/customizes"
 import "../../Components/origins"
 import "../../Components/customizes/Texts"
@@ -57,22 +58,108 @@ Item {
                             qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(QSTR.STR_QML_069)
         }
     }
-    // Height consumed by visible top banners + 24px spacing below them.
-    // Drives wallet-card height so it shrinks proportionally when banners appear.
-    readonly property int _bannersConsumedHeight: topBanners.height + (topBanners.height > 0 ? 24 : 0)
+    // Height consumed by the banner cluster below (capped/flickable), + 24px
+    // spacing before the wallet card. Drives wallet-card height so it
+    // shrinks proportionally when banners appear.
+    readonly property int _bannersConsumedHeight: bannersFlickable.height + (bannersFlickable.height > 0 ? 24 : 0)
 
-    // All conditional warning banners grouped here.
-    // Column.height auto-reflects only the visible children, so _bannersConsumedHeight
-    // is always accurate regardless of which banners are showing.
-    Column {
-        id: topBanners
+    // All conditional wallet-specific warning/notice banners for this
+    // screen, stacked in priority order: timelock notice (always first --
+    // it affects fund availability) -> wallet backup/registration warnings
+    // -> group-replace notices. At most 3 banners' worth of height is shown
+    // at once; if more are visible simultaneously the cluster becomes
+    // flickable instead of pushing the rest of the page further down
+    // indefinitely.
+    // NOTE: the generic home reminder banner (QHomeReminderBanner, driven
+    // by HomeReminderViewModel) is intentionally NOT part of this cluster.
+    // It's rendered once in SCR_HOME.qml, above whichever Home state is
+    // currently loaded (this wallet view, or the no-key/no-wallet welcome
+    // screens), so it stays visible regardless of wallet state.
+    Flickable {
+        id: bannersFlickable
         anchors {
             top: parent.top
             left: parent.left
             right: parent.right
         }
-        spacing: 24
-        QWalletWarningInfo {
+        clip: true
+        contentWidth: width
+        contentHeight: topBanners.height
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: contentHeight > height
+        ScrollBar.vertical: QScrollBar { }
+
+        // Sum of the first 3 *visible* banners' heights (in the priority
+        // order declared below), including spacing between them. With 3 or
+        // fewer visible banners this equals contentHeight exactly, so
+        // height == contentHeight and interactive is false -- no flick
+        // affordance appears unless it's actually needed.
+        readonly property int _firstThreeHeight: {
+            var heights = []
+            var kids = topBanners.children
+            for (var i = 0; i < kids.length && heights.length < 3; i++) {
+                var kid = kids[i]
+                if (kid.visible === true && kid.height > 0) {
+                    heights.push(kid.height)
+                }
+            }
+            var sum = 0
+            for (var j = 0; j < heights.length; j++) {
+                sum += heights[j]
+                if (j > 0) sum += topBanners.spacing
+            }
+            return sum
+        }
+
+        height: Math.min(contentHeight, _firstThreeHeight)
+
+        Column {
+            id: topBanners
+            width: bannersFlickable.width
+            spacing: 24
+
+            // Timelock notification -- kept first/top priority.
+            Rectangle {
+                id: timelockNoti
+                property bool needTobeVisibleWarning: walletInfo.timelockInfo.valueNeedVisibleWarning
+
+                width: _item.width
+                height: 60
+                radius: 8
+                color: timelockNoti.needTobeVisibleWarning ? "#FDEBD2" : "#EAEAEA"
+                visible: (walletInfo.walletBalanceSats > 0)
+                         && (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
+                         /*&& walletInfo.timeLocked*/
+                         && (walletInfo.timelockInfo.valueRemainingNumeric > 0)
+                Row {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 8
+                    QIcon {
+                        iconSize: 36
+                        anchors.verticalCenter: parent.verticalCenter
+                        source: timelockNoti.needTobeVisibleWarning ? "qrc:/Images/Images/warning_amber-60px.png" : "qrc:/Images/Images/info-60px.svg"
+                    }
+                    QLato {
+                        width: parent.width - 48
+                        height: 36
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.pixelSize: 16
+                        wrapMode: Text.WordWrap
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                        text: QSTR.STR_QML_2078.arg(walletInfo.timelockInfo.valueRemainingString)
+                        textFormat: Text.RichText
+                        onLinkActivated: {
+                            if(walletInfo.utxoList.count > 0){
+                                walletInfo.isViewCoinShow = true
+                            }
+                        }
+                    }
+                }
+            }
+
+            QWalletWarningInfo {
             visible: {
                 var ret = !forceClose && !walletIsReplaced
                 if (walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG) {
@@ -249,20 +336,23 @@ Item {
                 }
             }
         }
-    }   // end topBanners
+        }   // end topBanners
+    }   // end bannersFlickable
 
-    // Wallet card: 49% of the height remaining after top banners.
+    // Wallet card: 49% of the height remaining after the banner cluster.
     // When no banners are visible, this equals the original _item.height * 0.49.
+    // Clamped to >= 0 so a small/min-height window with several banners
+    // visible at once cannot push this negative and break the layout.
     QAreaWalletDetail{
         id: _walletDes
         anchors {
-            top: topBanners.bottom
-            topMargin: topBanners.height > 0 ? 24 : 0
+            top: bannersFlickable.bottom
+            topMargin: bannersFlickable.height > 0 ? 24 : 0
             left: parent.left
             right: parent.right
         }
         width: _item.width
-        height: (_item.height - _bannersConsumedHeight) * 0.49
+        height: Math.max(0, (_item.height - _bannersConsumedHeight) * 0.49)
             isAssisted: walletIsAssisted
             isHotWallet: walletKeyNeedBackup
             isLocked: walletIsLocked
@@ -720,66 +810,14 @@ Item {
                 }
             }
         }
-    // Timelock notification bar — conditional, anchored below the wallet card.
-    Rectangle {
-        id: timelockNoti
-        property bool needTobeVisibleWarning: walletInfo.timelockInfo.valueNeedVisibleWarning
-
-        anchors {
-            top: _walletDes.bottom
-            topMargin: 24
-            left: parent.left
-            right: parent.right
-        }
-        width: _item.width
-        // Collapse to 0 when hidden so transactionSection can always anchor to timelockNoti.bottom.
-        // This avoids a ternary anchor-target expression which is unreliable in Qt6.
-        height: visible ? 60 : 0
-        radius: 8
-        color:  timelockNoti.needTobeVisibleWarning? "#FDEBD2" : "#EAEAEA"
-            visible: (walletInfo.walletBalanceSats > 0)
-                     && (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
-                     /*&& walletInfo.timeLocked*/
-                     && (walletInfo.timelockInfo.valueRemainingNumeric > 0)
-            Row {
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
-                QIcon {
-                    iconSize: 36
-                    anchors.verticalCenter: parent.verticalCenter
-                    source: timelockNoti.needTobeVisibleWarning? "qrc:/Images/Images/warning_amber-60px.png" : "qrc:/Images/Images/info-60px.svg"
-                }
-                QLato {
-                    width: parent.width - 48
-                    height: 36
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.pixelSize: 16
-                    // lineHeightMode: Text.FixedHeight
-                    // lineHeight: 28
-                    wrapMode: Text.WordWrap
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignLeft
-                    text: QSTR.STR_QML_2078.arg(walletInfo.timelockInfo.valueRemainingString)
-                    textFormat: Text.RichText
-                    onLinkActivated: {
-                        if(walletInfo.utxoList.count > 0){
-                            walletInfo.isViewCoinShow = true
-                        }
-                    }
-                }
-            }
-        }
     // Transaction section: fills ALL remaining space dynamically.
     // anchors.bottom: parent.bottom means height auto-adjusts as banners appear/disappear.
+    // (timelockNoti now lives inside the banner cluster above -- see bannersFlickable.)
     Item {
         id: transactionSection
         anchors {
-            // timelockNoti collapses to height:0 when not visible, so .bottom == its y position.
-            // topMargin:0 when timelock hidden → gap = _walletDes.bottom + 24 (timelockNoti.y itself).
-            // topMargin:24 when timelock visible → gap adds 24 below the 60px bar.
-            top: timelockNoti.bottom
-            topMargin: timelockNoti.visible ? 24 : 0
+            top: _walletDes.bottom
+            topMargin: 24
             left: parent.left
             right: parent.right
             bottom: parent.bottom

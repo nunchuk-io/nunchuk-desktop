@@ -1,9 +1,25 @@
 # Windows Qt 6 reproducible release
 
-The Windows release workflow builds the same source commit twice on independent
-`windows-2022` runners with native MSVC 2022. Both unsigned ZIP files, Inno
-Setup installers, payload manifests and build metadata must compare
-byte-for-byte before the protected signing job can run.
+This document describes the full intended design: the same source commit
+built twice on independent `windows-2022` runners with native MSVC 2022,
+where both unsigned ZIP files, Inno Setup installers, payload manifests and
+build metadata must compare byte-for-byte before a protected signing job
+runs. `sign_windows.ps1` implements the signing half of that design but is
+not yet invoked by any workflow.
+
+**Current CI status:** `.github/workflows/build-windows.yml` builds once per
+tag push or manual run (matching `build-linux.yml`'s own single-build UX) and
+publishes the resulting **unsigned** ZIP/installer as the GitHub release
+asset directly -- a tag build is never gated on a second build comparing
+byte-for-byte. A manual `workflow_dispatch` run can tick the
+"check_reproducible_build" checkbox to additionally rebuild the same commit a
+second time in the same job and diff the two unsigned payloads; this is an
+opt-in diagnostic for validating pipeline changes, not a release gate, and it
+never runs for a tag push. Neither `sign_windows.ps1` nor the
+`release-signing` environment described under "Signing and publication" is
+invoked yet. That signing wiring, and the NASM version pin noted in the
+workflow's own comments (NASM is installed via Chocolatey without a hash
+pin, unlike the rest of the toolchain below), are open follow-ups.
 
 ## Immutable inputs
 
@@ -53,7 +69,8 @@ Set the GitHub Actions configuration variable `WINDOWS_SIGNER_SUBJECT` (at the
 repository or `release-signing` environment level) to the exact Authenticode
 subject expected on Nunchuk release files.
 
-After the two-replica gate passes, Azure Artifact Signing signs exactly:
+Once wired up (not yet implemented in CI, per "Current CI status" above),
+after the two-replica gate passes, Azure Artifact Signing would sign exactly:
 
 - `nunchuk-qt.exe`
 - `qt6keychain.dll`

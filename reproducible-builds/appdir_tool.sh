@@ -358,6 +358,9 @@ verify_appdir() {
     require_file \
         "${canonical_appdir}/usr/resources/qtwebengine_resources_200p.pak" \
         "Qt WebEngine 200-percent resources"
+    require_file \
+        "${canonical_appdir}/usr/resources/ca-certificates.crt" \
+        "CA certificate bundle"
     require_match \
         "${canonical_appdir}/usr/translations/qtwebengine_locales" \
         '*.pak' \

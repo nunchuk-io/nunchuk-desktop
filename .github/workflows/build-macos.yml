@@ -1,12 +1,487 @@
 name: Build macos release
+run-name: ${{ github.ref_type == 'tag' && github.ref_name || format('{0}_manual', github.ref_name) }}
+
+# Wires reproducible-builds/build_macos.sh + package_macos.sh + sign_macos.sh +
+# macos.lock.env (Qt 6.9.3 / Boost / libevent / Berkeley DB / Olm / QtKeychain /
+# HWI, all hash- or commit-pinned -- see the lock file) into CI. OpenSSL is not
+# an independent input here: it is the copy already vendored inside the
+# contrib/libnunchuk submodule, pinned by that submodule's own commit -- see
+# macos.lock.env's own comment. These versions and build steps were
+# re-derived directly from the manually-run reference workflow below, per an
+# explicit instruction not to trust this workflow's previous (unverified
+# draft) Qt 6.11.1 / standalone-OpenSSL-download / prebuilt-HWI values.
+#
+# Reproducibility model: matches build-linux.yml's (and, as of the same
+# change, build-windows.yml's) single-build-then-optionally-verify model. By
+# default (both a tag push and a plain workflow_dispatch run) each
+# architecture is built ONCE and that single unsigned payload is signed
+# directly -- there is no byte-for-byte gate in front of signing. Checking
+# the "check_reproducible_build" box on a manual workflow_dispatch run adds a
+# second from-scratch rebuild of the same commit in the same job purely to
+# report PASSED/NOT PASSED in the step summary; this never blocks or
+# influences signing, matching how build-linux.yml's own checkbox never
+# blocks or influences that workflow's publish step either. This was a
+# deliberate choice, made explicitly at the user's request, to mirror
+# build-linux.yml's UX instead of keeping this workflow's own previous
+# always-two-replica-then-gate design (what README.md/README-macos.md as
+# originally written both described for macOS). The trade-off accepted here:
+# unlike the previous version of this workflow, a real tag release is no
+# longer cryptographically
+# demonstrated to be reproducible before Apple signs and notarizes it --
+# reproducibility for a published macOS release becomes something anyone can
+# check after the fact (rebuild the tag, compare against the release asset),
+# the same posture build-linux.yml already documents for Linux. See the
+# "Reproducibility model" section added to reproducible-builds/README-macos.md
+# alongside this change.
+#
+# Runner images / Xcode selection carried over from the manually-run
+# reference workflow this was modeled on --
+# https://github.com/tongvanlinh/macdeploynunchuk/blob/main/.github/workflows/nunchuk-macos_matrix.yml
+# -- which selects Xcode 16.4 on the same two runner labels (macos-15-intel,
+# macos-15) and signs/notarizes successfully today. This repository has not
+# independently re-confirmed that GitHub's macos-15 images still ship Xcode
+# 16.4 at the exact 16F6 build recorded in macos.lock.env; needs confirmation
+# on first run. build_macos.sh's own toolchain check (Qt version equality
+# against QT_VERSION in macos.lock.env) fails loudly on drift, but does not
+# itself assert the Xcode build number.
+#
+# Signing/notarization (sign_macos.sh) runs in the "release-signing" GitHub
+# Environment, using the secrets named in reproducible-builds/README-macos.md
+# ("Locked inputs and secrets"): PROD_MACOS_CERTIFICATE,
+# PROD_MACOS_CERTIFICATE_PWD, PROD_MACOS_CERTIFICATE_NAME,
+# PROD_MACOS_CI_KEYCHAIN_PWD, IO_APPLE_ID, IO_APPLE_TEAM_ID,
+# IO_APPLE_APP_PASSWORD -- see that file's "CI signing setup checklist" for
+# whether those already exist on this repository or still need adding.
 
 on:
+  push:
+    tags: [ "*" ]
   workflow_dispatch:
+    # Manual run: use the "Use workflow from" ref picker on the Actions tab to
+    # choose either a tag (build that tag) or a branch (build its latest
+    # commit -- the resolve-version job below then reads the version straight
+    # out of that commit's CMakeLists.txt, so no version has to be typed in by
+    # hand and it can never drift from what the build itself produces).
+    # Manual runs still upload build/signing artifacts but never create or
+    # update a GitHub release (see publish-release's `if:` below).
+    inputs:
+      check_reproducible_build:
+        description: Check reproducible build (diagnostic only -- rebuilds a second time and reports PASSED/NOT PASSED; never blocks signing)
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  build:
-    runs-on: macos-13
-
+  resolve-version:
+    name: Resolve build version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Resolve build version
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            version="${{ github.ref_name }}"
+          else
+            # Manual run on a branch: read the version straight out of
+            # CMakeLists.txt's macOS project() declaration (project(Nunchuk
+            # VERSION X.Y.Z), the `if(UNIX AND APPLE)` branch) instead of a
+            # typed-in input. This is exactly the value
+            # package_macos.sh/Info.plist will bake in as
+            # CFBundleShortVersionString for whatever commit is checked out,
+            # so it cannot drift from what the build actually produces the
+            # way a manually-entered version string could.
+            version="$(sed -n -E 's/^[[:space:]]*project\(Nunchuk VERSION ([0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*)\).*/\1/p' CMakeLists.txt | head -n1)"
+            if [[ -z "${version}" ]]; then
+              echo "Could not find project(Nunchuk VERSION X.Y.Z) in CMakeLists.txt" >&2
+              exit 1
+            fi
+          fi
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
+            echo "Invalid resolved build version: ${version}" >&2
+            exit 1
+          fi
+          echo "Resolved build version: ${version}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build macOS ${{ matrix.arch }}
+    needs: resolve-version
+    env:
+      BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-15-intel / macos-15 are GitHub-hosted native x86_64 / arm64
+          # runners respectively -- both architectures build natively, no
+          # cross-compilation, matching build_macos.sh's own
+          # "$(uname -s)/$(uname -m)" self-check.
+          - arch: x86_64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    # Checkout lives in a subdirectory, not directly at $GITHUB_WORKSPACE.
+    # build_macos.sh's clean-tree check (`git status --porcelain
+    # --untracked-files=all`) has repeatedly failed because tools that don't
+    # respect an output/cache directory input -- confirmed for aqtinstall,
+    # which jurplel/install-qt-action uses internally and which always
+    # writes "aqtinstall.log" into the current working directory regardless
+    # of the `dir:` input -- drop stray files into whatever directory the
+    # step ran from. Previously that was the checkout root itself, so the
+    # stray file showed up as untracked in the very tree the clean check
+    # inspects. Keeping the checkout in its own subdirectory means anything
+    # a `uses:` step writes to the default $GITHUB_WORKSPACE (as those steps
+    # do -- `working-directory:` only applies to `run:` steps, not `uses:`
+    # steps, so it could not fix this) lands outside the git tree entirely,
+    # regardless of which tool does it or whether this workflow knows about
+    # it in advance.
+    defaults:
+      run:
+        working-directory: nunchuk-desktop
+    steps:
+      # Overrides the job's own working-directory default below: this step
+      # runs before checkout creates that subdirectory, so it must not try
+      # to cd into it first.
+      - name: Validate build version
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${BUILD_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
+            echo "Invalid build version: ${BUILD_VERSION}" >&2
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: nunchuk-desktop
+
+      # Also keep build_macos.sh's own OUTPUT_DIR outside the checkout: its
+      # default (${PROJECT_DIR}/out/macos/${ARCH}) would leave the first
+      # build's own output sitting untracked inside the git tree, which
+      # would then fail the *second* invocation's clean-tree check when the
+      # opt-in "check_reproducible_build" reproducibility rebuild runs later
+      # in this same job.
+      - name: Configure build output directory
+        run: echo "OUTPUT_DIR=${RUNNER_TEMP}/macos-output/${{ matrix.arch }}" >> "${GITHUB_ENV}"
+
+      - name: Select Xcode 16.4
+        run: |
+          set -euo pipefail
+          sudo xcode-select --switch /Applications/Xcode_16.4.app
+          xcodebuild -version
+          clang --version
+
+      # Qt 6.9.3 via the same jurplel/install-qt-action the reference
+      # workflow uses, with the exact same module list -- not aqt/pip, and
+      # not Qt 6.11.1 (both were the previous, unverified draft's own
+      # invented choices, never validated against a real build). Python is
+      # no longer installed here at all: build_macos.sh now sets up its own
+      # pyenv Python 3.9 internally, only for building HWI from source,
+      # matching how the reference workflow scopes Python to that one step.
+      - name: Install pinned Qt 6.9.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.9.3'
+          host: 'mac'
+          dir: ${{ runner.temp }}/qt
+          modules: 'qtmultimedia qtnetworkauth qtwebengine qtwebchannel qtpositioning qt5compat qtshadertools'
+
+      - name: Configure Qt path
+        run: |
+          set -euo pipefail
+          qt_root="${QT_ROOT_DIR:?install-qt-action did not export QT_ROOT_DIR}"
+          if [[ ! -x "${qt_root}/bin/macdeployqt" ]]; then
+            echo "install-qt-action did not install Qt where this workflow expected it: ${qt_root}" >&2
+            exit 1
+          fi
+          echo "QT_ROOT=${qt_root}" >> "${GITHUB_ENV}"
+
+      - name: Build (unsigned)
+        env:
+          ARCH: ${{ matrix.arch }}
+          TAG: ${{ env.BUILD_VERSION }}
+        run: bash reproducible-builds/build_macos.sh
+
+      # Only the canonical tar and its checksum are uploaded -- not the
+      # payload/ directory build_macos.sh also leaves on disk. Signing later
+      # extracts from this tar and re-verifies its checksum first, so it does
+      # not depend on actions/upload-artifact preserving Unix file modes or
+      # symlinks across a zip round trip -- that fidelity instead comes from
+      # package_macos.sh's own tar headers once the tar bytes themselves are
+      # confirmed unchanged.
+      - name: Upload unsigned payload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}
+          path: |
+            ${{ env.OUTPUT_DIR }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar
+            ${{ env.OUTPUT_DIR }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar.sha256
+          if-no-files-found: error
+          compression-level: 0
+
+      # Everything below is opt-in, manual-build-only diagnostics (the
+      # "check_reproducible_build" checkbox only exists on the
+      # workflow_dispatch form, so a tag push never has it and these steps
+      # never run for a release). It rebuilds the exact same commit from
+      # scratch a second time in the same job and compares the two unsigned
+      # tars byte-for-byte, mirroring build-linux.yml's own opt-in check.
+      # This is a convenience for validating changes to the build/packaging
+      # pipeline itself; it does not gate the sign jobs below, which always
+      # proceed from the single build above regardless of whether this ran or
+      # what it found.
+      - name: Save first build for reproducibility check
+        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
+        run: |
+          set -euo pipefail
+          name_prefix="nunchuk-macos-${{ matrix.arch }}-v${BUILD_VERSION}-unsigned"
+          mkdir -p /tmp/reproducible-build-check
+          cp "${OUTPUT_DIR}/${name_prefix}.tar" /tmp/reproducible-build-check/build1.tar
+          shasum -a 256 /tmp/reproducible-build-check/build1.tar
+
+      - name: Rebuild application for reproducibility check
+        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
+        env:
+          ARCH: ${{ matrix.arch }}
+          TAG: ${{ env.BUILD_VERSION }}
+        run: bash reproducible-builds/build_macos.sh
+
+      - name: Compare reproducibility check builds
+        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
+        run: |
+          set -euo pipefail
+          name_prefix="nunchuk-macos-${{ matrix.arch }}-v${BUILD_VERSION}-unsigned"
+          first_tar="/tmp/reproducible-build-check/build1.tar"
+          second_tar="${OUTPUT_DIR}/${name_prefix}.tar"
+
+          first_sha="$(shasum -a 256 "${first_tar}" | awk '{ print $1 }')"
+          second_sha="$(shasum -a 256 "${second_tar}" | awk '{ print $1 }')"
+
+          {
+            echo "### macOS ${{ matrix.arch }} reproducible build check"
+            echo
+            echo "Diagnostic only (workflow_dispatch + check_reproducible_build)."
+            echo "Rebuilds the exact same commit from scratch a second time in this"
+            echo "job and compares the two unsigned payload tars byte-for-byte. Does"
+            echo "NOT gate signing or publishing -- see reproducible-builds/README-macos.md"
+            echo "\"Reproducibility model\"."
+            echo
+            echo "| Build | SHA256 |"
+            echo "| --- | --- |"
+            echo "| 1st | \`${first_sha}\` |"
+            echo "| 2nd | \`${second_sha}\` |"
+            echo
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ "${first_sha}" == "${second_sha}" ]]; then
+            echo "**macOS ${{ matrix.arch }} reproducible build check: PASSED**" >> "${GITHUB_STEP_SUMMARY}"
+            echo "macOS ${{ matrix.arch }} reproducible build check: PASSED"
+            exit 0
+          fi
+
+          echo "**macOS ${{ matrix.arch }} reproducible build check: NOT PASSED**" >> "${GITHUB_STEP_SUMMARY}"
+          echo "::error::macOS ${{ matrix.arch }} reproducible build check NOT PASSED: the two from-scratch builds produced different bytes."
+          exit 1
+
+  sign-x86_64:
+    name: Sign & notarize x86_64
+    needs: [resolve-version, build]
+    env:
+      BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+    runs-on: macos-15-intel
+    environment: release-signing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download unsigned payload (x86_64)
+        uses: actions/download-artifact@v4
+        with:
+          name: nunchuk-macos-x86_64-v${{ env.BUILD_VERSION }}
+          path: unsigned
+
+      - name: Verify and extract payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          name_prefix="nunchuk-macos-x86_64-v${BUILD_VERSION}-unsigned"
+          archive="unsigned/${name_prefix}.tar"
+          # Confirms the tar survived actions/upload-artifact +
+          # download-artifact intact; this is a self-consistency check
+          # against build_macos.sh's own recorded checksum, not a
+          # reproducibility gate -- see the workflow's header comment and
+          # README-macos.md "Reproducibility model" for why there is no
+          # second independent build to compare against here.
+          ( cd unsigned && shasum -a 256 --check "${name_prefix}.tar.sha256" )
+
+          mkdir -p payload
+          tar -xf "${archive}" -C payload
+          if [[ ! -d "payload/Nunchuk.app" ]]; then
+            echo "Extracted payload does not contain Nunchuk.app" >&2
+            exit 1
+          fi
+
+          echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "${GITHUB_ENV}"
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "${GITHUB_ENV}"
+          echo "UNSIGNED_PAYLOAD_SHA256=$(awk '{ print $1 }' "unsigned/${name_prefix}.tar.sha256")" >> "${GITHUB_ENV}"
+
+      - name: Sign, notarize and package DMG
+        env:
+          PROJECT_DIR: ${{ github.workspace }}
+          ARCH: x86_64
+          TAG: ${{ env.BUILD_VERSION }}
+          PAYLOAD_DIR: ${{ github.workspace }}/payload
+          OUTPUT_DIR: ${{ runner.temp }}/signed-output
+          MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+          MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+          PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.IO_APPLE_ID }}
+          PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.IO_APPLE_TEAM_ID }}
+          PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.IO_APPLE_APP_PASSWORD }}
+        run: bash reproducible-builds/sign_macos.sh
+
+      - name: Upload signed release assets (x86_64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunchuk-macos-x86_64-signed-v${{ env.BUILD_VERSION }}
+          path: |
+            ${{ runner.temp }}/signed-output/nunchuk-macos-x86_64-v${{ env.BUILD_VERSION }}.dmg
+            ${{ runner.temp }}/signed-output/nunchuk-macos-x86_64-v${{ env.BUILD_VERSION }}.dmg.sha256
+            ${{ runner.temp }}/signed-output/nunchuk-macos-x86_64-v${{ env.BUILD_VERSION }}.release.json
+          if-no-files-found: error
+          compression-level: 0
+
+  sign-arm64:
+    name: Sign & notarize arm64
+    needs: [resolve-version, build]
+    env:
+      BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+    runs-on: macos-15
+    environment: release-signing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download unsigned payload (arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: nunchuk-macos-arm64-v${{ env.BUILD_VERSION }}
+          path: unsigned
+
+      - name: Verify and extract payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          name_prefix="nunchuk-macos-arm64-v${BUILD_VERSION}-unsigned"
+          archive="unsigned/${name_prefix}.tar"
+          ( cd unsigned && shasum -a 256 --check "${name_prefix}.tar.sha256" )
+
+          mkdir -p payload
+          tar -xf "${archive}" -C payload
+          if [[ ! -d "payload/Nunchuk.app" ]]; then
+            echo "Extracted payload does not contain Nunchuk.app" >&2
+            exit 1
+          fi
+
+          echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "${GITHUB_ENV}"
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "${GITHUB_ENV}"
+          echo "UNSIGNED_PAYLOAD_SHA256=$(awk '{ print $1 }' "unsigned/${name_prefix}.tar.sha256")" >> "${GITHUB_ENV}"
+
+      - name: Sign, notarize and package DMG
+        env:
+          PROJECT_DIR: ${{ github.workspace }}
+          ARCH: arm64
+          TAG: ${{ env.BUILD_VERSION }}
+          PAYLOAD_DIR: ${{ github.workspace }}/payload
+          OUTPUT_DIR: ${{ runner.temp }}/signed-output
+          MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+          MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+          PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.IO_APPLE_ID }}
+          PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.IO_APPLE_TEAM_ID }}
+          PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.IO_APPLE_APP_PASSWORD }}
+        run: bash reproducible-builds/sign_macos.sh
+
+      - name: Upload signed release assets (arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunchuk-macos-arm64-signed-v${{ env.BUILD_VERSION }}
+          path: |
+            ${{ runner.temp }}/signed-output/nunchuk-macos-arm64-v${{ env.BUILD_VERSION }}.dmg
+            ${{ runner.temp }}/signed-output/nunchuk-macos-arm64-v${{ env.BUILD_VERSION }}.dmg.sha256
+            ${{ runner.temp }}/signed-output/nunchuk-macos-arm64-v${{ env.BUILD_VERSION }}.release.json
+          if-no-files-found: error
+          compression-level: 0
+
+  publish-release:
+    name: Publish macOS release assets (signed)
+    # Only runs for a real tag push, never for workflow_dispatch, matching
+    # build-linux.yml/build-windows.yml's own publish-release jobs.
+    needs: [resolve-version, sign-x86_64, sign-arm64]
+    env:
+      BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+    if: github.event_name != 'workflow_dispatch' && github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    # Shared with build-linux.yml and build-windows.yml so a tag push cannot
+    # race two `gh release create`/`edit` calls for the same tag across the
+    # three platform workflows.
+    concurrency:
+      group: release-publish-${{ github.ref_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download x86_64 signed assets
+        uses: actions/download-artifact@v4
+        with:
+          name: nunchuk-macos-x86_64-signed-v${{ env.BUILD_VERSION }}
+          path: release-assets
+
+      - name: Download arm64 signed assets
+        uses: actions/download-artifact@v4
+        with:
+          name: nunchuk-macos-arm64-signed-v${{ env.BUILD_VERSION }}
+          path: release-assets
+
+      - name: Create or update GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(release-assets/*.dmg release-assets/*.sha256 release-assets/*.json)
+          if [[ "${#assets[@]}" -eq 0 ]]; then
+            echo "No release assets were downloaded" >&2
+            exit 1
+          fi
+
+          if gh release view "${BUILD_VERSION}" >/dev/null 2>&1; then
+            gh release edit "${BUILD_VERSION}" \
+              --title "${BUILD_VERSION}" \
+              --notes-file reproducible-builds/release-notes.md \
+              --draft=false \
+              --prerelease
+            gh release upload "${BUILD_VERSION}" "${assets[@]}" --clobber
+          else
+            gh release create "${BUILD_VERSION}" "${assets[@]}" \
+              --verify-tag \
+              --title "${BUILD_VERSION}" \
+              --notes-file reproducible-builds/release-notes.md \
+              --prerelease \
+              --latest=false
+          fi

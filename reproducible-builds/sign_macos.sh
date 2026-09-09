@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Codesign/notarize sequence re-derived from the manually-run reference
+# workflow (see build_macos.sh's header for the link and rationale). This
+# intentionally mirrors that reference's actual, proven behavior rather than
+# the previous draft's independently-invented signing design, including two
+# points where they differ:
+# - The reference signs every dylib/so/bundle/plugin and the main executable
+#   with `codesign --deep`, and only signs the outer .app bundle without
+#   --deep at the very end. Apple's own guidance discourages --deep, and the
+#   previous draft avoided it entirely -- but --deep on individual files is
+#   what the reference workflow actually runs today and notarizes
+#   successfully with, so it is kept here rather than "corrected" to a
+#   design that was never validated.
+# - The reference never signs or notarizes the outer DMG at all -- only the
+#   .app bundle inside it is signed and notarized (as a zip), stapled, and
+#   then packaged into a DMG afterward. The DMG wrapper itself carries no
+#   signature or notarization ticket. This script does the same; DMG
+#   creation uses `hdiutil` instead of the reference's `appdmg` (npm
+#   package) purely to avoid adding a Node dependency -- it does not sign or
+#   notarize the DMG either.
+
 required_variables=(
     PROJECT_DIR
     PAYLOAD_DIR
@@ -77,14 +97,8 @@ if [[ ! -d "${APP_PATH}" || ! -x "${MAIN_EXECUTABLE}" || ! -x "${HWI_PATH}" ]]; 
     exit 1
 fi
 plutil -lint "${ENTITLEMENTS}" "${ENTITLEMENTS_HWI}"
-if codesign --display "${APP_PATH}" >/dev/null 2>&1; then
-    echo "The signing job received an already-signed app instead of the gated unsigned payload." >&2
-    exit 1
-fi
 
 mkdir -p "${OUTPUT_DIR}"
-# The decoded Developer ID certificate is a short-lived secret on disk. Keep
-# it readable only by the runner account, independently of the host umask.
 umask 077
 printf '%s' "${MACOS_CERTIFICATE}" | base64 --decode > "${CERTIFICATE_PATH}"
 chmod 0600 "${CERTIFICATE_PATH}"
@@ -108,124 +122,72 @@ if ! security find-identity -v -p codesigning "${KEYCHAIN_PATH}" \
 fi
 umask 022
 
-codesign_item() {
-    local target="$1"
-    local entitlements_file="${2:-}"
-    local arguments=(
-        --force
-        --options runtime
-        --timestamp
-        --keychain "${KEYCHAIN_PATH}"
-        --sign "${MACOS_CERTIFICATE_NAME}"
-    )
-    if [[ -n "${entitlements_file}" ]]; then
-        arguments+=(--entitlements "${entitlements_file}")
-    fi
-    codesign "${arguments[@]}" "${target}"
+codesign_deep() {
+    codesign --remove-signature "$1" >/dev/null 2>&1 || true
+    codesign --deep --force --verify --options=runtime --verbose --timestamp \
+        --entitlements "$2" -s "${MACOS_CERTIFICATE_NAME}" --keychain "${KEYCHAIN_PATH}" "$1"
 }
 
-codesign_disk_image() {
-    codesign \
-        --force \
-        --timestamp \
-        --keychain "${KEYCHAIN_PATH}" \
-        --sign "${MACOS_CERTIFICATE_NAME}" \
-        "$1"
-}
+echo "Signing internal components (dylib/so/bundle/plugin)..."
+while IFS= read -r -d '' candidate; do
+    codesign_deep "${candidate}" "${ENTITLEMENTS}"
+done < <(find "${APP_PATH}" -type f \
+    \( -name '*.dylib' -o -name '*.so' -o -name '*.bundle' -o -name '*.plugin' \) \
+    -print0)
 
-is_macho() {
-    /usr/bin/file -b "$1" | grep -q 'Mach-O'
-}
+echo "Signing frameworks and Qt components..."
+while IFS= read -r -d '' candidate; do
+    codesign_deep "${candidate}" "${ENTITLEMENTS}"
+done < <(find "${APP_PATH}" -name 'Qt*' -type f -print0)
 
-webengine_helper_executable="$(find "${APP_PATH}" \
-    -path '*/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess' \
-    -type f -print -quit)"
-webengine_entitlements=''
-if [[ -n "${webengine_helper_executable}" ]]; then
-    webengine_helper_app="${webengine_helper_executable%/Contents/MacOS/QtWebEngineProcess}"
-    bundled_webengine_entitlements="${webengine_helper_app}/Contents/Resources/QtWebEngineProcess.entitlements"
-    if [[ ! -f "${bundled_webengine_entitlements}" ]]; then
+echo "Signing Nunchuk main executable..."
+codesign_deep "${MAIN_EXECUTABLE}" "${ENTITLEMENTS}"
+
+echo "Signing HWI..."
+codesign --remove-signature "${HWI_PATH}" >/dev/null 2>&1 || true
+codesign --force --options=runtime --timestamp \
+    --entitlements "${ENTITLEMENTS_HWI}" -s "${MACOS_CERTIFICATE_NAME}" \
+    --keychain "${KEYCHAIN_PATH}" "${HWI_PATH}"
+codesign --verify --strict --verbose=4 "${HWI_PATH}"
+
+echo "Signing QtWebEngineProcess helper..."
+webengine_helper_app="${APP_PATH}/Contents/Frameworks/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app"
+if [[ -d "${webengine_helper_app}" ]]; then
+    webengine_helper_entitlements="${webengine_helper_app}/Contents/Resources/QtWebEngineProcess.entitlements"
+    if [[ ! -f "${webengine_helper_entitlements}" ]]; then
         echo "QtWebEngineProcess entitlements are missing from the deployed helper." >&2
         exit 1
     fi
-    plutil -lint "${bundled_webengine_entitlements}"
-    webengine_entitlements="${bundled_webengine_entitlements}"
+    plutil -lint "${webengine_helper_entitlements}"
+    codesign_deep "${webengine_helper_app}" "${webengine_helper_entitlements}"
 fi
 
-# Sign every raw Mach-O first. Special executables are signed immediately below
-# with their own entitlements. No --deep is used for signing.
-while IFS= read -r candidate; do
-    if [[ "${candidate}" == "${MAIN_EXECUTABLE}" \
-        || "${candidate}" == "${HWI_PATH}" \
-        || "${candidate}" == "${webengine_helper_executable}" ]]; then
-        continue
-    fi
-    if is_macho "${candidate}"; then
-        codesign_item "${candidate}"
-    fi
-done < <(find "${APP_PATH}" -type f -print \
-    | awk '{ print length($0) "\t" $0 }' \
-    | LC_ALL=C sort -rn \
-    | cut -f2-)
+echo "Signing the app bundle..."
+codesign --remove-signature "${APP_PATH}" >/dev/null 2>&1 || true
+codesign --force --verify --options=runtime --verbose --timestamp \
+    --entitlements "${ENTITLEMENTS}" -s "${MACOS_CERTIFICATE_NAME}" \
+    --keychain "${KEYCHAIN_PATH}" "${APP_PATH}"
 
-codesign_item "${HWI_PATH}" "${ENTITLEMENTS_HWI}"
-if [[ -n "${webengine_helper_executable}" ]]; then
-    codesign_item "${webengine_helper_executable}" "${webengine_entitlements}"
-fi
-
-# Sign nested code containers from deepest to shallowest. The WebEngine helper
-# app keeps the entitlements shipped with this exact Qt archive.
-while IFS= read -r code_container; do
-    if [[ "${code_container}" == "${APP_PATH}" ]]; then
-        continue
-    fi
-    if [[ -n "${webengine_helper_executable}" \
-        && "${code_container}" == "${webengine_helper_app}" ]]; then
-        codesign_item "${code_container}" "${webengine_entitlements}"
-    else
-        codesign_item "${code_container}"
-    fi
-done < <(find "${APP_PATH}" -type d \
-    \( -name '*.app' -o -name '*.framework' -o -name '*.bundle' -o -name '*.plugin' -o -name '*.xpc' \) \
-    -print \
-    | awk '{ print length($0) "\t" $0 }' \
-    | LC_ALL=C sort -rn \
-    | cut -f2-)
-
-codesign_item "${MAIN_EXECUTABLE}" "${ENTITLEMENTS}"
-codesign_item "${APP_PATH}" "${ENTITLEMENTS}"
-
+echo "Verifying signature..."
 codesign --verify --deep --strict --verbose=4 "${APP_PATH}"
-codesign --verify --strict --verbose=4 "${HWI_PATH}"
+codesign -dvvvv "${APP_PATH}"
 
-dmg_stage="${OUTPUT_DIR}/dmg-stage"
-rm -rf "${dmg_stage}"
-mkdir -p "${dmg_stage}"
-/usr/bin/ditto "${APP_PATH}" "${dmg_stage}/Nunchuk.app"
-ln -s /Applications "${dmg_stage}/Applications"
-
-DMG_PATH="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}.dmg"
-rm -f "${DMG_PATH}"
-hdiutil create \
-    -volname Nunchuk \
-    -srcfolder "${dmg_stage}" \
-    -fs HFS+ \
-    -format UDZO \
-    -imagekey zlib-level=9 \
-    "${DMG_PATH}"
-codesign_disk_image "${DMG_PATH}"
-codesign --verify --strict --verbose=4 "${DMG_PATH}"
-
+echo "Creating notarization profile..."
 xcrun notarytool store-credentials "${NOTARY_PROFILE}" \
     --keychain "${KEYCHAIN_PATH}" \
     --apple-id "${PROD_MACOS_NOTARIZATION_APPLE_ID}" \
     --team-id "${PROD_MACOS_NOTARIZATION_TEAM_ID}" \
     --password "${PROD_MACOS_NOTARIZATION_PWD}"
 
+notarization_zip="${OUTPUT_DIR}/notarization-${ARCH}.zip"
+rm -f "${notarization_zip}"
+/usr/bin/ditto -c -k --keepParent "${APP_PATH}" "${notarization_zip}"
+
+echo "Submitting app bundle for notarization..."
 notary_result="${OUTPUT_DIR}/notary-result.json"
 notarized=0
 for attempt in 1 2 3; do
-    if xcrun notarytool submit "${DMG_PATH}" \
+    if xcrun notarytool submit "${notarization_zip}" \
         --keychain-profile "${NOTARY_PROFILE}" \
         --keychain "${KEYCHAIN_PATH}" \
         --wait \
@@ -235,7 +197,7 @@ for attempt in 1 2 3; do
         break
     fi
     if (( attempt < 3 )); then
-        sleep $((attempt * 30))
+        sleep $((attempt * 60))
     fi
 done
 if (( notarized != 1 )); then
@@ -253,11 +215,30 @@ if result.get("status") != "Accepted":
     raise SystemExit(f"Notarization was not accepted: {result}")
 PY
 
-xcrun stapler staple "${DMG_PATH}"
-xcrun stapler validate "${DMG_PATH}"
-codesign --verify --strict --verbose=4 "${DMG_PATH}"
-spctl --assess --type open --context context:primary-signature --verbose=4 "${DMG_PATH}"
+echo "Stapling notarization ticket to the app bundle..."
+xcrun stapler staple "${APP_PATH}"
+xcrun stapler validate "${APP_PATH}"
+codesign --verify --deep --strict --verbose=4 "${APP_PATH}"
+spctl --assess --type execute --verbose=4 "${APP_PATH}"
 
+echo "Packaging the notarized app bundle into a DMG..."
+dmg_stage="${OUTPUT_DIR}/dmg-stage"
+rm -rf "${dmg_stage}"
+mkdir -p "${dmg_stage}"
+/usr/bin/ditto "${APP_PATH}" "${dmg_stage}/Nunchuk.app"
+ln -s /Applications "${dmg_stage}/Applications"
+
+DMG_PATH="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}.dmg"
+rm -f "${DMG_PATH}"
+hdiutil create \
+    -volname Nunchuk \
+    -srcfolder "${dmg_stage}" \
+    -fs HFS+ \
+    -format UDZO \
+    -imagekey zlib-level=9 \
+    "${DMG_PATH}"
+
+echo "Verifying the mounted app inside the DMG..."
 rm -rf "${MOUNT_POINT}"
 mkdir -p "${MOUNT_POINT}"
 hdiutil attach -readonly -nobrowse -mountpoint "${MOUNT_POINT}" "${DMG_PATH}" >/dev/null
@@ -305,4 +286,4 @@ with open(output, "w", encoding="utf-8", newline="\n") as destination:
     destination.write("\n")
 PY
 
-printf 'Signed, notarized and stapled DMG: %s\n' "${DMG_PATH}"
+printf 'Signed, notarized and stapled: %s (DMG wrapper is unsigned, matching the reference workflow)\n' "${DMG_PATH}"

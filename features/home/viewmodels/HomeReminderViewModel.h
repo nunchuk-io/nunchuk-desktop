@@ -4,7 +4,6 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QObject>
-#include <QSet>
 #include <QVariantList>
 
 namespace features::home::viewmodels {
@@ -30,8 +29,6 @@ class HomeReminderViewModel : public QObject {
 
   public slots:
     void fetch();
-    void markShown();
-    void dismiss(const QString &presentedReminderId);
     void triggerAction(const QVariantMap &actionSnapshot);
 
   signals:
@@ -51,13 +48,10 @@ class HomeReminderViewModel : public QObject {
     features::home::usecases::GetHomeReminderUseCase m_getHomeReminderUseCase;
     QJsonObject m_reminder;
     QJsonArray m_actions;
-    QSet<QString> m_shownReminderIds;
     QString m_sessionKey;
     quint64 m_sessionGeneration{0};
     quint64 m_requestGeneration{0};
     bool m_loading{false};
-    bool m_fetchedCurrentSession{false};
-    bool m_ready{false};
     bool m_initialFetchScheduled{false};
     bool m_initialFetchGateResolved{false};
 };
