@@ -139,7 +139,15 @@ while IFS= read -r -d '' payload_file; do
         chmod 0644 "${payload_file}"
     fi
 done < <(find "${payload_root}" -type f -print0)
-xattr -cr "${payload_root}"
+# Absolute path, not a bare `xattr`: this script's PATH (inherited from
+# build_macos.sh, which prepends pyenv/PyInstaller-related bin directories
+# for the HWI build step earlier in the same run) can put a same-named PyPI
+# `xattr` console-script ahead of the real /usr/bin/xattr. That package's CLI
+# does not support -r at all ("option -r not recognized") despite otherwise
+# looking similar, unlike Apple's own xattr which does -- confirmed by an
+# actual CI failure with that exact message. Matches the same
+# already-qualified /usr/bin/ditto call above, for the same reason.
+/usr/bin/xattr -cr "${payload_root}"
 
 python3 - "${payload_root}/Nunchuk.app" "${payload_root}/payload-manifest.json" \
     "${ARCH}" "${TAG}" "${source_commit}" "${SOURCE_DATE_EPOCH}" <<'PY'

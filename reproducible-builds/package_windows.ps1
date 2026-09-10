@@ -65,7 +65,7 @@ function Write-Utf8NoBom {
     )
 
     $encoding = [System.Text.UTF8Encoding]::new($false)
-    $normalized = $Content.Replace(([char]13).ToString() + [char]10, [char]10)
+    $normalized = $Content.Replace("`r`n", "`n")
     [System.IO.File]::WriteAllText($Path, $normalized, $encoding)
 }
 
