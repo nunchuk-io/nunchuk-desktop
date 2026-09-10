@@ -198,8 +198,8 @@ $lock = Get-Content -LiteralPath $LockFile -Raw | ConvertFrom-Json
 if ([int]$lock.schemaVersion -ne 1) {
     throw "Unsupported Windows dependency lock schema: $($lock.schemaVersion)"
 }
-if ([string]$lock.qt.version -ne "6.11.1") {
-    throw "The release lock must pin Qt 6.11.1."
+if ([string]$lock.qt.version -ne "6.9.3") {
+    throw "The release lock must pin Qt 6.9.3."
 }
 if ([string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
     throw "The release lock must pin QtKeychain 0.15.0."
@@ -250,40 +250,18 @@ if (!(Test-Path -LiteralPath $ninjaExe -PathType Leaf)) {
     throw "ninja.exe is missing after extracting the pinned archive."
 }
 
-# aqtinstall 3.3.0 (the lock file's pinned toolchain.aqt release, and the
-# latest tagged release as of this writing) cannot install Qt 6.11.x for
-# Windows: it still assumes the pre-6.11 repo folder layout, so it looks
-# for ".../qt6_6111/qt6_6111/Updates.xml" (doesn't exist) instead of
-# ".../qt6_6111/qt6_6111_msvc2022_64/Updates.xml" (confirmed to exist on
-# download.qt.io) and fails with "Failed to locate XML data for Qt version
-# '6.11.1'." The fix ("Support Qt 6.11+ for Windows X64", aqtinstall
-# GitHub #1000 / archives.py+metadata.py folder-resolution rewrite) is
-# merged to aqtinstall's main branch but not in any tagged release yet
-# (confirmed via aqtinstall's own published ChangeLog: it is listed under
-# "Unreleased").
-#
-# Gap (needs confirmation / follow-up, same category as the NASM pin
-# above): until aqtinstall ships a tagged release with this fix,
-# aqt is installed here as a Python package from that branch's current
-# commit instead of the pinned/hash-verified standalone aqt.exe the lock
-# file points at for every other tool. The resolved commit is captured
-# once and reused for both this build and the optional
-# check_reproducible_build rebuild in the same job (so that comparison
-# stays meaningful), and is recorded in build-info.json -- but it is not
-# hash-pinned in windows-dependencies.lock.json. Replace this with the
-# lock file's normal Get-VerifiedDownload path once a released aqtinstall
-# version supports Qt 6.11.x on Windows.
-$aqtCommitRaw = (& git ls-remote https://github.com/miurahr/aqtinstall.git refs/heads/main)
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($aqtCommitRaw)) {
-    throw "Could not resolve the aqtinstall main branch commit (git ls-remote failed)."
-}
-$aqtCommit = ($aqtCommitRaw -split "\s+")[0]
-if ($aqtCommit -notmatch '^[0-9a-f]{40}$') {
-    throw "Unexpected aqtinstall main branch commit format: '$aqtCommit'"
-}
-python -m pip install --disable-pip-version-check --quiet "aqtinstall @ git+https://github.com/miurahr/aqtinstall.git@$aqtCommit"
+# aqtinstall 3.3.0 cannot install Qt 6.11.x for Windows (confirmed bug:
+# it assumes the pre-6.11 repo folder layout). Qt is pinned to 6.9.3 here
+# (matching Linux and macOS), which still uses that pre-6.11 layout, so
+# the plain pip-installed, unpatched aqtinstall==3.3.0 release works
+# correctly -- same approach and same Qt version as the proven manual
+# reference workflow. No local patch is needed for this Qt version; if
+# the pinned Qt version is ever raised to 6.11+ again, revisit this (see
+# git history for the archives.py/metadata.py patch that was used then).
+$aqtPinnedVersion = [string]$lock.toolchain.aqt.version
+python -m pip install --disable-pip-version-check --quiet "aqtinstall==$aqtPinnedVersion"
 if ($LASTEXITCODE -ne 0) {
-    throw "Failed to install aqtinstall from git commit $aqtCommit"
+    throw "Failed to install pinned aqtinstall==$aqtPinnedVersion from PyPI"
 }
 $aqtExe = "python"
 $aqtBaseArgs = @("-m", "aqt")
@@ -482,7 +460,7 @@ $tlsProbeCmake = @'
 cmake_minimum_required(VERSION 3.21)
 cmake_policy(SET CMP0091 NEW)
 project(qt_tls_probe LANGUAGES CXX)
-find_package(Qt6 6.11.1 EXACT COMPONENTS Core Network REQUIRED)
+find_package(Qt6 6.9.3 EXACT COMPONENTS Core Network REQUIRED)
 add_executable(qt-tls-probe main.cpp)
 target_link_libraries(qt-tls-probe PRIVATE Qt6::Core Qt6::Network)
 set_property(TARGET qt-tls-probe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
@@ -667,10 +645,7 @@ $buildInfo = [ordered]@{
     msvcFileVersion = $clVersion
     runnerImage = [string]$env:ImageOS
     runnerImageVersion = [string]$env:ImageVersion
-    # Not hash-pinned in windows-dependencies.lock.json -- see the aqt setup
-    # comment above. Recorded here so an unexpectedly different resolved
-    # commit between replicas would at least be visible in build-info.json.
-    aqtinstallSourceCommit = $aqtCommit
+    aqtinstallVersion = $aqtPinnedVersion
 }
 $buildInfoJson = $buildInfo | ConvertTo-Json -Depth 8
 Write-Utf8NoBom (Join-Path $OutputDirectory "build-info.json") ($buildInfoJson + [char]10)

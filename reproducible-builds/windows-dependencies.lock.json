@@ -14,8 +14,9 @@
     },
     "aqt": {
       "version": "3.3.0",
-      "url": "https://github.com/miurahr/aqtinstall/releases/download/v3.3.0/aqt_x64.exe",
-      "sha256": "4f74d4c95c464d238d7e17ec2d9b7f22a7c333f0f5270a62584e2b47fc765150"
+      "installMethod": "pip",
+      "pipPackage": "aqtinstall",
+      "note": "Installed via pip (not a standalone hash-pinned .exe), matching the proven manual reference workflow. aqtinstall 3.3.0 cannot install Qt 6.11.x on Windows (pre-6.11 repo folder layout assumption), but Qt is pinned to 6.9.3 below, which still uses the pre-6.11 layout, so no patch is required."
     },
     "innoSetup": {
       "version": "6.7.3",
@@ -24,7 +25,7 @@
     }
   },
   "qt": {
-    "version": "6.11.1",
+    "version": "6.9.3",
     "host": "windows",
     "target": "desktop",
     "architecture": "win64_msvc2022_64",

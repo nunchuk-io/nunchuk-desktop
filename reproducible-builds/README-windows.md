@@ -21,9 +21,18 @@ invoked yet. That signing wiring, and the NASM version pin noted in the
 workflow's own comments (NASM is installed via Chocolatey without a hash
 pin, unlike the rest of the toolchain below), are open follow-ups.
 
+Qt is pinned to 6.9.3 (matching Linux and macOS) rather than a newer 6.11.x
+release: aqtinstall 3.3.0 (the only tagged release) has a confirmed,
+still-unreleased-fix bug that prevents it from installing Qt 6.11.x on
+Windows (it assumes the pre-6.11 repository folder layout). Qt 6.9.3 still
+uses that pre-6.11 layout, so the plain, unpatched `aqtinstall==3.3.0`
+release installed from PyPI works correctly -- the same Qt version and
+install method as the proven manual reference workflow this pipeline is
+based on.
+
 ## Immutable inputs
 
-`windows-dependencies.lock.json` pins Qt 6.11.1 and its required modules,
+`windows-dependencies.lock.json` pins Qt 6.9.3 and its required modules,
 QtKeychain 0.15.0, Olm, vcpkg, HWI, CMake, Ninja, aqt, Inno Setup and the exact
 OpenSSL 3.5.7 source archive. The same OpenSSL source is built twice:
 

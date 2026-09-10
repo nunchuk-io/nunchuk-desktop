@@ -6,7 +6,7 @@
 # beyond main's own reproducibility baseline.
 FROM ubuntu:24.04
 
-ARG QT_VERSION=6.11.1
+ARG QT_VERSION=6.9.3
 # aqtinstall host/arch identifiers vs. the resulting install subdirectory name
 # under QT_INSTALL_DIR/<version>/. The install directory is NOT the same
 # string as the arch identifier: aqtinstall strips the "linux_" prefix from

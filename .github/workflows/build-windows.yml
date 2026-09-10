@@ -2,7 +2,7 @@ name: Build windows release
 run-name: ${{ github.event_name != 'workflow_dispatch' && github.ref_name || format('{0}_manual', github.ref_name) }}
 
 # Wires reproducible-builds/build_windows.ps1 + package_windows.ps1 +
-# windows-dependencies.lock.json (Qt 6.11.1 / OpenSSL 3.5.7 / vcpkg / Olm /
+# windows-dependencies.lock.json (Qt 6.9.3 / OpenSSL 3.5.7 / vcpkg / Olm /
 # QtKeychain, all hash- or commit-pinned) into CI, structured like
 # build-linux.yml: a tag push always builds once and publishes immediately
 # (no gate); a manual workflow_dispatch run can additionally tick
@@ -173,11 +173,10 @@ jobs:
         with:
           arch: x64
 
-      # build_windows.ps1 now installs aqt via `python -m pip install` from
-      # aqtinstall's main branch (see the script's own comment: no tagged
-      # aqtinstall release supports Qt 6.11.x on Windows yet), so python/pip
-      # must be on PATH. windows-2022 has Python cached but not guaranteed
-      # on PATH without this.
+      # build_windows.ps1 installs aqt via `python -m pip install
+      # aqtinstall==<pinned>` (see windows-dependencies.lock.json), so
+      # python/pip must be on PATH. windows-2022 has Python cached but not
+      # guaranteed on PATH without this.
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:

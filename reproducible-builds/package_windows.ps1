@@ -20,7 +20,7 @@ param(
     [string]$BuildInfoFile,
     [string]$TlsProbeExe,
     [string]$ExistingStageDirectory,
-    [string]$QtDirectory = "C:\nunchuk-repro\qt\6.11.1\msvc2022_64",
+    [string]$QtDirectory = "C:\nunchuk-repro\qt\6.9.3\msvc2022_64",
     [string]$QtKeychainDirectory = "C:\nunchuk-repro\installed\qtkeychain",
     [string]$OpenSslDirectory = "C:\nunchuk-repro\installed\openssl-runtime",
     [string]$WorkDirectory = "C:\nunchuk-repro\package",
@@ -213,8 +213,8 @@ foreach ($file in @($LockFile, $InstallerRecipe)) {
     }
 }
 $lock = Get-Content -LiteralPath $LockFile -Raw | ConvertFrom-Json
-if ([string]$lock.qt.version -ne "6.11.1" -or [string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
-    throw "Packaging lock is not the approved Qt 6.11.1 / QtKeychain 0.15.0 lock."
+if ([string]$lock.qt.version -ne "6.9.3" -or [string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
+    throw "Packaging lock is not the approved Qt 6.9.3 / QtKeychain 0.15.0 lock."
 }
 
 $env:SOURCE_DATE_EPOCH = $SourceDateEpoch.ToString([System.Globalization.CultureInfo]::InvariantCulture)
@@ -428,7 +428,7 @@ if ([long]$buildInfo.sourceDateEpoch -ne $SourceDateEpoch) {
 if ([string]$buildInfo.releaseVersion -ne $ReleaseVersion) {
     throw "build-info release version mismatch."
 }
-if ([string]$buildInfo.qtVersion -ne "6.11.1" -or
+if ([string]$buildInfo.qtVersion -ne "6.9.3" -or
     [string]$buildInfo.applicationOpenSslVersion -ne "3.5.7" -or
     [string]$buildInfo.qtTlsOpenSslVersion -ne "3.5.7") {
     throw "build-info does not prove the locked Qt/OpenSSL runtime."

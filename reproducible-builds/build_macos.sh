@@ -204,26 +204,8 @@ fi
 # --- HWI, built from source for both architectures (matching the reference
 # workflow's own approach; the previous draft used a prebuilt x86_64 release
 # asset instead, which was never actually validated).
-#
-# `boost` here is unrelated to HWI: it is installed now (while
-# HOMEBREW_NO_AUTO_UPDATE is already set, to avoid a second brew-update pass
-# later) for contrib/libnunchuk/contrib/bitcoin/cmake/module/AddBoostIfNeeded.cmake,
-# a vendored Bitcoin Core CMake module that the app's configure step always
-# reaches (contrib/libnunchuk/CMakeLists.txt adds that subdirectory
-# unconditionally) and that hard-requires `find_package(Boost 1.73.0 REQUIRED
-# CONFIG)` -- i.e. a Boost install with generated CMake package-config files.
-# Our own pinned Boost ${BOOST_VERSION} below is built via bootstrap.sh/b2 and
-# wired in through BOOST_ROOT for the app's own (MODULE-mode) Boost lookup;
-# it is not confirmed to also emit CONFIG-mode package files, so it cannot be
-# relied on to satisfy this second, independent find_package(CONFIG) call.
-# The module itself already special-cases CMAKE_HOST_APPLE by shelling out to
-# `brew --prefix boost` before calling find_package, so installing the
-# Homebrew formula is all that is needed here -- no extra cmake flags. This
-# module only uses Boost::headers (header-only), so the exact version
-# Homebrew provides (well above the 1.73.0 floor) does not affect the
-# reproducibility of anything actually linked into the app.
 export HOMEBREW_NO_AUTO_UPDATE=1
-brew install pyenv libusb boost >/dev/null
+brew install pyenv libusb >/dev/null
 
 # Matches the reference workflow exactly: `brew install pyenv` only installs
 # the pyenv command itself; PYENV_ROOT ($HOME/.pyenv) is created lazily by
@@ -255,7 +237,9 @@ if ! lipo "${hwi_binary}" -verify_arch "${ARCH}"; then
 fi
 "${hwi_binary}" --version
 
-# --- Boost 1.81.0 (static, matching the reference workflow's b2 options).
+# --- Boost ${BOOST_VERSION} (static, matching the reference workflow's b2
+# options; version itself is not from the reference -- see macos.lock.env's
+# BOOST_VERSION comment).
 boost_archive="${DOWNLOAD_DIR}/boost_${BOOST_VERSION//./_}.tar.gz"
 download_checked \
     "https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION//./_}.tar.gz" \
@@ -429,10 +413,25 @@ export BOOST_ROOT="${boost_prefix}"
 export PATH="${QT_ROOT}/bin:${PATH}"
 
 app_build_dir="${BUILD_ROOT}/app-build"
+# ${boost_prefix} is in CMAKE_PREFIX_PATH (in addition to -DBOOST_ROOT below)
+# because two independent Boost lookups happen during this configure, not
+# one: the top-level app's own find_package(Boost) (classic MODULE mode via
+# CMake's bundled FindBoost.cmake, which honors BOOST_ROOT) and, separately,
+# contrib/libnunchuk/contrib/bitcoin/cmake/module/AddBoostIfNeeded.cmake's
+# find_package(Boost 1.73.0 REQUIRED CONFIG) (CONFIG mode, which does not
+# consult BOOST_ROOT at all, only Boost_ROOT/CMAKE_PREFIX_PATH/registry).
+# Without this, the second lookup either fails outright or -- worse, on a
+# machine with Homebrew's own boost installed -- silently resolves to
+# whatever version Homebrew currently ships instead of this pinned build
+# (see macos.lock.env's BOOST_VERSION comment for why that already broke
+# once). ${boost_prefix} satisfies both: CMake's CONFIG search checks
+# <prefix>/lib/cmake/Boost-${BOOST_VERSION}/ for every entry in
+# CMAKE_PREFIX_PATH, which is where `b2 install` places the package-config
+# files this Boost version generates.
 cmake -S "${PROJECT_DIR}" -B "${app_build_dir}" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET}" \
-    -DCMAKE_PREFIX_PATH="${QT_ROOT}/lib/cmake;${olm_prefix};${libevent_prefix};${bdb_prefix};${qtkeychain_prefix}" \
+    -DCMAKE_PREFIX_PATH="${QT_ROOT}/lib/cmake;${olm_prefix};${libevent_prefix};${bdb_prefix};${qtkeychain_prefix};${boost_prefix}" \
     -DBOOST_ROOT="${boost_prefix}" \
     -Devent_lib:FILEPATH="${libevent_prefix}/lib/libevent.a" \
     -DAPPEND_CPPFLAGS="-I${libevent_prefix}/include" \

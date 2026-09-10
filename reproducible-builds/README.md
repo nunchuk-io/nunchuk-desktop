@@ -11,7 +11,9 @@ release artifact was produced from the published source.
 | macOS x86_64/arm64 | Single build per arch, Developer ID signed and notarized (opt-in reproducibility check, not gated) | `nunchuk-macos-<ARCH>-v<VERSION>.dmg` |
 | Windows x64 | Single build, unsigned (opt-in reproducibility check, not gated); Authenticode signing not yet wired into CI | `nunchuk-windows-x64-v<VERSION>-unsigned-setup.exe` |
 
-The Linux builder uses Qt 6.11.1 and OpenSSL 3.5.7 LTS. It pins Qt module set,
+The Linux builder uses Qt 6.9.3 and OpenSSL 3.5.7 LTS (matching macOS and
+Windows's pinned Qt version -- see README-windows.md). It pins
+Qt module set,
 source dependency commits, linuxdeploy/linuxdeploy-plugin-qt/linuxdeploy-plugin-appimage
 bytes and the AppImage runtime, per architecture. Like main's Linux builder, it
 does not pin the Ubuntu base image digest or individual apt package versions —
@@ -19,11 +21,12 @@ an accepted, documented gap (see "Reproducibility boundary" below), not
 something this port tightens beyond main's own baseline. `SOURCE_DATE_EPOCH` is
 derived from the source commit.
 
-macOS and Windows no longer share the same Qt/OpenSSL versions: Windows pins
-Qt 6.11.1 and OpenSSL 3.5.7 LTS (`windows-dependencies.lock.json`), while
-macOS was re-derived from a separately proven reference workflow and pins Qt
-6.9.3, with OpenSSL sourced from the `contrib/libnunchuk` submodule instead of
-an independent download (see `reproducible-builds/macos.lock.env`). Both
+macOS and Windows now share the same Qt version (6.9.3) as Linux, though not
+the same OpenSSL sourcing: Windows pins Qt 6.9.3 and OpenSSL 3.5.7 LTS
+(`windows-dependencies.lock.json`), while macOS was re-derived from a
+separately proven reference workflow and pins Qt 6.9.3, with OpenSSL sourced
+from the `contrib/libnunchuk` submodule instead of an independent download
+(see `reproducible-builds/macos.lock.env`). Both
 still build once per architecture by default and only reproducibility-check
 on an opt-in basis (see "Reproducibility boundary" below) -- an earlier
 version of both workflows instead built two clean unsigned replicas
