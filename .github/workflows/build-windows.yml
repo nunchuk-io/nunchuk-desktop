@@ -173,6 +173,17 @@ jobs:
         with:
           arch: x64
 
+      # build_windows.ps1 now installs aqt via `python -m pip install` from
+      # aqtinstall's main branch (see the script's own comment: no tagged
+      # aqtinstall release supports Qt 6.11.x on Windows yet), so python/pip
+      # must be on PATH. windows-2022 has Python cached but not guaranteed
+      # on PATH without this.
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+          architecture: x64
+
       # build_windows.ps1 builds OpenSSL 3.5.7 from source with nmake and
       # requires nasm.exe on PATH (Configure target VC-WIN64A). windows-2022
       # ships Perl and nmake (via MSVC) but not NASM.

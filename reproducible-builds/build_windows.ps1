@@ -250,12 +250,47 @@ if (!(Test-Path -LiteralPath $ninjaExe -PathType Leaf)) {
     throw "ninja.exe is missing after extracting the pinned archive."
 }
 
-$aqtExe = Join-Path $toolsDirectory "aqt.exe"
-Get-VerifiedDownload $lock.toolchain.aqt $aqtExe
+# aqtinstall 3.3.0 (the lock file's pinned toolchain.aqt release, and the
+# latest tagged release as of this writing) cannot install Qt 6.11.x for
+# Windows: it still assumes the pre-6.11 repo folder layout, so it looks
+# for ".../qt6_6111/qt6_6111/Updates.xml" (doesn't exist) instead of
+# ".../qt6_6111/qt6_6111_msvc2022_64/Updates.xml" (confirmed to exist on
+# download.qt.io) and fails with "Failed to locate XML data for Qt version
+# '6.11.1'." The fix ("Support Qt 6.11+ for Windows X64", aqtinstall
+# GitHub #1000 / archives.py+metadata.py folder-resolution rewrite) is
+# merged to aqtinstall's main branch but not in any tagged release yet
+# (confirmed via aqtinstall's own published ChangeLog: it is listed under
+# "Unreleased").
+#
+# Gap (needs confirmation / follow-up, same category as the NASM pin
+# above): until aqtinstall ships a tagged release with this fix,
+# aqt is installed here as a Python package from that branch's current
+# commit instead of the pinned/hash-verified standalone aqt.exe the lock
+# file points at for every other tool. The resolved commit is captured
+# once and reused for both this build and the optional
+# check_reproducible_build rebuild in the same job (so that comparison
+# stays meaningful), and is recorded in build-info.json -- but it is not
+# hash-pinned in windows-dependencies.lock.json. Replace this with the
+# lock file's normal Get-VerifiedDownload path once a released aqtinstall
+# version supports Qt 6.11.x on Windows.
+$aqtCommitRaw = (& git ls-remote https://github.com/miurahr/aqtinstall.git refs/heads/main)
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($aqtCommitRaw)) {
+    throw "Could not resolve the aqtinstall main branch commit (git ls-remote failed)."
+}
+$aqtCommit = ($aqtCommitRaw -split "\s+")[0]
+if ($aqtCommit -notmatch '^[0-9a-f]{40}$') {
+    throw "Unexpected aqtinstall main branch commit format: '$aqtCommit'"
+}
+python -m pip install --disable-pip-version-check --quiet "aqtinstall @ git+https://github.com/miurahr/aqtinstall.git@$aqtCommit"
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to install aqtinstall from git commit $aqtCommit"
+}
+$aqtExe = "python"
+$aqtBaseArgs = @("-m", "aqt")
 $env:Path = "$cmakeBin;$ninjaRoot;$env:Path"
 Invoke-Checked $cmakeExe.FullName @("--version")
 Invoke-Checked $ninjaExe @("--version")
-Invoke-Checked $aqtExe @("version")
+Invoke-Checked $aqtExe ($aqtBaseArgs + @("version"))
 
 $qtRoot = Join-Path $WorkDirectory "qt"
 $qtArguments = @(
@@ -266,15 +301,12 @@ $qtArguments = @(
     [string]$lock.qt.architecture,
     "--outputdir",
     $qtRoot,
-    # aqt's default mirror rotation can pick an unofficial mirror missing
-    # Updates.xml/checksums for a given version ("Failed to locate XML data
-    # for Qt version ..."). Pin the official host to avoid that flakiness.
     "--base",
     "https://download.qt.io",
     "-m"
 )
 $qtArguments += @($lock.qt.modules | ForEach-Object { [string]$_ })
-Invoke-Checked $aqtExe $qtArguments
+Invoke-Checked $aqtExe ($aqtBaseArgs + $qtArguments)
 
 $qtDirectory = Join-Path $qtRoot "$($lock.qt.version)\$($lock.qt.directoryName)"
 $requiredQtFiles = @(
@@ -635,6 +667,10 @@ $buildInfo = [ordered]@{
     msvcFileVersion = $clVersion
     runnerImage = [string]$env:ImageOS
     runnerImageVersion = [string]$env:ImageVersion
+    # Not hash-pinned in windows-dependencies.lock.json -- see the aqt setup
+    # comment above. Recorded here so an unexpectedly different resolved
+    # commit between replicas would at least be visible in build-info.json.
+    aqtinstallSourceCommit = $aqtCommit
 }
 $buildInfoJson = $buildInfo | ConvertTo-Json -Depth 8
 Write-Utf8NoBom (Join-Path $OutputDirectory "build-info.json") ($buildInfoJson + [char]10)
