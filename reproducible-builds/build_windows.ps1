@@ -224,6 +224,57 @@ New-Item -ItemType Directory -Path $buildSource -Force | Out-Null
 if ($LASTEXITCODE -ge 8) {
     throw "Failed to create the deterministic source copy; robocopy exit code=$LASTEXITCODE"
 }
+
+# contrib/libnunchuk and a couple of its nested vendored trees predate this
+# project's CMP0091 adoption and hardcode a static MSVC CRT (/MT, plus
+# /NODEFAULTLIB:MSVCRT) unconditionally on MSVC, which conflicts with Qt's
+# official /MD builds and with CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+# set below. This mirrors the "Normalize source MSVC runtime to dynamic CRT"
+# step the proven manual reference workflow performs before configuring.
+# It only touches this deterministic $buildSource copy -- $SourceDirectory
+# (the original checkout, including its submodules) is never modified, so
+# the tracked-changes and submodule-status checks above stay meaningful.
+$cmakeFiles = Get-ChildItem -LiteralPath $buildSource -Recurse -File | Where-Object {
+    $_.Name -eq "CMakeLists.txt" -or $_.Extension -eq ".cmake"
+}
+$normalizedCount = 0
+foreach ($file in $cmakeFiles) {
+    $original = Get-Content -LiteralPath $file.FullName -Raw
+    $updated = $original
+
+    $updated = $updated -replace '(?<![A-Za-z0-9_])[/-]MTd(?![A-Za-z0-9_])', '/MDd'
+    $updated = $updated -replace '(?<![A-Za-z0-9_])[/-]MT(?![A-Za-z0-9_])', '/MD'
+    # /MD implicitly pulls in MSVCRT as a default library; leftover
+    # /NODEFAULTLIB or /Zl (per-object default-library suppression) from the
+    # old /MT setup would otherwise cause unresolved CRT symbols.
+    $updated = $updated -replace '(?i)(?<![A-Za-z0-9_])[/-]NODEFAULTLIB(?::[A-Za-z0-9_.-]+)?(?![A-Za-z0-9_])', ''
+    $updated = $updated -replace '(?i)(?<![A-Za-z0-9_])[/-]Zl(?![A-Za-z0-9_])', ''
+    # CMAKE_MSVC_RUNTIME_LIBRARY / MSVC_RUNTIME_LIBRARY target property values.
+    $updated = $updated -replace 'MultiThreaded\$<\$<CONFIG:Debug>:Debug>(?!DLL)', 'MultiThreaded$<$<CONFIG:Debug>:Debug>DLL'
+    $updated = $updated -replace '(?<![A-Za-z0-9_])MultiThreadedDebug(?!DLL|[A-Za-z0-9_])', 'MultiThreadedDebugDLL'
+    $updated = $updated -replace '(?<![A-Za-z0-9_])MultiThreaded(?!Debug|DLL|\$<|[A-Za-z0-9_])', 'MultiThreadedDLL'
+    # Keep any in-source vcpkg triplet declaration consistent with the
+    # pinned x64-windows-static-md triplet (static libraries + dynamic CRT).
+    $updated = $updated -replace '(?im)(set\s*\(\s*VCPKG_CRT_LINKAGE\s+)static(\s*\))', '${1}dynamic${2}'
+
+    if ($updated -cne $original) {
+        Set-Content -LiteralPath $file.FullName -Value $updated -Encoding UTF8 -NoNewline
+        $normalizedCount++
+        Write-Host "Normalized CRT flags: $($file.FullName)"
+    }
+}
+Write-Host "Normalized CMake files: $normalizedCount"
+
+$remainingCrtDeclarations = Get-ChildItem -LiteralPath $buildSource -Recurse -File | Where-Object {
+    $_.Name -eq "CMakeLists.txt" -or $_.Extension -eq ".cmake"
+} | Select-String -Pattern '(?<![A-Za-z0-9_])[/-]MTd?(?![A-Za-z0-9_])|(?<![A-Za-z0-9_])MultiThreadedDebug(?!DLL|[A-Za-z0-9_])|(?<![A-Za-z0-9_])MultiThreaded(?!Debug|DLL|\$<|[A-Za-z0-9_])|(?i:(?<![A-Za-z0-9_])[/-]NODEFAULTLIB(?::[A-Za-z0-9_.-]+)?(?![A-Za-z0-9_]))|(?i:(?<![A-Za-z0-9_])[/-]Zl(?![A-Za-z0-9_]))|VCPKG_CRT_LINKAGE\s+static' -AllMatches
+if ($remainingCrtDeclarations) {
+    Write-Host "---- Invalid MSVC CRT declarations still present ----"
+    $remainingCrtDeclarations | Select-Object Path, LineNumber, Line | Format-Table -AutoSize
+    throw "Source (post-normalization) still declares a static or suppressed CRT."
+}
+Write-Host "Source MSVC runtime normalization: PASS (/MD + default CRT)"
+
 $sourceTimestamp = [DateTimeOffset]::FromUnixTimeSeconds($SourceDateEpoch).UtcDateTime
 foreach ($item in Get-ChildItem -LiteralPath $buildSource -Recurse -Force) {
     $item.CreationTimeUtc = $sourceTimestamp
