@@ -319,7 +319,21 @@ mkdir -p "${bdb_build_root}"
     export CXX="${CLANGXX}"
     export AR="$(xcrun --sdk macosx --find ar)"
     export RANLIB="$(xcrun --sdk macosx --find ranlib)"
-    export CFLAGS="-arch ${ARCH} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET} -isysroot ${SDKROOT} -Wno-error=implicit-function-declaration -Wno-error=format-security -Wno-error=implicit-int -Wno-deprecated-non-prototype"
+    # -DSTDC_HEADERS=1: dbinc/db_int.h picks <stdarg.h> vs. the legacy
+    # <varargs.h> based on whether autoconf's STDC_HEADERS macro got defined.
+    # BDB 4.8's own `configure` (this installer's target) is not reliably
+    # setting it on this toolchain, so mut_tas.c falls through to
+    # `#include <varargs.h>` -- and Xcode 16.4/clang 17 turns that header
+    # into a hard `#error "Please use <stdarg.h> instead of <varargs.h>"`
+    # (older Xcode versions shipped a harmless deprecated stub instead, which
+    # is presumably why this was not caught before). This is not something
+    # `-Wno-error=...` can paper over: it is a preprocessor #error, not a
+    # compiler warning. Forcing STDC_HEADERS=1 is factually correct on any
+    # modern macOS toolchain (fully conformant ANSI C headers) and matches
+    # what autoconf's own AC_HEADER_STDC test is trying to detect in the
+    # first place -- this just supplies the answer directly instead of
+    # relying on that 2010-era test still working on today's toolchain.
+    export CFLAGS="-arch ${ARCH} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET} -isysroot ${SDKROOT} -DSTDC_HEADERS=1 -Wno-error=implicit-function-declaration -Wno-error=format-security -Wno-error=implicit-int -Wno-deprecated-non-prototype"
     export CXXFLAGS="-arch ${ARCH} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET} -isysroot ${SDKROOT} -stdlib=libc++"
     export LDFLAGS="-arch ${ARCH} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET} -isysroot ${SDKROOT}"
     export MAKEFLAGS="-j1 -s"

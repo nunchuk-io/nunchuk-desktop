@@ -266,6 +266,11 @@ $qtArguments = @(
     [string]$lock.qt.architecture,
     "--outputdir",
     $qtRoot,
+    # aqt's default mirror rotation can pick an unofficial mirror missing
+    # Updates.xml/checksums for a given version ("Failed to locate XML data
+    # for Qt version ..."). Pin the official host to avoid that flakiness.
+    "--base",
+    "https://download.qt.io",
     "-m"
 )
 $qtArguments += @($lock.qt.modules | ForEach-Object { [string]$_ })
