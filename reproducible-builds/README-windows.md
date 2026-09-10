@@ -33,8 +33,18 @@ based on.
 ## Immutable inputs
 
 `windows-dependencies.lock.json` pins Qt 6.9.3 and its required modules,
-QtKeychain 0.15.0, Olm, vcpkg, HWI, CMake, Ninja, aqt, Inno Setup and the exact
-OpenSSL 3.5.7 source archive. The same OpenSSL source is built twice:
+QtKeychain 0.15.0, Olm, vcpkg, pkgconf, HWI, CMake, Ninja, aqt, Inno Setup and
+the exact OpenSSL 3.5.7 source archive. The same OpenSSL source is built twice:
+
+The pinned vcpkg commit's own MSYS2 bootstrap (used to acquire pkgconf for
+libevent) references an msys2-runtime build that has since been pruned from
+every msys2 mirror -- a cold build gets a 404 from all of them. Rather than
+bumping the vcpkg commit (which would silently drift every other pinned
+port's version), `build_windows.ps1` installs a pinned, hash-verified native
+`pkgconf.exe` (a PyPI wheel, same package/version as the proven manual
+reference workflow) and passes it through vcpkg's clean Windows build
+environment via `VCPKG_ENV_PASSTHROUGH PKG_CONFIG` in the triplet, so
+vcpkg's own MSYS2/pkgconf acquisition path is never invoked.
 
 - `no-shared` archives are selected explicitly by the application CMake cache;
 - shared `libssl-3-x64.dll` and `libcrypto-3-x64.dll` provide the runtime used

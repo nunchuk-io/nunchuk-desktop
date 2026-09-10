@@ -310,6 +310,41 @@ if ($null -eq $graphicalEffectsPrivate) {
     throw "Qt 5 Compat GraphicalEffects private plugin is missing."
 }
 
+# vcpkg's pinned commit below acquires pkgconf via its own MSYS2 bootstrap
+# (vcpkg_acquire_msys / vcpkg_find_acquire_program(PKGCONFIG)), which pulls
+# in a specific msys2-runtime build. That exact build has been pruned from
+# every msys2 mirror (confirmed: 404 from repo.msys2.org and every listed
+# mirror), which breaks libevent's vcpkg_fixup_pkgconfig step. Bumping the
+# pinned vcpkg commit would "fix" this but silently drifts every other
+# pinned port's version too. Instead, install a pinned, hash-verified native
+# pkgconf.exe here (same package/version as the proven manual reference
+# workflow) and pass it through vcpkg's clean Windows build environment via
+# the triplet's VCPKG_ENV_PASSTHROUGH, so vcpkg never invokes its own
+# MSYS2/pkgconf acquisition at all.
+$pkgconfWheel = Join-Path $downloads "pkgconf.whl"
+Get-VerifiedDownload $lock.sources.pkgconf $pkgconfWheel
+$pkgconfExtractDir = Join-Path $toolsDirectory "pkgconf"
+Reset-Directory $pkgconfExtractDir
+Invoke-Checked python @("-m", "zipfile", "-e", $pkgconfWheel, $pkgconfExtractDir)
+$pinnedPkgConfig = Join-Path $pkgconfExtractDir ([string]$lock.sources.pkgconf.binaryRelativePath)
+if (!(Test-Path -LiteralPath $pinnedPkgConfig -PathType Leaf)) {
+    throw "pkgconf.exe is missing after extracting the pinned wheel: $pinnedPkgConfig"
+}
+$pinnedPkgConfigHash = Get-Sha256 $pinnedPkgConfig
+$pinnedPkgConfigExpectedHash = ([string]$lock.sources.pkgconf.binarySha256).ToLowerInvariant()
+if ($pinnedPkgConfigHash -ne $pinnedPkgConfigExpectedHash) {
+    throw "SHA-256 mismatch for pkgconf.exe: expected=$pinnedPkgConfigExpectedHash actual=$pinnedPkgConfigHash"
+}
+$pkgconfVersionOutput = (& $pinnedPkgConfig --version 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $pkgconfVersionOutput -cne [string]$lock.sources.pkgconf.binaryVersion) {
+    throw "pkgconf version mismatch: expected=$($lock.sources.pkgconf.binaryVersion) actual='$pkgconfVersionOutput'"
+}
+$pkgconfHeaders = (& dumpbin.exe /HEADERS $pinnedPkgConfig 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0 -or $pkgconfHeaders -notmatch '8664 machine \(x64\)') {
+    throw "Pinned pkgconf.exe is not an x64 PE."
+}
+Write-Host "pkgconf pin: PASS ($pkgconfVersionOutput, $pinnedPkgConfig)"
+
 $vcpkgDirectory = Join-Path $dependenciesDirectory "vcpkg"
 Initialize-PinnedRepository ([string]$lock.sources.vcpkg.repository) ([string]$lock.sources.vcpkg.commit) $vcpkgDirectory
 Invoke-Checked (Join-Path $vcpkgDirectory "bootstrap-vcpkg.bat") @("-disableMetrics") $vcpkgDirectory
@@ -326,6 +361,13 @@ $tripletText = Get-Content -LiteralPath $tripletFile -Raw
 if ($tripletText -notmatch 'VCPKG_LIBRARY_LINKAGE\s+static' -or $tripletText -notmatch 'VCPKG_CRT_LINKAGE\s+dynamic') {
     throw "$triplet must use static libraries and dynamic MSVC CRT."
 }
+if ($tripletText -notmatch '(?m)^\s*set\(\s*VCPKG_ENV_PASSTHROUGH\s+PKG_CONFIG\s*\)\s*$') {
+    Add-Content -LiteralPath $tripletFile -Value "`nset(VCPKG_ENV_PASSTHROUGH PKG_CONFIG)`n"
+    $tripletText = Get-Content -LiteralPath $tripletFile -Raw
+    if ($tripletText -notmatch '(?m)^\s*set\(\s*VCPKG_ENV_PASSTHROUGH\s+PKG_CONFIG\s*\)\s*$') {
+        throw "Failed to add VCPKG_ENV_PASSTHROUGH PKG_CONFIG to $triplet."
+    }
+}
 $vcpkgPackages = @(
     "boost-algorithm",
     "boost-asio",
@@ -340,7 +382,14 @@ $vcpkgPackages = @(
     "berkeleydb",
     "sqlite3"
 ) | ForEach-Object { "{0}:{1}" -f $_, $triplet }
-Invoke-Checked $vcpkgExe (@("install") + $vcpkgPackages + @("--clean-after-build")) $vcpkgDirectory
+$oldPkgConfig = $env:PKG_CONFIG
+$env:PKG_CONFIG = $pinnedPkgConfig
+try {
+    Invoke-Checked $vcpkgExe (@("install") + $vcpkgPackages + @("--clean-after-build")) $vcpkgDirectory
+}
+finally {
+    $env:PKG_CONFIG = $oldPkgConfig
+}
 $vcpkgList = @(& $vcpkgExe list)
 if ($LASTEXITCODE -ne 0) {
     throw "Unable to verify the exact vcpkg package set."
@@ -646,6 +695,8 @@ $buildInfo = [ordered]@{
     runnerImage = [string]$env:ImageOS
     runnerImageVersion = [string]$env:ImageVersion
     aqtinstallVersion = $aqtPinnedVersion
+    pkgconfVersion = [string]$lock.sources.pkgconf.binaryVersion
+    pkgconfSha256 = $pinnedPkgConfigHash
 }
 $buildInfoJson = $buildInfo | ConvertTo-Json -Depth 8
 Write-Utf8NoBom (Join-Path $OutputDirectory "build-info.json") ($buildInfoJson + [char]10)

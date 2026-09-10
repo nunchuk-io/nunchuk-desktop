@@ -44,7 +44,17 @@
     "vcpkg": {
       "repository": "https://github.com/microsoft/vcpkg.git",
       "commit": "f523208df4ae467436dc2d2eeab594fed240d552",
-      "triplet": "x64-windows-static-md"
+      "triplet": "x64-windows-static-md",
+      "note": "This commit's vcpkg_acquire_msys.cmake pins msys2-runtime-3.5.4-2, which has been pruned from every msys2 mirror (404 everywhere), breaking libevent's pkgconf/MSYS2 bootstrap on a cold build. Do not fix this by bumping the vcpkg commit (that drifts every other pinned port's version too). Instead, build_windows.ps1 installs the pinned native pkgconf binary below and passes it through the triplet via VCPKG_ENV_PASSTHROUGH, so vcpkg's own MSYS2/pkgconf acquisition path is never invoked -- the same workaround the proven manual reference workflow uses."
+    },
+    "pkgconf": {
+      "installMethod": "pip-wheel",
+      "version": "2.3.0.post2",
+      "binaryVersion": "2.3.0",
+      "url": "https://files.pythonhosted.org/packages/41/d9/15d77555b64f71fe2e19535dbaf14d00862f6f7a84060d1edc481842a524/pkgconf-2.3.0.post2-py3-none-win_amd64.whl",
+      "sha256": "a2b650c8b34e402f5e32c06684d95b0c7ebbbb45d17642f5401b625f889d0e6f",
+      "binarySha256": "1ba9d9178bcaa896d0aea29d3798161d15dc3abe346371e15221de1e30b94a3b",
+      "binaryRelativePath": "pkgconf\\.bin\\pkgconf.exe"
     },
     "olm": {
       "repository": "https://gitlab.matrix.org/matrix-org/olm.git",
