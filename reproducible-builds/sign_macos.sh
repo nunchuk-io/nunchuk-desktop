@@ -82,12 +82,23 @@ CERTIFICATE_PATH="${RUNNER_TEMP:-${OUTPUT_DIR}}/nunchuk-signing-${ARCH}.p12"
 NOTARY_PROFILE="nunchuk-notary-${ARCH}"
 MOUNT_POINT="${OUTPUT_DIR}/mounted-dmg"
 mounted=0
+original_keychain_list=()
+original_default_keychain=""
 
 cleanup() {
     if (( mounted == 1 )); then
         hdiutil detach "${MOUNT_POINT}" -force >/dev/null 2>&1 || true
     fi
     rm -f "${CERTIFICATE_PATH}"
+    # Restore the process's keychain search list/default before deleting the
+    # signing keychain, not after -- otherwise the (now-deleted) signing
+    # keychain would linger in the search list until this shell exits.
+    if [[ -n "${original_default_keychain}" ]]; then
+        security default-keychain -s "${original_default_keychain}" >/dev/null 2>&1 || true
+    fi
+    if (( ${#original_keychain_list[@]} > 0 )); then
+        security list-keychains -d user -s "${original_keychain_list[@]}" >/dev/null 2>&1 || true
+    fi
     security delete-keychain "${KEYCHAIN_PATH}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -115,6 +126,24 @@ security set-key-partition-list \
     -s \
     -k "${MACOS_CI_KEYCHAIN_PWD}" \
     "${KEYCHAIN_PATH}"
+
+# `security create-keychain` does not add the new keychain to the process's
+# keychain SEARCH LIST or make it the default. `security find-identity
+# <path>` (the self-check just below) takes an explicit path and so finds
+# the identity regardless -- but `codesign -s "<name>"` resolves identities
+# by searching the keychain search list / default keychain only, not an
+# arbitrary path on disk. Skipping this step is what previously produced
+# "error: The specified item could not be found in the keychain" on the very
+# first codesign call below, even though the identity had just been
+# confirmed present in this exact keychain. The original list/default are
+# captured here and restored by the cleanup() trap.
+while IFS= read -r existing_keychain; do
+    original_keychain_list+=("${existing_keychain}")
+done < <(security list-keychains -d user | sed -E 's/^[[:space:]]*"(.*)"[[:space:]]*$/\1/')
+original_default_keychain="$(security default-keychain -d user | sed -E 's/^[[:space:]]*"(.*)"[[:space:]]*$/\1/')"
+security list-keychains -d user -s "${KEYCHAIN_PATH}" "${original_keychain_list[@]}"
+security default-keychain -s "${KEYCHAIN_PATH}"
+
 if ! security find-identity -v -p codesigning "${KEYCHAIN_PATH}" \
     | grep -Fq "${MACOS_CERTIFICATE_NAME}"; then
     echo "Developer ID identity was not imported: ${MACOS_CERTIFICATE_NAME}" >&2
