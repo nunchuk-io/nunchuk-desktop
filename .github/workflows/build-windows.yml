@@ -162,16 +162,19 @@ jobs:
           Write-Host "Resolved build version '$version' from $source"
 
       - name: Setup MSVC developer environment
-        # ilammy/msvc-dev-cmd, pinned per windows-dependencies.lock.json (actions.msvcDevCmd).
-        # No exact toolset/SDK pin: build_windows.ps1 only requires an active
-        # x64 MSVC environment (cl/link/lib/dumpbin on PATH) and records the
-        # actual cl.exe file version into build-info.json for traceability.
-        # The windows-2022 image's MSVC/SDK version is an accepted external
-        # input, per reproducible-builds/README-windows.md
-        # "Remaining external inputs".
+        # ilammy/msvc-dev-cmd, pinned per windows-dependencies.lock.json
+        # (actions.msvcDevCmd). toolset/sdk match
+        # windows-dependencies.lock.json's toolchain.msvc.toolsetVersion /
+        # windowsSdkVersion exactly, matching the proven manual reference
+        # workflow instead of accepting whatever ships on the windows-2022
+        # runner image. build_windows.ps1 re-verifies both values (and that
+        # cl/link/lib/dumpbin resolve under this exact toolset) before
+        # configuring anything.
         uses: ilammy/msvc-dev-cmd@a102174a2b586eec2ea151a69e6fd14404a8ce7c
         with:
           arch: x64
+          toolset: 14.44.35207
+          sdk: 10.0.22621.0
 
       # build_windows.ps1 installs aqt via `python -m pip install
       # aqtinstall==<pinned>` (see windows-dependencies.lock.json), so

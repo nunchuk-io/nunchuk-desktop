@@ -33,8 +33,13 @@ based on.
 ## Immutable inputs
 
 `windows-dependencies.lock.json` pins Qt 6.9.3 and its required modules,
-QtKeychain 0.15.0, Olm, vcpkg, pkgconf, HWI, CMake, Ninja, aqt, Inno Setup and
-the exact OpenSSL 3.5.7 source archive. The same OpenSSL source is built twice:
+QtKeychain 0.15.0, Olm, vcpkg, pkgconf, py7zr, HWI, CMake, Ninja, aqt, Inno
+Setup, the MSVC toolset/Windows SDK version and the exact OpenSSL 3.5.7
+source archive. Ninja is installed via pip (`ninja==1.11.1.2`, a Kitware
+fork wheel with jobserver support) rather than the official ninja-build
+release, since Ninja 1.13.0 has a known MSVC response-file regression
+(https://github.com/ninja-build/ninja/issues/2616). The same OpenSSL source
+is built twice:
 
 The pinned vcpkg commit's own MSYS2 bootstrap (used to acquire pkgconf for
 libevent) references an msys2-runtime build that has since been pruned from
@@ -45,6 +50,18 @@ port's version), `build_windows.ps1` installs a pinned, hash-verified native
 reference workflow) and passes it through vcpkg's clean Windows build
 environment via `VCPKG_ENV_PASSTHROUGH PKG_CONFIG` in the triplet, so
 vcpkg's own MSYS2/pkgconf acquisition path is never invoked.
+
+`build_windows.ps1` also materializes the `x64-windows-static-md` community
+triplet from scratch (rather than patching the one shipped by the pinned
+vcpkg commit), pinning `VCPKG_PLATFORM_TOOLSET_VERSION` and
+`VCPKG_CMAKE_SYSTEM_VERSION` to the same MSVC toolset/Windows SDK pin above,
+so vcpkg-built ports (Boost, zeromq, libevent, ...) compile with the exact
+same toolset as everything else. libevent's port version and upstream
+source ref are verified against the lock file right after vcpkg checkout,
+and installed on its own first (before the rest of the package set) so a
+cold-build failure fails fast. After install, the script verifies the exact
+Boost header set is present and that no out-of-scope `libffi` dependency was
+pulled in -- all matching the proven manual reference workflow.
 
 - `no-shared` archives are selected explicitly by the application CMake cache;
 - shared `libssl-3-x64.dll` and `libcrypto-3-x64.dll` provide the runtime used
@@ -114,9 +131,12 @@ release only after explicit investigation, then rerun the protected job.
 
 ## Remaining external inputs
 
-The dependency versions and downloaded bytes are locked, but the
-`windows-2022` hosted image, MSVC/Windows SDK installation, Qt distribution
-service and upstream archive availability are external inputs. The two replicas
-prove determinism for the selected runner/toolchain fingerprint; long-term
+The dependency versions and downloaded bytes are locked, and the MSVC toolset
+(14.44.35207) and Windows SDK (10.0.22621.0) are now pinned via
+`ilammy/msvc-dev-cmd`'s `toolset:`/`sdk:` inputs and re-verified by
+`build_windows.ps1`, matching the proven manual reference workflow exactly.
+The `windows-2022` hosted image itself, Qt distribution service and upstream
+archive availability remain external inputs. The two replicas prove
+determinism for the selected runner/toolchain fingerprint; long-term
 independent rebuilding requires mirrored dependencies and a versioned runner
 image.

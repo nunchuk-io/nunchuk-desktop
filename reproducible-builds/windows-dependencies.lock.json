@@ -8,15 +8,28 @@
       "sha256": "f4b499f71cf44115a1d711d4867da3c6bd2f3f4d7121c213ace979757640385c"
     },
     "ninja": {
-      "version": "1.12.1",
-      "url": "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip",
-      "sha256": "f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a"
+      "version": "1.11.1.2",
+      "binaryVersion": "1.11.1.git.kitware.jobserver-1",
+      "installMethod": "pip",
+      "pipPackage": "ninja",
+      "note": "Installed via pip (ninja==1.11.1.2, a Kitware fork wheel with jobserver support), matching the proven manual reference workflow exactly. Ninja 1.13.0 has a known MSVC response-file regression (https://github.com/ninja-build/ninja/issues/2616); do not upgrade past this pin without re-verifying."
     },
     "aqt": {
       "version": "3.3.0",
       "installMethod": "pip",
       "pipPackage": "aqtinstall",
       "note": "Installed via pip (not a standalone hash-pinned .exe), matching the proven manual reference workflow. aqtinstall 3.3.0 cannot install Qt 6.11.x on Windows (pre-6.11 repo folder layout assumption), but Qt is pinned to 6.9.3 below, which still uses the pre-6.11 layout, so no patch is required."
+    },
+    "py7zr": {
+      "version": "1.1.0",
+      "installMethod": "pip",
+      "pipPackage": "py7zr",
+      "note": "aqtinstall's optional 7z-archive extraction dependency. Pinned to match the proven manual reference workflow, since aqtinstall would otherwise pull in whatever py7zr release is newest on PyPI at install time."
+    },
+    "msvc": {
+      "toolsetVersion": "14.44.35207",
+      "windowsSdkVersion": "10.0.22621.0",
+      "note": "Pinned to match the proven manual reference workflow exactly (ilammy/msvc-dev-cmd toolset:/sdk: inputs), rather than accepting whatever MSVC/SDK ships on the windows-2022 runner image."
     },
     "innoSetup": {
       "version": "6.7.3",
@@ -46,6 +59,11 @@
       "commit": "f523208df4ae467436dc2d2eeab594fed240d552",
       "triplet": "x64-windows-static-md",
       "note": "This commit's vcpkg_acquire_msys.cmake pins msys2-runtime-3.5.4-2, which has been pruned from every msys2 mirror (404 everywhere), breaking libevent's pkgconf/MSYS2 bootstrap on a cold build. Do not fix this by bumping the vcpkg commit (that drifts every other pinned port's version too). Instead, build_windows.ps1 installs the pinned native pkgconf binary below and passes it through the triplet via VCPKG_ENV_PASSTHROUGH, so vcpkg's own MSYS2/pkgconf acquisition path is never invoked -- the same workaround the proven manual reference workflow uses."
+    },
+    "libevent": {
+      "version": "2.1.12+20230128#1",
+      "sourceRef": "4d85d28acdbb83bb60e500e9345bab757b64d6d1",
+      "note": "Pinned port version + upstream source REF that the vcpkg commit above must provide, matching the proven manual reference workflow's explicit libevent pin verification."
     },
     "pkgconf": {
       "installMethod": "pip-wheel",
