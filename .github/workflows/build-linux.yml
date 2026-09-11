@@ -1,8 +1,14 @@
 name: Build linux release
 # run-name can only use trigger-context expressions (no script output), so it
 # cannot reflect a version auto-detected from CMakeLists.txt by the
-# "Determine build version" step below; it just labels manual runs generically.
-run-name: ${{ github.ref_type == 'tag' && github.ref_name || 'manual' }}
+# "Determine build version" step below -- it uses github.ref_name directly
+# instead (the raw branch/tag name), matching what a manual run against a
+# branch actually labels itself with anyway (the branch name, not the app
+# version). Three cases:
+#   - manual run, ref is a branch:  nunchuk-linux-<branch>-manual
+#   - manual run, ref is a tag:     nunchuk-linux-v<tag>-manual
+#   - tag push (automatic):         nunchuk-linux-v<tag>
+run-name: ${{ github.ref_type == 'branch' && format('nunchuk-linux-{0}-manual', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-linux-v{0}-manual', github.ref_name) || format('nunchuk-linux-v{0}', github.ref_name) }}
 
 on:
   push:
@@ -398,10 +404,19 @@ jobs:
           echo "Linux SSL and smoke tests passed."
           CI_TESTS
 
+      # Artifact display name only (the actual zip filename referenced by
+      # `path:` below is unaffected -- it stays keyed off BUILD_VERSION, per
+      # the "Determine build version" step, since that is what
+      # package_linux.sh actually wrote to disk). Same three cases as
+      # run-name above, plus the arch (matrix.appimage_arch) to keep the two
+      # matrix legs' artifacts from colliding under the same name:
+      #   - manual run, ref is a branch:  nunchuk-linux-<arch>-<branch>-manual
+      #   - manual run, ref is a tag:     nunchuk-linux-<arch>-v<tag>-manual
+      #   - tag push (automatic):         nunchuk-linux-<arch>-v<tag>
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}
+          name: ${{ github.ref_type == 'branch' && format('nunchuk-linux-{0}-{1}-manual', matrix.appimage_arch, github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-linux-{0}-v{1}-manual', matrix.appimage_arch, github.ref_name) || format('nunchuk-linux-{0}-v{1}', matrix.appimage_arch, env.BUILD_VERSION) }}
           path: nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}.zip
           if-no-files-found: error
           compression-level: 0

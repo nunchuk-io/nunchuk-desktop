@@ -1,5 +1,11 @@
 name: Build windows release
-run-name: ${{ github.event_name != 'workflow_dispatch' && github.ref_name || format('{0}_manual', github.ref_name) }}
+# Naming rule (kept in sync with the "Upload build artifacts" step's
+# artifact name below -- both must derive the same string independently,
+# since run-name cannot read job/step outputs or env vars):
+#   - workflow_dispatch off a branch : nunchuk-windows-x64-<branch>-manual
+#   - workflow_dispatch off a tag    : nunchuk-windows-x64-v<tag>-manual
+#   - tag push (automatic)           : nunchuk-windows-x64-v<tag>
+run-name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual', github.ref_name)) || format('nunchuk-windows-x64-v{0}', github.ref_name) }}
 
 # Wires reproducible-builds/build_windows.ps1 + package_windows.ps1 +
 # windows-dependencies.lock.json (Qt 6.9.3 / OpenSSL 3.5.7 / vcpkg / Olm /
@@ -217,33 +223,75 @@ jobs:
 
       - name: Build application
         shell: pwsh
+        # Tees full, untruncated output to $env:RUNNER_TEMP (a sibling of
+        # C:\nunchuk-repro, never touched by build_windows.ps1's own
+        # Reset-Directory calls) so "Upload build log on failure" below can
+        # publish it as a small, reliably downloadable artifact -- the GitHub
+        # Actions log viewer truncates very large steps in the UI, and the
+        # full "Download log archive" can itself be too large to fetch.
         run: |
-          & .\reproducible-builds\build_windows.ps1 `
-            -Replica a `
-            -ExpectedCommit $env:EXPECTED_COMMIT `
-            -ReleaseVersion $env:BUILD_VERSION `
-            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE)
+          $buildLogPath = Join-Path $env:RUNNER_TEMP "nunchuk-windows-build.log"
+          try {
+            & .\reproducible-builds\build_windows.ps1 `
+              -Replica a `
+              -ExpectedCommit $env:EXPECTED_COMMIT `
+              -ReleaseVersion $env:BUILD_VERSION `
+              -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE) *>&1 |
+              Tee-Object -FilePath $buildLogPath
+          }
+          catch {
+            Write-Host "::error::build_windows.ps1 failed; see the uploaded *-build-log artifact for the full untruncated output."
+            throw
+          }
 
       - name: Package application (unsigned)
         shell: pwsh
+        # See "Build application" above for why this is teed to RUNNER_TEMP.
         run: |
-          & .\reproducible-builds\package_windows.ps1 `
-            -ExpectedCommit $env:EXPECTED_COMMIT `
-            -ReleaseVersion $env:BUILD_VERSION `
-            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE) `
-            -ArtifactFlavor unsigned `
-            -ApplicationExe C:\nunchuk-repro\build-output\nunchuk-qt.exe `
-            -BuildInfoFile C:\nunchuk-repro\build-output\build-info.json `
-            -TlsProbeExe C:\nunchuk-repro\build-output\qt-tls-probe.exe `
-            -SmokeTest
+          $packageLogPath = Join-Path $env:RUNNER_TEMP "nunchuk-windows-package.log"
+          try {
+            & .\reproducible-builds\package_windows.ps1 `
+              -ExpectedCommit $env:EXPECTED_COMMIT `
+              -ReleaseVersion $env:BUILD_VERSION `
+              -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE) `
+              -ArtifactFlavor unsigned `
+              -ApplicationExe C:\nunchuk-repro\build-output\nunchuk-qt.exe `
+              -BuildInfoFile C:\nunchuk-repro\build-output\build-info.json `
+              -TlsProbeExe C:\nunchuk-repro\build-output\qt-tls-probe.exe `
+              -SmokeTest *>&1 |
+              Tee-Object -FilePath $packageLogPath
+          }
+          catch {
+            Write-Host "::error::package_windows.ps1 failed; see the uploaded *-build-log artifact for the full untruncated output."
+            throw
+          }
+
+      - name: Upload build log on failure
+        # Runs whenever "Build application" or "Package application" above
+        # failed, regardless of how far each got. Uses if-no-files-found:
+        # warn (not error) since only one of the two logs may exist depending
+        # on which step failed first. Naming mirrors "Upload build artifacts"
+        # below with a "-build-log" suffix so it's traceable to the same run.
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual-build-log', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual-build-log', github.ref_name)) || format('nunchuk-windows-x64-v{0}-build-log', github.ref_name) }}
+          path: |
+            ${{ runner.temp }}\nunchuk-windows-build.log
+            ${{ runner.temp }}\nunchuk-windows-package.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload build artifacts
         # actions/upload-artifact, pinned per windows-dependencies.lock.json (actions.uploadArtifact).
         # Uploaded unconditionally, before the optional reproducibility check
         # below -- the check's outcome never affects this artifact.
+        # name: must derive the same string as run-name above (see the
+        # naming rule comment there); the tag-push case is also what
+        # publish-release's "Download build artifacts" step expects.
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nunchuk-windows-x64-v${{ env.BUILD_VERSION }}
+          name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual', github.ref_name)) || format('nunchuk-windows-x64-v{0}', github.ref_name) }}
           path: C:\nunchuk-repro\artifacts
           if-no-files-found: error
 
