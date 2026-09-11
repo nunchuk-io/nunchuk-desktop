@@ -259,18 +259,55 @@ ln -s /Applications "${dmg_stage}/Applications"
 
 DMG_PATH="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}.dmg"
 rm -f "${DMG_PATH}"
-hdiutil create \
-    -volname Nunchuk \
-    -srcfolder "${dmg_stage}" \
-    -fs HFS+ \
-    -format UDZO \
-    -imagekey zlib-level=9 \
-    "${DMG_PATH}"
+# hdiutil create intermittently fails with "Resource busy" -- a known,
+# transient macOS disk-arbitration/Spotlight race against the just-written
+# dmg_stage directory or the just-removed DMG_PATH, not a real conflict with
+# this script's own state (nothing else here holds either path open at this
+# point). Retried a few times with a short backoff rather than failing the
+# whole signing job on what is reliably a one-shot flake.
+dmg_created=0
+for attempt in 1 2 3 4 5; do
+    if hdiutil create \
+        -volname Nunchuk \
+        -srcfolder "${dmg_stage}" \
+        -fs HFS+ \
+        -format UDZO \
+        -imagekey zlib-level=9 \
+        "${DMG_PATH}"; then
+        dmg_created=1
+        break
+    fi
+    echo "hdiutil create failed (attempt ${attempt}/5), retrying..." >&2
+    rm -f "${DMG_PATH}"
+    if (( attempt < 5 )); then
+        sleep $((attempt * 5))
+    fi
+done
+if (( dmg_created != 1 )); then
+    echo "hdiutil create failed after five attempts." >&2
+    exit 1
+fi
 
 echo "Verifying the mounted app inside the DMG..."
 rm -rf "${MOUNT_POINT}"
 mkdir -p "${MOUNT_POINT}"
-hdiutil attach -readonly -nobrowse -mountpoint "${MOUNT_POINT}" "${DMG_PATH}" >/dev/null
+# Same transient "Resource busy" risk as the hdiutil create above -- retry
+# rather than fail outright.
+dmg_attached=0
+for attempt in 1 2 3 4 5; do
+    if hdiutil attach -readonly -nobrowse -mountpoint "${MOUNT_POINT}" "${DMG_PATH}" >/dev/null; then
+        dmg_attached=1
+        break
+    fi
+    echo "hdiutil attach failed (attempt ${attempt}/5), retrying..." >&2
+    if (( attempt < 5 )); then
+        sleep $((attempt * 5))
+    fi
+done
+if (( dmg_attached != 1 )); then
+    echo "hdiutil attach failed after five attempts." >&2
+    exit 1
+fi
 mounted=1
 codesign --verify --deep --strict --verbose=4 "${MOUNT_POINT}/Nunchuk.app"
 spctl --assess --type execute --verbose=4 "${MOUNT_POINT}/Nunchuk.app"

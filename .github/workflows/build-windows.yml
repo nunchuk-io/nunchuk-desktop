@@ -1,11 +1,10 @@
 name: Build windows release
-# Naming rule (kept in sync with the "Upload build artifacts" step's
-# artifact name below -- both must derive the same string independently,
-# since run-name cannot read job/step outputs or env vars):
-#   - workflow_dispatch off a branch : nunchuk-windows-x64-<branch>-manual
-#   - workflow_dispatch off a tag    : nunchuk-windows-x64-v<tag>-manual
-#   - tag push (automatic)           : nunchuk-windows-x64-v<tag>
-run-name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual', github.ref_name)) || format('nunchuk-windows-x64-v{0}', github.ref_name) }}
+# Naming rule -- run-name deliberately omits "x64" (kept only in the
+# artifact names below, since a single run only ever targets x64):
+#   - workflow_dispatch off a branch : nunchuk-windows-<branch>-manual
+#   - workflow_dispatch off a tag    : nunchuk-windows-v<tag>-manual
+#   - tag push (automatic)           : nunchuk-windows-v<tag>
+run-name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-{0}-manual', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-v{0}-manual', github.ref_name)) || format('nunchuk-windows-v{0}', github.ref_name) }}
 
 # Wires reproducible-builds/build_windows.ps1 + package_windows.ps1 +
 # windows-dependencies.lock.json (Qt 6.9.3 / OpenSSL 3.5.7 / vcpkg / Olm /
