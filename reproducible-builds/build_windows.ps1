@@ -379,7 +379,13 @@ if ($LASTEXITCODE -ne 0 -or $ninjaVersionOutput -cne $ninjaExpectedBinaryVersion
     throw "Ninja version mismatch: expected=$ninjaExpectedBinaryVersion actual='$ninjaVersionOutput'"
 }
 Write-Host "ninja pin: PASS ($ninjaVersionOutput, $ninjaExe)"
-Invoke-Checked $aqtExe ($aqtBaseArgs + @("version"))
+# aqt unconditionally writes an "aqtinstall.log" file into the current
+# working directory. Without an explicit WorkingDirectory here, that lands
+# in $SourceDirectory (the original checkout GitHub Actions runs this whole
+# script from), which then trips the post-build "checkout must not change"
+# dirty-check below (git sees an untracked aqtinstall.log). Run aqt from
+# $WorkDirectory instead, which is never checked for git cleanliness.
+Invoke-Checked $aqtExe ($aqtBaseArgs + @("version")) $WorkDirectory
 
 $qtRoot = Join-Path $WorkDirectory "qt"
 $qtArguments = @(
@@ -395,7 +401,7 @@ $qtArguments = @(
     "-m"
 )
 $qtArguments += @($lock.qt.modules | ForEach-Object { [string]$_ })
-Invoke-Checked $aqtExe ($aqtBaseArgs + $qtArguments)
+Invoke-Checked $aqtExe ($aqtBaseArgs + $qtArguments) $WorkDirectory
 
 $qtDirectory = Join-Path $qtRoot "$($lock.qt.version)\$($lock.qt.directoryName)"
 $requiredQtFiles = @(
