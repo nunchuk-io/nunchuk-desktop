@@ -480,7 +480,30 @@ cmake -S "${PROJECT_DIR}" -B "${app_build_dir}" \
     -Devent_lib:FILEPATH="${libevent_prefix}/lib/libevent.a" \
     -DAPPEND_CPPFLAGS="-I${libevent_prefix}/include" \
     -DUR__DISABLE_TESTS=ON
-cmake --build "${app_build_dir}" --parallel "${JOBS}"
+# Retried rather than dropped to -j1: a transient host-level I/O flake has
+# been observed here ("ranlib: can't write to output file (Input/output
+# error)"), consistent with the same kind of macOS-runner disk-arbitration
+# hiccup already retried for hdiutil in sign_macos.sh, not a determinism bug
+# in this build. A retry is cheap -- cmake/make only recompile/relink
+# whatever object failed to write, not a full rebuild -- and does not cost
+# extra time on the (normal) non-flaky run, unlike permanently lowering
+# --parallel, which would slow down every single build to guard against a
+# rare event.
+app_build_succeeded=0
+for attempt in 1 2 3; do
+    if cmake --build "${app_build_dir}" --parallel "${JOBS}"; then
+        app_build_succeeded=1
+        break
+    fi
+    echo "cmake --build (app) failed (attempt ${attempt}/3), retrying..." >&2
+    if (( attempt < 3 )); then
+        sleep $((attempt * 10))
+    fi
+done
+if (( app_build_succeeded != 1 )); then
+    echo "cmake --build (app) failed after three attempts." >&2
+    exit 1
+fi
 
 APP_PATH="${app_build_dir}/Nunchuk.app" \
 HWI_BINARY="${hwi_binary}" \
