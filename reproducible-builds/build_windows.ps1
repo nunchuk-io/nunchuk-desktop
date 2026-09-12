@@ -595,7 +595,7 @@ Get-Command nmake.exe -ErrorAction Stop | Out-Null
 Get-Command nasm.exe -ErrorAction Stop | Out-Null
 $oldClAppend = $env:_CL_
 $oldLinkAppend = $env:_LINK_
-$env:_CL_ = "/MD /Brepro /ZH:SHA_256 /pathmap:$WorkDirectory=/_/work"
+$env:_CL_ = "/MD /Brepro /ZH:SHA_256 /experimental:deterministic /pathmap:$WorkDirectory=/_/work"
 $env:_LINK_ = "/Brepro"
 try {
     $opensslStaticSource = Join-Path $dependenciesDirectory "openssl-static-source"
@@ -659,9 +659,24 @@ if ($LASTEXITCODE -ne 0 -or $opensslStaticVersionOutput.Trim() -notmatch '^OpenS
     throw "Built application OpenSSL does not report exact OpenSSL 3.5.7: $opensslStaticVersionOutput"
 }
 
-$pathMaps = "/Brepro /ZH:SHA_256 /pathmap:$buildSource=/_/src /pathmap:$WorkDirectory=/_/work"
+# /experimental:deterministic must accompany /pathmap: on the compiler side --
+# without it, cl.exe silently ignores every /pathmap: entry (observed as
+# repeated "D9007 : '/pathmap:' requires '/experimental:deterministic';
+# option ignored" warnings), so path-independent reproducibility was not
+# actually being achieved despite the flag being present.
+$pathMaps = "/Brepro /ZH:SHA_256 /experimental:deterministic /pathmap:$buildSource=/_/src /pathmap:$WorkDirectory=/_/work"
 $linkerFlags = "/Brepro /INCREMENTAL:NO /PDBALTPATH:%_PDB%"
 $staticLinkerFlags = "/Brepro"
+# The proven manual reference workflow does not attempt reproducibility at
+# all (no /Brepro anywhere) and links this same object/library set (Boost,
+# OpenSSL, Olm, secp256k1, ...) successfully. /Brepro's deterministic-link
+# mode is suspected of crashing link.exe silently on this specific, very
+# large static link (ninja prints "Linking CXX executable nunchuk-qt.exe"
+# and then nothing -- no LNK error, no exit message). Temporarily drop
+# /Brepro from only the final application's own link step (Olm/QtKeychain
+# above already link fine with it, so they keep $linkerFlags unchanged) to
+# test that hypothesis; re-add once confirmed and, if needed, worked around.
+$applicationLinkerFlags = "/INCREMENTAL:NO /PDBALTPATH:%_PDB%"
 
 $tlsProbeSource = Join-Path $dependenciesDirectory "qt-tls-probe"
 $tlsProbeBuild = Join-Path $buildDirectory "qt-tls-probe"
@@ -810,8 +825,8 @@ $applicationConfigure = @(
     '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>DLL',
     "-DCMAKE_C_FLAGS_INIT=$pathMaps",
     "-DCMAKE_CXX_FLAGS_INIT=$pathMaps",
-    "-DCMAKE_EXE_LINKER_FLAGS=$linkerFlags",
-    "-DCMAKE_SHARED_LINKER_FLAGS=$linkerFlags",
+    "-DCMAKE_EXE_LINKER_FLAGS=$applicationLinkerFlags",
+    "-DCMAKE_SHARED_LINKER_FLAGS=$applicationLinkerFlags",
     "-DCMAKE_STATIC_LINKER_FLAGS=$staticLinkerFlags",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
     "-Devent_lib:FILEPATH=$eventLibrary",
