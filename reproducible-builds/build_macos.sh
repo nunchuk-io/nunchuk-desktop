@@ -169,6 +169,27 @@ checkout_commit() {
 # workspace behaves the same as a first run. Any build residue left inside
 # the openssl submodule by a previous run of this exact script is removed on
 # exit, not just checked for up front.
+openssl_source_dir="${PROJECT_DIR}/contrib/libnunchuk/contrib/openssl"
+cleanup_openssl_build_residue() {
+    # `checkout -- .` first reverts any tracked file `./config`/`make
+    # install_dev` rewrote in place (e.g. permission bits, generated headers
+    # tracked upstream) -- `git clean` alone cannot touch modified tracked
+    # files, only untracked ones. `-ff` (double force, not `-f`) is required
+    # for `clean` to also remove untracked directories that themselves look
+    # like git repositories, which OpenSSL's own build can leave behind.
+    # Without both, this nested tree can stay dirty after a build even
+    # though this cleanup ran, which fails the very next clean-tree check
+    # below on a second invocation in the same checkout (e.g. the opt-in
+    # reproducibility-check rebuild in the same CI job).
+    git -C "${openssl_source_dir}" checkout --quiet -- . >/dev/null 2>&1 || true
+    git -C "${openssl_source_dir}" clean -ffdx --quiet >/dev/null 2>&1 || true
+}
+# Run once up front too, not only on exit: if a previous run of this script
+# was killed before its own EXIT trap fired (runner timeout, cancelled job),
+# this is the only thing that can still recover a clean tree for this run.
+cleanup_openssl_build_residue
+trap cleanup_openssl_build_residue EXIT
+
 if [[ -n "$(git -C "${PROJECT_DIR}" status --porcelain --untracked-files=all)" ]]; then
     echo "The reproducible macOS builder requires a completely clean source tree." >&2
     git -C "${PROJECT_DIR}" status --short --untracked-files=all >&2
@@ -181,11 +202,6 @@ git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '
         exit 1
     fi
 '
-openssl_source_dir="${PROJECT_DIR}/contrib/libnunchuk/contrib/openssl"
-cleanup_openssl_build_residue() {
-    git -C "${openssl_source_dir}" clean -fdx --quiet >/dev/null 2>&1 || true
-}
-trap cleanup_openssl_build_residue EXIT
 
 cmake -E remove_directory "${BUILD_ROOT}"
 cmake -E remove_directory "${OUTPUT_DIR}"
@@ -315,6 +331,15 @@ sed -i '' \
     "${bdb_installer}"
 mkdir -p "${bdb_build_root}"
 (
+    # install_db4.sh downloads "db-4.8.30.NC.tar.gz" with `curl -O` and
+    # extracts/builds it into whatever directory it is run from -- it does
+    # not confine that to its <base-dir> argument. Without this `cd`, both
+    # land in this script's own working directory (PROJECT_DIR, when invoked
+    # from a CI step with a repo-rooted working-directory default), leaving
+    # the checkout dirty and failing the clean-tree check on any later
+    # invocation in the same checkout (e.g. the opt-in
+    # reproducibility-check rebuild in the same CI job).
+    cd "${bdb_build_root}"
     unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH LIBRARY_PATH \
         OBJC_INCLUDE_PATH OBJCPLUS_INCLUDE_PATH
     export CC="${CLANG}"

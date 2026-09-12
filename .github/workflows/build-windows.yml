@@ -239,6 +239,16 @@ jobs:
               Tee-Object -FilePath $buildLogPath
           }
           catch {
+            # Tee-Object only captures build_windows.ps1's own piped output;
+            # the terminating error caught here happens outside that pipe, so
+            # it must be appended to the same log file explicitly, or it is
+            # lost from the uploaded artifact entirely.
+            $errorText = "`n==== build_windows.ps1 terminating error ====`n" + `
+              "Exception: $($_.Exception.Message)`n" + `
+              "ScriptStackTrace:`n$($_.ScriptStackTrace)`n" + `
+              "LASTEXITCODE at catch time: $LASTEXITCODE`n"
+            Add-Content -LiteralPath $buildLogPath -Value $errorText
+            Write-Host $errorText
             Write-Host "::error::build_windows.ps1 failed; see the uploaded *-build-log artifact for the full untruncated output."
             throw
           }
@@ -261,6 +271,12 @@ jobs:
               Tee-Object -FilePath $packageLogPath
           }
           catch {
+            $errorText = "`n==== package_windows.ps1 terminating error ====`n" + `
+              "Exception: $($_.Exception.Message)`n" + `
+              "ScriptStackTrace:`n$($_.ScriptStackTrace)`n" + `
+              "LASTEXITCODE at catch time: $LASTEXITCODE`n"
+            Add-Content -LiteralPath $packageLogPath -Value $errorText
+            Write-Host $errorText
             Write-Host "::error::package_windows.ps1 failed; see the uploaded *-build-log artifact for the full untruncated output."
             throw
           }
