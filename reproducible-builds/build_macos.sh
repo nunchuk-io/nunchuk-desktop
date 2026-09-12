@@ -193,6 +193,25 @@ trap cleanup_openssl_build_residue EXIT
 if [[ -n "$(git -C "${PROJECT_DIR}" status --porcelain --untracked-files=all)" ]]; then
     echo "The reproducible macOS builder requires a completely clean source tree." >&2
     git -C "${PROJECT_DIR}" status --short --untracked-files=all >&2
+    # The line(s) above only report *that* a submodule is dirty (e.g. " M
+    # contrib/libnunchuk") -- git's top-level status never expands into a
+    # submodule's own working tree, so a dirty-submodule failure alone gives
+    # no actionable detail. Two independent things can each cause that " M":
+    # (1) modified/untracked content inside the submodule's own working
+    # tree, or (2) the submodule's checked-out commit itself having moved
+    # away from what the superproject's index recorded, with no local
+    # content changes at all -- e.g. something ran `git checkout`/`git
+    # submodule update` to a different ref during configure/build. Case (2)
+    # produces no output from a plain `git status` inside the submodule, so
+    # both are checked and reported separately below.
+    echo "--- git submodule status --recursive (a leading +/- means a checked-out commit changed) ---" >&2
+    git -C "${PROJECT_DIR}" submodule status --recursive >&2
+    git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '
+        if test -n "$(git status --porcelain --untracked-files=all)"; then
+            echo "--- dirty submodule content: $displaypath ---" >&2
+            git status --short --untracked-files=all >&2
+        fi
+    ' >&2
     exit 1
 fi
 git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '

@@ -595,7 +595,17 @@ Get-Command nmake.exe -ErrorAction Stop | Out-Null
 Get-Command nasm.exe -ErrorAction Stop | Out-Null
 $oldClAppend = $env:_CL_
 $oldLinkAppend = $env:_LINK_
-$env:_CL_ = "/MD /Brepro /ZH:SHA_256 /experimental:deterministic /pathmap:$WorkDirectory=/_/work"
+# NOTE: no /pathmap:/experimental:deterministic here, unlike the CMake-driven
+# builds below. OpenSSL's own nmake-generated command lines pass /Zi with a
+# bare relative /Fd (e.g. "/Fdossl_static.pdb"); once /experimental:deterministic
+# actually activates /pathmap (see the CMake $pathMaps comment below for why
+# that used to be silently ignored), cl.exe remaps that PDB's own resolved
+# path through the same substitution rule, producing a nonexistent path like
+# "_/work\dependencies\openssl-static-source\ossl_static.pdb" and failing
+# with "fatal error C1090: PDB API call failed, error code '3'". The CMake
+# Release builds below never hit this because they don't pass /Zi (no PDBs
+# are generated for them), so this is scoped to only the OpenSSL nmake build.
+$env:_CL_ = "/MD /Brepro /ZH:SHA_256"
 $env:_LINK_ = "/Brepro"
 try {
     $opensslStaticSource = Join-Path $dependenciesDirectory "openssl-static-source"
