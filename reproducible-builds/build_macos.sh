@@ -246,6 +246,28 @@ git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '
     fi
 '
 
+# Normalize the mtime of every tracked file in this project's own top-level
+# tree (git ls-files does not descend into submodules, so contrib/* is
+# untouched) to SOURCE_DATE_EPOCH before anything compiles. The checkout
+# itself is reused in place -- never re-cloned -- across the two
+# from-scratch builds the opt-in reproducibility check runs in the same CI
+# job, so file *content* is already identical between them. But
+# cleanup_source_tree_residue()'s own `git checkout -- .` (run at the start
+# of each invocation, above) can rewrite a file's on-disk mtime to whatever
+# wall-clock time that particular invocation happened to run at, even when
+# the content it writes back is byte-for-byte the same. Some tools embed a
+# source file's own mtime into their compiled output independently of any
+# build-wide "source date" override -- e.g. Qt's rcc records each resource
+# file's last-modified time for its runtime QResource API, which
+# QT_RCC_SOURCE_DATE_OVERRIDE does not touch, that being rcc's own
+# invocation timestamp, not a per-input-file value. Fixing every source
+# file's mtime to the same deterministic value up front removes that
+# variable regardless of which specific tool turns out to be reading it.
+normalized_source_timestamp="$(date -u -r "${SOURCE_DATE_EPOCH}" '+%Y%m%d%H%M.%S')"
+while IFS= read -r -d '' tracked_file; do
+    touch -h -t "${normalized_source_timestamp}" "${PROJECT_DIR}/${tracked_file}"
+done < <(git -C "${PROJECT_DIR}" ls-files -z)
+
 cmake -E remove_directory "${BUILD_ROOT}"
 cmake -E remove_directory "${OUTPUT_DIR}"
 mkdir -p "${DEPS_ROOT}" "${DOWNLOAD_DIR}" "${SOURCE_ROOT}" "${OUTPUT_DIR}"
@@ -530,6 +552,73 @@ if (( app_build_succeeded != 1 )); then
     echo "cmake --build (app) failed after three attempts." >&2
     exit 1
 fi
+
+# Apple's ld64 assigns LC_UUID a value that is not purely a deterministic
+# function of the linked content -- a CI reproducibility check rebuilding
+# the identical commit twice in the same job produced two Nunchuk binaries
+# confirmed (via `cmp -l` + `otool -l`) to be byte-identical everywhere
+# except this one 16-byte load command (plus, on arm64, a handful of
+# further bytes in the embedded ad-hoc code-signature hash that covers it).
+# Every other source of non-determinism this pipeline could control (glob
+# order, source/rcc timestamps, dirty submodule residue) was already fixed
+# and ruled out by that same test; this is the one piece left, and Apple
+# provides no supported linker flag to make it content-deterministic.
+# Patched in place to a value derived from the source commit/arch/tag
+# instead: stable across repeated builds of the same commit (what
+# reproducibility here means), while still changing between actual
+# releases.
+nunchuk_binary="${app_build_dir}/Nunchuk.app/Contents/MacOS/Nunchuk"
+source_commit_for_uuid="$(git -C "${PROJECT_DIR}" rev-parse HEAD)"
+python3 - "${nunchuk_binary}" "${source_commit_for_uuid}" "${ARCH}" "${TAG}" <<'PY'
+import hashlib
+import struct
+import sys
+
+path, commit, arch, tag = sys.argv[1:]
+LC_UUID = 0x1b
+
+with open(path, "r+b") as f:
+    data = f.read()
+    magic = struct.unpack_from("<I", data, 0)[0]
+    if magic != 0xfeedfacf:
+        raise SystemExit(f"Unsupported Mach-O magic (expected 64-bit): {magic:#x}")
+    ncmds = struct.unpack_from("<I", data, 16)[0]
+    offset = 32
+    for _ in range(ncmds):
+        cmd, cmdsize = struct.unpack_from("<II", data, offset)
+        if cmd == LC_UUID:
+            new_uuid = hashlib.sha256(
+                f"nunchuk-macos-uuid:{commit}:{arch}:{tag}".encode()
+            ).digest()[:16]
+            f.seek(offset + 8)
+            f.write(new_uuid)
+            break
+        offset += cmdsize
+    else:
+        raise SystemExit("LC_UUID load command not found in Nunchuk binary.")
+PY
+
+# arm64 macOS requires every executable to carry at least an ad-hoc code
+# signature to run at all, so ld64 auto-attaches one at link time; that
+# signature's own hash covers the load commands area (including LC_UUID),
+# so patching the UUID above leaves the signature ld64 already wrote stale
+# for the new bytes (this matched a CI diagnostic: the arm64 byte diff had
+# a second, small cluster of differing bytes at the very end of the file --
+# the embedded signature blob -- in addition to the LC_UUID bytes
+# themselves; x86_64 did not show this second cluster). Re-signing ad-hoc
+# (`codesign -s -`) to fix that up was tried first and made things worse,
+# not better: a follow-up CI run showed a *new*, still-nondeterministic
+# ~63-byte diff confined to the same end-of-file signature-blob region --
+# ad-hoc codesign apparently embeds something (a local signing time,
+# despite no `--timestamp`, is the leading suspect) that is not a pure
+# function of the file's content either. Nothing in this pipeline executes
+# or otherwise needs a *valid* signature on this binary before sign_macos.sh
+# runs -- and sign_macos.sh already unconditionally strips whatever
+# signature is present (`codesign --remove-signature`) before applying the
+# real Developer ID one. So instead of re-signing, the stale ad-hoc
+# signature is simply removed: no signature at all means nothing left to
+# vary.
+codesign --remove-signature "${nunchuk_binary}" 2>/dev/null || true
 
 APP_PATH="${app_build_dir}/Nunchuk.app" \
 HWI_BINARY="${hwi_binary}" \

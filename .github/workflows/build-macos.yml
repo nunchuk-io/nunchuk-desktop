@@ -355,6 +355,37 @@ jobs:
                   echo "Still different after stripping -- NOT just local symbol table entries; something else varies (real codegen/content difference)."
                 fi
               } >> "${GITHUB_STEP_SUMMARY}"
+
+              # Two hypotheses (unsorted glob link order, ld64's N_OSO debug
+              # map) have each already been tried and ruled out by earlier
+              # runs of this check without fixing the mismatch -- guessing a
+              # third without evidence isn't productive. Get the actual
+              # shape of the difference instead: how many bytes differ (a
+              # handful suggests one localized field like an embedded UUID;
+              # thousands+ suggests real code/layout divergence), where the
+              # first few are, and whether Mach-O load commands (segment
+              # sizes, LC_UUID, etc.) differ.
+              {
+                echo
+                echo "#### Byte-level diff detail"
+                echo
+                echo "Size: build1=$(stat -f%z "${nunchuk1}") bytes, build2=$(stat -f%z "${nunchuk2}") bytes"
+                echo
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
+              cmp_count="$(cmp -l "${nunchuk1}" "${nunchuk2}" 2>/dev/null | wc -l | tr -d ' ')" || true
+              echo "Differing byte count (cmp -l): ${cmp_count}" >> "${GITHUB_STEP_SUMMARY}"
+              echo "First 20 differing bytes (offset  build1-octal  build2-octal):" >> "${GITHUB_STEP_SUMMARY}"
+              cmp -l "${nunchuk1}" "${nunchuk2}" 2>/dev/null | head -20 >> "${GITHUB_STEP_SUMMARY}" || true
+              {
+                echo '```'
+                echo
+                echo "Mach-O load command diff (\`otool -l\`):"
+                echo
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
+              diff -u <(otool -l "${nunchuk1}") <(otool -l "${nunchuk2}") >> "${GITHUB_STEP_SUMMARY}" || true
+              echo '```' >> "${GITHUB_STEP_SUMMARY}"
           fi
 
           exit 1
