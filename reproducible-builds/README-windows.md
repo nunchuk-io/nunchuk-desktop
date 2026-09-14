@@ -1,15 +1,67 @@
 # Windows Qt 6 reproducible release
 
-The Windows release workflow builds the same source commit twice on independent
-`windows-2022` runners with native MSVC 2022. Both unsigned ZIP files, Inno
-Setup installers, payload manifests and build metadata must compare
-byte-for-byte before the protected signing job can run.
+This document describes the full intended design: the same source commit
+built twice on independent `windows-2022` runners with native MSVC 2022,
+where both unsigned ZIP files, Inno Setup installers, payload manifests and
+build metadata must compare byte-for-byte before a protected signing job
+runs. `sign_windows.ps1` implements the signing half of that design but is
+not yet invoked by any workflow.
+
+**Current CI status:** `.github/workflows/build-windows.yml` builds once per
+tag push or manual run (matching `build-linux.yml`'s own single-build UX) and
+publishes the resulting **unsigned** ZIP/installer as the GitHub release
+asset directly -- a tag build is never gated on a second build comparing
+byte-for-byte. A manual `workflow_dispatch` run can tick the
+"check_reproducible_build" checkbox to additionally rebuild the same commit a
+second time in the same job and diff the two unsigned payloads; this is an
+opt-in diagnostic for validating pipeline changes, not a release gate, and it
+never runs for a tag push. Neither `sign_windows.ps1` nor the
+`release-signing` environment described under "Signing and publication" is
+invoked yet. That signing wiring, and the NASM version pin noted in the
+workflow's own comments (NASM is installed via Chocolatey without a hash
+pin, unlike the rest of the toolchain below), are open follow-ups.
+
+Qt is pinned to 6.9.3 (matching Linux and macOS) rather than a newer 6.11.x
+release: aqtinstall 3.3.0 (the only tagged release) has a confirmed,
+still-unreleased-fix bug that prevents it from installing Qt 6.11.x on
+Windows (it assumes the pre-6.11 repository folder layout). Qt 6.9.3 still
+uses that pre-6.11 layout, so the plain, unpatched `aqtinstall==3.3.0`
+release installed from PyPI works correctly -- the same Qt version and
+install method as the proven manual reference workflow this pipeline is
+based on.
 
 ## Immutable inputs
 
-`windows-dependencies.lock.json` pins Qt 6.11.1 and its required modules,
-QtKeychain 0.15.0, Olm, vcpkg, HWI, CMake, Ninja, aqt, Inno Setup and the exact
-OpenSSL 3.5.7 source archive. The same OpenSSL source is built twice:
+`windows-dependencies.lock.json` pins Qt 6.9.3 and its required modules,
+QtKeychain 0.15.0, Olm, vcpkg, pkgconf, py7zr, HWI, CMake, Ninja, aqt, Inno
+Setup, the MSVC toolset/Windows SDK version and the exact OpenSSL 3.5.7
+source archive. Ninja is installed via pip (`ninja==1.11.1.2`, a Kitware
+fork wheel with jobserver support) rather than the official ninja-build
+release, since Ninja 1.13.0 has a known MSVC response-file regression
+(https://github.com/ninja-build/ninja/issues/2616). The same OpenSSL source
+is built twice:
+
+The pinned vcpkg commit's own MSYS2 bootstrap (used to acquire pkgconf for
+libevent) references an msys2-runtime build that has since been pruned from
+every msys2 mirror -- a cold build gets a 404 from all of them. Rather than
+bumping the vcpkg commit (which would silently drift every other pinned
+port's version), `build_windows.ps1` installs a pinned, hash-verified native
+`pkgconf.exe` (a PyPI wheel, same package/version as the proven manual
+reference workflow) and passes it through vcpkg's clean Windows build
+environment via `VCPKG_ENV_PASSTHROUGH PKG_CONFIG` in the triplet, so
+vcpkg's own MSYS2/pkgconf acquisition path is never invoked.
+
+`build_windows.ps1` also materializes the `x64-windows-static-md` community
+triplet from scratch (rather than patching the one shipped by the pinned
+vcpkg commit), pinning `VCPKG_PLATFORM_TOOLSET_VERSION` and
+`VCPKG_CMAKE_SYSTEM_VERSION` to the same MSVC toolset/Windows SDK pin above,
+so vcpkg-built ports (Boost, zeromq, libevent, ...) compile with the exact
+same toolset as everything else. libevent's port version and upstream
+source ref are verified against the lock file right after vcpkg checkout,
+and installed on its own first (before the rest of the package set) so a
+cold-build failure fails fast. After install, the script verifies the exact
+Boost header set is present and that no out-of-scope `libffi` dependency was
+pulled in -- all matching the proven manual reference workflow.
 
 - `no-shared` archives are selected explicitly by the application CMake cache;
 - shared `libssl-3-x64.dll` and `libcrypto-3-x64.dll` provide the runtime used
@@ -53,7 +105,8 @@ Set the GitHub Actions configuration variable `WINDOWS_SIGNER_SUBJECT` (at the
 repository or `release-signing` environment level) to the exact Authenticode
 subject expected on Nunchuk release files.
 
-After the two-replica gate passes, Azure Artifact Signing signs exactly:
+Once wired up (not yet implemented in CI, per "Current CI status" above),
+after the two-replica gate passes, Azure Artifact Signing would sign exactly:
 
 - `nunchuk-qt.exe`
 - `qt6keychain.dll`
@@ -78,9 +131,12 @@ release only after explicit investigation, then rerun the protected job.
 
 ## Remaining external inputs
 
-The dependency versions and downloaded bytes are locked, but the
-`windows-2022` hosted image, MSVC/Windows SDK installation, Qt distribution
-service and upstream archive availability are external inputs. The two replicas
-prove determinism for the selected runner/toolchain fingerprint; long-term
+The dependency versions and downloaded bytes are locked, and the MSVC toolset
+(14.44.35207) and Windows SDK (10.0.22621.0) are now pinned via
+`ilammy/msvc-dev-cmd`'s `toolset:`/`sdk:` inputs and re-verified by
+`build_windows.ps1`, matching the proven manual reference workflow exactly.
+The `windows-2022` hosted image itself, Qt distribution service and upstream
+archive availability remain external inputs. The two replicas prove
+determinism for the selected runner/toolchain fingerprint; long-term
 independent rebuilding requires mirrored dependencies and a versioned runner
 image.

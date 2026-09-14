@@ -3,9 +3,18 @@ set -euo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-/project}"
 TAG="${TAG:-0.0.0}"
-HWI_VERSION="3.2.0-displayaddress"
-HWI_ARCHIVE="hwi-3.2.0-linux-x86_64.tar.gz"
-HWI_SHA256="ee7cf2afe085128c55ebaa1fb1da45831ae82a02f5b8c462c1dc95e6e606220a"
+# AppImage-standard architecture name for this build: x86_64 or aarch64. Also
+# used to disambiguate output filenames when both architectures are built in
+# the same workflow run (see build-linux.yml's matrix).
+ARCH="${ARCH:?ARCH must be set to x86_64 or aarch64}"
+if [[ "${ARCH}" != "x86_64" && "${ARCH}" != "aarch64" ]]; then
+    echo "Unsupported ARCH: ${ARCH} (expected x86_64 or aarch64)" >&2
+    exit 1
+fi
+# HWI is built from source for both architectures (see the "Build HWI from
+# source" workflow step) because upstream only publishes prebuilt x86_64
+# binaries. The built binary is bind-mounted into the container at this path.
+HWI_PREBUILT_BINARY="${PROJECT_DIR}/hwi-prebuilt/hwi"
 
 if [[ "${PROJECT_DIR}" != /* || ! -f "${PROJECT_DIR}/CMakeLists.txt" ]]; then
     echo "PROJECT_DIR must be an absolute Nunchuk source directory: ${PROJECT_DIR}" >&2
@@ -17,9 +26,15 @@ if [[ ! "${TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
     exit 1
 fi
 
-SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -c safe.directory="${PROJECT_DIR}" -C "${PROJECT_DIR}" log -1 --pretty=%ct)}"
-if [[ ! "${SOURCE_DATE_EPOCH}" =~ ^[0-9]+$ ]]; then
-    echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH}" >&2
+# Unlike build_linux.sh, this script does not recompute SOURCE_DATE_EPOCH: it
+# only validates the value build_linux.sh already exported (matching main's
+# package_linux.sh, which likewise just validates rather than deriving its own
+# value). Recomputing here as a "${SOURCE_DATE_EPOCH:-...}" fallback would be
+# redundant at best and, since the Docker image itself always has this env var
+# set to a non-empty builder-image constant, would silently mask a caller that
+# forgot to export the real value instead of failing loudly.
+if [[ ! "${SOURCE_DATE_EPOCH:-}" =~ ^[0-9]+$ ]]; then
+    echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH:-unset}" >&2
     exit 1
 fi
 
@@ -31,7 +46,7 @@ export ZERO_AR_DATE=1
 export APPIMAGE_EXTRACT_AND_RUN=1
 umask 022
 
-PACKAGE_NAME="nunchuk-linux-v${TAG}"
+PACKAGE_NAME="nunchuk-linux-${ARCH}-v${TAG}"
 PACKAGE_DIR="${PROJECT_DIR}/${PACKAGE_NAME}"
 APP_DIR="${PACKAGE_DIR}/Appdir"
 APPIMAGE_NAME="${PACKAGE_NAME}.AppImage"
@@ -147,6 +162,7 @@ verify_custom_apprun() {
     grep -Fqx 'export QTWEBENGINE_DISABLE_SANDBOX=1' "${selected}"
     grep -Fqx 'export QT_MEDIA_BACKEND=ffmpeg' "${selected}"
     grep -Fqx 'export OPENSSL_MODULES="$APPDIR/usr/lib/ossl-modules"' "${selected}"
+    grep -Fqx 'export SSL_CERT_FILE="${NUNCHUK_HOST_CA_BUNDLE:-$APPDIR/usr/resources/ca-certificates.crt}"' "${selected}"
     grep -Fqx 'exec "$APPDIR/usr/bin/nunchuk-qt" "$@"' "${selected}"
 
     if [[ "${selected}" == "${app_root}/AppRun.wrapped" ]] \
@@ -336,12 +352,21 @@ QT_SHADER_TOOLS_LIB="${QT_INSTALLED_PREFIX}/lib/libQt6ShaderTools.so.6"
 GRAPHICAL_EFFECTS_SOURCE="${QT_QML_PATH}/Qt5Compat/GraphicalEffects/private/libqtgraphicaleffectsprivateplugin.so"
 WEBENGINE_CORE="$(find "${QT_INSTALLED_PREFIX}/lib" -maxdepth 1 -type f -name 'libQt6WebEngineCore.so.*' -print -quit)"
 QXCB_PLUGIN="${QT_INSTALLED_PREFIX}/plugins/platforms/libqxcb.so"
+# Qt WebEngine's system-minizip build loads libminizip.so.1 in a way that
+# does not appear as a direct NEEDED entry linuxdeploy's automatic ELF walk
+# follows (the same class of gap as Qt5Compat's ShaderTools dependency
+# below), so it has to be handed to linuxdeploy explicitly via --library or
+# it is silently left out of the AppDir, failing the appdir_tool.sh
+# "minizip runtime" check later. See Dockerfile.linux's builder-image check
+# for the host minizip symbol set this depends on.
+MINIZIP_LIBRARY="$(ldconfig -p | awk '$1 == "libminizip.so.1" { print $NF }' | sort -u | head -n1)"
 
 for required_file in \
     "${QT_SHADER_TOOLS_LIB}" \
     "${GRAPHICAL_EFFECTS_SOURCE}" \
     "${WEBENGINE_CORE}" \
-    "${QXCB_PLUGIN}"; do
+    "${QXCB_PLUGIN}" \
+    "${MINIZIP_LIBRARY}"; do
     if [[ -z "${required_file}" || ! -f "${required_file}" ]]; then
         echo "Required Qt 6 runtime input is missing: ${required_file}" >&2
         exit 1
@@ -352,16 +377,11 @@ done
 cmake -E remove_directory "${PACKAGE_DIR}"
 mkdir -p "${APP_DIR}/usr/bin"
 
-HWI_DOWNLOAD="${PACKAGE_DIR}/${HWI_ARCHIVE}"
-HWI_EXTRACT_DIR="${PACKAGE_DIR}/hwi-extracted"
-curl --fail --location --show-error \
-    --output "${HWI_DOWNLOAD}" \
-    "https://github.com/nogibi/HWI/releases/download/${HWI_VERSION}/${HWI_ARCHIVE}"
-echo "${HWI_SHA256}  ${HWI_DOWNLOAD}" | sha256sum --check --strict
-mkdir -p "${HWI_EXTRACT_DIR}"
-tar -xzf "${HWI_DOWNLOAD}" -C "${HWI_EXTRACT_DIR}"
-install -m 0755 "${HWI_EXTRACT_DIR}/hwi" "${APP_DIR}/usr/bin/hwi"
-rm -rf -- "${HWI_DOWNLOAD}" "${HWI_EXTRACT_DIR}"
+if [[ ! -x "${HWI_PREBUILT_BINARY}" ]]; then
+    echo "HWI binary was not found (expected to be built from source by the workflow before packaging): ${HWI_PREBUILT_BINARY}" >&2
+    exit 1
+fi
+install -m 0755 "${HWI_PREBUILT_BINARY}" "${APP_DIR}/usr/bin/hwi"
 
 cat > "${DESKTOP_FILE}" <<'EOF'
 [Desktop Entry]
@@ -384,6 +404,23 @@ APPDIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 export QTWEBENGINE_DISABLE_SANDBOX=1
 export QT_MEDIA_BACKEND=ffmpeg
 export OPENSSL_MODULES="$APPDIR/usr/lib/ossl-modules"
+# Prefer the running system's own, OS-maintained CA store (kept current by
+# the distro's security updates, and honours any locally trusted enterprise
+# root); fall back to the bundle frozen at build time only if the host has
+# none of the well-known bundle paths used by major distro families
+# (Debian/Ubuntu/Arch, RHEL/Fedora, openSUSE).
+NUNCHUK_HOST_CA_BUNDLE=""
+for candidate in \
+    /etc/ssl/certs/ca-certificates.crt \
+    /etc/pki/tls/certs/ca-bundle.crt \
+    /etc/ssl/ca-bundle.pem \
+    /etc/pki/tls/cacert.pem; do
+    if [ -s "$candidate" ]; then
+        NUNCHUK_HOST_CA_BUNDLE="$candidate"
+        break
+    fi
+done
+export SSL_CERT_FILE="${NUNCHUK_HOST_CA_BUNDLE:-$APPDIR/usr/resources/ca-certificates.crt}"
 export PATH="$APPDIR/usr/bin:$PATH"
 exec "$APPDIR/usr/bin/nunchuk-qt" "$@"
 EOF
@@ -397,15 +434,31 @@ export EXTRA_QT_MODULES=svg
 unset EXTRA_QT_PLUGINS EXTRA_PLATFORM_PLUGINS
 export LD_LIBRARY_PATH="${OPENSSL_ROOT_DIR}/lib:${QT_INSTALLED_PREFIX}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export VERSION="${TAG}"
-export ARCH=x86_64
+export ARCH
+
+# The aqt-installed Qt SDK ships every backend plugin for a module the app
+# links, not just the one nunchuk-qt actually uses: e.g. all sqldrivers
+# (libqsqlpsql.so, libqsqlmysql.so, libqsqlodbc.so, ...) even though only
+# sqlite is needed, and the CUPS-backed printsupport plugin even though the
+# app never talks to a system printer (see Models/Printer/QPDFPrinter.cpp,
+# which only needs Qt's PDF print engine). linuxdeploy-plugin-qt auto-detects
+# the modules in use and tries to bundle every plugin file it finds for each
+# one, including their system library dependencies (libpq.so.5,
+# libmysqlclient.so, libcups.so.2, ...) that this builder image intentionally
+# does not install. Prune the SDK's plugin tree down to ALLOWED_QT_PLUGINS
+# before deployment so linuxdeploy never sees a disallowed plugin and never
+# has a dependency to fail on, instead of discovering each one one-by-one as
+# a build failure.
+restrict_qt_plugins "${QT_INSTALLED_PREFIX}/plugins"
 
 # First pass deploys the executable, its QML imports and the selected Qt 6
-# runtime. ShaderTools is explicit because it is loaded by Qt5Compat's private
-# GraphicalEffects plugin and therefore is not visible in the main ELF graph.
+# runtime. ShaderTools and minizip are explicit because neither is visible in
+# the main ELF graph linuxdeploy walks automatically (see comments above).
 linuxdeploy \
     --appdir "${APP_DIR}" \
     --executable "${NUNCHUK_BINARY}" \
     --library "${QT_SHADER_TOOLS_LIB}" \
+    --library "${MINIZIP_LIBRARY}" \
     --desktop-file "${DESKTOP_FILE}" \
     --icon-file "${PROJECT_DIR}/deploy/nunchuk-qt.png" \
     --custom-apprun "${CUSTOM_APPRUN}" \
@@ -431,6 +484,19 @@ mkdir -p "${APP_DIR}/usr/lib/ossl-modules"
 install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libssl.so.3")" "${APP_DIR}/usr/lib/libssl.so.3"
 install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libcrypto.so.3")" "${APP_DIR}/usr/lib/libcrypto.so.3"
 install -m 0755 "${OPENSSL_ROOT_DIR}/lib/ossl-modules/legacy.so" "${APP_DIR}/usr/lib/ossl-modules/legacy.so"
+
+# Our custom-built OpenSSL's compiled-in default cert store
+# ("${OPENSSL_ROOT_DIR}/certs") is never populated, so it cannot be relied on
+# at all. AppRun prefers the end user's own host CA store when one exists
+# (see the AppRun heredoc below), but bundle a CA snapshot from the builder
+# image as a fallback for hosts that have none of the well-known bundle
+# paths, so TLS verification always has something to fall back on.
+mkdir -p "${APP_DIR}/usr/resources"
+if [[ ! -s /etc/ssl/certs/ca-certificates.crt ]]; then
+    echo "System CA certificate bundle was not found: /etc/ssl/certs/ca-certificates.crt" >&2
+    exit 1
+fi
+install -m 0644 /etc/ssl/certs/ca-certificates.crt "${APP_DIR}/usr/resources/ca-certificates.crt"
 
 # The Qt deploy plugin adds QML/plugin ELFs after linuxdeploy's initial scan.
 # Feed every resulting ELF back through linuxdeploy to close their dependency
@@ -460,6 +526,7 @@ restrict_qt_plugins "${PLUGIN_ROOT}"
 install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libssl.so.3")" "${APP_DIR}/usr/lib/libssl.so.3"
 install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libcrypto.so.3")" "${APP_DIR}/usr/lib/libcrypto.so.3"
 install -m 0755 "${OPENSSL_ROOT_DIR}/lib/ossl-modules/legacy.so" "${APP_DIR}/usr/lib/ossl-modules/legacy.so"
+install -m 0644 /etc/ssl/certs/ca-certificates.crt "${APP_DIR}/usr/resources/ca-certificates.crt"
 if [[ ! -e "${APP_DIR}/nunchuk-qt.png" ]]; then
     echo "Root AppImage icon was not deployed: ${APP_DIR}/nunchuk-qt.png" >&2
     exit 1
@@ -542,29 +609,93 @@ grep -E '^max_glibc(xx)?=' "${APPDIR_VERIFICATION_REPORT}"
 rm -f -- "${APPDIR_VERIFICATION_REPORT}"
 
 # Normalize all input metadata before squashfs creation. The separately pinned
-# runtime prevents appimagetool from fetching anything from a moving channel.
+# runtime (LDAI_RUNTIME_FILE below) prevents linuxdeploy-plugin-appimage from
+# fetching anything from a moving channel.
 find "${APP_DIR}" -print0 \
     | LC_ALL=C sort -z \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
 APPDIR_MANIFEST="${PACKAGE_DIR}/appdir-metadata.manifest"
-APPDIR_AFTER_MANIFEST="${PACKAGE_DIR}/appdir-metadata.after-appimagetool.manifest"
+APPDIR_AFTER_MANIFEST="${PACKAGE_DIR}/appdir-metadata.after-appimage-plugin.manifest"
 write_appdir_manifest "${APP_DIR}" "${APPDIR_MANIFEST}"
 
-env -u VERSION \
-    ARCH=x86_64 \
-    appimagetool \
-    --appimage-extract-and-run \
-    --runtime-file "${APPIMAGE_RUNTIME_FILE}" \
-    "${APP_DIR}" \
-    "${APPIMAGE_PATH}"
+# linuxdeploy's own AppImage output plugin replaces the separate
+# appimagetool/type2-runtime combination used previously (both only ever
+# published prebuilt x86_64 binaries; linuxdeploy-plugin-appimage is
+# published for both x86_64 and aarch64 like linuxdeploy itself).
+# LDAI_RUNTIME_FILE pins the exact runtime bytes, matching the previous
+# --runtime-file behavior.
+#
+# Invoke linuxdeploy-plugin-appimage directly (its own README: "Like all
+# linuxdeploy plugins, linuxdeploy-plugin-appimage is a standalone tool and
+# can be used without linuxdeploy"), NOT via `linuxdeploy --output appimage`.
+# Going through `linuxdeploy` re-runs its full bundling pass first ("After
+# completing the bundling process ... linuxdeploy will then call the
+# AppImage plugin", per the same README) -- confirmed in practice: it
+# re-patchelf'd and re-deployed files already placed by the two passes
+# above, mutating file content (not just metadata) and tripping the
+# manifest-diff check below. Calling the plugin binary standalone skips that
+# redundant, mutating pass entirely.
+(
+    cd "${PACKAGE_DIR}"
+    LDAI_RUNTIME_FILE="${APPIMAGE_RUNTIME_FILE}" \
+        linuxdeploy-plugin-appimage \
+        --appdir "${APP_DIR}"
+)
 write_appdir_manifest "${APP_DIR}" "${APPDIR_AFTER_MANIFEST}"
-if ! cmp -s "${APPDIR_MANIFEST}" "${APPDIR_AFTER_MANIFEST}"; then
-    diff -u "${APPDIR_MANIFEST}" "${APPDIR_AFTER_MANIFEST}" >&2 || true
-    echo "appimagetool modified normalized AppDir metadata" >&2
+
+# Always print the raw, unfiltered manifest diff to the build log -- even
+# when it's within the expected/allowed set below -- so a real CI run gives
+# direct evidence of exactly what linuxdeploy-plugin-appimage touched,
+# instead of having to infer it from whether the build passed or failed.
+echo "AppDir metadata diff around the linuxdeploy-plugin-appimage call (before -> after):"
+diff -u "${APPDIR_MANIFEST}" "${APPDIR_AFTER_MANIFEST}" || true
+
+# linuxdeploy-plugin-appimage is known, in practice, to replace the AppDir
+# root's "<name>.desktop" symlink (which linuxdeploy's earlier passes point
+# at usr/share/applications/nunchuk.desktop, per the AppImage convention)
+# with an ordinary regular file of equivalent content, as part of its own
+# desktop-file/AppStream handling. That in turn bumps the root directory
+# entry's own mtime (an unavoidable consequence of replacing one of its
+# children). These are the only two manifest lines allowed to differ here;
+# anything else differing still fails the build.
+appimage_plugin_expected_diff_filter() {
+    grep -Ev $'^(\\.|nunchuk\\.desktop)\t' -- "$1"
+}
+APPDIR_DIFF="${PACKAGE_DIR}/appdir-metadata.diff"
+if ! diff -u \
+        <(appimage_plugin_expected_diff_filter "${APPDIR_MANIFEST}") \
+        <(appimage_plugin_expected_diff_filter "${APPDIR_AFTER_MANIFEST}") \
+        > "${APPDIR_DIFF}"; then
+    echo "Diff after excluding the known root '.' / nunchuk.desktop lines (this is what fails the build):"
+    cat "${APPDIR_DIFF}" >&2
+    echo "linuxdeploy-plugin-appimage modified normalized AppDir metadata beyond the known root nunchuk.desktop symlink-to-file conversion" >&2
     exit 1
 fi
+echo "AppDir metadata diff was limited to the known root '.' / nunchuk.desktop lines; nothing else changed."
+rm -f -- "${APPDIR_DIFF}"
+
+if [[ ! -f "${APP_DIR}/nunchuk.desktop" || -L "${APP_DIR}/nunchuk.desktop" ]]; then
+    echo "Expected linuxdeploy-plugin-appimage to replace the root nunchuk.desktop symlink with a regular file" >&2
+    exit 1
+fi
+echo "Root nunchuk.desktop after linuxdeploy-plugin-appimage ($(stat -c '%s bytes, mode %a' -- "${APP_DIR}/nunchuk.desktop")):"
+cat -- "${APP_DIR}/nunchuk.desktop"
+# Deliberately not verify_desktop_metadata here: that helper also asserts the
+# custom "X-AppImage-Version=${TAG}" key, which is our own addition and not
+# something linuxdeploy-plugin-appimage's regeneration of this specific copy
+# is known to preserve. That exact key is still asserted on the
+# usr/share/applications copy below, which this conversion does not touch;
+# this root copy only needs to still be a well-formed desktop file.
+desktop-file-validate --no-hints "${APP_DIR}/nunchuk.desktop"
 rm -f -- "${APPDIR_AFTER_MANIFEST}"
+
+GENERATED_APPIMAGE="$(find "${PACKAGE_DIR}" -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
+if [[ -z "${GENERATED_APPIMAGE}" ]]; then
+    echo "linuxdeploy-plugin-appimage did not produce an AppImage" >&2
+    exit 1
+fi
+mv -- "${GENERATED_APPIMAGE}" "${APPIMAGE_PATH}"
 chmod 0755 "${APPIMAGE_PATH}"
 touch --no-dereference --date="@${SOURCE_DATE_EPOCH}" "${APPIMAGE_PATH}"
 

@@ -55,7 +55,7 @@ function Write-Utf8NoBom {
     )
 
     $encoding = [System.Text.UTF8Encoding]::new($false)
-    $normalized = $Content.Replace(([char]13).ToString() + [char]10, [char]10)
+    $normalized = $Content.Replace("`r`n", "`n")
     [System.IO.File]::WriteAllText($Path, $normalized, $encoding)
 }
 
@@ -198,8 +198,8 @@ $lock = Get-Content -LiteralPath $LockFile -Raw | ConvertFrom-Json
 if ([int]$lock.schemaVersion -ne 1) {
     throw "Unsupported Windows dependency lock schema: $($lock.schemaVersion)"
 }
-if ([string]$lock.qt.version -ne "6.11.1") {
-    throw "The release lock must pin Qt 6.11.1."
+if ([string]$lock.qt.version -ne "6.9.3") {
+    throw "The release lock must pin Qt 6.9.3."
 }
 if ([string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
     throw "The release lock must pin QtKeychain 0.15.0."
@@ -207,6 +207,33 @@ if ([string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
 if ([string]$lock.runtime.qtTlsOpenSsl.version -ne "3.5.7") {
     throw "The Qt TLS runtime must remain locked to OpenSSL 3.5.7 LTS."
 }
+
+# Pin the MSVC toolset and Windows SDK version, matching the proven manual
+# reference workflow's ilammy/msvc-dev-cmd toolset:/sdk: inputs exactly,
+# instead of accepting whatever ships on the windows-2022 runner image.
+# build-windows.yml must pass these same values to msvc-dev-cmd's with:
+# block; this only verifies the environment it produced.
+if ([string]::IsNullOrWhiteSpace($env:VCToolsInstallDir)) {
+    throw "VCToolsInstallDir is not set; the MSVC developer environment is not active."
+}
+$vcToolsRoot = (Resolve-Path $env:VCToolsInstallDir).Path.TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+foreach ($tool in @("cl.exe", "link.exe", "lib.exe", "dumpbin.exe")) {
+    $toolPath = (Get-Command $tool -ErrorAction Stop).Source
+    if (!$toolPath.StartsWith("$vcToolsRoot\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "$tool resolves outside the pinned MSVC toolset: $toolPath"
+    }
+}
+$expectedMsvcToolsetVersion = [string]$lock.toolchain.msvc.toolsetVersion
+$expectedWindowsSdkVersion = [string]$lock.toolchain.msvc.windowsSdkVersion
+$actualMsvcToolsetVersion = $env:VCToolsVersion.TrimEnd('\')
+$actualWindowsSdkVersion = $env:WindowsSDKVersion.TrimEnd('\')
+if ($actualMsvcToolsetVersion -cne $expectedMsvcToolsetVersion) {
+    throw "MSVC toolset mismatch: expected=$expectedMsvcToolsetVersion actual=$actualMsvcToolsetVersion"
+}
+if ($actualWindowsSdkVersion -cne $expectedWindowsSdkVersion) {
+    throw "Windows SDK mismatch: expected=$expectedWindowsSdkVersion actual=$actualWindowsSdkVersion"
+}
+Write-Host "MSVC/SDK pin: PASS ($actualMsvcToolsetVersion, $actualWindowsSdkVersion)"
 
 Reset-Directory $WorkDirectory
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
@@ -224,6 +251,57 @@ New-Item -ItemType Directory -Path $buildSource -Force | Out-Null
 if ($LASTEXITCODE -ge 8) {
     throw "Failed to create the deterministic source copy; robocopy exit code=$LASTEXITCODE"
 }
+
+# contrib/libnunchuk and a couple of its nested vendored trees predate this
+# project's CMP0091 adoption and hardcode a static MSVC CRT (/MT, plus
+# /NODEFAULTLIB:MSVCRT) unconditionally on MSVC, which conflicts with Qt's
+# official /MD builds and with CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+# set below. This mirrors the "Normalize source MSVC runtime to dynamic CRT"
+# step the proven manual reference workflow performs before configuring.
+# It only touches this deterministic $buildSource copy -- $SourceDirectory
+# (the original checkout, including its submodules) is never modified, so
+# the tracked-changes and submodule-status checks above stay meaningful.
+$cmakeFiles = Get-ChildItem -LiteralPath $buildSource -Recurse -File | Where-Object {
+    $_.Name -eq "CMakeLists.txt" -or $_.Extension -eq ".cmake"
+}
+$normalizedCount = 0
+foreach ($file in $cmakeFiles) {
+    $original = Get-Content -LiteralPath $file.FullName -Raw
+    $updated = $original
+
+    $updated = $updated -replace '(?<![A-Za-z0-9_])[/-]MTd(?![A-Za-z0-9_])', '/MDd'
+    $updated = $updated -replace '(?<![A-Za-z0-9_])[/-]MT(?![A-Za-z0-9_])', '/MD'
+    # /MD implicitly pulls in MSVCRT as a default library; leftover
+    # /NODEFAULTLIB or /Zl (per-object default-library suppression) from the
+    # old /MT setup would otherwise cause unresolved CRT symbols.
+    $updated = $updated -replace '(?i)(?<![A-Za-z0-9_])[/-]NODEFAULTLIB(?::[A-Za-z0-9_.-]+)?(?![A-Za-z0-9_])', ''
+    $updated = $updated -replace '(?i)(?<![A-Za-z0-9_])[/-]Zl(?![A-Za-z0-9_])', ''
+    # CMAKE_MSVC_RUNTIME_LIBRARY / MSVC_RUNTIME_LIBRARY target property values.
+    $updated = $updated -replace 'MultiThreaded\$<\$<CONFIG:Debug>:Debug>(?!DLL)', 'MultiThreaded$<$<CONFIG:Debug>:Debug>DLL'
+    $updated = $updated -replace '(?<![A-Za-z0-9_])MultiThreadedDebug(?!DLL|[A-Za-z0-9_])', 'MultiThreadedDebugDLL'
+    $updated = $updated -replace '(?<![A-Za-z0-9_])MultiThreaded(?!Debug|DLL|\$<|[A-Za-z0-9_])', 'MultiThreadedDLL'
+    # Keep any in-source vcpkg triplet declaration consistent with the
+    # pinned x64-windows-static-md triplet (static libraries + dynamic CRT).
+    $updated = $updated -replace '(?im)(set\s*\(\s*VCPKG_CRT_LINKAGE\s+)static(\s*\))', '${1}dynamic${2}'
+
+    if ($updated -cne $original) {
+        Set-Content -LiteralPath $file.FullName -Value $updated -Encoding UTF8 -NoNewline
+        $normalizedCount++
+        Write-Host "Normalized CRT flags: $($file.FullName)"
+    }
+}
+Write-Host "Normalized CMake files: $normalizedCount"
+
+$remainingCrtDeclarations = Get-ChildItem -LiteralPath $buildSource -Recurse -File | Where-Object {
+    $_.Name -eq "CMakeLists.txt" -or $_.Extension -eq ".cmake"
+} | Select-String -Pattern '(?<![A-Za-z0-9_])[/-]MTd?(?![A-Za-z0-9_])|(?<![A-Za-z0-9_])MultiThreadedDebug(?!DLL|[A-Za-z0-9_])|(?<![A-Za-z0-9_])MultiThreaded(?!Debug|DLL|\$<|[A-Za-z0-9_])|(?i:(?<![A-Za-z0-9_])[/-]NODEFAULTLIB(?::[A-Za-z0-9_.-]+)?(?![A-Za-z0-9_]))|(?i:(?<![A-Za-z0-9_])[/-]Zl(?![A-Za-z0-9_]))|VCPKG_CRT_LINKAGE\s+static' -AllMatches
+if ($remainingCrtDeclarations) {
+    Write-Host "---- Invalid MSVC CRT declarations still present ----"
+    $remainingCrtDeclarations | Select-Object Path, LineNumber, Line | Format-Table -AutoSize
+    throw "Source (post-normalization) still declares a static or suppressed CRT."
+}
+Write-Host "Source MSVC runtime normalization: PASS (/MD + default CRT)"
+
 $sourceTimestamp = [DateTimeOffset]::FromUnixTimeSeconds($SourceDateEpoch).UtcDateTime
 foreach ($item in Get-ChildItem -LiteralPath $buildSource -Recurse -Force) {
     $item.CreationTimeUtc = $sourceTimestamp
@@ -241,21 +319,73 @@ if ($null -eq $cmakeExe) {
 }
 $cmakeBin = $cmakeExe.Directory.FullName
 
-$ninjaArchive = Join-Path $downloads "ninja.zip"
-Get-VerifiedDownload $lock.toolchain.ninja $ninjaArchive
-$ninjaRoot = Join-Path $toolsDirectory "ninja"
-Expand-Archive -LiteralPath $ninjaArchive -DestinationPath $ninjaRoot -Force
-$ninjaExe = Join-Path $ninjaRoot "ninja.exe"
-if (!(Test-Path -LiteralPath $ninjaExe -PathType Leaf)) {
-    throw "ninja.exe is missing after extracting the pinned archive."
+# ninja, aqtinstall and py7zr are all installed via pip, matching the
+# proven manual reference workflow's "Install pinned Python build tools"
+# step exactly. ninja==1.11.1.2 is a Kitware fork wheel with jobserver
+# support; plain ninja 1.13.0 has a known MSVC response-file regression
+# (see windows-dependencies.lock.json toolchain.ninja.note) -- do not
+# switch back to downloading the official ninja-build release zip.
+#
+# aqtinstall 3.3.0 cannot install Qt 6.11.x for Windows (confirmed bug:
+# it assumes the pre-6.11 repo folder layout). Qt is pinned to 6.9.3 here
+# (matching Linux and macOS), which still uses that pre-6.11 layout, so
+# the plain pip-installed, unpatched aqtinstall==3.3.0 release works
+# correctly -- same approach and same Qt version as the proven manual
+# reference workflow. No local patch is needed for this Qt version; if
+# the pinned Qt version is ever raised to 6.11+ again, revisit this (see
+# git history for the archives.py/metadata.py patch that was used then).
+#
+# py7zr is aqtinstall's optional 7z-archive extraction dependency; pinned
+# here so it does not silently resolve to whatever release is newest on
+# PyPI at install time.
+$ninjaPinnedVersion = [string]$lock.toolchain.ninja.version
+$ninjaExpectedBinaryVersion = [string]$lock.toolchain.ninja.binaryVersion
+$aqtPinnedVersion = [string]$lock.toolchain.aqt.version
+$py7zrPinnedVersion = [string]$lock.toolchain.py7zr.version
+python -m pip install --disable-pip-version-check --quiet `
+    "aqtinstall==$aqtPinnedVersion" `
+    "py7zr==$py7zrPinnedVersion" `
+    "ninja==$ninjaPinnedVersion"
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to install pinned aqtinstall/py7zr/ninja from PyPI"
 }
-
-$aqtExe = Join-Path $toolsDirectory "aqt.exe"
-Get-VerifiedDownload $lock.toolchain.aqt $aqtExe
-$env:Path = "$cmakeBin;$ninjaRoot;$env:Path"
+python -m pip check
+if ($LASTEXITCODE -ne 0) {
+    throw "pip check reported an inconsistent Python environment after installing the pinned tools."
+}
+$installedPackageVersionsJson = (python -c "import importlib.metadata as m, json; print(json.dumps({p: m.version(p) for p in ('aqtinstall', 'py7zr', 'ninja')}))" | Out-String).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to read installed aqtinstall/py7zr/ninja package versions."
+}
+$installedPackageVersions = $installedPackageVersionsJson | ConvertFrom-Json
+$expectedPackageVersions = [ordered]@{
+    aqtinstall = $aqtPinnedVersion
+    py7zr      = $py7zrPinnedVersion
+    ninja      = $ninjaPinnedVersion
+}
+foreach ($packageName in $expectedPackageVersions.Keys) {
+    $actualPackageVersion = [string]$installedPackageVersions.$packageName
+    if ($actualPackageVersion -cne $expectedPackageVersions[$packageName]) {
+        throw "$packageName version mismatch: expected=$($expectedPackageVersions[$packageName]) actual=$actualPackageVersion"
+    }
+}
+$aqtExe = "python"
+$aqtBaseArgs = @("-m", "aqt")
+$ninjaExe = (Get-Command ninja.exe -ErrorAction Stop).Source
+$env:Path = "$cmakeBin;$env:Path"
 Invoke-Checked $cmakeExe.FullName @("--version")
-Invoke-Checked $ninjaExe @("--version")
-Invoke-Checked $aqtExe @("version")
+$ninjaVersionOutput = (& $ninjaExe --version 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $ninjaVersionOutput -cne $ninjaExpectedBinaryVersion) {
+    throw "Ninja version mismatch: expected=$ninjaExpectedBinaryVersion actual='$ninjaVersionOutput'"
+}
+Write-Host "ninja pin: PASS ($ninjaVersionOutput, $ninjaExe)"
+# aqt unconditionally writes an "aqtinstall.log" file into the current
+# working directory. Without an explicit WorkingDirectory here, that lands
+# in $SourceDirectory (the original checkout GitHub Actions runs this whole
+# script from), which then trips the post-build "checkout must not change"
+# dirty-check below (git sees an untracked aqtinstall.log). Run aqt from
+# $WorkDirectory instead, which is never checked for git cleanliness.
+Invoke-Checked $aqtExe ($aqtBaseArgs + @("version")) $WorkDirectory
 
 $qtRoot = Join-Path $WorkDirectory "qt"
 $qtArguments = @(
@@ -266,10 +396,12 @@ $qtArguments = @(
     [string]$lock.qt.architecture,
     "--outputdir",
     $qtRoot,
+    "--base",
+    "https://download.qt.io",
     "-m"
 )
 $qtArguments += @($lock.qt.modules | ForEach-Object { [string]$_ })
-Invoke-Checked $aqtExe $qtArguments
+Invoke-Checked $aqtExe ($aqtBaseArgs + $qtArguments) $WorkDirectory
 
 $qtDirectory = Join-Path $qtRoot "$($lock.qt.version)\$($lock.qt.directoryName)"
 $requiredQtFiles = @(
@@ -295,38 +427,132 @@ if ($null -eq $graphicalEffectsPrivate) {
     throw "Qt 5 Compat GraphicalEffects private plugin is missing."
 }
 
+# vcpkg's pinned commit below acquires pkgconf via its own MSYS2 bootstrap
+# (vcpkg_acquire_msys / vcpkg_find_acquire_program(PKGCONFIG)), which pulls
+# in a specific msys2-runtime build. That exact build has been pruned from
+# every msys2 mirror (confirmed: 404 from repo.msys2.org and every listed
+# mirror), which breaks libevent's vcpkg_fixup_pkgconfig step. Bumping the
+# pinned vcpkg commit would "fix" this but silently drifts every other
+# pinned port's version too. Instead, install a pinned, hash-verified native
+# pkgconf.exe here (same package/version as the proven manual reference
+# workflow) and pass it through vcpkg's clean Windows build environment via
+# the triplet's VCPKG_ENV_PASSTHROUGH, so vcpkg never invokes its own
+# MSYS2/pkgconf acquisition at all.
+$pkgconfWheel = Join-Path $downloads "pkgconf.whl"
+Get-VerifiedDownload $lock.sources.pkgconf $pkgconfWheel
+$pkgconfExtractDir = Join-Path $toolsDirectory "pkgconf"
+Reset-Directory $pkgconfExtractDir
+Invoke-Checked python @("-m", "zipfile", "-e", $pkgconfWheel, $pkgconfExtractDir)
+$pinnedPkgConfig = Join-Path $pkgconfExtractDir ([string]$lock.sources.pkgconf.binaryRelativePath)
+if (!(Test-Path -LiteralPath $pinnedPkgConfig -PathType Leaf)) {
+    throw "pkgconf.exe is missing after extracting the pinned wheel: $pinnedPkgConfig"
+}
+$pinnedPkgConfigHash = Get-Sha256 $pinnedPkgConfig
+$pinnedPkgConfigExpectedHash = ([string]$lock.sources.pkgconf.binarySha256).ToLowerInvariant()
+if ($pinnedPkgConfigHash -ne $pinnedPkgConfigExpectedHash) {
+    throw "SHA-256 mismatch for pkgconf.exe: expected=$pinnedPkgConfigExpectedHash actual=$pinnedPkgConfigHash"
+}
+$pkgconfVersionOutput = (& $pinnedPkgConfig --version 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $pkgconfVersionOutput -cne [string]$lock.sources.pkgconf.binaryVersion) {
+    throw "pkgconf version mismatch: expected=$($lock.sources.pkgconf.binaryVersion) actual='$pkgconfVersionOutput'"
+}
+$pkgconfHeaders = (& dumpbin.exe /HEADERS $pinnedPkgConfig 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0 -or $pkgconfHeaders -notmatch '8664 machine \(x64\)') {
+    throw "Pinned pkgconf.exe is not an x64 PE."
+}
+Write-Host "pkgconf pin: PASS ($pkgconfVersionOutput, $pinnedPkgConfig)"
+
 $vcpkgDirectory = Join-Path $dependenciesDirectory "vcpkg"
 Initialize-PinnedRepository ([string]$lock.sources.vcpkg.repository) ([string]$lock.sources.vcpkg.commit) $vcpkgDirectory
+
+# Lock both the port version and the upstream source ref of libevent, so a
+# future vcpkg commit bump (or an in-place port edit) cannot silently change
+# what gets built. Matches the proven manual reference workflow's explicit
+# libevent pin verification, performed right after checkout.
+$libeventManifestPath = Join-Path $vcpkgDirectory "ports\libevent\vcpkg.json"
+$libeventManifest = Get-Content -LiteralPath $libeventManifestPath -Raw | ConvertFrom-Json
+$actualLibeventVersion = [string]$libeventManifest.version
+if ([int]$libeventManifest.'port-version' -gt 0) {
+    $actualLibeventVersion += "#$($libeventManifest.'port-version')"
+}
+$libeventPortfile = Get-Content -LiteralPath (Join-Path $vcpkgDirectory "ports\libevent\portfile.cmake") -Raw
+$expectedLibeventVersion = [string]$lock.sources.libevent.version
+$expectedLibeventSourceRef = [string]$lock.sources.libevent.sourceRef
+$libeventSourcePattern = '(?m)^\s*REF\s+' + [regex]::Escape($expectedLibeventSourceRef) + '\s*$'
+if ($actualLibeventVersion -cne $expectedLibeventVersion -or $libeventPortfile -notmatch $libeventSourcePattern) {
+    throw "libevent pin mismatch: expected version=$expectedLibeventVersion ref=$expectedLibeventSourceRef actual version=$actualLibeventVersion"
+}
+Write-Host "vcpkg/libevent pin: PASS ($([string]$lock.sources.vcpkg.commit), $actualLibeventVersion)"
+
+$triplet = [string]$lock.sources.vcpkg.triplet
+$msvcToolsetVersion = [string]$lock.toolchain.msvc.toolsetVersion
+$windowsSdkVersion = [string]$lock.toolchain.msvc.windowsSdkVersion
+
+# The community triplet shipped by this vcpkg commit does not pin the MSVC
+# minor toolset or Windows SDK version, so vcpkg-built ports (boost, zeromq,
+# libevent, ...) could otherwise pick up whatever the runner happens to have.
+# Materialize the triplet from scratch with those pinned, matching the proven
+# manual reference workflow exactly instead of patching the shipped file.
+$tripletFile = Join-Path $vcpkgDirectory "triplets\community\$triplet.cmake"
+$tripletContent = @"
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+set(VCPKG_LIBRARY_LINKAGE static)
+set(VCPKG_PLATFORM_TOOLSET v143)
+set(VCPKG_PLATFORM_TOOLSET_VERSION "$msvcToolsetVersion")
+set(VCPKG_CMAKE_SYSTEM_VERSION "$windowsSdkVersion")
+set(VCPKG_ENV_PASSTHROUGH PKG_CONFIG)
+"@
+Write-Utf8NoBom $tripletFile $tripletContent
+
 Invoke-Checked (Join-Path $vcpkgDirectory "bootstrap-vcpkg.bat") @("-disableMetrics") $vcpkgDirectory
 $vcpkgExe = Join-Path $vcpkgDirectory "vcpkg.exe"
-$triplet = [string]$lock.sources.vcpkg.triplet
-$tripletFile = @(
-    (Join-Path $vcpkgDirectory "triplets\$triplet.cmake"),
-    (Join-Path $vcpkgDirectory "triplets\community\$triplet.cmake")
-) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
-if (!$tripletFile) {
-    throw "Pinned vcpkg triplet does not exist: $triplet"
-}
 $tripletText = Get-Content -LiteralPath $tripletFile -Raw
-if ($tripletText -notmatch 'VCPKG_LIBRARY_LINKAGE\s+static' -or $tripletText -notmatch 'VCPKG_CRT_LINKAGE\s+dynamic') {
-    throw "$triplet must use static libraries and dynamic MSVC CRT."
+if ($tripletText -notmatch '(?m)^\s*set\(\s*VCPKG_LIBRARY_LINKAGE\s+static\s*\)\s*$' -or
+    $tripletText -notmatch '(?m)^\s*set\(\s*VCPKG_CRT_LINKAGE\s+dynamic\s*\)\s*$' -or
+    $tripletText -notmatch '(?m)^\s*set\(\s*VCPKG_ENV_PASSTHROUGH\s+PKG_CONFIG\s*\)\s*$') {
+    throw "$triplet is missing static libraries, dynamic CRT, or PKG_CONFIG passthrough."
 }
-$vcpkgPackages = @(
-    "boost-algorithm",
-    "boost-asio",
-    "boost-bind",
-    "boost-format",
-    "boost-multi-index",
-    "boost-process",
-    "boost-signals2",
-    "boost-tokenizer",
-    "zeromq",
-    "libevent",
-    "berkeleydb",
-    "sqlite3"
-) | ForEach-Object { "{0}:{1}" -f $_, $triplet }
-Invoke-Checked $vcpkgExe (@("install") + $vcpkgPackages + @("--clean-after-build")) $vcpkgDirectory
-$vcpkgList = @(& $vcpkgExe list)
+Write-Host "vcpkg triplet linkage + PKG_CONFIG passthrough + toolset/SDK pin: PASS"
+
+$env:VCPKG_ROOT = $vcpkgDirectory
+$env:VCPKG_DOWNLOADS = Join-Path $WorkDirectory "vcpkg-downloads"
+
+$oldPkgConfig = $env:PKG_CONFIG
+$oldCmakePolicyMinimum = $env:CMAKE_POLICY_VERSION_MINIMUM
+$env:PKG_CONFIG = $pinnedPkgConfig
+try {
+    # Install libevent on its own first so a cold-build failure fails fast
+    # with a focused log, matching the proven manual reference workflow.
+    # CMAKE_POLICY_VERSION_MINIMUM is a fallback for vcpkg ports whose
+    # embedded CMakeLists.txt declare a cmake_minimum_required below CMake
+    # 4's floor; vcpkg downloads its own internal CMake copy to build ports,
+    # independent of the pinned $cmakeExe used for this script's own
+    # configure steps.
+    $env:CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+    Invoke-Checked $vcpkgExe @("install", "libevent:$triplet", "--debug") $vcpkgDirectory
+
+    $vcpkgPackages = @(
+        "boost-algorithm",
+        "boost-asio",
+        "boost-bind",
+        "boost-format",
+        "boost-multi-index",
+        "boost-process",
+        "boost-signals2",
+        "boost-tokenizer",
+        "zeromq",
+        "berkeleydb",
+        "sqlite3"
+    ) | ForEach-Object { "{0}:{1}" -f $_, $triplet }
+    Invoke-Checked $vcpkgExe (@("install") + $vcpkgPackages + @("--clean-after-build")) $vcpkgDirectory
+}
+finally {
+    $env:PKG_CONFIG = $oldPkgConfig
+    $env:CMAKE_POLICY_VERSION_MINIMUM = $oldCmakePolicyMinimum
+}
+
+$vcpkgList = @(& $vcpkgExe list --x-full-desc)
 if ($LASTEXITCODE -ne 0) {
     throw "Unable to verify the exact vcpkg package set."
 }
@@ -334,6 +560,39 @@ $unexpectedVcpkgOpenSsl = @($vcpkgList | Where-Object { $_ -match '^openssl:' })
 if ($unexpectedVcpkgOpenSsl.Count -ne 0) {
     throw "vcpkg unexpectedly installed OpenSSL; the application and Qt TLS runtime must both use locked OpenSSL 3.5.7: $($unexpectedVcpkgOpenSsl -join '; ')"
 }
+$libeventListPattern = '^libevent:' + [regex]::Escape($triplet) + '\s+' + [regex]::Escape($expectedLibeventVersion) + '(?:\s|$)'
+$installedLibevent = @($vcpkgList | Where-Object { $_ -match $libeventListPattern })
+if ($installedLibevent.Count -ne 1) {
+    throw "Installed libevent does not match the pinned version $expectedLibeventVersion."
+}
+if ($vcpkgList -match '^libffi:') {
+    throw "Out-of-scope dependency libffi was pulled into the build."
+}
+
+$boostInclude = Join-Path $vcpkgDirectory "installed\$triplet\include\boost"
+$requiredBoostHeaders = @(
+    "algorithm\hex.hpp",
+    "algorithm\string.hpp",
+    "asio.hpp",
+    "asio\ssl.hpp",
+    "bind.hpp",
+    "format.hpp",
+    "multi_index\hashed_index.hpp",
+    "multi_index_container.hpp",
+    "operators.hpp",
+    "process.hpp",
+    "process\windows.hpp",
+    "signals2.hpp",
+    "tokenizer.hpp",
+    "tuple\tuple.hpp"
+)
+foreach ($relativePath in $requiredBoostHeaders) {
+    $header = Join-Path $boostInclude $relativePath
+    if (!(Test-Path -LiteralPath $header -PathType Leaf)) {
+        throw "Required Boost header is missing: $header"
+    }
+}
+Write-Host "Boost module allowlist: PASS"
 
 $opensslArchive = Join-Path $downloads "openssl-$($lock.runtime.qtTlsOpenSsl.version).tar.gz"
 Get-VerifiedDownload $lock.runtime.qtTlsOpenSsl $opensslArchive
@@ -342,7 +601,17 @@ Get-Command nmake.exe -ErrorAction Stop | Out-Null
 Get-Command nasm.exe -ErrorAction Stop | Out-Null
 $oldClAppend = $env:_CL_
 $oldLinkAppend = $env:_LINK_
-$env:_CL_ = "/MD /Brepro /ZH:SHA_256 /pathmap:$WorkDirectory=/_/work"
+# NOTE: no /pathmap:/experimental:deterministic here, unlike the CMake-driven
+# builds below. OpenSSL's own nmake-generated command lines pass /Zi with a
+# bare relative /Fd (e.g. "/Fdossl_static.pdb"); once /experimental:deterministic
+# actually activates /pathmap (see the CMake $pathMaps comment below for why
+# that used to be silently ignored), cl.exe remaps that PDB's own resolved
+# path through the same substitution rule, producing a nonexistent path like
+# "_/work\dependencies\openssl-static-source\ossl_static.pdb" and failing
+# with "fatal error C1090: PDB API call failed, error code '3'". The CMake
+# Release builds below never hit this because they don't pass /Zi (no PDBs
+# are generated for them), so this is scoped to only the OpenSSL nmake build.
+$env:_CL_ = "/MD /Brepro /ZH:SHA_256"
 $env:_LINK_ = "/Brepro"
 try {
     $opensslStaticSource = Join-Path $dependenciesDirectory "openssl-static-source"
@@ -406,9 +675,32 @@ if ($LASTEXITCODE -ne 0 -or $opensslStaticVersionOutput.Trim() -notmatch '^OpenS
     throw "Built application OpenSSL does not report exact OpenSSL 3.5.7: $opensslStaticVersionOutput"
 }
 
-$pathMaps = "/Brepro /ZH:SHA_256 /pathmap:$buildSource=/_/src /pathmap:$WorkDirectory=/_/work"
+# /experimental:deterministic must accompany /pathmap: on the compiler side --
+# without it, cl.exe silently ignores every /pathmap: entry (observed as
+# repeated "D9007 : '/pathmap:' requires '/experimental:deterministic';
+# option ignored" warnings), so path-independent reproducibility was not
+# actually being achieved despite the flag being present.
+$pathMaps = "/Brepro /ZH:SHA_256 /experimental:deterministic /pathmap:$buildSource=/_/src /pathmap:$WorkDirectory=/_/work"
 $linkerFlags = "/Brepro /INCREMENTAL:NO /PDBALTPATH:%_PDB%"
 $staticLinkerFlags = "/Brepro"
+# Dropping /Brepro from only the final application's link step (previous
+# revision of this file) got past the earlier silent link crash, but the
+# two-replica reproducibility check then failed: without /Brepro, link.exe
+# embeds the real wall-clock build time in the PE header instead of a
+# content-derived deterministic value, so the two replicas differ -- exactly
+# what /Brepro exists to prevent. This isn't optional for this pipeline.
+#
+# Revised hypothesis: the original crash may not have been /Brepro itself,
+# but /Brepro combined with /pathmap: silently being a no-op (see the
+# /experimental:deterministic fix above, added in the same round as the
+# /Brepro removal) -- i.e. two independent changes landed together and the
+# wrong one got blamed. Now that /pathmap: actually takes effect at compile
+# time, re-enable /Brepro for the application's own link step too (reuse
+# $linkerFlags, same as Olm/QtKeychain/TLS probe) and let the next run's
+# reproducibility check be the real test. If the link crashes again, this
+# reasoning was wrong and /Brepro-at-final-link needs a different fix
+# (e.g. a post-link normalization pass instead of the linker flag).
+$applicationLinkerFlags = $linkerFlags
 
 $tlsProbeSource = Join-Path $dependenciesDirectory "qt-tls-probe"
 $tlsProbeBuild = Join-Path $buildDirectory "qt-tls-probe"
@@ -445,7 +737,7 @@ $tlsProbeCmake = @'
 cmake_minimum_required(VERSION 3.21)
 cmake_policy(SET CMP0091 NEW)
 project(qt_tls_probe LANGUAGES CXX)
-find_package(Qt6 6.11.1 EXACT COMPONENTS Core Network REQUIRED)
+find_package(Qt6 6.9.3 EXACT COMPONENTS Core Network REQUIRED)
 add_executable(qt-tls-probe main.cpp)
 target_link_libraries(qt-tls-probe PRIVATE Qt6::Core Qt6::Network)
 set_property(TARGET qt-tls-probe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
@@ -462,7 +754,7 @@ $tlsProbeConfigure = @(
     "-DCMAKE_PREFIX_PATH=$qtDirectory",
     "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
     '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL',
-    "-DCMAKE_CXX_FLAGS=$pathMaps",
+    "-DCMAKE_CXX_FLAGS_INIT=$pathMaps",
     "-DCMAKE_EXE_LINKER_FLAGS=$linkerFlags",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 )
@@ -493,8 +785,8 @@ $olmConfigure = @(
     "-DCMAKE_INSTALL_PREFIX=$olmInstall",
     "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
     '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>DLL',
-    "-DCMAKE_C_FLAGS=$pathMaps",
-    "-DCMAKE_CXX_FLAGS=$pathMaps",
+    "-DCMAKE_C_FLAGS_INIT=$pathMaps",
+    "-DCMAKE_CXX_FLAGS_INIT=$pathMaps",
     "-DCMAKE_EXE_LINKER_FLAGS=$linkerFlags",
     "-DCMAKE_SHARED_LINKER_FLAGS=$linkerFlags",
     "-DCMAKE_STATIC_LINKER_FLAGS=$staticLinkerFlags",
@@ -523,8 +815,8 @@ $qtKeychainConfigure = @(
     "-DVCPKG_TARGET_TRIPLET=$triplet",
     "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
     '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>DLL',
-    "-DCMAKE_C_FLAGS=$pathMaps",
-    "-DCMAKE_CXX_FLAGS=$pathMaps",
+    "-DCMAKE_C_FLAGS_INIT=$pathMaps",
+    "-DCMAKE_CXX_FLAGS_INIT=$pathMaps",
     "-DCMAKE_EXE_LINKER_FLAGS=$linkerFlags",
     "-DCMAKE_SHARED_LINKER_FLAGS=$linkerFlags",
     "-DCMAKE_STATIC_LINKER_FLAGS=$staticLinkerFlags",
@@ -555,10 +847,10 @@ $applicationConfigure = @(
     "-DVCPKG_TARGET_TRIPLET=$triplet",
     "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
     '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>DLL',
-    "-DCMAKE_C_FLAGS=$pathMaps",
-    "-DCMAKE_CXX_FLAGS=$pathMaps",
-    "-DCMAKE_EXE_LINKER_FLAGS=$linkerFlags",
-    "-DCMAKE_SHARED_LINKER_FLAGS=$linkerFlags",
+    "-DCMAKE_C_FLAGS_INIT=$pathMaps",
+    "-DCMAKE_CXX_FLAGS_INIT=$pathMaps",
+    "-DCMAKE_EXE_LINKER_FLAGS=$applicationLinkerFlags",
+    "-DCMAKE_SHARED_LINKER_FLAGS=$applicationLinkerFlags",
     "-DCMAKE_STATIC_LINKER_FLAGS=$staticLinkerFlags",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
     "-Devent_lib:FILEPATH=$eventLibrary",
@@ -630,6 +922,9 @@ $buildInfo = [ordered]@{
     msvcFileVersion = $clVersion
     runnerImage = [string]$env:ImageOS
     runnerImageVersion = [string]$env:ImageVersion
+    aqtinstallVersion = $aqtPinnedVersion
+    pkgconfVersion = [string]$lock.sources.pkgconf.binaryVersion
+    pkgconfSha256 = $pinnedPkgConfigHash
 }
 $buildInfoJson = $buildInfo | ConvertTo-Json -Depth 8
 Write-Utf8NoBom (Join-Path $OutputDirectory "build-info.json") ($buildInfoJson + [char]10)

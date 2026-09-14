@@ -33,6 +33,7 @@ import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Popups"
+import "../../Components/customizes/Wallets"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -45,15 +46,6 @@ QScreen {
                 || _confirm.opened
                 || syncProgressBox.opened
                 || chatHistorySandbox.opened
-    }
-
-    function tryOpenHomeReminder() {
-        if (isOnTop
-                && HomeReminderViewModel.reminderId.length > 0
-                && !homeReminderPopup.visible
-                && !hasBlockingPopup()) {
-            homeReminderPopup.open()
-        }
     }
 
     Component {
@@ -183,10 +175,40 @@ QScreen {
             width: homeroot.width - pannel_left.width
             height: homeroot.height
             color: "#FFFFFF"
+
+            // Generic home reminder banner (see QHomeReminderBanner.qml).
+            // Lives here -- above the step Loader -- rather than inside
+            // QHomeInitialStep3 only, so it shows regardless of Home state:
+            // the "no key yet" / "no wallet yet" welcome screens (step1,
+            // step2) as well as the normal wallet view (step3). It pushes
+            // the Loader content down; it never overlays anything.
+            QHomeReminderBanner {
+                id: homeReminderBanner
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    margins: 24
+                }
+                visible: HomeReminderViewModel.reminderId.length > 0
+                title: HomeReminderViewModel.title
+                description: HomeReminderViewModel.description
+                onBannerClicked: {
+                    var reminderActions = HomeReminderViewModel.actions
+                    if (reminderActions && reminderActions.length > 0) {
+                        HomeReminderViewModel.triggerAction(reminderActions[0])
+                    }
+                }
+            }
+
             Loader {
-                width: parent.width
-                height: parent.height
-                anchors.centerIn: parent
+                anchors {
+                    top: homeReminderBanner.visible ? homeReminderBanner.bottom : parent.top
+                    topMargin: homeReminderBanner.visible ? 24 : 0
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                }
                 sourceComponent: {
                     var dashboard = GroupWallet.dashboardInfo
                     var isShowDashBoard = dashboard ? dashboard.isShowDashBoard : false
@@ -218,7 +240,6 @@ QScreen {
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape
-        onClosed: homeroot.tryOpenHomeReminder()
         background: Item{}
         property string addrToVerify: ""
         Rectangle {
@@ -306,7 +327,6 @@ QScreen {
         id:_info1
         title: STR.STR_QML_339
         contentText: STR.STR_QML_1048
-        onClosed: homeroot.tryOpenHomeReminder()
     }
 
     QPopupInfoTwoButtons {
@@ -321,51 +341,18 @@ QScreen {
                 _content.signalChangeDate()
             }
         ]
-        onClosed: homeroot.tryOpenHomeReminder()
     }
 
-    QPopupHomeReminder {
-        id: homeReminderPopup
-        title: HomeReminderViewModel.title
-        description: HomeReminderViewModel.description
-        imageUrl: HomeReminderViewModel.imageUrl
-        actions: HomeReminderViewModel.actions
-        property string presentedReminderId: ""
-        property string closingReminderId: ""
-
-        onOpened: {
-            presentedReminderId = HomeReminderViewModel.reminderId
-            HomeReminderViewModel.markShown()
-        }
-        onAboutToHide: closingReminderId = presentedReminderId
-        onClosed: {
-            HomeReminderViewModel.dismiss(closingReminderId)
-            presentedReminderId = ""
-            closingReminderId = ""
-            homeroot.tryOpenHomeReminder()
-        }
-        onActionTriggered: (action) => HomeReminderViewModel.triggerAction(action)
-    }
-
-    Connections {
-        target: HomeReminderViewModel
-
-        function onReminderReady() {
-            homeroot.tryOpenHomeReminder()
-        }
-
-        function onReminderChanged() {
-            if (HomeReminderViewModel.reminderId.length === 0 && homeReminderPopup.visible) {
-                homeReminderPopup.close()
-            }
-        }
-    }
+    // The generic home reminder is now shown as a persistent, non-dismissible
+    // banner inside the Wallet Manager content area (see QHomeInitialStep3.qml
+    // / QHomeReminderBanner.qml) instead of an auto-opening modal popup.
+    // HomeReminderViewModel.fetch() below still re-checks validity with the
+    // server every time Home comes back on top; the banner's own visibility
+    // is entirely driven by HomeReminderViewModel.reminderId.
 
     onIsOnTopChanged: {
         if (isOnTop) {
             HomeReminderViewModel.fetch()
-        } else if (homeReminderPopup.visible) {
-            homeReminderPopup.close()
         }
     }
 
@@ -389,7 +376,6 @@ QScreen {
             close()
             QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, data)
         }
-        onClosed: homeroot.tryOpenHomeReminder()
     }
 
     /*=========================================SYNC=========================================*/
@@ -441,7 +427,6 @@ QScreen {
         onClosed: {
             boxmask.sourceComponent = null
             timer4s.stop()
-            homeroot.tryOpenHomeReminder()
         }
         Timer {
             id: timer4s
@@ -543,6 +528,5 @@ QScreen {
 
     QPopupKeepGroupChatHistorySandBox {
         id: chatHistorySandbox
-        onClosed: homeroot.tryOpenHomeReminder()
     }
 }

@@ -20,7 +20,7 @@ param(
     [string]$BuildInfoFile,
     [string]$TlsProbeExe,
     [string]$ExistingStageDirectory,
-    [string]$QtDirectory = "C:\nunchuk-repro\qt\6.11.1\msvc2022_64",
+    [string]$QtDirectory = "C:\nunchuk-repro\qt\6.9.3\msvc2022_64",
     [string]$QtKeychainDirectory = "C:\nunchuk-repro\installed\qtkeychain",
     [string]$OpenSslDirectory = "C:\nunchuk-repro\installed\openssl-runtime",
     [string]$WorkDirectory = "C:\nunchuk-repro\package",
@@ -65,7 +65,7 @@ function Write-Utf8NoBom {
     )
 
     $encoding = [System.Text.UTF8Encoding]::new($false)
-    $normalized = $Content.Replace(([char]13).ToString() + [char]10, [char]10)
+    $normalized = $Content.Replace("`r`n", "`n")
     [System.IO.File]::WriteAllText($Path, $normalized, $encoding)
 }
 
@@ -213,8 +213,8 @@ foreach ($file in @($LockFile, $InstallerRecipe)) {
     }
 }
 $lock = Get-Content -LiteralPath $LockFile -Raw | ConvertFrom-Json
-if ([string]$lock.qt.version -ne "6.11.1" -or [string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
-    throw "Packaging lock is not the approved Qt 6.11.1 / QtKeychain 0.15.0 lock."
+if ([string]$lock.qt.version -ne "6.9.3" -or [string]$lock.sources.qtKeychain.tag -ne "0.15.0") {
+    throw "Packaging lock is not the approved Qt 6.9.3 / QtKeychain 0.15.0 lock."
 }
 
 $env:SOURCE_DATE_EPOCH = $SourceDateEpoch.ToString([System.Globalization.CultureInfo]::InvariantCulture)
@@ -282,7 +282,6 @@ else {
             "--release",
             "--force",
             "--verbose", "2",
-            "--compiler-runtime",
             "--qmldir", $SourceDirectory,
             (Join-Path $stage "nunchuk-qt.exe")
         )
@@ -292,6 +291,42 @@ else {
         if ($createdScannerShim -and (Test-Path -LiteralPath $scannerShim -PathType Leaf)) {
             Remove-Item -LiteralPath $scannerShim -Force
         }
+    }
+
+    # No --compiler-runtime above: it does not reliably stage the MSVC C++
+    # runtime as raw DLLs on every runner/toolset combination -- observed
+    # both "msvcp140.dll missing" AND, when it falls back, dropping the
+    # vc_redist.x64.exe bootstrapper itself into staging (a legitimate x86
+    # launcher stub that then fails the x64-PE check below). Copy the three
+    # runtime DLLs explicitly instead: prefer the exact pinned toolset's own
+    # redist folder (VCToolsRedistDir, set by ilammy/msvc-dev-cmd), falling
+    # back to System32, which GitHub's windows-2022 image ships with the
+    # VC++ 2015-2022 Redistributable preinstalled. Also remove any stray
+    # vc_redist.x64.exe a prior windeployqt run may have left behind.
+    $strayVcRedist = Join-Path $stage "vc_redist.x64.exe"
+    if (Test-Path -LiteralPath $strayVcRedist -PathType Leaf) {
+        Remove-Item -LiteralPath $strayVcRedist -Force
+    }
+    $crtRuntimeFiles = @("msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll")
+    $crtRedistCandidates = @()
+    if (![string]::IsNullOrWhiteSpace($env:VCToolsRedistDir)) {
+        $crtRedistCandidates += (Join-Path $env:VCToolsRedistDir "x64\Microsoft.VC143.CRT")
+    }
+    $crtRedistCandidates += "$env:SystemRoot\System32"
+    foreach ($fileName in $crtRuntimeFiles) {
+        $destination = Join-Path $stage $fileName
+        if (Test-Path -LiteralPath $destination -PathType Leaf) {
+            continue
+        }
+        $source = $crtRedistCandidates |
+            ForEach-Object { Join-Path $_ $fileName } |
+            Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+            Select-Object -First 1
+        if (!$source) {
+            throw "Could not locate $fileName under VCToolsRedistDir or System32 to stage it explicitly."
+        }
+        Copy-Item -LiteralPath $source -Destination $destination -Force
+        Write-Host "Staged MSVC runtime DLL explicitly: $fileName (from $source)"
     }
 
     $explicitQtFiles = [ordered]@{
@@ -428,7 +463,7 @@ if ([long]$buildInfo.sourceDateEpoch -ne $SourceDateEpoch) {
 if ([string]$buildInfo.releaseVersion -ne $ReleaseVersion) {
     throw "build-info release version mismatch."
 }
-if ([string]$buildInfo.qtVersion -ne "6.11.1" -or
+if ([string]$buildInfo.qtVersion -ne "6.9.3" -or
     [string]$buildInfo.applicationOpenSslVersion -ne "3.5.7" -or
     [string]$buildInfo.qtTlsOpenSslVersion -ne "3.5.7") {
     throw "build-info does not prove the locked Qt/OpenSSL runtime."

@@ -48,7 +48,16 @@ trap restore_zlib_zconf EXIT
 # isolated builder process.
 git config --global --add safe.directory '*'
 
-SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -c safe.directory="${PROJECT_DIR}" log -1 --pretty=%ct)}"
+# Override the builder image's fallback (Dockerfile.linux's SOURCE_DATE_EPOCH,
+# only meant for timestamps produced while building the image itself) with the
+# timestamp of the actual source revision being packaged. This must be an
+# unconditional assignment, not a "${SOURCE_DATE_EPOCH:-...}" default: the
+# Docker image always has SOURCE_DATE_EPOCH set to a non-empty value, so a
+# "${VAR:-default}" fallback would never take the git-derived value and every
+# release would silently carry the image's fixed timestamp instead of its own
+# commit's. Matches main's build_linux.sh, which uses this same unconditional
+# form.
+SOURCE_DATE_EPOCH="$(git -c safe.directory="${PROJECT_DIR}" -C "${PROJECT_DIR}" log -1 --format=%ct)"
 if [[ ! "${SOURCE_DATE_EPOCH}" =~ ^[0-9]+$ ]]; then
     echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH}" >&2
     exit 1

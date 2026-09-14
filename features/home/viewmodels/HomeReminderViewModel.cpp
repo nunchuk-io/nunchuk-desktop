@@ -85,20 +85,53 @@ void HomeReminderViewModel::fetch() {
         clearReminder();
         return;
     }
-    if (m_ready) {
-        emit reminderReady();
-        return;
-    }
-    if (m_fetchedCurrentSession) {
-        return;
-    }
 
+    // Unlike the previous popup flow, the persistent banner must re-check
+    // validity with the server every time Home is (re-)entered, and must
+    // hide itself purely based on that response -- never based on whether
+    // the user already saw/clicked it. So there is no "already fetched this
+    // session" short-circuit here anymore: every call actually re-queries
+    // (guarded only by m_loading, to avoid overlapping in-flight requests).
     m_loading = true;
     const quint64 requestGeneration = ++m_requestGeneration;
     const quint64 sessionGeneration = m_sessionGeneration;
-    const bool anonymous = !CLIENT_INSTANCE->isNunchukLoggedIn();
     emit loadingChanged();
 
+    // Debug/QA only: force a local dummy reminder instead of calling the
+    // live API, so the persistent banner can be exercised without depending
+    // on the backend actually returning an active reminder. Enable by
+    // setting NUNCHUK_DEBUG_DUMMY_REMINDER=1 in the environment before
+    // launching the app. Never set by default / production code paths.
+    if (qEnvironmentVariableIsSet("NUNCHUK_DEBUG_DUMMY_REMINDER")) {
+        QJsonObject dummyAction;
+        dummyAction.insert("label", QStringLiteral("View"));
+        dummyAction.insert("type", QStringLiteral("OPEN_LINK"));
+        dummyAction.insert("target", QStringLiteral("https://x.com/nunchuk_io/status/2083357949297414435"));
+
+        QJsonObject dummyReminder;
+        dummyReminder.insert("id", QStringLiteral("dummy-reminder-1"));
+        dummyReminder.insert("title", QStringLiteral("[DUMMY] Generic warning banner"));
+        dummyReminder.insert("description", QStringLiteral("This is a local test reminder (NUNCHUK_DEBUG_DUMMY_REMINDER). Click to open the test link."));
+        dummyReminder.insert("image_url", QString());
+        dummyReminder.insert("action", dummyAction);
+
+        QTimer::singleShot(0, this, [this, requestGeneration, sessionGeneration, dummyReminder]() {
+            m_loading = false;
+            emit loadingChanged();
+            syncSession();
+            if (requestGeneration != m_requestGeneration || sessionGeneration != m_sessionGeneration) {
+                return;
+            }
+            if (!isEligibleAudience()) {
+                clearReminder();
+                return;
+            }
+            applyReminder(dummyReminder);
+        });
+        return;
+    }
+
+    const bool anonymous = !CLIENT_INSTANCE->isNunchukLoggedIn();
     features::home::usecases::GetHomeReminderInput input;
     input.anonymous = anonymous;
     m_getHomeReminderUseCase.executeAsync(input, [this, requestGeneration, sessionGeneration](const core::usecase::Result<features::home::usecases::GetHomeReminderResult> &result) {
@@ -123,9 +156,6 @@ void HomeReminderViewModel::fetch() {
             return;
         }
 
-        // Both a null reminder and a valid object complete this session's
-        // optional fetch. This avoids polling the endpoint on every Home focus.
-        m_fetchedCurrentSession = true;
         const QJsonObject &reminder = result.value().reminder;
         if (reminder.isEmpty()) {
             clearReminder();
@@ -133,22 +163,6 @@ void HomeReminderViewModel::fetch() {
         }
         applyReminder(reminder);
     });
-}
-
-void HomeReminderViewModel::markShown() {
-    const QString id = reminderId();
-    if (!id.isEmpty()) {
-        m_shownReminderIds.insert(id);
-    }
-    m_ready = false;
-}
-
-void HomeReminderViewModel::dismiss(const QString &presentedReminderId) {
-    if (presentedReminderId.isEmpty() || presentedReminderId != reminderId()) {
-        return;
-    }
-    m_ready = false;
-    clearReminder();
 }
 
 void HomeReminderViewModel::triggerAction(const QVariantMap &actionSnapshot) {
@@ -218,7 +232,6 @@ bool HomeReminderViewModel::syncSession() {
     m_sessionKey = key;
     ++m_sessionGeneration;
     ++m_requestGeneration;
-    m_fetchedCurrentSession = false;
     clearReminder();
     return true;
 }
@@ -227,7 +240,7 @@ void HomeReminderViewModel::applyReminder(const QJsonObject &reminder) {
     const QString id = reminder.value("id").toString().trimmed();
     const QString reminderTitle = reminder.value("title").toString().trimmed();
     const QString reminderDescription = reminder.value("description").toString().trimmed();
-    if (id.isEmpty() || (reminderTitle.isEmpty() && reminderDescription.isEmpty()) || m_shownReminderIds.contains(id)) {
+    if (id.isEmpty() || (reminderTitle.isEmpty() && reminderDescription.isEmpty())) {
         clearReminder();
         return;
     }
@@ -247,7 +260,6 @@ void HomeReminderViewModel::applyReminder(const QJsonObject &reminder) {
 
     m_reminder = reminder;
     m_actions = normalizedActions;
-    m_ready = true;
     emit reminderChanged();
     emit reminderReady();
 }
@@ -256,7 +268,6 @@ void HomeReminderViewModel::clearReminder() {
     const bool hadReminder = !m_reminder.isEmpty() || !m_actions.isEmpty();
     m_reminder = {};
     m_actions = {};
-    m_ready = false;
     if (hadReminder) {
         emit reminderChanged();
     }
