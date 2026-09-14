@@ -89,12 +89,17 @@ QScreen {
                             id: emailrepeat
                             model: 0
                             function validateEmail(email) {
-                                if(Draco.pkey_username_availability(email)){
-                                    return true;
-                                }else{
-                                    var re = /\S+@\S+\.\S+/;
-                                    return re.test(email);
-                                }
+                                // Was: Draco.pkey_username_availability(email) as a first check.
+                                // That is a synchronous, UI-thread-blocking network call (up to
+                                // 120s on a stalled connection, see QRest transfer timeout) to an
+                                // endpoint meant for Primary Key username availability, not contact
+                                // emails. isVaildAll() re-runs this for every email already in the
+                                // list on every add/remove, so it grew with each contact typed.
+                                // The actual add-contact request is validated server-side anyway
+                                // (Draco.requestFriends() returns failedEmails), so this was purely
+                                // a cosmetic pre-check with no functional benefit here.
+                                var re = /\S+@\S+\.\S+/;
+                                return re.test(email);
                             }
                             Rectangle {
                                 id: background
@@ -244,6 +249,13 @@ QScreen {
                     if(result){
                         QMLHandle.sendEvent(EVT.EVT_ONLINE_ADD_CONTACTS_BACK)
                         AppModel.showToast(0, STR.STR_QML_550, EWARNING.SUCCESS_MSG);
+                    }
+                    else{
+                        // Transport/network failure (Draco.requestFriends() did not
+                        // reach the server or the reply was not parseable). Without
+                        // this, the popup silently did nothing and looked like the
+                        // Add Contact action was broken.
+                        AppModel.showToast(0, STR.STR_QML_2255, EWARNING.EXCEPTION_MSG);
                     }
                 }
             }

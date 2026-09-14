@@ -930,7 +930,11 @@ QScreen {
                 content: STR.STR_QML_368
                 height: 180
                 icon:"qrc:/Images/Images/addContact.svg"
-                enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
+                // Add-contact is a plain REST flow (Draco.requestFriends/inviteFriends),
+                // not a Matrix support-room. It must not be gated by readySupport,
+                // which can stay false while a support-room request is in flight
+                // or stuck (see ClientController::createSupportRoom comment).
+                enabled: ClientController.isMatrixLoggedIn && !preventTimer.running
                 onBtnClicked: {
                     preventTimer.restart()
                     QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
