@@ -484,7 +484,15 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT,
+                        // NOTE: "To BitBox" temporarily hidden - not supported yet.
+                        // The action below references `displayAddressBusybox`,
+                        // which is not declared in this component's scope (it only
+                        // exists as a sibling id in SCR_WALLET_INFO.qml, and QML id
+                        // scope does not cross component boundaries), so clicking
+                        // this used to throw a ReferenceError and do nothing.
+                        // Re-enable only after the actual BitBox export/registration
+                        // flow is implemented and wired up correctly.
+                        visible: false,
                         label: STR.STR_QML_1749, // To BitBox
                         icon: "",
                         iconRight: "",

@@ -263,7 +263,6 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
         if (!safeThis || !safeDash) return;
 
         safeDash->GetAlertsInfo();
-        safeDash->GetHealthCheckInfo();
 
         // GO TO KEY STATUS SCREEN
         QJsonObject dummy_transaction = outputCopy["dummy_transaction"].toObject();
@@ -274,6 +273,23 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
         const QString type          = dummy_transaction["type"].toString();
         const int pending_signatures = dummy_transaction["pending_signatures"].toInt();
         const int flow              = StringToInt(type);
+
+        // For the HEALTH_CHECK_* flow (below, non GROUP_WALLET_SETUP case),
+        // EVT_KEY_HEALTH_CHECK_STATUS_REQUEST already triggers GetWalletInfo() +
+        // GetHealthCheckInfo() (see EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER in
+        // STATE_ID_SCR_HOME.cpp). Calling GetHealthCheckInfo() here as well fired a
+        // second, concurrent fetch racing with that one, and was the suspected cause
+        // of the Key Health Status badge not refreshing promptly while the screen was
+        // already open. Skip the duplicate call for that one case; keep it for every
+        // other flow, since nothing else refreshes health info for them.
+        const bool isHealthCheckFlow =
+            (AlertEnum::E_Alert_t)flow == AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST ||
+            (AlertEnum::E_Alert_t)flow == AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING ||
+            (AlertEnum::E_Alert_t)flow == AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS;
+        if (!isHealthCheckFlow || safeDash->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
+            safeDash->GetHealthCheckInfo();
+        }
+
         switch ((AlertEnum::E_Alert_t)flow) {
         case AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST:
         case AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING:

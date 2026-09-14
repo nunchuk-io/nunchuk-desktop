@@ -252,7 +252,14 @@ QOnScreenContentTypeB {
                         }
                     },
                     {
-                        visible: true,
+                        // NOTE: "To BitBox" temporarily hidden - not supported yet.
+                        // The action below references `displayAddressBusybox`, which
+                        // is not declared anywhere in this component's scope (QML id
+                        // scope does not cross component boundaries), so clicking
+                        // this used to throw a ReferenceError and do nothing.
+                        // Re-enable only after the actual BitBox export/registration
+                        // flow is implemented and wired up correctly.
+                        visible: false,
                         label: STR.STR_QML_1749, // To BitBox
                         icon: "",
                         iconRight: "",

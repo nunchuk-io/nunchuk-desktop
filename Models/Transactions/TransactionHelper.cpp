@@ -32,8 +32,8 @@ void signRequest(const QVariant &msg) {
     if (txInfo->singleSignersAssigned()) {
         QSingleSignerPtr signer = txInfo->singleSignersAssigned()->getSingleSignerByFingerPrint(signerXfp);
         if (!signer) {
-            // FIXME SHOW TOAST ?
             DBG_INFO << "Signer not found for fingerprint: " << signerXfp << txInfo->singleSignersAssigned()->rowCount();
+            AppModel::instance()->showToast(0, "Signer not found", EWARNING::WarningType::ERROR_MSG);
             emit AppModel::instance() -> finishedSigningTransaction();
             return;
         }
@@ -55,19 +55,27 @@ void signRequest(const QVariant &msg) {
                 } else {
                     AppModel::instance()->startSigningTransaction(wallet_id, tx_id, device.data()->masterFingerPrint(), true);
                 }
+            } else {
+                // Previously fell through silently here: no toast AND no
+                // finishedSigningTransaction() emit, leaving the signing busy
+                // box (QPopupSigningBusyBox) open indefinitely with no way for
+                // the user to tell what went wrong.
+                DBG_INFO << "Software signer device not found for fingerprint: " << signerXfp;
+                AppModel::instance()->showToast(0, "Signing device not found. Please check the connection and try again.", EWARNING::WarningType::ERROR_MSG);
+                emit AppModel::instance() -> finishedSigningTransaction();
             }
         } else if ((int)ENUNCHUCK::SignerType::HARDWARE == signerType || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType) {
             QDevicePtr device = AppModel::instance()->deviceList()->getDeviceByXfp(signerXfp);
             if (device) {
                 AppModel::instance()->startSigningTransaction(wallet_id, tx_id, device.data()->masterFingerPrint(), false);
             } else {
-                // FIXME SHOW TOAST ?
                 DBG_INFO << "Device not found for fingerprint: " << signerXfp;
+                AppModel::instance()->showToast(0, "Signing device not found. Please check the connection and try again.", EWARNING::WarningType::ERROR_MSG);
                 emit AppModel::instance() -> finishedSigningTransaction();
             }
         } else {
-            // FIXME SHOW TOAST ?
             DBG_INFO << "Signer type is not SOFTWARE or HARDWARE";
+            AppModel::instance()->showToast(0, "This signer type does not support signing here", EWARNING::WarningType::ERROR_MSG);
             emit AppModel::instance() -> finishedSigningTransaction();
         }
     }
