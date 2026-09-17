@@ -142,7 +142,9 @@ QPopupEmpty {
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_LEDGER ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_TREZOR ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX ||
-                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE ||
+                    // KEEPKEY: wired flow, same group as the others.
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_KEEPKEY
         onPrevClicked:{ closeClicked() }  
         onNextClicked:{ _popup.nextClicked() }            
     }

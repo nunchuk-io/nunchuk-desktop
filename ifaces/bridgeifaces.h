@@ -74,6 +74,8 @@ public:
         ADD_TREZOR = (int)nunchuk::SignerTag::TREZOR,
         ADD_LEDGER = (int)nunchuk::SignerTag::LEDGER,
         ADD_BITBOX = (int)nunchuk::SignerTag::BITBOX,
+        ADD_KEEPKEY = (int)nunchuk::SignerTag::KEEPKEY,
+        ADD_KRUX = (int)nunchuk::SignerTag::KRUX,
         ADD_TAPSIGNER,
     };
 

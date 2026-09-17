@@ -23,6 +23,8 @@ const QMap<Key, StructAddHardware> map_keys = {
     {Key::ADD_COLDCARD, {"COLDCARD", "coldcard", STR_CPP_126, STR_CPP_125, 152}},
     {Key::ADD_BITBOX, {"BITBOX", "bitbox02", STR_CPP_128, STR_CPP_127, 124}},
     {Key::ADD_JADE, {"JADE", "jade", STR_CPP_133, STR_CPP_132, 152}},
+    // KEEPKEY: assumed Trezor-like protocol, timeout copied from Trezor (unconfirmed).
+    {Key::ADD_KEEPKEY, {"KEEPKEY", "keepkey", STR_CPP_135, STR_CPP_134, 124}},
 };
 
 namespace {
@@ -642,10 +644,10 @@ ENUNCHUCK::WalletType QAssistedDraftWallets::walletType() const {
     }
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType) {
-    
+void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod) {
+
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, verifyType, index]() ->bool{
+    runInConcurrent([this, verifyType, verificationMethod, index]() ->bool{
         auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
         auto xfpSelected = currentSigerInfo.value("xfp").toString();
         DBG_INFO << "index: " << index << "verifyType: " << verifyType << "currentSigerInfo: " << currentSigerInfo;
@@ -664,7 +666,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
                 if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
                     AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
                 } else {
-                    requestVerifySingleSigner(verifyType);
+                    requestVerifySingleSigner(verifyType, verificationMethod);
                 }
             }
         }
@@ -674,10 +676,10 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
     });
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType) {
+void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType, const QString &verificationMethod) {
     DBG_INFO << "verifyType: " << verifyType << "qr_data size: " << qr_data.size();
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, qr_data, verifyType]() ->bool{
+    runInConcurrent([this, qr_data, verifyType, verificationMethod]() ->bool{
         QWarningMessage msg;
         nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
@@ -686,18 +688,18 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr
         if (signer.get_descriptor() != qrSigner.get_descriptor()) {
             AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         } else {
-            requestVerifySingleSigner(verifyType);
-        }        
+            requestVerifySingleSigner(verifyType, verificationMethod);
+        }
         return true;
     },[](bool ret) {
         qApp->restoreOverrideCursor();
     });
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType) {
+void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType, const QString &verificationMethod) {
     DBG_INFO << "verifyType: " << verifyType << "fileName: " << fileName;
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, fileName, verifyType]() ->bool{
+    runInConcurrent([this, fileName, verifyType, verificationMethod]() ->bool{
         QWarningMessage msg;
         QString file_path = qUtils::QGetFilePath(fileName);
         nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
@@ -707,36 +709,36 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &file
         if (signer.get_descriptor() != fileSigner.get_descriptor()) {
             AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         } else {
-            requestVerifySingleSigner(verifyType);
-        }        
+            requestVerifySingleSigner(verifyType, verificationMethod);
+        }
         return true;
     },[](bool ret) {
         qApp->restoreOverrideCursor();
     });
 }
 
-bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType) {
+bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         if (dashboard->canReplaceKey()) {
-            return replacementVerifySingleSigner(verifyType);
+            return replacementVerifySingleSigner(verifyType, verificationMethod, keyChecksum);
         } else {
-            return addVerifySingleSigner(verifyType);
+            return addVerifySingleSigner(verifyType, verificationMethod, keyChecksum);
         }
     }
     return false;
 }
 
-bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType) {
+bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         QString error_msg;
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         bool ret{false};
         if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verifyType, error_msg);
+            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
         } else {
-            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verifyType, error_msg);
+            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
         }
-        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "ret: " << ret << "error_msg: " << error_msg;
+        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "ret: " << ret << "error_msg: " << error_msg;
         if (ret) {
             emit verifySingleSignerResult(1);
         }
@@ -745,20 +747,53 @@ bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType) {
     return false;
 }
 
-bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyType) {
+bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         QJsonObject result;
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         bool ret{false};
         if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verifyType, servicesTagPtr()->passwordToken(), result);
+            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
         } else {
-            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verifyType, servicesTagPtr()->passwordToken(), result);
+            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
         }
-        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "result: " << result;
+        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "result: " << result;
         if (ret) {
             emit verifySingleSignerResult(1);
         }
+        return ret;
+    }
+    return false;
+}
+
+bool QAssistedDraftWallets::requestVerifyEncryptedBackup(const QString &verifyType) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        QString keyChecksum = dashboard->lastUploadedBackupChecksum();
+        return requestVerifySingleSigner(verifyType, "ENCRYPTED_BACKUP", keyChecksum);
+    }
+    return false;
+}
+
+bool QAssistedDraftWallets::requestSetClaimOptions(const QStringList &claimOptions) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        QJsonObject output;
+        QString error_msg;
+        bool ret{false};
+        if (dashboard->canReplaceKey()) {
+            if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
+                ret = Draco::instance()->SetClaimOptionsKeyReplacement(dashboard->wallet_id(), xfpSelected, claimOptions, servicesTagPtr()->passwordToken(), output, error_msg);
+            } else {
+                ret = Byzantine::instance()->SetClaimOptionsKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, claimOptions, servicesTagPtr()->passwordToken(), output, error_msg);
+            }
+        } else {
+            if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
+                ret = Draco::instance()->DraftWalletSetClaimOptions(xfpSelected, claimOptions, output, error_msg);
+            } else {
+                ret = Byzantine::instance()->DraftWalletSetClaimOptions(dashboard->groupId(), xfpSelected, claimOptions, output, error_msg);
+            }
+        }
+        DBG_INFO << "xfpSelected: " << xfpSelected << "claimOptions: " << claimOptions << "ret: " << ret << "error_msg: " << error_msg;
         return ret;
     }
     return false;

@@ -530,6 +530,9 @@ const QMap<int, QList<int>> mapIndexMiniscript = {{0, {0 * 2, 0 * 2 + 1}}, {1, {
 const QMap<QString, int> mapTagkeys = {
     {"LEDGER", (int)Key::ADD_LEDGER}, {"TREZOR", (int)Key::ADD_TREZOR}, {"COLDCARD", (int)Key::ADD_COLDCARD},
     {"BITBOX", (int)Key::ADD_BITBOX}, {"JADE", (int)Key::ADD_JADE},
+    // KEEPKEY needs this map or hwType defaults to -1, blanking the add/backup screen.
+    // KRUX omitted: goes through the shared airgap/remote flow instead, like KEYSTONE/PASSPORT.
+    {"KEEPKEY", (int)Key::ADD_KEEPKEY},
 };
 
 QJsonObject QGroupDashboard::createOrUpdateSignerInfo(const QJsonObject &info, int index) {
@@ -878,8 +881,14 @@ bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QStr
         ret = Byzantine::instance()->ReplacementUploadBackupFile(groupId(), wallet_id(), servicesTagPtr()->passwordToken(), body, output, error_msg);
     }
     if (ret) {
+        // NOTE (assumed field name, needs backend confirmation): "key_checksum" used to verify ENCRYPTED_BACKUP later.
+        m_lastUploadedBackupChecksum = output.value("key_checksum").toString();
+        emit lastUploadedBackupChecksumChanged();
         updateSuccess();
     } else {
+        // Defensive: clear stale checksum on failed upload so a later verify can't reuse it.
+        m_lastUploadedBackupChecksum.clear();
+        emit lastUploadedBackupChecksumChanged();
         updateFail();
     }
     return ret;
@@ -901,8 +910,13 @@ bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QStr
         ret = Byzantine::instance()->DraftWalletUploadBackupFile(groupId(), body, output, error_msg);
     }
     if (ret) {
+        m_lastUploadedBackupChecksum = output.value("key_checksum").toString();
+        emit lastUploadedBackupChecksumChanged();
         updateSuccess();
     } else {
+        // Defensive: same reasoning as ReplacementUploadBackupFile.
+        m_lastUploadedBackupChecksum.clear();
+        emit lastUploadedBackupChecksumChanged();
         updateFail();
     }
     return ret;

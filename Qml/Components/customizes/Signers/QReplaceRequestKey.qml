@@ -195,6 +195,91 @@ Item {
             color: "#A7F0BA"
         }
     }
+    // Setup 20bD-20eD/20dD (NUN-10192): mirrors QAddRequestKey.qml's claim_options/verifications model.
+    Component {
+        id: verifyBackupButton
+        QTextButton {
+            width: label.paintedWidth + 2*16
+            height: 36
+            type: eTypeB
+            label.text: STR.STR_QML_2309 // "Verify backup"
+            label.font.pixelSize: 16
+            onButtonClicked: backupClicked()
+        }
+    }
+    Component {
+        id: setUpButton
+        QTextButton {
+            width: label.paintedWidth + 2*16
+            height: 36
+            type: eTypeB
+            label.text: STR.STR_QML_2310 // "Set up"
+            label.font.pixelSize: 16
+            onButtonClicked: backupClicked()
+        }
+    }
+    // claim_options/verifications (NUN-10192), applies once replacements.length >= 2 and MULTI_SIG.
+    function claimOptions() {
+        return modelData.claim_options !== undefined ? modelData.claim_options : []
+    }
+    function hasClaimOption(method) {
+        return claimOptions().indexOf(method) !== -1
+    }
+    function verificationFor(method) {
+        var list = modelData.verifications !== undefined ? modelData.verifications : []
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].verification_method === method) return list[i]
+        }
+        return null
+    }
+    function fileStatusText() {
+        var v = verificationFor("ENCRYPTED_BACKUP")
+        if (!v || v.verification_type === "NONE") return STR.STR_QML_2288 // Not uploaded
+        if (v.verification_type === "SKIPPED_VERIFICATION") return STR.STR_QML_2289 // Skipped
+        return STR.STR_QML_2279 // Verified
+    }
+    function seedStatusText() {
+        var v = verificationFor("SEED_PHRASE")
+        if (!v || v.verification_type === "NONE") return STR.STR_QML_2287 // Pending
+        if (v.verification_type === "SKIPPED_VERIFICATION") return STR.STR_QML_2289 // Skipped
+        return STR.STR_QML_2279 // Verified
+    }
+    function methodState(method) {
+        var v = verificationFor(method)
+        if (method === "ENCRYPTED_BACKUP" && !v) return "NOT_UPLOADED"
+        if (!v || v.verification_type === "NONE") return "PENDING"
+        if (v.verification_type === "SKIPPED_VERIFICATION") return "SKIPPED"
+        return "VERIFIED"
+    }
+    // Single source of truth for row state; adds "REPLACE"/"ADD_NEW" tiers before the claim_options tiers.
+    function inheritanceRowState() {
+        if (modelData.wallet_type !== "MULTI_SIG") {
+            // Outside NUN-10192 scope - unchanged legacy behavior.
+            return inheritance("REPLACE", "ADD_NEW", "BACKUP", "ADDED")
+        }
+        if (modelData.replacements.length === 0) return "REPLACE"
+        if (modelData.replacements.length === 1) return "ADD_NEW"
+        var opts = claimOptions()
+        if (opts.length === 0) {
+            // Setup 20dD: "[] means legacy/not configured" - "Set up opens the sharing-method selection".
+            return "SET_UP"
+        }
+        if (hasClaimOption("ENCRYPTED_BACKUP") && methodState("ENCRYPTED_BACKUP") === "NOT_UPLOADED") {
+            return "BACKUP" // Setup 20fD
+        }
+        var allVerified = opts.every(function(m) { return methodState(m) === "VERIFIED" })
+        return allVerified ? "ADDED" : "VERIFY_BACKUP" // Setup 20D (Added) vs 20bD/20cD/20eD (Verify backup)
+    }
+    function inheritanceActionComponent() {
+        switch (inheritanceRowState()) {
+        case "REPLACE": return replaceButton
+        case "ADD_NEW": return addButton
+        case "SET_UP": return setUpButton
+        case "BACKUP": return backupButton
+        case "VERIFY_BACKUP": return verifyBackupButton
+        default: return addedCheck
+        }
+    }
     Component {
         id: inheritanceEmpty
         QDashRectangle {
@@ -260,8 +345,18 @@ Item {
         id: inheritanceAdded
         QDashRectangle {
             anchors.fill: parent
-            color: inheritance("#FFFFFF", "#66A7F0BA", "#FDEBD2", "#A7F0BA")
-            isDashed: inheritance(false, true, false, false)
+            // BUGFIX: color/button both now use inheritanceRowState(), matching QAddRequestKey.qml.
+            color: {
+                switch (inheritanceRowState()) {
+                case "REPLACE": return "#FFFFFF"
+                case "ADD_NEW": return "#66A7F0BA"
+                case "SET_UP": return "#FDEBD2"
+                case "BACKUP": return "#FDEBD2"
+                case "VERIFY_BACKUP": return "#FDEBD2"
+                default: return "#A7F0BA"
+                }
+            }
+            isDashed: inheritanceRowState() === "ADD_NEW"
             radius: 8
             borderWitdh: isDashed ? 2 : 1
             borderColor: isDashed ? "#031F2B" : "#DEDEDE"
@@ -342,6 +437,28 @@ Item {
                             font.pixelSize: 12
                         }
                     }
+                    // Setup 20D-20gD: File/Seed captions, matching QAddRequestKey.qml.
+                    Column {
+                        width: parent.width
+                        spacing: 2
+                        visible: modelData.is_inheritance && claimOptions().length > 0
+                        QLato {
+                            width: parent.width
+                            visible: hasClaimOption("ENCRYPTED_BACKUP")
+                            text: STR.STR_QML_2307.arg(fileStatusText())
+                            font.pixelSize: 11
+                            color: "#5B6268"
+                            horizontalAlignment: Text.AlignLeft
+                        }
+                        QLato {
+                            width: parent.width
+                            visible: hasClaimOption("SEED_PHRASE")
+                            text: STR.STR_QML_2308.arg(seedStatusText())
+                            font.pixelSize: 11
+                            color: "#5B6268"
+                            horizontalAlignment: Text.AlignLeft
+                        }
+                    }
                 }
             }
             Loader {
@@ -350,7 +467,7 @@ Item {
                     right: parent.right
                     rightMargin: 12
                 }
-                sourceComponent: inheritance(replaceButton, addButton, backupButton, addedCheck)
+                sourceComponent: inheritanceActionComponent()
             }
         }
     }

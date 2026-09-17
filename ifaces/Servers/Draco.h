@@ -288,7 +288,8 @@ class Draco : public QObject {
 
     bool ResetKeyReplacement(const QString &wallet_id, const QString &passwordToken, QJsonObject &output, QString &errormsg);
 
-    bool VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &type, const QString &passwordToken, QJsonObject &result);
+    bool VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, const QString &passwordToken, QJsonObject &result);
+    bool SetClaimOptionsKeyReplacement(const QString &wallet_id, const QString &xfp, const QStringList &claim_options, const QString &passwordToken, QJsonObject &output, QString &errormsg);
 
     bool RemoveKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &passwordToken, QJsonObject &result);
 
@@ -324,7 +325,8 @@ class Draco : public QObject {
                                      QString &errormsg);
     bool DraftWalletDownloadBackupFile(const QString &xfp, QJsonObject &output, QString &errormsg);
     bool DraftWalletUploadBackupFile(const QMap<QString, QVariant> &requestBody, QJsonObject &output, QString &errormsg);
-    bool DraftWalletSignerVerify(const QString &xfp, const QString &type, QString &errormsg);
+    bool DraftWalletSignerVerify(const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, QString &errormsg);
+    bool DraftWalletSetClaimOptions(const QString &xfp, const QStringList &claim_options, QJsonObject &output, QString &errormsg);
 
     // Supported signers
     bool GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg);

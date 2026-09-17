@@ -39,6 +39,8 @@ QScreen {
             case NUNCHUCKTYPE.ADD_COLDCARD: return _Coldcard
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
             case NUNCHUCKTYPE.ADD_JADE: return _Jade
+            // KEEPKEY: reuses the Trezor flow.
+            case NUNCHUCKTYPE.ADD_KEEPKEY: return _Trezor
             default: return null
             }
         }

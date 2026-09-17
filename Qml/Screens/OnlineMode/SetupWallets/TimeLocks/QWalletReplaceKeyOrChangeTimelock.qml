@@ -179,19 +179,38 @@ QOnScreenContentTypeB {
                                         _info.open()
                                     }
                                     onBackupClicked: {
-                                        if(modelData.wallet_type === "MULTI_SIG") {
-                                            _importColdcardBackup.xfp = modelData.xfp
-                                            _importColdcardBackup.open()
-                                            var _input = {
-                                                type: "open-import-encrypted-backup",
-                                                fingerPrint: modelData.xfp,
+                                        // BUGFIX (NUN-10192): Replace Key now routes by claim_options like Add Key.
+                                        // startReplaceKeyAtIndex() moved to the top - must set currentSigner
+                                        // before requestSetClaimOptions/requestVerifyX read it.
+                                        dashInfo.startReplaceKeyAtIndex(index)
+                                        var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+                                        var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                                        var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                                        if (hasSeed && hasEncrypted) {
+                                            _verifyBothBackups.open2(modelData.xfp, modelData.tag)
+                                        } else if (hasEncrypted) {
+                                            var verifs = modelData.verifications !== undefined ? modelData.verifications : []
+                                            var encryptedVerif = null
+                                            for (var vi = 0; vi < verifs.length; vi++) {
+                                                if (verifs[vi].verification_method === "ENCRYPTED_BACKUP") { encryptedVerif = verifs[vi]; break }
                                             }
-                                            dashInfo.requestBackupColdcard(_input)
+                                            if (encryptedVerif === null) {
+                                                _encryptedBackupFlow.startFlow(modelData.tag, modelData.xfp)
+                                            } else {
+                                                _encryptedBackupFlow.startVerifyOnly(modelData.tag, modelData.xfp)
+                                            }
+                                        } else if (hasSeed) {
+                                            GroupWallet.qAddHardware = modelData.hwType
+                                            _backupSeedPhraseFlow.startFlow()
+                                        } else if (modelData.wallet_type === "MULTI_SIG") {
+                                            // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
+                                            // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
+                                            _changeDistribution.hwType = modelData.hwType
+                                            _changeDistribution.openFor(modelData.xfp, modelData.tag)
                                         } else {
                                             GroupWallet.qAddHardware = modelData.hwType
                                             _backupSeedPhraseFlow.startFlow()
                                         }
-                                        dashInfo.startReplaceKeyAtIndex(index)
                                     }
                                 }
                             }
@@ -453,6 +472,64 @@ QOnScreenContentTypeB {
 
     QBackupSeedPhraseFlow {
         id: _backupSeedPhraseFlow
+    }
+    QEncryptedBackupFlow {
+        id: _encryptedBackupFlow
+    }
+    QVerifyBothBackups {
+        id: _verifyBothBackups
+        onChangeShareMethod: {
+            // Same as QWalletCreationPendingOnchainRead.qml: reopen Key Distribution Choice, no dead-end.
+            var idx = findReplaceKeyIndexByXfp(_verifyBothBackups.xfp)
+            if (idx < 0) return
+            _changeDistribution.hwType = dashInfo.replaceKeys[idx].hwType
+            _changeDistribution.openFor(_verifyBothBackups.xfp, _verifyBothBackups.signerTag)
+        }
+    }
+    function findReplaceKeyIndexByXfp(xfp) {
+        var keys = dashInfo.replaceKeys
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i].xfp === xfp) return i
+        }
+        return -1
+    }
+    QPopupOverlayScreen {
+        id: _changeDistribution
+        property string xfp: ""
+        property string signerTag: ""
+        property int hwType: -1
+        content: _changeDistributionComp
+        Component {
+            id: _changeDistributionComp
+            QKeyDistributionChoice {
+                onDistributionChosen: function(claimOptions) {
+                    var idx = findReplaceKeyIndexByXfp(_changeDistribution.xfp)
+                    if (idx < 0) { _changeDistribution.close(); return }
+                    dashInfo.startReplaceKeyAtIndex(idx)
+                    if (!(GroupWallet.qIsByzantine ? GroupWallet : UserWallet).requestSetClaimOptions(claimOptions)) {
+                        return
+                    }
+                    GroupWallet.refresh()
+                    _changeDistribution.close()
+                    var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                    var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                    if (hasSeed && hasEncrypted) {
+                        _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag)
+                    } else if (hasEncrypted) {
+                        _encryptedBackupFlow.startFlow(_changeDistribution.signerTag, _changeDistribution.xfp)
+                    } else if (hasSeed) {
+                        GroupWallet.qAddHardware = _changeDistribution.hwType
+                        _backupSeedPhraseFlow.startFlow()
+                    }
+                }
+            }
+        }
+        function openFor(keyXfp, tag) {
+            xfp = keyXfp
+            signerTag = tag
+            open()
+            if (itemInfo) itemInfo.refresh(tag)
+        }
     }
 
     ReplaceKeyOrChangeTimelockViewModel {

@@ -4410,12 +4410,16 @@ bool Draco::ResetKeyReplacement(const QString &wallet_id, const QString& passwor
     return false;
 }
 
-bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString& type, const QString& passwordToken, QJsonObject& result)
+bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString& verification_method, const QString& type, const QString& key_checksum, const QString& passwordToken, QJsonObject& result)
 {
     if (wallet_id.isEmpty() || xfp.isEmpty()) return false;
 
     QJsonObject data;
+    data["verification_method"] = verification_method;
     data["verification_type"] = type;
+    if (!key_checksum.isEmpty()) {
+        data["key_checksum"] = key_checksum;
+    }
     QMap<QString, QString> params;
     params["Verify-token"] = passwordToken;
     int reply_code = -1;
@@ -4436,6 +4440,37 @@ bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, c
             return false;
         }
     }
+    return false;
+}
+
+bool Draco::SetClaimOptionsKeyReplacement(const QString &wallet_id, const QString &xfp, const QStringList &claim_options, const QString &passwordToken, QJsonObject &output, QString &errormsg)
+{
+    if (wallet_id.isEmpty() || xfp.isEmpty()) return false;
+
+    QJsonObject data;
+    data["claim_options"] = QJsonArray::fromStringList(claim_options);
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_SET_CLAIM_OPTIONS];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = m_rest->putSync(cmd, {}, params, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        } else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    errormsg = reply_msg;
     return false;
 }
 
@@ -5109,10 +5144,14 @@ bool Draco::DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBo
     return false;
 }
 
-bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& type, QString& errormsg)
+bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg)
 {
     QJsonObject data;
+    data["verification_method"] = verification_method;
     data["verification_type"] = type;
+    if (!key_checksum.isEmpty()) {
+        data["key_checksum"] = key_checksum;
+    }
     QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_VERIFY];
     cmd.replace("{xfp}", xfp);
 
@@ -5132,6 +5171,32 @@ bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& type, QSt
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
+    return false;
+}
+
+bool Draco::DraftWalletSetClaimOptions(const QString& xfp, const QStringList& claim_options, QJsonObject& output, QString& errormsg)
+{
+    QJsonObject data;
+    data["claim_options"] = QJsonArray::fromStringList(claim_options);
+    QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_SET_CLAIM_OPTIONS];
+    cmd.replace("{xfp}", xfp);
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        } else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    errormsg = reply_msg;
     return false;
 }
 

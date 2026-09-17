@@ -705,6 +705,10 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QCheckYourJadeFirmware.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QCheckYourLedgerFirmware.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QHowOnChainTimelockWorks.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QKeyDistributionChoice.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QEncryptedBackupFlow.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyBothBackups.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseGuide.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseQuestion.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchain.qml</file>

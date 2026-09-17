@@ -74,11 +74,13 @@ QBadge {
                     case "TREZOR":      value = "Wired"; break
                     case "BITBOX":      value = "Wired"; break
                     case "JADE":        value = "Wired"; break
+                    case "KEEPKEY":     value = "Wired"; break
                     case "PLATFORM":    value = "Platform"; break
                     case "INHERITANCE":
                     case "KEYSTONE":
                     case "PASSPORT":
                     case "SEEDSIGNER":
+                    case "KRUX":
                     default:value = "Unknown"; break
                     }
                 }
