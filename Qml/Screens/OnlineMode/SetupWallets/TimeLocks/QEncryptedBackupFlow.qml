@@ -30,6 +30,8 @@ import "../../../../Components/customizes"
 import "../../../../Components/customizes/Chats"
 import "../../../../Components/customizes/Texts"
 import "../../../../Components/customizes/Buttons"
+import "../../../../Components/customizes/Popups"
+import "../../../OnlineMode/SetupWallets"
 import "../../../../../localization/STR_QML.js" as STR
 
 // Branch (b) - Encrypted backup: Setup 15D/15aD/15bD/16D/17D/18D, generic for all hardware incl. COLDCARD.
