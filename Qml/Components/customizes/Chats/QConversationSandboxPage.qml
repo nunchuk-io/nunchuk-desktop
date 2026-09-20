@@ -290,7 +290,9 @@ Rectangle {
                 }
                 QTextField {
                     id: messageField
-                    width: parent.width - emojiPicker.width - parent.spacing
+                    // BUGFIX: was missing a Send button entirely (unlike QConversationPage.qml);
+                    // reserve space for it here too, not just the emoji picker.
+                    width: parent.width - emojiPicker.width - sendMessageBtn.width - parent.spacing*2
                     height: parent.height
                     placeholderText: "Type your message..."
                     inputMethodHints: Qt.ImhNone
@@ -328,6 +330,30 @@ Rectangle {
                     id: emojiPicker
                     targetInput: messageField
                     anchors.verticalCenter: parent.verticalCenter
+                }
+                // BUGFIX: this page had no Send button; only Enter/Return could send a message.
+                MouseArea {
+                    id: sendMessageBtn
+                    width: 40
+                    height: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    enabled: messageField.text.length > 0
+                    hoverEnabled: true
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    ToolTip.visible: enabled && containsMouse
+                    ToolTip.delay: 500
+                    ToolTip.text: STR.STR_QML_002
+                    QIcon {
+                        anchors.centerIn: parent
+                        iconSize: 24
+                        scale: sendMessageBtn.pressed
+                               ? 0.9
+                               : (sendMessageBtn.containsMouse && sendMessageBtn.enabled ? 1.1 : 1)
+                        source: sendMessageBtn.enabled
+                                ? "qrc:/Images/Images/SendMessage-dark.png"
+                                : "qrc:/Images/Images/SendMessage.png"
+                    }
+                    onClicked: messageField.sendRequest()
                 }
             }
         }

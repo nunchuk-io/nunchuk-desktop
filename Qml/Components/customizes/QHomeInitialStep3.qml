@@ -343,6 +343,10 @@ Item {
     // When no banners are visible, this equals the original _item.height * 0.49.
     // Clamped to >= 0 so a small/min-height window with several banners
     // visible at once cannot push this negative and break the layout.
+    // BUGFIX: the >= 0 clamp alone still let this shrink below the Quick-receive
+    // column's own content height, so that column (vertically centered here)
+    // overflowed into the banners above/transactions below. Also floor it at
+    // quickReceiveCol's real height so it can shrink but never clip/overlap it.
     QAreaWalletDetail{
         id: _walletDes
         anchors {
@@ -352,7 +356,8 @@ Item {
             right: parent.right
         }
         width: _item.width
-        height: Math.max(0, (_item.height - _bannersConsumedHeight) * 0.49)
+        height: Math.max(area_quickrecevied.visible ? quickReceiveCol.height : 0,
+                          Math.max(0, (_item.height - _bannersConsumedHeight) * 0.49))
             isAssisted: walletIsAssisted
             isHotWallet: walletKeyNeedBackup
             isLocked: walletIsLocked
@@ -701,6 +706,7 @@ Item {
                     height: parent.height
                     visible: (myRole !== "FACILITATOR_ADMIN")
                     Column {
+                        id: quickReceiveCol
                         width: parent.width
                         anchors.centerIn: parent
                         spacing: 16*QAPP_DEVICE_HEIGHT_RATIO

@@ -273,19 +273,23 @@ void Draco::refreshContacts()
 {
     if(CLIENT_INSTANCE->isNunchukLoggedIn()){
         QtConcurrent::run([this]() {
-            QList<DracoUser> contacts = getContacts();
+            // Pending lists sync first (and as soon as each is fetched) so
+            // sent/received requests show up without waiting on the general
+            // contacts list, which is fetched and synced last.
             QList<DracoUser> contactsSent = getContactsSent();
-            QList<DracoUser> contactsReceived = getContactsReceived();
-
-            DBG_INFO << "contacts size: " << contacts.size();
-            QThreadForwarder::instance()->forwardInQueuedConnection([contacts](){
-                CLIENT_INSTANCE->syncContacts(contacts);
-            });
             QThreadForwarder::instance()->forwardInQueuedConnection([contactsSent](){
                 CLIENT_INSTANCE->syncContactsSent(contactsSent);
             });
+
+            QList<DracoUser> contactsReceived = getContactsReceived();
             QThreadForwarder::instance()->forwardInQueuedConnection([contactsReceived](){
                 CLIENT_INSTANCE->syncContactsReceived(contactsReceived);
+            });
+
+            QList<DracoUser> contacts = getContacts();
+            DBG_INFO << "contacts size: " << contacts.size();
+            QThreadForwarder::instance()->forwardInQueuedConnection([contacts](){
+                CLIENT_INSTANCE->syncContacts(contacts);
             });
         });
     }
@@ -959,6 +963,9 @@ QVariant Draco::requestFriends(const QVariant emails)
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject dataObj = jsonObj["data"].toObject();
             QStringList failed_emails = dataObj["failed_emails"].toVariant().toStringList();
+            // Sync sent-list now (on this thread) so the UI shows the new
+            // pending contact immediately, before the caller closes the popup.
+            CLIENT_INSTANCE->syncContactsSent(getContactsSent());
             refreshContacts();
             ret["result"] = true;
             ret["failedEmails"] = failed_emails;
