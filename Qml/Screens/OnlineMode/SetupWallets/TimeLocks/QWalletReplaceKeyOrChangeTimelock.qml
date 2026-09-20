@@ -151,7 +151,7 @@ QOnScreenContentTypeB {
                                 model: dashInfo.replaceKeys
                                 QReplaceRequestKey {
                                     width: parent.width  // = _contentColumn.width - 8 = 338
-                                    onTapsignerClicked: {
+                                    onInheritanceKeyClicked: {
                                         dashInfo.startReplaceKeyAtIndex(index)
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {
@@ -167,7 +167,9 @@ QOnScreenContentTypeB {
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {
                                             _hardwareAddKey.key_index = modelData.key_index
-                                            _hardwareAddKey.isInheritance = false
+                                            // BUGFIX: was hardcoded false; any hardware slot can now be an
+                                            // inheritance key per backend is_inheritance, so read it from modelData.
+                                            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
                                             _hardwareAddKey.open()
                                         } else {
                                             GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)

@@ -247,6 +247,19 @@ QPopupOverlayScreen {
             label.text: STR.STR_QML_1621
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: stateFlow.setScreenFlow("device-guide")
+            // BUGFIX: once the backup file is submitted to the server, Back must not be usable anymore.
+            property bool submitted: false
+            bottomLeft: submitted ? _hiddenBack : _visibleBack
+            Component { id: _hiddenBack; Item {} }
+            Component {
+                id: _visibleBack
+                QButtonTextLink {
+                    width: 97
+                    height: 48
+                    label: STR.STR_QML_059
+                    onButtonClicked: prevClicked()
+                }
+            }
             content: Item {
                 Row {
                     spacing: 36
@@ -284,6 +297,7 @@ QPopupOverlayScreen {
                 id: fileDialog
                 fileMode: FileDialog.OpenFile
                 onAccepted: {
+                    submitted = true
                     var _input = {type: "import-encrypted-backup", fingerPrint: _root.xfp, currentFile: fileDialog.currentFile}
                     GroupWallet.dashboardInfo.requestBackupColdcard(_input)
                 }

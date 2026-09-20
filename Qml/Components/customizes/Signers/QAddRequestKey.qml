@@ -33,8 +33,18 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     width: 322
-    height: 72
-    signal tapsignerClicked()
+    // BUGFIX: row was a fixed 72px, so the Setup 20D-20gD caption line(s) (File/Seed or "Sharing
+    // method not set") overflowed into the next row. Grow the row by 16px per visible caption line.
+    readonly property int captionLines: {
+        if (!modelData.is_inheritance || !modelData.has) return 0
+        if (inheritanceState() === "SET_UP") return 1
+        var n = 0
+        if (hasClaimOption("ENCRYPTED_BACKUP")) n++
+        if (hasClaimOption("SEED_PHRASE")) n++
+        return n
+    }
+    height: 72 + captionLines * 16
+    signal inheritanceKeyClicked()
     signal serkeyClicked()
     signal hardwareClicked()
     signal backupClicked()
@@ -91,7 +101,7 @@ Item {
             label.font.pixelSize: 16
             onButtonClicked: {
                 if (modelData.is_inheritance) {
-                    tapsignerClicked()
+                    inheritanceKeyClicked()
                 } else {
                     hardwareClicked()
                 }
@@ -255,21 +265,11 @@ Item {
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
-                    Row {
-                        spacing: 4
-                        QBadge {
-                            width: 77
-                            height: 16
-                            fontSize: 10
-                            text: STR.STR_QML_1600
-                            color: "#EAEAEA"
-                        }
-                        QAccountIndexs {
-                            height: 16
-                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
-                            accountIndexs: modelData.account_indexs
-                            walletType: modelData.wallet_type
-                        }
+                    QAccountIndexs {
+                        height: 16
+                        visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
+                        accountIndexs: modelData.account_indexs
+                        walletType: modelData.wallet_type
                     }
                 }
             }
@@ -280,6 +280,27 @@ Item {
                     rightMargin: 12
                 }
                 sourceComponent: addButton
+            }
+            // Setup 01aD: "Inheritance" corner ribbon (replaces the old inline grey badge).
+            Rectangle {
+                anchors {
+                    top: parent.top
+                    right: parent.right
+                    topMargin: -1
+                    rightMargin: 16
+                }
+                height: 20
+                width: _ribbonLabel.paintedWidth + 16
+                radius: 4
+                color: "#CF4018"
+                QLato {
+                    id: _ribbonLabel
+                    anchors.centerIn: parent
+                    text: STR.STR_QML_1600
+                    color: "#FFFFFF"
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                }
             }
         }
     }
@@ -383,7 +404,16 @@ Item {
                     Column {
                         width: parent.width
                         spacing: 2
-                        visible: modelData.is_inheritance && claimOptions().length > 0
+                        visible: modelData.is_inheritance
+                        // Setup 20dD: "Sharing method not set" caption for the SET_UP state.
+                        QLato {
+                            width: parent.width
+                            visible: inheritanceState() === "SET_UP"
+                            text: STR.STR_QML_2311
+                            font.pixelSize: 11
+                            color: "#5B6268"
+                            horizontalAlignment: Text.AlignLeft
+                        }
                         QLato {
                             width: parent.width
                             visible: hasClaimOption("ENCRYPTED_BACKUP")

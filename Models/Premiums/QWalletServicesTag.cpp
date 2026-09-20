@@ -425,8 +425,11 @@ void QWalletServicesTag::configWalletSetup() {
     QString errormsg;
     bool ret = Draco::instance()->GetWalletSetupConfig(config, errormsg);
     if (ret) {
-        DBG_INFO << config;
+        // Full response, so supported_signers[]/claim_options can be checked (NUN-10192).
+        DBG_INFO << "GetWalletSetupConfig response:" << config;
         setSetupConfig(config);
+    } else {
+        DBG_INFO << "GetWalletSetupConfig failed:" << errormsg;
     }
 }
 

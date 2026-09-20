@@ -62,7 +62,8 @@ QPopupOverlayScreen {
         id: your_inheritance_key
         QYourInheritanceKey {
             onCloseClicked: _infoPopup.close()
-            onPrevClicked: _infoPopup.close()
+            // BUGFIX: Back must go to the previous screen, not cancel the whole flow; Close/X does that.
+            onPrevClicked: stateScreen.backScreen()
             onNextClicked: stateScreen.setScreenFlow("important-notice-about-passphrase")
         }
     }
@@ -71,7 +72,8 @@ QPopupOverlayScreen {
         id: important_notice_about_passphrase
         QImportantNoticeAboutPassphraseOnchain {
             onCloseClicked: _infoPopup.close()
-            onPrevClicked: _infoPopup.close()
+            // BUGFIX: Back returns to "your-inheritance-key", it must not cancel the flow.
+            onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
                 _infoPopup.close()
                 _infoPopup.nextClicked()

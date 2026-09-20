@@ -306,6 +306,12 @@ QVariant QSignerManagement::claimOptionsForTag(const QString& tag, const QString
     return QVariant::fromValue(QVariantList());
 }
 
+// BUGFIX: setupConfigJs() only fetches once per app session (cached even if stale/legacy);
+// call this before reading claim options so a server-side rollout doesn't need an app restart.
+void QSignerManagement::refreshSetupConfig() {
+    QWalletServicesTag::instance()->configWalletSetup();
+}
+
 QString QSignerManagement::claimNoteForTag(const QString& tag, const QString& walletType) const {
     QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
     QJsonArray supported_signers = config["supported_signers"].toArray();

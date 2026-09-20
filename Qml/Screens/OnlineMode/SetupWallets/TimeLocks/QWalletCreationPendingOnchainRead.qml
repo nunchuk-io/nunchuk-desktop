@@ -129,7 +129,7 @@ QOnScreenContentTypeB {
                                 model: dashInfo.keys
                                 QAddRequestKey {
                                     width: parent.width  // = _contentColumn.width - 8 = 338
-                                    onTapsignerClicked: {
+                                    onInheritanceKeyClicked: {
                                         dashInfo.startAddKeyAtIndex(index)
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {

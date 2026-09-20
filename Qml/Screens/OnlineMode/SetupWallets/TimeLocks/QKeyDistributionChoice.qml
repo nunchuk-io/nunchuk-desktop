@@ -41,6 +41,8 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_2256
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    // BUGFIX: Back had no handler at all, so prevClicked() fired into the void and did nothing.
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     // BUGFIX: Next used to stay enabled even when selected_option wasn't in availableOptions.
     nextEnable: {
         var item = maps.find(function(e) { return e.id === selected_option })
@@ -70,6 +72,9 @@ QOnScreenContentTypeA {
 
     function refresh(tag) {
         signerTag = tag
+        // BUGFIX: setup config is cached once per app session; force a fresh fetch here so a
+        // server-side rollout (e.g. new supported_signers[] entries) is picked up without a restart.
+        SignerManagement.refreshSetupConfig()
         // BUGFIX: pass wallet_type so claim_options/claim_note match the right supported_signers[] entry.
         var walletType = SignerManagement.currentSigner.wallet_type !== undefined ? SignerManagement.currentSigner.wallet_type : ""
         availableOptions = SignerManagement.claimOptionsForTag(tag, walletType) || []

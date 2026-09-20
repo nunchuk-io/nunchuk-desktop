@@ -28,6 +28,7 @@ import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/Signers"
 import "../../../Components/customizes/Popups"
 import "../../OnlineMode/AddHardwareKeys"
+import "TimeLocks"
 import "../../../../localization/STR_QML.js" as STR
 
 
@@ -147,17 +148,24 @@ QOnScreenContentTypeB {
                                 id: signers
                                 model: GroupWallet.dashboardInfo.keys
                                 QAddRequestKey {
-                                    onTapsignerClicked: {
-                                        // _info.contentText = STR.STR_QML_961
-                                        // _info.open()
-                                        _hardwareAddKey.key_index = modelData.key_index
-                                        _hardwareAddKey.isInheritance = true
-                                        _hardwareAddKey.open()
+                                    onInheritanceKeyClicked: {
+                                        // BUGFIX: was missing the guide (02D/03D) and the "has" resume check;
+                                        // now matches QWalletCreationPendingOnchainRead.qml.
                                         dashInfo.startAddKeyAtIndex(index)
+                                        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+                                        if (!has) {
+                                            _hardwareAddKey.key_index = modelData.key_index
+                                            _inheritanceConfigureGuide.openGuide()
+                                        } else {
+                                            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
+                                            dashInfo.requestStartKeyCreate(modelData.tag, true)
+                                        }
                                     }
                                     onHardwareClicked: {
                                         _hardwareAddKey.key_index = modelData.key_index
-                                        _hardwareAddKey.isInheritance = false
+                                        // BUGFIX: was hardcoded false; any hardware slot can now be an
+                                        // inheritance key per backend is_inheritance, so read it from modelData.
+                                        _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
                                         _hardwareAddKey.open()
                                         dashInfo.startAddKeyAtIndex(index)
                                     }
@@ -166,13 +174,37 @@ QOnScreenContentTypeB {
                                         _info.open()
                                     }
                                     onBackupClicked: {
-                                        _importColdcardBackup.xfp = modelData.xfp
-                                        _importColdcardBackup.open()
-                                        var _input = {
-                                            type: "open-import-encrypted-backup",
-                                            fingerPrint: modelData.xfp,
+                                        // BUGFIX (NUN-10192): was unconditional legacy COLDCARD import; now
+                                        // routes by claim_options like QWalletCreationPendingOnchainRead.qml.
+                                        dashInfo.startAddKeyAtIndex(index)
+                                        var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+                                        var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                                        var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                                        if (hasSeed && hasEncrypted) {
+                                            _verifyBothBackups.open2(modelData.xfp, modelData.tag)
+                                        } else if (hasEncrypted) {
+                                            var verifs = modelData.verifications !== undefined ? modelData.verifications : []
+                                            var encryptedVerif = null
+                                            for (var vi = 0; vi < verifs.length; vi++) {
+                                                if (verifs[vi].verification_method === "ENCRYPTED_BACKUP") { encryptedVerif = verifs[vi]; break }
+                                            }
+                                            if (encryptedVerif === null) {
+                                                _encryptedBackupFlow.startFlow(modelData.tag, modelData.xfp)
+                                            } else {
+                                                _encryptedBackupFlow.startVerifyOnly(modelData.tag, modelData.xfp)
+                                            }
+                                        } else if (hasSeed) {
+                                            GroupWallet.qAddHardware = modelData.hwType
+                                            _backupSeedPhraseFlow.startFlow()
+                                        } else if (modelData.wallet_type === "MULTI_SIG") {
+                                            // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
+                                            // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
+                                            _changeDistribution.hwType = modelData.hwType
+                                            _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                        } else {
+                                            GroupWallet.qAddHardware = modelData.hwType
+                                            _backupSeedPhraseFlow.startFlow()
                                         }
-                                        dashInfo.requestBackupColdcard(_input)
                                     }
                                 }
                             }
@@ -184,6 +216,14 @@ QOnScreenContentTypeB {
     }
     onPrevClicked: closeScreen()
     bottomRight: Item{}
+
+    QInheritanceConfigureGuide {
+        id: _inheritanceConfigureGuide
+        onNextClicked: {
+            _hardwareAddKey.isInheritance = true
+            _hardwareAddKey.open()
+        }
+    }
 
     QPopupHardwareAddKey {
         id: _hardwareAddKey
@@ -210,5 +250,75 @@ QOnScreenContentTypeB {
 
     QPopupImportColdcardBackup {
         id: _importColdcardBackup
+    }
+
+    QBackupSeedPhraseFlow {
+        id: _backupSeedPhraseFlow
+    }
+    QEncryptedBackupFlow {
+        id: _encryptedBackupFlow
+    }
+    QVerifyBothBackups {
+        id: _verifyBothBackups
+        onChangeShareMethod: {
+            // Same as QWalletCreationPendingOnchainRead.qml: reopen Key Distribution Choice, no dead-end.
+            var idx = findKeyIndexByXfp(_verifyBothBackups.xfp)
+            if (idx < 0) return
+            _changeDistribution.hwType = dashInfo.keys[idx].hwType
+            _changeDistribution.openFor(_verifyBothBackups.xfp, _verifyBothBackups.signerTag)
+        }
+    }
+
+    // Looks up a key's index in dashInfo.keys by xfp, for contexts that only have xfp/tag, not the Repeater index.
+    function findKeyIndexByXfp(xfp) {
+        var ks = dashInfo.keys
+        for (var i = 0; i < ks.length; i++) {
+            if (ks[i].xfp === xfp) return i
+        }
+        return -1
+    }
+
+    // "Change how you share this key" popup - wraps QKeyDistributionChoice in a QPopupOverlayScreen,
+    // same pattern as QWalletCreationPendingOnchainRead.qml.
+    QPopupOverlayScreen {
+        id: _changeDistribution
+        property string xfp: ""
+        property string signerTag: ""
+        property int hwType: -1
+        content: _changeDistributionComp
+        Component {
+            id: _changeDistributionComp
+            QKeyDistributionChoice {
+                onDistributionChosen: function(claimOptions) {
+                    var idx = findKeyIndexByXfp(_changeDistribution.xfp)
+                    if (idx < 0) { _changeDistribution.close(); return }
+                    dashInfo.startAddKeyAtIndex(idx)
+                    // BUGFIX (like SCR_ADD_HARDWARE.qml): check the result before closing/navigating on.
+                    if (!(GroupWallet.qIsByzantine ? GroupWallet : UserWallet).requestSetClaimOptions(claimOptions)) {
+                        return
+                    }
+                    // BUGFIX: missing refresh, same as SCR_ADD_HARDWARE.qml.
+                    GroupWallet.refresh()
+                    _changeDistribution.close()
+                    var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                    var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                    if (hasSeed && hasEncrypted) {
+                        _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag)
+                    } else if (hasEncrypted) {
+                        _encryptedBackupFlow.startFlow(_changeDistribution.signerTag, _changeDistribution.xfp)
+                    } else if (hasSeed) {
+                        GroupWallet.qAddHardware = _changeDistribution.hwType
+                        _backupSeedPhraseFlow.startFlow()
+                    }
+                }
+            }
+        }
+        function openFor(keyXfp, tag) {
+            xfp = keyXfp
+            signerTag = tag
+            open()
+            // ids inside Component {} aren't reachable from outside; use itemInfo (Loader.item) instead.
+            if (itemInfo) itemInfo.refresh(tag)
+        }
     }
 }
