@@ -339,26 +339,17 @@ Item {
                 }
                 sourceComponent: addButton
             }
-            // Setup 01aD: "Inheritance" corner ribbon (replaces the old inline grey badge).
-            Rectangle {
+            // Setup 01aD: "Inheritance" corner ribbon, per Figma asset Inheritance_badge.svg (81x14 Hug).
+            QImage {
                 anchors {
                     top: parent.top
                     right: parent.right
-                    topMargin: -1
-                    rightMargin: 16
+                    topMargin: 0
+                    rightMargin: 1
                 }
-                height: 20
-                width: _ribbonLabel.paintedWidth + 16
-                radius: 4
-                color: "#CF4018"
-                QLato {
-                    id: _ribbonLabel
-                    anchors.centerIn: parent
-                    text: STR.STR_QML_1600
-                    color: "#FFFFFF"
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
-                }
+                width: 81
+                height: 14
+                source: "qrc:/Images/Images/Inheritance_badge.svg"
             }
         }
     }

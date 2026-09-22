@@ -43,6 +43,55 @@ Item {
     property var inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property var planInfo: inheritancePlanInfo.planInfo
     property string walletName: ServiceSetting.walletInfo.walletName
+
+    // NUN-10192: inheritance_keys[] only carries xfp; claim_options lives on the wallet's own key
+    // list, so cross-reference by xfp to know each key's sharing method(s).
+    function keyClaimOptions(xfp) {
+        var keys = ServiceSetting.walletInfo && ServiceSetting.walletInfo.dashboardInfo ? ServiceSetting.walletInfo.dashboardInfo.keys : []
+        // Case-insensitive match: inheritance_keys[].xfp casing vs dashboardInfo.keys[].xfp casing is unverified.
+        for (var i = 0; i < keys.length; i++) {
+            if (String(keys[i].xfp).toUpperCase() === String(xfp).toUpperCase()) {
+                return keys[i].claim_options !== undefined ? keys[i].claim_options : []
+            }
+        }
+        return []
+    }
+    function keyCardIcon(options) {
+        return options.indexOf("SEED_PHRASE") !== -1 ? "qrc:/Images/Images/key-dark.svg" : "qrc:/Images/Images/change-password-dark.svg"
+    }
+    // Seed-capable keys show "Inheritance key (XFP: ...)"; backup-only (or unclassified) keeps the legacy "Backup Password" title.
+    function keyCardTitle(xfp, options, index, total) {
+        if (options.indexOf("SEED_PHRASE") !== -1) {
+            return total > 1 ? QSTR.STR_QML_2038.arg(index + 1).arg(xfp.toUpperCase()) : QSTR.STR_QML_1984.arg(xfp.toUpperCase())
+        }
+        return QSTR.STR_QML_727
+    }
+    function keyCardSubtitle(options, index, total) {
+        var hasSeed = options.indexOf("SEED_PHRASE") !== -1
+        var hasBackup = options.indexOf("ENCRYPTED_BACKUP") !== -1
+        if (hasSeed && hasBackup) return QSTR.STR_QML_2325
+        if (hasSeed) return total > 1 ? QSTR.STR_QML_2039.arg(index + 1) : QSTR.STR_QML_1986
+        return QSTR.STR_QML_917
+    }
+    // BUGFIX: _img_bg was a fixed height sized for exactly 1 key card; grow it for extra stacked cards (mockup 04D).
+    function extraKeyCardsHeight() {
+        var n = planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
+        return n > 1 ? (n - 1) * 104 : 0
+    }
+    function keyInfoClicked(options) {
+        var hasSeed = options.indexOf("SEED_PHRASE") !== -1
+        var hasBackup = options.indexOf("ENCRYPTED_BACKUP") !== -1
+        if (hasSeed && hasBackup) {
+            _BackupPassword.isFinalStep = false
+            _BackupPassword.open()
+        } else if (hasSeed) {
+            _SeedPhraseBackup.isJointVariant = false
+            _SeedPhraseBackup.open()
+        } else {
+            _BackupPassword.isFinalStep = true
+            _BackupPassword.open()
+        }
+    }
     QContextMenu {
         id: optionMenu
         menuWidth: 300
@@ -72,7 +121,10 @@ Item {
         Rectangle {
             id: _img_bg
             width: parent.width
-            height: vm.distribution_method == "CUSTOMIZE" ? 376 : 486
+            // BUGFIX: the "Funds become claimable after" block used to be excluded from CUSTOMIZE's
+            // layout (visible: false -> Column skips it); now it always shows, so CUSTOMIZE's fixed
+            // budget needs +122 (label + 62px card + the Column spacing this block no longer skips).
+            height: (vm.distribution_method == "CUSTOMIZE" ? 376 + 122 : 486) + extraKeyCardsHeight()
             color: "#D0E2FF"
             Column {
                 anchors.fill: parent
@@ -237,56 +289,63 @@ Item {
                     Row {
                         id: row_key
                         spacing: 12
-                        Row {
+                        QInheritancePlanMagicPhrases {
+                            magicPhrases: vm.assetAllocation
+                            magic: planInfo.magic
+                        }
+                        // NUN-10192: 1 card per inheritance key, content driven by that key's claim_options (mockup 01D-04D).
+                        Column {
                             spacing: 12
-                            QInheritancePlanMagicPhrases {
-                                magicPhrases: vm.assetAllocation
-                                magic: planInfo.magic
-                            }
-                            Rectangle {
-                                width: 393
-                                height: 92
-                                color: "#FFFFFF"
-                                radius: 12
-                                Row {
-                                    spacing: 12
-                                    anchors.fill: parent
-                                    anchors.margins: 12
-                                    QIcon {
-                                        iconSize: 24
-                                        source: "qrc:/Images/Images/change-password-dark.svg"
-                                    }
-                                    Column {
+                            Repeater {
+                                model: planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
+                                Rectangle {
+                                    property string _xfp: planInfo.inheritance_keys[index].xfp
+                                    property var _claimOptions: viewHBinheritancePlanRoot.keyClaimOptions(_xfp)
+                                    width: 393
+                                    height: 92
+                                    color: "#FFFFFF"
+                                    radius: 12
+                                    Row {
                                         spacing: 12
-                                        QLato {
-                                            width: 333
-                                            font.pixelSize: 16
-                                            color: "#1C1C1C"
-                                            text:  QSTR.STR_QML_727
-                                            font.weight: Font.Bold
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        QIcon {
+                                            iconSize: 24
+                                            source: viewHBinheritancePlanRoot.keyCardIcon(_claimOptions)
+                                        }
+                                        Column {
+                                            spacing: 12
                                             QLato {
-                                                anchors.right: parent.right
+                                                width: 333
                                                 font.pixelSize: 16
                                                 color: "#1C1C1C"
-                                                text:  "Info"
-                                                font.underline: true
+                                                text: viewHBinheritancePlanRoot.keyCardTitle(_xfp, _claimOptions, index, planInfo.inheritance_keys.length)
+                                                textFormat: Text.RichText
                                                 font.weight: Font.Bold
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        _BackupPassword.open()
+                                                QLato {
+                                                    anchors.right: parent.right
+                                                    font.pixelSize: 16
+                                                    color: "#1C1C1C"
+                                                    text:  "Info"
+                                                    font.underline: true
+                                                    font.weight: Font.Bold
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        hoverEnabled: true
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: {
+                                                            viewHBinheritancePlanRoot.keyInfoClicked(_claimOptions)
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
-                                        QLato {
-                                            font.pixelSize: 16
-                                            color: "#1C1C1C"
-                                            text: QSTR.STR_QML_917
-                                            width: 333
-                                            wrapMode: Text.WordWrap
+                                            QLato {
+                                                font.pixelSize: 16
+                                                color: "#1C1C1C"
+                                                text: viewHBinheritancePlanRoot.keyCardSubtitle(_claimOptions, index, planInfo.inheritance_keys.length)
+                                                width: 333
+                                                wrapMode: Text.WordWrap
+                                            }
                                         }
                                     }
                                 }
@@ -294,7 +353,7 @@ Item {
                         }
                     }
                     Column {
-                        visible: vm.distribution_method === "LUMP_SUM"
+                        // BUGFIX: off-chain timelock value is method-agnostic (NUN-10192); must always show.
                         spacing: 12
                         QLato {
                             font.pixelSize: 16
@@ -466,12 +525,13 @@ Item {
     }
     Connections {
         target: inheritancePlanInfo
-        onSecurityQuestionClosed: {
+        // BUGFIX: modernize deprecated implicit onFoo Connections syntax (Qt warning), no behavior change.
+        function onSecurityQuestionClosed() {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 _Security.close()
             }
         }
-        onInheritanceDummyTransactionAlert: {
+        function onInheritanceDummyTransactionAlert() {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 QMLHandle.sendEvent(EVT.EVT_HEALTH_CHECK_STARTING_REQUEST)
             }

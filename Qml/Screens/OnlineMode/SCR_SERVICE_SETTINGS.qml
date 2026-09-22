@@ -193,6 +193,16 @@ QScreen {
 
     QPopupTheBackupPassword {
         id: _BackupPassword
+        // NUN-10192: "both methods" key -> continue to the seed-phrase step (joint copy) instead of closing.
+        onContinueClicked: {
+            _BackupPassword.close()
+            _SeedPhraseBackup.isJointVariant = true
+            _SeedPhraseBackup.open()
+        }
+    }
+
+    QPopupTheSeedPhraseBackup {
+        id: _SeedPhraseBackup
     }
 
     QPopupPrepareInheritanceKey {

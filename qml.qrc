@@ -553,6 +553,7 @@
         <file>Qml/Screens/OnlineMode/Coins/QCreateANewCollectionDescription.qml</file>
         <file>Qml/Components/customizes/Buttons/QCheckBoxTypeA.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPopupTheBackupPassword.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPopupTheSeedPhraseBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupLoading.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupSuccess.qml</file>
@@ -972,6 +973,7 @@
         <file>Images/2.Active.svg</file>
         <file>Images/3.Active.svg</file>
         <file>Images/4.Active.svg</file>
+        <file>Images/Inheritance_badge.svg</file>
         <file>Images/5.Active.svg</file>
         <file>Images/compose-white.svg</file>
         <file>Images/Delete.svg</file>
