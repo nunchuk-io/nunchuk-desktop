@@ -192,7 +192,10 @@ Item {
     // shows "Verify backup" here (unlike the Verify-both-backups checklist, where SKIPPED counts as done).
     function methodState(method) {
         var v = verificationFor(method)
-        if (method === "ENCRYPTED_BACKUP" && !v) return "NOT_UPLOADED"
+        // BUGFIX (confirmed via runtime log: backend 400 "Missing encrypted backup" on verify): a
+        // verifications[] entry with verification_type "NONE" can exist before the file is actually
+        // uploaded, so for ENCRYPTED_BACKUP "NONE" must count as NOT_UPLOADED too, matching fileStatusText().
+        if (method === "ENCRYPTED_BACKUP" && (!v || v.verification_type === "NONE")) return "NOT_UPLOADED"
         if (!v || v.verification_type === "NONE") return "PENDING"
         if (v.verification_type === "SKIPPED_VERIFICATION") return "SKIPPED"
         return "VERIFIED"

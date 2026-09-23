@@ -2454,3 +2454,11 @@ var STR_QML_2323 = qsTr("Share the backup itself. If you used a passphrase, shar
 var STR_QML_2324 = qsTr("For joint control, keep both recovery methods with the same party. Share the Magic Phrase with the other party.")
 // NUN-10192: key card subtitle when claim_options has both ENCRYPTED_BACKUP and SEED_PHRASE (mockup 03D/04D).
 var STR_QML_2325 = qsTr("Backup Password, or the seed phrase you backed up earlier")
+
+// NUN-10192: Setup 13bD "Seed phrase verified" result screen (re-add device -> public key match).
+var STR_QML_2326 = qsTr("Seed phrase verified")
+var STR_QML_2327 = qsTr("Public key matches your inheritance key")
+// NUN-10192: Setup 13cD "This key doesn't match" (re-add device -> pubkey mismatch, backend never
+// emitted a failure signal before this fix, so this screen was unreachable).
+var STR_QML_2328 = qsTr("This key doesn't match")
+var STR_QML_2329 = qsTr("The key you re-added derives a different public key, so this seed phrase backup would not recover your inheritance key. Check the words and their order, then try again.")

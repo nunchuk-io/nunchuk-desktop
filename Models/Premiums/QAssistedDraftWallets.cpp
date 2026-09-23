@@ -663,8 +663,12 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
                     msg.resetWarningMessage();
                     bridge::nunchukVerifySingleSigner(device, signer, msg);
                 }
+                // BUGFIX (Setup 13cD root cause): a pubkey mismatch is detected HERE, client-side,
+                // before requestVerifySingleSigner() (the backend call) is ever reached - so the API-level
+                // emit added there can never fire for this case. Only a toast was shown, with no signal for
+                // QML to route to a result screen. Now emits the same signal the API path uses.
                 if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-                    AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+                    emit verifySingleSignerResult(0, msg.what());
                 } else {
                     requestVerifySingleSigner(verifyType, verificationMethod);
                 }
@@ -685,8 +689,10 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
         auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
+        // BUGFIX (Setup 13cD root cause): same as ViaConnectDevice - descriptor mismatch is caught here,
+        // before the backend call, so it must emit the result signal too, not just a toast.
         if (signer.get_descriptor() != qrSigner.get_descriptor()) {
-            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            emit verifySingleSignerResult(0, msg.what());
         } else {
             requestVerifySingleSigner(verifyType, verificationMethod);
         }
@@ -706,8 +712,9 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &file
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
         auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
+        // BUGFIX (Setup 13cD root cause): same as ViaConnectDevice.
         if (signer.get_descriptor() != fileSigner.get_descriptor()) {
-            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            emit verifySingleSignerResult(0, msg.what());
         } else {
             requestVerifySingleSigner(verifyType, verificationMethod);
         }
@@ -739,9 +746,9 @@ bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType, con
             ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
         }
         DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "ret: " << ret << "error_msg: " << error_msg;
-        if (ret) {
-            emit verifySingleSignerResult(1);
-        }
+        // BUGFIX: used to only emit on success, so QML had no way to detect/route a failed verify
+        // (e.g. re-added device derives a different pubkey) - now always emits, carrying error_msg on failure.
+        emit verifySingleSignerResult(ret ? 1 : 0, ret ? QString() : error_msg);
         return ret;
     }
     return false;
@@ -758,9 +765,9 @@ bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyT
             ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
         }
         DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "result: " << result;
-        if (ret) {
-            emit verifySingleSignerResult(1);
-        }
+        // BUGFIX: same as addVerifySingleSigner - always emit; on failure, "result" is the server's
+        // errorObj (VerifyKeyReplacement contract), so forward its "message" field.
+        emit verifySingleSignerResult(ret ? 1 : 0, ret ? QString() : result.value("message").toString());
         return ret;
     }
     return false;

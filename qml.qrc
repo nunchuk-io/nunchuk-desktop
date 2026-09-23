@@ -709,6 +709,7 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QKeyDistributionChoice.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QEncryptedBackupFlow.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyBothBackups.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupConfirmRemoveBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseGuide.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseQuestion.qml</file>
@@ -988,6 +989,7 @@
         <file>Images/logo-vertical-dark.svg</file>
         <file>Images/logo-vertical-light.svg</file>
         <file>Images/importFile.svg</file>
+        <file>Images/Import_encrypted_backup.svg</file>
         <file>Images/Device_Icons/nfc-key-dark.svg</file>
         <file>Images/Device_Icons/nfc-key-light.svg</file>
         <file>Images/Device_Icons/software-key-light.svg</file>

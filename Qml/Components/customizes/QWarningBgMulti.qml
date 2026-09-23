@@ -31,7 +31,10 @@ import "../../../localization/STR_QML.js" as STR
 Rectangle {
     id: _root
     width: 528
-    height: 60
+    // BUGFIX: was a fixed 60 (or whatever a caller overrode it to), so 2-line messages didn't fit the
+    // allotted text height and overflowed past the 12px margins. Self-size from the actual content
+    // instead, so every caller keeps exactly a 12px margin on all 4 sides regardless of line count.
+    height: _content.height + 2*12
     color: "#EAEAEA"
     radius: 12
     property string icon: ""
@@ -39,8 +42,13 @@ Rectangle {
     property int iSize: 24
 
     Row {
-        anchors.fill: parent
-        anchors.margins: 12
+        id: _content
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            margins: 12
+        }
         spacing: 12
         QIcon {
             iconSize: iSize
@@ -51,7 +59,6 @@ Rectangle {
         QLato {
             id: _txt
             width: _root.width - 2*12 - iSize - 12
-            height: 60 - 2*12
             wrapMode: Text.WordWrap
             lineHeight: 28
             lineHeightMode: Text.FixedHeight

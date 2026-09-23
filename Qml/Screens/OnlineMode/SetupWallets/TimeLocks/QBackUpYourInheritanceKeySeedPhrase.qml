@@ -41,9 +41,11 @@ QOnScreenContentTypeA {
     content: Item {
         Row {
             spacing: 36
+            // BUGFIX: 512 overflowed the ~500px content budget (popupHeight 700 - fixed offsets),
+            // pushing content into the bottom Back/Continue button row.
             Rectangle {
                 width: 346
-                height: 512
+                height: 500
                 radius: 24
                 color: "#D0E2FF"
                 QPictureSmooth {
@@ -55,7 +57,7 @@ QOnScreenContentTypeA {
             }
             Item {
                 width: 346
-                height: 512
+                height: 500
                 Column {
                     width: parent.width
                     spacing: 24

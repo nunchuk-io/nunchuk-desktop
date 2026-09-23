@@ -174,7 +174,10 @@ QOnScreenContentTypeB {
                                             for (var vi = 0; vi < verifs.length; vi++) {
                                                 if (verifs[vi].verification_method === "ENCRYPTED_BACKUP") { encryptedVerif = verifs[vi]; break }
                                             }
-                                            if (encryptedVerif === null) {
+                                            // BUGFIX (confirmed via runtime log: backend 400 "Missing encrypted
+                                            // backup" on verify): an entry with verification_type "NONE" can
+                                            // exist before the file is uploaded, same as QVerifyBothBackups.qml.
+                                            if (encryptedVerif === null || encryptedVerif.verification_type === "NONE") {
                                                 _encryptedBackupFlow.startFlow(modelData.tag, modelData.xfp)
                                             } else {
                                                 _encryptedBackupFlow.startVerifyOnly(modelData.tag, modelData.xfp)
@@ -504,24 +507,13 @@ QOnScreenContentTypeB {
                 onDistributionChosen: function(claimOptions) {
                     var idx = findKeyIndexByXfp(_changeDistribution.xfp)
                     if (idx < 0) { _changeDistribution.close(); return }
-                    dashInfo.startAddKeyAtIndex(idx)
-                    // BUGFIX (like SCR_ADD_HARDWARE.qml): check the result before closing/navigating on.
-                    if (!(GroupWallet.qIsByzantine ? GroupWallet : UserWallet).requestSetClaimOptions(claimOptions)) {
+                    // NUN-10192: dropping ENCRYPTED_BACKUP from an already-uploaded key needs confirm-in-app
+                    // first (moved here from QVerifyBothBackups.qml's link click).
+                    if (claimOptions.indexOf("ENCRYPTED_BACKUP") === -1 && hasUploadedEncryptedBackup(_changeDistribution.xfp)) {
+                        _confirmRemoveBackup.openWith(claimOptions)
                         return
                     }
-                    // BUGFIX: missing refresh, same as SCR_ADD_HARDWARE.qml.
-                    GroupWallet.refresh()
-                    _changeDistribution.close()
-                    var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                    var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                    if (hasSeed && hasEncrypted) {
-                        _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag)
-                    } else if (hasEncrypted) {
-                        _encryptedBackupFlow.startFlow(_changeDistribution.signerTag, _changeDistribution.xfp)
-                    } else if (hasSeed) {
-                        GroupWallet.qAddHardware = _changeDistribution.hwType
-                        _backupSeedPhraseFlow.startFlow()
-                    }
+                    applyDistributionChoice(idx, claimOptions)
                 }
             }
         }
@@ -531,6 +523,48 @@ QOnScreenContentTypeB {
             open()
             // ids inside Component {} aren't reachable from outside; use itemInfo (Loader.item) instead.
             if (itemInfo) itemInfo.refresh(tag)
+        }
+    }
+
+    // Shared "apply" step for _changeDistribution, called directly or after _confirmRemoveBackup confirms.
+    function applyDistributionChoice(idx, claimOptions) {
+        dashInfo.startAddKeyAtIndex(idx)
+        // BUGFIX (like SCR_ADD_HARDWARE.qml): check the result before closing/navigating on.
+        if (!(GroupWallet.qIsByzantine ? GroupWallet : UserWallet).requestSetClaimOptions(claimOptions)) {
+            return
+        }
+        // BUGFIX: missing refresh, same as SCR_ADD_HARDWARE.qml.
+        GroupWallet.refresh()
+        _changeDistribution.close()
+        var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+        var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+        if (hasSeed && hasEncrypted) {
+            _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag)
+        } else if (hasEncrypted) {
+            _encryptedBackupFlow.startFlow(_changeDistribution.signerTag, _changeDistribution.xfp)
+        } else if (hasSeed) {
+            GroupWallet.qAddHardware = _changeDistribution.hwType
+            _backupSeedPhraseFlow.startFlow()
+        }
+    }
+
+    // True if this key already has an ENCRYPTED_BACKUP verifications[] entry (i.e. a file was uploaded).
+    function hasUploadedEncryptedBackup(xfp) {
+        var idx = findKeyIndexByXfp(xfp)
+        if (idx < 0) return false
+        var verifs = dashInfo.keys[idx].verifications !== undefined ? dashInfo.keys[idx].verifications : []
+        for (var i = 0; i < verifs.length; i++) {
+            if (verifs[i].verification_method === "ENCRYPTED_BACKUP") return true
+        }
+        return false
+    }
+
+    QPopupConfirmRemoveBackup {
+        id: _confirmRemoveBackup
+        onConfirmed: function(claimOptions) {
+            var idx = findKeyIndexByXfp(_changeDistribution.xfp)
+            if (idx < 0) return
+            applyDistributionChoice(idx, claimOptions)
         }
     }
 

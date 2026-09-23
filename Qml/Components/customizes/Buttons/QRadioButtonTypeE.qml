@@ -50,7 +50,9 @@ Rectangle {
             font.pixelSize: fontPixelSize
             font.weight: fontWeight
             anchors.verticalCenter: parent.verticalCenter
-            width: textWidth > 0 ? textWidth : radioRoot.width - icon.width - 40
+            // BUGFIX: didn't reserve space for the badge, so a wide label + badge (e.g. "Recommended")
+            // could push the badge past the row's right edge instead of just wrapping the label.
+            width: textWidth > 0 ? textWidth : radioRoot.width - icon.width - 40 - (badge.visible ? badge.width + 8 : 0)
             wrapMode: Text.WordWrap
             lineHeightMode: Text.FixedHeight
             lineHeight: 20

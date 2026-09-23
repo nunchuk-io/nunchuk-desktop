@@ -98,7 +98,9 @@ class QAssistedDraftWallets : public QSwitchAPI {
     void hardwareReqChanged();
     void signerExistListChanged();
     void deviceListChanged();
-    void verifySingleSignerResult(int result);
+    // BUGFIX: was fired only on success (1); QML had no event to react to on failure. Now always
+    // fires (0 = failed, 1 = success), carrying the backend error message on failure.
+    void verifySingleSignerResult(int result, const QString &errorMsg = QString());
   public slots:
     void cancelRequestKey(const QString &request_id, const QString &group_id = "");
     void addHardwareFromConfig(int hardwareType, const QString &group_id, int key_index = -1, bool is_inheritance = false);

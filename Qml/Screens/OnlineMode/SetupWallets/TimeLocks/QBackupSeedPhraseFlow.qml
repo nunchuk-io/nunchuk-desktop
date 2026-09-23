@@ -32,6 +32,7 @@ import "../../../../Components/customizes/Texts"
 import "../../../../Components/customizes/Buttons"
 import "../../../../Components/customizes/Popups"
 import "../../../../Components/customizes/QRCodes"
+import "../../../../Components/customizes/Signers"
 import "../../../OnlineMode/AddHardwareKeys"
 import "../../../OnlineMode/SetupWallets"
 import "../../../../../localization/STR_QML.js" as STR
@@ -40,10 +41,26 @@ QPopupOverlayScreen {
     id: _infoPopup
     signal nextClicked()
     property string selected_verify_option: "SELF_VERIFIED"
+    // BUGFIX: backend error message for the failed-verify screen (Setup 13cD) - not the exact
+    // "expected/actual XFP" the mockup shows, since no such structured field is returned by the API.
+    property string verify_error_msg: ""
+    // BUGFIX: snapshot the signer identity once at startFlow(), instead of reading the mutable global
+    // SignerManagement.currentSigner throughout the whole multi-screen flow (the re-add-device step
+    // connects a different physical device without repointing currentSigner, but nothing guarantees
+    // that stays true forever - QEncryptedBackupFlow.qml/QVerifyBothBackups.qml already thread their
+    // own xfp/signerTag this same way for the same reason).
+    property string xfp: ""
+    property string signerTag: ""
+    property string signerName: ""
+    property string signerType: ""
     QScreenStateFlow {
         id: stateFlow
     }
     function startFlow() {
+        xfp = SignerManagement.currentSigner.xfp !== undefined ? SignerManagement.currentSigner.xfp : ""
+        signerTag = SignerManagement.currentSigner.tag !== undefined ? SignerManagement.currentSigner.tag : ""
+        signerName = SignerManagement.currentSigner.name !== undefined ? SignerManagement.currentSigner.name : ""
+        signerType = SignerManagement.currentSigner.type !== undefined ? SignerManagement.currentSigner.type : ""
         _infoPopup.open()
         stateFlow.setScreenFlow("backup-your-inheritance-key-seed-phrase")
     }
@@ -54,6 +71,7 @@ QPopupOverlayScreen {
         {screen: "important-notice-about-passphrase-guide",    screen_component: important_notice_about_passphrase_guide},
         {screen: "re-add-the-stored-key",                      screen_component: _re_add_the_stored_key},
         {screen: "result-restore-key",                         screen_component: _resultRestoreKey},
+        {screen: "result-restore-key-failed",                  screen_component: _resultRestoreKeyFailed},
         {screen: "coldcard-via-file-screen",                   screen_component: coldcard_via_file_screen},
         {screen: "coldcard-via-qr-screen",                     screen_component: coldcard_via_qr_screen},
         {screen: "blockstream-jade-via-qr-screen",               screen_component: blockstream_jade_via_qr_screen}
@@ -113,10 +131,16 @@ QPopupOverlayScreen {
             onNextClicked: stateFlow.setScreenFlow("re-add-the-stored-key")
         }
     }
-    function verifyResult(result) {
+    // BUGFIX (Setup 13bD/13cD): after re-adding the device, success used to just close the popup
+    // silently, and failure did nothing at all (backend never emitted a failure signal at all before
+    // this fix - see QAssistedDraftWallets.cpp). Now routes to the matching result screen either way.
+    function verifyResult(result, errorMsg) {
         if (result == 1) {
             GroupWallet.refresh()
-            _infoPopup.close()
+            stateFlow.setScreenFlow("result-restore-key")
+        } else {
+            verify_error_msg = errorMsg !== undefined ? errorMsg : ""
+            stateFlow.setScreenFlow("result-restore-key-failed")
         }
     }
     Component {
@@ -199,19 +223,184 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result)
+                onVerifySingleSignerResult: verifyResult(result, errorMsg)
             }
         }
     }
+    // Setup 13bD: "Seed phrase verified" - re-added device's public key matched the inheritance key.
     Component {
         id: _resultRestoreKey
-        QScreenResultFinalize {
-            successText: STR.STR_QML_1965
-            successDescription: STR.STR_QML_1966
-            isSuccess: true
+        QOnScreenContent {
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: ""
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            onNextClicked: {
-                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            content: Column {
+                anchors.fill: parent
+                anchors.margins: 36
+                spacing: 24
+                Rectangle {
+                    width: 96; height: 96
+                    radius: 48
+                    color: "#A7F0BA"
+                    QIcon {
+                        iconSize: 60
+                        anchors.centerIn: parent
+                        source: "qrc:/Images/Images/check-dark.svg"
+                    }
+                }
+                QLato {
+                    width: parent.width
+                    height: 40
+                    text: STR.STR_QML_2326
+                    font.pixelSize: 32
+                    font.weight: Font.DemiBold
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Rectangle {
+                    width: 539
+                    height: 76
+                    radius: 12
+                    border.width: 1
+                    border.color: "#DEDEDE"
+                    Row {
+                        anchors { fill: parent; margins: 16 }
+                        spacing: 12
+                        QIcon {
+                            iconSize: 24
+                            anchors.verticalCenter: parent.verticalCenter
+                            source: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+                        }
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+                            QLato {
+                                text: _infoPopup.signerName !== "" ? _infoPopup.signerName : _infoPopup.signerTag
+                                font.weight: Font.ExtraBold
+                                font.pixelSize: 15
+                            }
+                            // NOTE (assumed field name "type", needs visual QA): matches the convention used
+                            // by QSignerDetailDelegate.qml (typeStr: modelData.keyinfo.type) elsewhere.
+                            QSignerBadgeName {
+                                typeStr: _infoPopup.signerType
+                                tag: _infoPopup.signerTag
+                                color: "#DEDEDE"
+                                height: 16
+                                font.weight: Font.Bold
+                                font.pixelSize: 10
+                            }
+                            QLato {
+                                text: STR.STR_QML_2327
+                                font.pixelSize: 12
+                                color: "#5B6268"
+                            }
+                        }
+                    }
+                }
+            }
+            bottomRight: QTextButton {
+                width: 120
+                height: 48
+                label.text: STR.STR_QML_265
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            }
+        }
+    }
+
+    // Setup 13cD: "This key doesn't match" - re-added device derives a different public key.
+    // GAP (needs backend confirmation): the API has no structured expected/actual XFP field, only a
+    // free-text error message, so the card subtitle below falls back to that message, not "XFP: X - expected Y".
+    Component {
+        id: _resultRestoreKeyFailed
+        QOnScreenContent {
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: ""
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            content: Column {
+                anchors.fill: parent
+                anchors.margins: 36
+                spacing: 24
+                Rectangle {
+                    width: 96; height: 96
+                    radius: 48
+                    color: "#FFD7D9"
+                    QIcon {
+                        iconSize: 60
+                        anchors.centerIn: parent
+                        source: "qrc:/Images/Images/error_outline_24px.png"
+                    }
+                }
+                QLato {
+                    width: parent.width
+                    height: 40
+                    text: STR.STR_QML_2328
+                    font.pixelSize: 32
+                    font.weight: Font.DemiBold
+                    verticalAlignment: Text.AlignVCenter
+                }
+                QLato {
+                    width: 539
+                    text: STR.STR_QML_2329
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 24
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                }
+                Rectangle {
+                    width: 539
+                    height: 76
+                    radius: 12
+                    border.width: 1
+                    border.color: "#DEDEDE"
+                    Row {
+                        anchors { fill: parent; margins: 16 }
+                        spacing: 12
+                        QIcon {
+                            iconSize: 24
+                            anchors.verticalCenter: parent.verticalCenter
+                            source: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+                        }
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+                            QLato {
+                                text: _infoPopup.signerName !== "" ? _infoPopup.signerName : _infoPopup.signerTag
+                                font.weight: Font.ExtraBold
+                                font.pixelSize: 15
+                            }
+                            QSignerBadgeName {
+                                typeStr: _infoPopup.signerType
+                                tag: _infoPopup.signerTag
+                                color: "#DEDEDE"
+                                height: 16
+                                font.weight: Font.Bold
+                                font.pixelSize: 10
+                            }
+                            // GAP: no expected/actual XFP field from the API - show the backend's own
+                            // error message when present, else just this key's XFP.
+                            QLato {
+                                text: _infoPopup.verify_error_msg !== "" ? _infoPopup.verify_error_msg : "XFP: " + _infoPopup.xfp.toUpperCase()
+                                font.pixelSize: 12
+                                color: "#5B6268"
+                                wrapMode: Text.WordWrap
+                                width: 380
+                            }
+                        }
+                    }
+                }
+            }
+            bottomRight: QTextButton {
+                width: label.paintedWidth + 32
+                height: 48
+                label.text: STR.STR_QML_1632
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: stateFlow.setScreenFlow("re-add-the-stored-key")
             }
         }
     }
@@ -226,7 +415,7 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result)
+                onVerifySingleSignerResult: verifyResult(result, errorMsg)
             }
         }
     }
@@ -240,7 +429,7 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result)
+                onVerifySingleSignerResult: verifyResult(result, errorMsg)
             }
         }
     }
@@ -254,7 +443,7 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result)
+                onVerifySingleSignerResult: verifyResult(result, errorMsg)
             }
         }
     }

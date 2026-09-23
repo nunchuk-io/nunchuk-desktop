@@ -147,9 +147,9 @@ QPopupOverlayScreen {
                             }
                         }
                     }
+                    // BUGFIX: no explicit height - QWarningBgMulti now self-sizes to its 2-line text.
                     QWarningBgMulti {
                         width: 539
-                        height: 48
                         icon: "qrc:/Images/Images/info-60px.svg"
                         txt.text: STR.STR_QML_2295
                     }
@@ -212,9 +212,9 @@ QPopupOverlayScreen {
                             }
                         }
                     }
+                    // BUGFIX: no explicit height - self-sizes now.
                     QWarningBgMulti {
                         width: 539
-                        height: 48
                         visible: _root.signerTag === "KEYSTONE"
                         icon: "qrc:/Images/Images/info-60px.svg"
                         txt.text: STR.STR_QML_2298.arg(_root.deviceName(_root.signerTag))
@@ -263,25 +263,121 @@ QPopupOverlayScreen {
             content: Item {
                 Row {
                     spacing: 36
+                    // BUGFIX: mockup shows a taller portrait card (346x512, same as the legacy
+                    // QImportEncryptedBackup.qml COLDCARD screen) with the 346x300 illustration centered
+                    // inside, not the illustration stretched edge-to-edge - that's what made it look wrong.
                     Rectangle {
                         width: 346
-                        height: 300
+                        height: 512
                         radius: 24
                         color: "#D0E2FF"
                         QPicture {
-                            width: 200
-                            height: 200
-                            anchors.centerIn: parent
-                            source: "qrc:/Images/Images/upload-cloud.svg"
+                            width: 346
+                            height: 300
+                            anchors.verticalCenter: parent.verticalCenter
+                            source: "qrc:/Images/Images/Import_encrypted_backup.svg"
                         }
                     }
-                    QLato {
+                    // Setup 16D (generic) vs 16aD (COLDCARD): same illustration, different right-side guidance.
+                    Loader {
                         width: 346
-                        text: STR.STR_QML_2299
+                        sourceComponent: _root.signerTag === "COLDCARD" ? _coldcardGuide : _genericGuide
+                    }
+                }
+            }
+            Component {
+                id: _genericGuide
+                QLato {
+                    width: 346
+                    text: STR.STR_QML_2299
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 20
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                }
+            }
+            // Setup 16aD: reuses the legacy COLDCARD Virtual-Disk/SD-card copy from QImportEncryptedBackup.qml
+            // (same STR_QML_1622-1628 strings), adapted to this screen's 346-wide right column.
+            Component {
+                id: _coldcardGuide
+                Column {
+                    width: 346
+                    spacing: 24
+                    QLato {
+                        width: parent.width
+                        text: STR.STR_QML_1622
                         lineHeightMode: Text.FixedHeight
-                        lineHeight: 20
+                        lineHeight: 28
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignLeft
+                    }
+                    Repeater {
+                        id: _coldcardSteps
+                        width: parent.width
+                        readonly property var content_map: [
+                            {height: 208, headline: STR.STR_QML_1623, content: STR.STR_QML_1624, content1: STR.STR_QML_1625, content2: STR.STR_QML_1626.arg("backup.7z"), icon: "qrc:/Images/Images/1.Active.svg"},
+                            {height: 88,  headline: STR.STR_QML_1627, content: STR.STR_QML_1628.arg("backup.7z"), icon: "qrc:/Images/Images/2.Active.svg"},
+                        ]
+                        model: content_map.length
+                        Rectangle {
+                            property var _item: _coldcardSteps.content_map[index]
+                            width: 346
+                            height: _item.height
+                            Row {
+                                spacing: 12
+                                QIcon { iconSize: 24; source: _item.icon }
+                                Column {
+                                    width: 310
+                                    height: _item.height
+                                    spacing: 8
+                                    QLato {
+                                        width: 310
+                                        text: _item.headline
+                                        font.weight: Font.DemiBold
+                                        horizontalAlignment: Text.AlignLeft
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    QLato {
+                                        id: _coldcardStepTerm
+                                        width: 310
+                                        text: _item.content
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 20
+                                        wrapMode: Text.WordWrap
+                                        horizontalAlignment: Text.AlignLeft
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    Rectangle {
+                                        width: 310
+                                        height: 64
+                                        radius: 8
+                                        color: "#EAEAEA"
+                                        visible: _item.content1 !== undefined && _item.content1 !== ""
+                                        QLato {
+                                            width: 310 - 12*2
+                                            text: _item.content1 ? _item.content1 : ""
+                                            lineHeightMode: Text.FixedHeight
+                                            lineHeight: 20
+                                            wrapMode: Text.WordWrap
+                                            horizontalAlignment: Text.AlignLeft
+                                            verticalAlignment: Text.AlignVCenter
+                                            anchors.centerIn: parent
+                                        }
+                                    }
+                                    QLato {
+                                        width: 310
+                                        height: 60
+                                        text: _item.content2 ? _item.content2 : ""
+                                        visible: _item.content2 !== undefined && _item.content2 !== ""
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 20
+                                        wrapMode: Text.WordWrap
+                                        horizontalAlignment: Text.AlignLeft
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
