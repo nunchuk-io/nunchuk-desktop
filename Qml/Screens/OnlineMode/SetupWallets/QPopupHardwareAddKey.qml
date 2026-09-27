@@ -65,7 +65,8 @@ QPopupEmpty {
         onCloseClicked: { _popup.close() }
         content: Item {
             Column {
-                anchors.fill: parent
+                id: _header
+                anchors { left: parent.left; right: parent.right; top: parent.top }
                 spacing: 0
                 QLato {
                     id: titleLabel
@@ -93,10 +94,30 @@ QPopupEmpty {
                     verticalAlignment: Text.AlignVCenter
                     visible: subtitleText != ""
                 }
+            }
+            // BUGFIX: the key list used to just stack under the header with no bottom bound, so the
+            // warning box (anchored to parent.bottom) overlapped/hid the last item(s) whenever the list
+            // was long enough. Now a fixed area between the header and the warning box, scrollable
+            // (Flickable) if the list doesn't fit, with an explicit 12px gap above the warning box.
+            Flickable {
+                id: _listArea
+                anchors {
+                    top: _header.bottom
+                    left: parent.left
+                    right: parent.right
+                    bottom: _warningLoader.active ? _warningLoader.top : parent.bottom
+                    bottomMargin: _warningLoader.active ? 12 : 0
+                }
+                clip: true
+                contentWidth: width
+                contentHeight: _list.height
+                ScrollBar.vertical: QScrollBar { }
                 Column {
+                    id: _list
+                    width: parent.width
                     spacing: 0
                     Repeater {
-                        model: supportedKeys.listSupportedKeys()                    
+                        model: supportedKeys.listSupportedKeys()
                         QRadioButtonTypeA {
                             id: btn
                             width: 528
@@ -120,22 +141,31 @@ QPopupEmpty {
                     }
                 }
             }
-            QWarningBgMulti {
-                width: 528
-                visible: isInheritance && supportWarning && !supportedKeys.isMiniscript
-                height: 108
-                icon: "qrc:/Images/Images/info-60px.svg"
-                txt.text: STR.STR_QML_1603
+            // BUGFIX: single Loader instead of 2 mutually-exclusive Rectangles with independent
+            // visible/height, so _listArea's bottom anchor above has one stable reference regardless of
+            // which variant (isInheritance or not) is showing.
+            Loader {
+                id: _warningLoader
                 anchors.bottom: parent.bottom
+                width: 528
+                active: supportWarning && !supportedKeys.isMiniscript
+                sourceComponent: isInheritance ? _warningMultiComp : _warningSimpleComp
             }
-
-            QWarningBg {
-                width: 528
-                visible: !isInheritance && supportWarning && !supportedKeys.isMiniscript
-                height: 60
-                icon: "qrc:/Images/Images/info-60px.svg"
-                txt.text: STR.STR_QML_943
-                anchors.bottom: parent.bottom
+            Component {
+                id: _warningMultiComp
+                QWarningBgMulti {
+                    width: 528
+                    icon: "qrc:/Images/Images/info-60px.svg"
+                    txt.text: STR.STR_QML_1603
+                }
+            }
+            Component {
+                id: _warningSimpleComp
+                QWarningBg {
+                    width: 528
+                    icon: "qrc:/Images/Images/info-60px.svg"
+                    txt.text: STR.STR_QML_943
+                }
             }
         }
         nextEnable: GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_COLDCARD ||
