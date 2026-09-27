@@ -686,6 +686,12 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr
     runInConcurrent([this, qr_data, verifyType, verificationMethod]() ->bool{
         QWarningMessage msg;
         nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
+        // BUGFIX (Setup 13cD): invalid/unmatched QR content used to fall through to the descriptor
+        // comparison below with an empty signer instead of failing immediately here, same as ViaConnectDevice.
+        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+            emit verifySingleSignerResult(0, msg.what());
+            return true;
+        }
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
         auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
@@ -709,6 +715,14 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &file
         QWarningMessage msg;
         QString file_path = qUtils::QGetFilePath(fileName);
         nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
+        // BUGFIX (Setup 13cD): a wrong-format/invalid file (e.g. a .bsms file instead of a Coldcard JSON
+        // export) used to fall through to the descriptor comparison below with an empty signer instead
+        // of failing immediately here, same as ViaConnectDevice - this is why an invalid file could still
+        // show "Seed phrase verified".
+        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+            emit verifySingleSignerResult(0, msg.what());
+            return true;
+        }
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
         auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);

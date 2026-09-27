@@ -435,6 +435,19 @@ Item {
                 }
                 sourceComponent: inheritanceActionComponent()
             }
+            // BUGFIX: the "Inheritance" ribbon only showed on the not-yet-added (inheritanceAdd) card;
+            // once a key was added it disappeared. Must always show for an inheritance key, added or not.
+            QImage {
+                anchors {
+                    top: parent.top
+                    right: parent.right
+                    topMargin: 0
+                    rightMargin: 1
+                }
+                width: 81
+                height: 14
+                source: "qrc:/Images/Images/Inheritance_badge.svg"
+            }
         }
     }
     Component {

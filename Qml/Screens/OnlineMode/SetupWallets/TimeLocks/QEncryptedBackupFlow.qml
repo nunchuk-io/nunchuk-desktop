@@ -34,9 +34,12 @@ import "../../../../Components/customizes/Popups"
 import "../../../OnlineMode/SetupWallets"
 import "../../../../../localization/STR_QML.js" as STR
 
-// Branch (b) - Encrypted backup: Setup 15D/15aD/15bD/16D/17D/18D, generic for all hardware incl. COLDCARD.
-// CORRECTION: an earlier comment claimed COLDCARD needed special routing; verified QBackupCOLDCARD.qml
-// calls the identical requestBackupColdcard() API, so this generic flow is correct, not a bug.
+// Branch (b) - Encrypted backup: Setup 15D/15aD/15bD/16D/17D/18D, generic for all hardware except COLDCARD.
+// BUGFIX (reported: "Display wrong screen when clicking on 'Backup' button for COLDCARD key"): an earlier
+// comment here claimed COLDCARD didn't need special routing since QBackupCOLDCARD.qml calls the same
+// requestBackupColdcard() API - that was wrong. Per explicit product decision, COLDCARD must keep showing
+// its old single-screen design (QBackupCOLDCARD.qml + QPopupImportColdcardBackup), not this generic
+// multi-step flow. startFlow() below now branches to _backupIntroColdcard for COLDCARD.
 // Known gap: _deviceGuide only has detailed steps for KEYSTONE; others share a generic placeholder text.
 QPopupOverlayScreen {
     id: _root
@@ -48,6 +51,19 @@ QPopupOverlayScreen {
 
     QScreenStateFlow {
         id: stateFlow
+    }
+
+    // BUGFIX: the legacy COLDCARD screen (_backupIntroColdcard -> QImportEncryptedBackupSuccess.qml's
+    // "Done" button) just closes without refreshing, unlike the generic flow (which refreshes later,
+    // after its own separate verify step). Without this, the dashboard's key list/captions would stay
+    // stale after a successful COLDCARD upload until the user manually refreshed.
+    Connections {
+        target: AppModel
+        function onAddSignerPercentageChanged() {
+            if (_root.signerTag === "COLDCARD" && AppModel.addSignerPercentage === 100) {
+                GroupWallet.refresh()
+            }
+        }
     }
 
     function deviceName(tag) {
@@ -69,7 +85,8 @@ QPopupOverlayScreen {
         xfp = keyXfp
         // "open-import-encrypted-backup" resets AppModel.addSignerPercentage to 0.
         GroupWallet.dashboardInfo.requestBackupColdcard({type: "open-import-encrypted-backup", fingerPrint: keyXfp})
-        stateFlow.setScreenFlow("back-up-your-inheritance-key")
+        // BUGFIX: COLDCARD keeps the old single-screen backup design, everything else uses the new flow.
+        stateFlow.setScreenFlow(tag === "COLDCARD" ? "back-up-your-inheritance-key-coldcard" : "back-up-your-inheritance-key")
         _root.open()
     }
 
@@ -83,10 +100,11 @@ QPopupOverlayScreen {
     }
 
     readonly property var map_flow: [
-        {screen: "back-up-your-inheritance-key", screen_component: _backupIntro},
-        {screen: "device-guide",                 screen_component: _deviceGuide},
-        {screen: "import-progress",              screen_component: _importProgress},
-        {screen: "verify-your-backup",           screen_component: _verifyBackup},
+        {screen: "back-up-your-inheritance-key",          screen_component: _backupIntro},
+        {screen: "back-up-your-inheritance-key-coldcard", screen_component: _backupIntroColdcard},
+        {screen: "device-guide",                          screen_component: _deviceGuide},
+        {screen: "import-progress",                       screen_component: _importProgress},
+        {screen: "verify-your-backup",                    screen_component: _verifyBackup},
     ]
 
     content: {
@@ -96,6 +114,15 @@ QPopupOverlayScreen {
         } else {
             _root.close()
             return null
+        }
+    }
+
+    // Legacy COLDCARD screen (kept per explicit bug report, not part of the new Setup 15D-18D flow).
+    Component {
+        id: _backupIntroColdcard
+        QBackupCOLDCARD {
+            inputFingerPrint: _root.xfp
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 

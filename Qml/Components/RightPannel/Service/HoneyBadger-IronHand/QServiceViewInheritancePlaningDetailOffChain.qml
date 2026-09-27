@@ -46,9 +46,10 @@ Item {
 
     // NUN-10192: inheritance_keys[] only carries xfp; claim_options lives on the wallet's own key
     // list, so cross-reference by xfp to know each key's sharing method(s).
+    // BUGFIX (confirmed via inheritanceGetPlan response log): claim_options ships directly on each
+    // inheritance_keys[] entry -- the old dashboardInfo.keys cross-reference always returned [].
     function keyClaimOptions(xfp) {
-        var keys = ServiceSetting.walletInfo && ServiceSetting.walletInfo.dashboardInfo ? ServiceSetting.walletInfo.dashboardInfo.keys : []
-        // Case-insensitive match: inheritance_keys[].xfp casing vs dashboardInfo.keys[].xfp casing is unverified.
+        var keys = planInfo && planInfo.inheritance_keys ? planInfo.inheritance_keys : []
         for (var i = 0; i < keys.length; i++) {
             if (String(keys[i].xfp).toUpperCase() === String(xfp).toUpperCase()) {
                 return keys[i].claim_options !== undefined ? keys[i].claim_options : []

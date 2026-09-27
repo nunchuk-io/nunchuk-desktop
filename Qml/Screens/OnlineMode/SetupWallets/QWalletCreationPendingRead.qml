@@ -39,7 +39,8 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_938
+    // BUGFIX: reuse the same title as QWalletCreationPendingOnchainRead.qml ("Let's add your keys" -> "Let's configure your wallet").
+    label.text: STR.STR_QML_1940
     onCloseClicked: closeScreen()
     content: Item {
         Row {
@@ -176,29 +177,17 @@ QOnScreenContentTypeB {
                                     onBackupClicked: {
                                         // BUGFIX (NUN-10192): was unconditional legacy COLDCARD import; now
                                         // routes by claim_options like QWalletCreationPendingOnchainRead.qml.
+                                        // BUGFIX: single-option keys (seed-only/encrypted-only) used to skip
+                                        // straight into their own flow; now every configured key (1 or 2
+                                        // options) always goes through the Verify-your-backups checklist
+                                        // (Setup 12c), which shows only the row(s) matching claim_options and
+                                        // picks startFlow()/startVerifyOnly() itself based on upload state.
                                         dashInfo.startAddKeyAtIndex(index)
                                         var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
                                         var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
                                         var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                                        if (hasSeed && hasEncrypted) {
-                                            _verifyBothBackups.open2(modelData.xfp, modelData.tag)
-                                        } else if (hasEncrypted) {
-                                            var verifs = modelData.verifications !== undefined ? modelData.verifications : []
-                                            var encryptedVerif = null
-                                            for (var vi = 0; vi < verifs.length; vi++) {
-                                                if (verifs[vi].verification_method === "ENCRYPTED_BACKUP") { encryptedVerif = verifs[vi]; break }
-                                            }
-                                            // BUGFIX (confirmed via runtime log: backend 400 "Missing encrypted
-                                            // backup" on verify): an entry with verification_type "NONE" can
-                                            // exist before the file is uploaded, same as QVerifyBothBackups.qml.
-                                            if (encryptedVerif === null || encryptedVerif.verification_type === "NONE") {
-                                                _encryptedBackupFlow.startFlow(modelData.tag, modelData.xfp)
-                                            } else {
-                                                _encryptedBackupFlow.startVerifyOnly(modelData.tag, modelData.xfp)
-                                            }
-                                        } else if (hasSeed) {
-                                            GroupWallet.qAddHardware = modelData.hwType
-                                            _backupSeedPhraseFlow.startFlow()
+                                        if (hasSeed || hasEncrypted) {
+                                            _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
                                         } else if (modelData.wallet_type === "MULTI_SIG") {
                                             // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
                                             // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
@@ -324,15 +313,11 @@ QOnScreenContentTypeB {
         // BUGFIX: missing refresh, same as SCR_ADD_HARDWARE.qml.
         GroupWallet.refresh()
         _changeDistribution.close()
+        // BUGFIX: always go through the Verify-your-backups checklist (Setup 12c), same as onBackupClicked.
         var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
         var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-        if (hasSeed && hasEncrypted) {
-            _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag)
-        } else if (hasEncrypted) {
-            _encryptedBackupFlow.startFlow(_changeDistribution.signerTag, _changeDistribution.xfp)
-        } else if (hasSeed) {
-            GroupWallet.qAddHardware = _changeDistribution.hwType
-            _backupSeedPhraseFlow.startFlow()
+        if (hasSeed || hasEncrypted) {
+            _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag, claimOptions)
         }
     }
 

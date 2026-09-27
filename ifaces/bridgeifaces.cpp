@@ -2285,40 +2285,47 @@ nunchuk::SingleSigner bridge::nunchukParseQRSigners(const QStringList &qr_data, 
     bool foundNetworkMatch = false;
     bool foundPurposeMatch = false;
     bool foundAccountMatch = false;
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
-        for (auto s : signers) {
-            int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
-            if (coinType == AppSetting::instance()->primaryServer()) {
-                foundNetworkMatch = true;
-                DBG_INFO << "coinType matched:" << coinType;
-                int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
-                if (purpose == 48) {
-                    foundPurposeMatch = true;
-                    DBG_INFO << "purpose matched:" << purpose;
-                    int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
-                    if (index == account_index) {
-                        foundAccountMatch = true;
-                        signer = s;
-                        DBG_INFO << "account_index matched:" << index;
-                        break;
-                    } else if (account_index == -1) {
-                        // If account_index is -1, return the first matching purpose and network
-                        foundAccountMatch = true;
-                        signer = s;
-                        DBG_INFO << "account_index matched any:" << index;
-                        break;
+    // BUGFIX (Setup 13cD): same gap as nunchukParseJSONSigners(..., account_index, ...) above -- invalid/
+    // unmatched QR content that yields zero parsed signers used to leave msg as NONE_MSG (looking like
+    // success) instead of failing explicitly.
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        if (signers.size() > 0) {
+            for (auto s : signers) {
+                int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
+                if (coinType == AppSetting::instance()->primaryServer()) {
+                    foundNetworkMatch = true;
+                    DBG_INFO << "coinType matched:" << coinType;
+                    int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
+                    if (purpose == 48) {
+                        foundPurposeMatch = true;
+                        DBG_INFO << "purpose matched:" << purpose;
+                        int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
+                        if (index == account_index) {
+                            foundAccountMatch = true;
+                            signer = s;
+                            DBG_INFO << "account_index matched:" << index;
+                            break;
+                        } else if (account_index == -1) {
+                            // If account_index is -1, return the first matching purpose and network
+                            foundAccountMatch = true;
+                            signer = s;
+                            DBG_INFO << "account_index matched any:" << index;
+                            break;
+                        }
                     }
                 }
             }
-        }
-        if (!foundNetworkMatch) {
-            msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
-        }
-        else if (!foundPurposeMatch) {
-            msg.setWarningMessage(-101, "No signer found with purpose m/48h'", EWARNING::WarningType::EXCEPTION_MSG);
-        }
-        else if (!foundAccountMatch) {
-            msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
+            if (!foundNetworkMatch) {
+                msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+            else if (!foundPurposeMatch) {
+                msg.setWarningMessage(-101, "No signer found with purpose m/48h'", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+            else if (!foundAccountMatch) {
+                msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+        } else {
+            msg.setWarningMessage(-100, "No signer found in QR", EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return signer;
@@ -2418,40 +2425,51 @@ nunchuk::SingleSigner bridge::nunchukParseJSONSigners(const QString &filePathNam
     bool foundPurposeMatch = false;
     bool foundAccountMatch = false;
     nunchuk::SingleSigner signer("","","","", {},"",0,"");
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
-        for (auto s : signers) {
-            int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
-            if (coinType == AppSetting::instance()->primaryServer()) {
-                foundNetworkMatch = true;
-                DBG_INFO << "coinType matched:" << coinType;
-                int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
-                if (purpose == 48) {
-                    foundPurposeMatch = true;
-                    DBG_INFO << "purpose matched:" << purpose;
-                    int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
-                    if (index == account_index) {
-                        foundAccountMatch = true;
-                        signer = s;
-                        DBG_INFO << "account_index matched:" << index;
-                        break;
-                    } else if (account_index == -1) {
-                        // If account_index is -1, return the first matching purpose and network
-                        foundAccountMatch = true;
-                        signer = s;
-                        DBG_INFO << "account_index matched any:" << index;
-                        break;
+    // BUGFIX (Setup 13cD): the error-setting logic below used to only run when signers.size() > 0, so a
+    // wrong-format/invalid file (e.g. a .bsms file fed in here instead of a Coldcard JSON export) that
+    // yields zero parsed signers left msg as NONE_MSG -- looking like success -- while returning this
+    // empty default signer. Callers compared that empty signer's descriptor as if it were a real result,
+    // which could read as "verified" instead of failing. Now always fails explicitly when nothing is found.
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        if (signers.size() > 0) {
+            for (auto s : signers) {
+                int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
+                if (coinType == AppSetting::instance()->primaryServer()) {
+                    foundNetworkMatch = true;
+                    DBG_INFO << "coinType matched:" << coinType;
+                    int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
+                    if (purpose == 48) {
+                        foundPurposeMatch = true;
+                        DBG_INFO << "purpose matched:" << purpose;
+                        int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
+                        if (index == account_index) {
+                            foundAccountMatch = true;
+                            signer = s;
+                            DBG_INFO << "account_index matched:" << index;
+                            break;
+                        } else if (account_index == -1) {
+                            // If account_index is -1, return the first matching purpose and network
+                            foundAccountMatch = true;
+                            signer = s;
+                            DBG_INFO << "account_index matched any:" << index;
+                            break;
+                        }
                     }
                 }
             }
-        }
-        if (!foundNetworkMatch) {
-            msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
-        }
-        else if (!foundNetworkMatch) {
-            msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
-        }
-        else if (!foundAccountMatch) {
-            msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
+            if (!foundNetworkMatch) {
+                msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+            // BUGFIX: this was a duplicate `!foundNetworkMatch` check, so a purpose mismatch never got
+            // reported and silently fell through to the account-index branch below.
+            else if (!foundPurposeMatch) {
+                msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+            else if (!foundAccountMatch) {
+                msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+        } else {
+            msg.setWarningMessage(-100, "No signer found in file", EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return signer;

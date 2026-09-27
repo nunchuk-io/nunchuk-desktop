@@ -164,9 +164,11 @@ QOnScreenContentTypeA {
                     }
                 }
             }
+            // BUGFIX: hardcoded height: 64 overrode QWarningBgMulti's own self-sizing (height:
+            // _content.height + 2*12), so a 2-line note didn't get vcentered/12px-margined correctly.
+            // Let it self-size like every other caller of this shared component.
             QWarningBgMulti {
                 width: 539
-                height: 64
                 visible: _root.claimNote !== ""
                 icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: _root.claimNote

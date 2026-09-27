@@ -96,12 +96,10 @@ QScreen {
                 var xfp = SignerManagement.currentSigner.xfp
                 var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
                 var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                if (hasSeed && hasEncrypted) {
-                    _verifyBothBackups.open2(xfp, signerTag)
-                } else if (hasSeed) {
-                    _backupSeedPhraseFlow.startFlow()
-                } else if (hasEncrypted) {
-                    _encryptedBackupFlow.startFlow(signerTag, xfp)
+                // BUGFIX: always go through the Verify-your-backups checklist (Setup 12c), for 1 or 2
+                // options, not just "Do both" - it shows only the row(s) matching claim_options.
+                if (hasSeed || hasEncrypted) {
+                    _verifyBothBackups.open2(xfp, signerTag, claimOptions)
                 } else {
                     closeTo(NUNCHUCKTYPE.CURRENT_TAB)
                     AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);

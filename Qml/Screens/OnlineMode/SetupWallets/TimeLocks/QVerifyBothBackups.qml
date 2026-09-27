@@ -33,16 +33,23 @@ import "../../../../Components/customizes/Buttons"
 import "../../../../Components/customizes/Popups"
 import "../../../../../localization/STR_QML.js" as STR
 
-// Setup 12c-*: "Verify your backups" checklist, shown when "Do both" is chosen in Key Distribution Choice.
+// Setup 12c-*: "Verify your backups" checklist - single entry point for any configured inheritance key
+// (1 or 2 claim_options), not just "Do both"; the row for a method not in claim_options is grayed out
+// and disabled (see active_/hasEncryptedOption()/hasSeedOption() below), not hidden.
 QPopupOverlayScreen {
     id: _root
     property string xfp: ""
     property string signerTag: ""
+    // BUGFIX: right after requestSetClaimOptions()+GroupWallet.refresh(), dashInfo.keys[].claim_options
+    // can still be stale (refresh is async) by the time this screen opens - callers already have the
+    // claim_options they just chose/read, so accept it directly instead of re-deriving from currentKey().
+    property var selectedClaimOptions: []
     signal changeShareMethod()
 
-    function open2(keyXfp, tag) {
+    function open2(keyXfp, tag, claimOpts) {
         xfp = keyXfp
         signerTag = tag
+        selectedClaimOptions = claimOpts !== undefined ? claimOpts : []
         _root.open()
     }
 
@@ -79,10 +86,26 @@ QPopupOverlayScreen {
         if (v.verification_type === "SKIPPED_VERIFICATION") return "SKIPPED"
         return "VERIFIED"
     }
+    // BUGFIX: this screen is now the single entry point for ANY configured key (1 or 2 claim_options),
+    // not just "Do both" - each row must only be active when its method is actually selected, and
+    // Continue must not wait on a method the key never opted into.
+    function claimOptions() {
+        if (selectedClaimOptions.length > 0) return selectedClaimOptions
+        var key = currentKey()
+        return (key && key.claim_options !== undefined) ? key.claim_options : []
+    }
+    function hasEncryptedOption() {
+        return claimOptions().indexOf("ENCRYPTED_BACKUP") !== -1
+    }
+    function hasSeedOption() {
+        return claimOptions().indexOf("SEED_PHRASE") !== -1
+    }
     function canContinue() {
         var e = encryptedState()
         var s = seedState()
-        return (e === "VERIFIED" || e === "SKIPPED") && (s === "VERIFIED" || s === "SKIPPED")
+        var encryptedOk = !hasEncryptedOption() || (e === "VERIFIED" || e === "SKIPPED")
+        var seedOk = !hasSeedOption() || (s === "VERIFIED" || s === "SKIPPED")
+        return encryptedOk && seedOk
     }
 
     // BUGFIX: was a 2-screen state machine (checklist/remove-confirm); the remove-confirm step
@@ -124,6 +147,11 @@ QPopupOverlayScreen {
                         border.width: 1
                         border.color: "#DEDEDE"
                         property string state_: _root.encryptedState()
+                        // BUGFIX: this method may not be selected at all for this key - gray it out and
+                        // disable its action when so, instead of always treating it as active.
+                        property bool active_: _root.hasEncryptedOption()
+                        enabled: active_
+                        opacity: active_ ? 1.0 : 0.4
                         // BUGFIX: dropped the VERIFIED green fill - badge already signals "Verified"
                         // (same convention as QAddRequestKey.qml); coloring the whole row too was redundant.
                         color: state_ === "SKIPPED" ? "#FDEBD2" : "#FFFFFF"
@@ -202,6 +230,10 @@ QPopupOverlayScreen {
                         border.width: 1
                         border.color: "#DEDEDE"
                         property string state_: _root.seedState()
+                        // BUGFIX: same as _encryptedRow - gray out and disable when not selected.
+                        property bool active_: _root.hasSeedOption()
+                        enabled: active_
+                        opacity: active_ ? 1.0 : 0.4
                         // BUGFIX: same as _encryptedRow - drop the redundant VERIFIED green fill.
                         color: state_ === "SKIPPED" ? "#FDEBD2" : "#FFFFFF"
                         Item {

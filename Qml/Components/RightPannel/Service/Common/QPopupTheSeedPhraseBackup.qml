@@ -26,17 +26,39 @@ import "./../../../customizes/Texts"
 import "../../../../../localization/STR_QML.js" as STR
 
 // NUN-10192: "The seed phrase backup" info popup (mockup 07D standalone / 08bD both-methods).
+// BUGFIX: was built on QOnScreenContentTypeA, whose rounded-corner chrome relies on a
+// layer.enabled + OpacityMask combo that renders as a plain square box in this build. Rebuilt the
+// shell with a native Rectangle radius (no GraphicalEffects) to match the bordered/rounded card
+// style already used elsewhere in this CR (e.g. QInheritanceDetailsOffChain.qml).
 QPopupEmpty {
     id: _id
     // Both-methods context (08bD) uses different "how to share"/warning copy than standalone (07D).
     property bool isJointVariant: false
-    content: QOnScreenContentTypeA {
+    content: Item {
+        // BUGFIX: fixed to popupWidth/popupHeight (800x700, same as "Share your secrets" and other
+        // dialogs) instead of self-sizing to content -- was rendering a different size than the
+        // rest of the app's popups.
         width: 800
-        // NUN-10192: 2 items (84px each) + the warning note box (72px) need more than the 2-item baseline.
-        height: 560
-        label.text: STR.STR_QML_2316
-        onCloseClicked: _id.close()
-        content: Item {
+        height: 700
+        // BUGFIX: Item doesn't mirror width/height into implicitWidth/Height, which QPopup.qml's
+        // boxmask sizing (contentInfo.implicitWidth/Height) relies on -- without this the outer
+        // drop-shadow/padding rect collapses to 0x0.
+        implicitWidth: width
+        implicitHeight: height
+        Rectangle {
+            id: _frame
+            anchors.fill: parent
+            radius: 24
+            color: "#FFFFFF"
+        }
+        Column {
+            id: _layout
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 36 }
+            spacing: 16
+            QHeadLine {
+                width: parent.width - 48
+                text: STR.STR_QML_2316
+            }
             Column {
                 width: 539
                 spacing: 24
@@ -123,19 +145,23 @@ QPopupEmpty {
                     }
                 }
             }
-        }
-
-        bottomLeft: Item {}
-        bottomRight: Row {
-            spacing: 12
-            QTextButton {
-                width: 73
+            Item {
+                width: 539
                 height: 48
-                label.text: STR.STR_QML_341
-                label.font.pixelSize: 16
-                type: eTypeE
-                onButtonClicked: _id.close()
+                QTextButton {
+                    anchors.right: parent.right
+                    width: 73
+                    height: 48
+                    label.text: STR.STR_QML_341
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: _id.close()
+                }
             }
+        }
+        QCloseButton {
+            anchors { right: parent.right; rightMargin: 24; top: parent.top; topMargin: 24 }
+            onClicked: _id.close()
         }
     }
 }

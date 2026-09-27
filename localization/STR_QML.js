@@ -2462,3 +2462,18 @@ var STR_QML_2327 = qsTr("Public key matches your inheritance key")
 // emitted a failure signal before this fix, so this screen was unreachable).
 var STR_QML_2328 = qsTr("This key doesn't match")
 var STR_QML_2329 = qsTr("The key you re-added derives a different public key, so this seed phrase backup would not recover your inheritance key. Check the words and their order, then try again.")
+
+// NUN-10192: "Share your secrets" result dialog (Post 02D-05D) -- Secret 1/2 card headings.
+var STR_QML_2330 = qsTr("Secret 1 — The Magic Phrase")
+var STR_QML_2331 = qsTr("Secret 2 — The inheritance key")
+// Secret 2 bullet text per claim_options; each inheritance key contributes 1 bullet per method it has (mockup 04D/04iD/05D: 1 key with both methods = 2 bullets).
+var STR_QML_2332 = qsTr("The inheritance key's seed phrase backup.")
+var STR_QML_2333 = qsTr("The Backup Password for the encrypted backup.")
+// Warning variants: seed-only (no encrypted backup exists at all) is party-agnostic (mockup 02D/02iD).
+var STR_QML_2334 = qsTr("There is no encrypted backup on the server for this plan, so the seed phrase backup is the only way to recover the inheritance key. Failure to share it will result in the inheritance being unclaimable.")
+// "Do both" warning variants (mockup 04D/04iD/05D) -- distinct from encrypted-only wording (STR_QML_890/893).
+var STR_QML_2335 = qsTr("You are solely responsible for sharing these secrets with the Beneficiary. Failure to share will result in the inheritance being unclaimable.")
+var STR_QML_2336 = qsTr("You are solely responsible for sharing these secrets with the Trustee. Failure to share will result in the inheritance being unclaimable.")
+var STR_QML_2337 = qsTr("You are solely responsible for sharing these secrets. Failure to share will result in the inheritance being unclaimable.")
+// Joint control extra note under the Secret 2 bullets (mockup 05D only).
+var STR_QML_2338 = qsTr("Both unlock the same key, so they must go to the same party. Splitting them would give each party a copy of the key and leave the Magic Phrase unmatched.")

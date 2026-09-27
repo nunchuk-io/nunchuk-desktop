@@ -990,6 +990,10 @@
         <file>Images/logo-vertical-light.svg</file>
         <file>Images/importFile.svg</file>
         <file>Images/Import_encrypted_backup.svg</file>
+        <file>Images/seed_phrase_secrets.svg</file>
+        <file>Images/encrypted_backup_secrets.svg</file>
+        <file>Images/both_backup_secrets.svg</file>
+        <file>Images/security-answer-distribution.svg</file>
         <file>Images/Device_Icons/nfc-key-dark.svg</file>
         <file>Images/Device_Icons/nfc-key-light.svg</file>
         <file>Images/Device_Icons/software-key-light.svg</file>
