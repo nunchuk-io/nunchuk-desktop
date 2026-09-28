@@ -324,6 +324,8 @@ Item {
                     label.text: QSTR.STR_QML_265
                     label.font.pixelSize: 16
                     type: eTypeE
+                    // Disable Continue while the magic phrase box is empty.
+                    enabled: magicPhrase.textInputted.trim().length > 0
                     onButtonClicked: {
                         vm.claimInit(magicPhrase.textInputted);
                     }

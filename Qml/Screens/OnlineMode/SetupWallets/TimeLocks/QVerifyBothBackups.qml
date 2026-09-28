@@ -142,7 +142,9 @@ QPopupOverlayScreen {
                     Rectangle {
                         id: _encryptedRow
                         width: 539
-                        height: 72
+                        // BUGFIX: row grows to guarantee >=12px top/bottom gap around whichever side (text
+                        // column or action column) is taller, instead of a fixed height:72 that overflowed.
+                        height: Math.max(72, Math.max(_encCol.height, _encActionCol.height) + 24)
                         radius: 12
                         border.width: 1
                         border.color: "#DEDEDE"
@@ -152,26 +154,33 @@ QPopupOverlayScreen {
                         property bool active_: _root.hasEncryptedOption()
                         enabled: active_
                         opacity: active_ ? 1.0 : 0.4
-                        // BUGFIX: dropped the VERIFIED green fill - badge already signals "Verified"
-                        // (same convention as QAddRequestKey.qml); coloring the whole row too was redundant.
-                        color: state_ === "SKIPPED" ? "#FDEBD2" : "#FFFFFF"
+                        // BUGFIX: design (Setup 12c-viiD) shows a green fill for VERIFIED, not just the
+                        // badge - a previous change dropped this as "redundant" but that doesn't match design.
+                        color: state_ === "SKIPPED" ? "#FDEBD2" : (state_ === "VERIFIED" ? "#A7F0BA" : "#FFFFFF")
                         Item {
-                            anchors { fill: parent; margins: 16 }
-                            QIcon {
-                                id: _encIcon
-                                iconSize: 24
+                            anchors { fill: parent; leftMargin: 16; rightMargin: 16; topMargin: 12; bottomMargin: 12 }
+                            // BUGFIX: design wraps the row icon in a round neutral badge, not a bare icon.
+                            Rectangle {
+                                id: _encIconBadge
+                                width: 48
+                                height: 48
+                                radius: 24
+                                color: "#F5F5F5"
                                 anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-                                source: "qrc:/Images/Images/change-password-dark.svg"
+                                QIcon {
+                                    id: _encIcon
+                                    iconSize: 24
+                                    anchors.centerIn: parent
+                                    source: "qrc:/Images/Images/backup_black_24dp.svg"
+                                }
                             }
                             Column {
-                                // BUGFIX: was a fixed-width Row item, so the action button/badge floated right
-                                // after the text instead of pinning to the card's right edge; anchor-based
-                                // layout now keeps the action fixed to the right like the mockup.
+                                id: _encCol
                                 anchors {
-                                    left: _encIcon.right
+                                    left: _encIconBadge.right
                                     leftMargin: 12
-                                    right: parent.right
-                                    rightMargin: 100
+                                    right: _encActionCol.left
+                                    rightMargin: 12
                                     verticalCenter: parent.verticalCenter
                                 }
                                 spacing: 2
@@ -182,42 +191,54 @@ QPopupOverlayScreen {
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
                                 }
-                                // Setup 12c-ivD: "Verification skipped" label next to Verify button (pixel
-                                // placement not yet QA'd against mockup).
+                            }
+                            // BUGFIX: design places "Verification skipped" under the action button/badge on
+                            // the right (not under the description on the left, as it was before) - this
+                            // column groups the badge/button with that label so they stay pinned together.
+                            Item {
+                                id: _encActionCol
+                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                                width: 120
+                                height: (_encryptedRow.state_ === "VERIFIED" ? 24 :
+                                        (36 + (_encryptedRow.state_ === "SKIPPED" ? 4 + _encSkippedLabel.height : 0)))
+                                QBadge {
+                                    id: _encBadge
+                                    visible: _encryptedRow.state_ === "VERIFIED"
+                                    anchors { right: parent.right; top: parent.top }
+                                    width: 88
+                                    height: 24
+                                    iconSize: 24
+                                    icon: "qrc:/Images/Images/check-circle-dark.svg"
+                                    text: STR.STR_QML_2279
+                                    color: "#A7F0BA"
+                                }
+                                QTextButton {
+                                    id: _encButton
+                                    visible: _encryptedRow.state_ !== "VERIFIED"
+                                    anchors { right: parent.right; top: parent.top }
+                                    width: label.paintedWidth + 32
+                                    height: 36
+                                    type: eTypeB
+                                    label.font.pixelSize: 14
+                                    label.text: _encryptedRow.state_ === "NOT_UPLOADED" ? STR.STR_QML_2282 : STR.STR_QML_2281
+                                    onButtonClicked: {
+                                        // NOT_UPLOADED: full flow from start. SKIPPED: was uploaded once
+                                        // (skip only reachable after a real upload attempt) - jump to verify.
+                                        if (_encryptedRow.state_ === "NOT_UPLOADED") {
+                                            _encryptedFlow.startFlow(_root.signerTag, _root.xfp)
+                                        } else {
+                                            _encryptedFlow.startVerifyOnly(_root.signerTag, _root.xfp)
+                                        }
+                                    }
+                                }
                                 QLato {
+                                    id: _encSkippedLabel
                                     visible: _encryptedRow.state_ === "SKIPPED"
+                                    anchors { right: parent.right; top: _encButton.bottom; topMargin: 4 }
                                     text: STR.STR_QML_2280
                                     font.pixelSize: 11
                                     font.weight: Font.Bold
                                     color: "#9A6B23"
-                                }
-                            }
-                            QBadge {
-                                visible: _encryptedRow.state_ === "VERIFIED"
-                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                                width: 88
-                                height: 24
-                                iconSize: 24
-                                icon: "qrc:/Images/Images/check-circle-dark.svg"
-                                text: STR.STR_QML_2279
-                                color: "#A7F0BA"
-                            }
-                            QTextButton {
-                                visible: _encryptedRow.state_ !== "VERIFIED"
-                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                                width: label.paintedWidth + 32
-                                height: 36
-                                type: eTypeB
-                                label.font.pixelSize: 14
-                                label.text: _encryptedRow.state_ === "NOT_UPLOADED" ? STR.STR_QML_2282 : STR.STR_QML_2281
-                                onButtonClicked: {
-                                    // NOT_UPLOADED: full flow from start. SKIPPED: was uploaded once
-                                    // (skip only reachable after a real upload attempt) - jump to verify.
-                                    if (_encryptedRow.state_ === "NOT_UPLOADED") {
-                                        _encryptedFlow.startFlow(_root.signerTag, _root.xfp)
-                                    } else {
-                                        _encryptedFlow.startVerifyOnly(_root.signerTag, _root.xfp)
-                                    }
                                 }
                             }
                         }
@@ -225,7 +246,9 @@ QPopupOverlayScreen {
                     Rectangle {
                         id: _seedRow
                         width: 539
-                        height: 72
+                        // BUGFIX: same overflow fix as _encryptedRow - guarantee >=12px top/bottom gap
+                        // around whichever side (text column or action column) is taller.
+                        height: Math.max(72, Math.max(_seedCol.height, _seedActionCol.height) + 24)
                         radius: 12
                         border.width: 1
                         border.color: "#DEDEDE"
@@ -234,23 +257,32 @@ QPopupOverlayScreen {
                         property bool active_: _root.hasSeedOption()
                         enabled: active_
                         opacity: active_ ? 1.0 : 0.4
-                        // BUGFIX: same as _encryptedRow - drop the redundant VERIFIED green fill.
-                        color: state_ === "SKIPPED" ? "#FDEBD2" : "#FFFFFF"
+                        // BUGFIX: same as _encryptedRow - design shows a green fill for VERIFIED.
+                        color: state_ === "SKIPPED" ? "#FDEBD2" : (state_ === "VERIFIED" ? "#A7F0BA" : "#FFFFFF")
                         Item {
-                            anchors { fill: parent; margins: 16 }
-                            QIcon {
-                                id: _seedIcon
-                                iconSize: 24
+                            anchors { fill: parent; leftMargin: 16; rightMargin: 16; topMargin: 12; bottomMargin: 12 }
+                            // BUGFIX: same round icon badge as _encryptedRow.
+                            Rectangle {
+                                id: _seedIconBadge
+                                width: 48
+                                height: 48
+                                radius: 24
+                                color: "#F5F5F5"
                                 anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-                                source: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+                                QIcon {
+                                    id: _seedIcon
+                                    iconSize: 24
+                                    anchors.centerIn: parent
+                                    source: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+                                }
                             }
                             Column {
-                                // BUGFIX: same right-edge pin as _encryptedRow.
+                                id: _seedCol
                                 anchors {
-                                    left: _seedIcon.right
+                                    left: _seedIconBadge.right
                                     leftMargin: 12
-                                    right: parent.right
-                                    rightMargin: 100
+                                    right: _seedActionCol.left
+                                    rightMargin: 12
                                     verticalCenter: parent.verticalCenter
                                 }
                                 spacing: 2
@@ -261,51 +293,65 @@ QPopupOverlayScreen {
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
                                 }
+                            }
+                            // BUGFIX: same right-side grouping as _encryptedRow - "Verification skipped"
+                            // belongs under the action button, not under the left-side description.
+                            Item {
+                                id: _seedActionCol
+                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                                width: 120
+                                height: (_seedRow.state_ === "VERIFIED" ? 24 :
+                                        (36 + (_seedRow.state_ === "SKIPPED" ? 4 + _seedSkippedLabel.height : 0)))
+                                QBadge {
+                                    id: _seedBadge
+                                    visible: _seedRow.state_ === "VERIFIED"
+                                    anchors { right: parent.right; top: parent.top }
+                                    width: 88
+                                    height: 24
+                                    iconSize: 24
+                                    icon: "qrc:/Images/Images/check-circle-dark.svg"
+                                    text: STR.STR_QML_2279
+                                    color: "#A7F0BA"
+                                }
+                                QTextButton {
+                                    id: _seedButton
+                                    // NEEDS CONFIRMATION: seed phrase "Verify" always restarts startFlow(); there's
+                                    // no "verify only" shortcut like encrypted backup has.
+                                    visible: _seedRow.state_ !== "VERIFIED"
+                                    anchors { right: parent.right; top: parent.top }
+                                    width: label.paintedWidth + 32
+                                    height: 36
+                                    type: eTypeB
+                                    label.font.pixelSize: 14
+                                    label.text: STR.STR_QML_2281
+                                    onButtonClicked: _backupSeedFlow.startFlow()
+                                }
                                 QLato {
+                                    id: _seedSkippedLabel
                                     visible: _seedRow.state_ === "SKIPPED"
+                                    anchors { right: parent.right; top: _seedButton.bottom; topMargin: 4 }
                                     text: STR.STR_QML_2280
                                     font.pixelSize: 11
                                     font.weight: Font.Bold
                                     color: "#9A6B23"
                                 }
                             }
-                            QBadge {
-                                visible: _seedRow.state_ === "VERIFIED"
-                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                                width: 88
-                                height: 24
-                                iconSize: 24
-                                icon: "qrc:/Images/Images/check-circle-dark.svg"
-                                text: STR.STR_QML_2279
-                                color: "#A7F0BA"
-                            }
-                            QTextButton {
-                                // NEEDS CONFIRMATION: seed phrase "Verify" always restarts startFlow(); there's
-                                // no "verify only" shortcut like encrypted backup has.
-                                visible: _seedRow.state_ !== "VERIFIED"
-                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                                width: label.paintedWidth + 32
-                                height: 36
-                                type: eTypeB
-                                label.font.pixelSize: 14
-                                label.text: STR.STR_QML_2281
-                                onButtonClicked: _backupSeedFlow.startFlow()
-                            }
                         }
                     }
-                    QLato {
-                        width: parent.width
-                        text: STR.STR_QML_2277
-                        font.pixelSize: 12
-                        color: "#5B6268"
-                        wrapMode: Text.WordWrap
+                    // BUGFIX: design shows this as a grey rounded info box with an (i) icon, not plain
+                    // text - reusing the same info-box component/icon already used elsewhere in this flow.
+                    QWarningBgMulti {
+                        width: 539
+                        icon: "qrc:/Images/Images/info-60px.svg"
+                        txt.text: STR.STR_QML_2277
                     }
                     QLato {
                         width: parent.width
                         text: STR.STR_QML_2278
                         font.pixelSize: 13
-                        font.underline: true
-                        color: "#0051CF"
+                        // BUGFIX: design shows this as plain bold dark text, not a blue underlined link.
+                        font.weight: Font.Bold
+                        color: "#031F2B"
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor

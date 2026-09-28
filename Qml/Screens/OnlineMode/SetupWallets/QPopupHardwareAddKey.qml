@@ -111,16 +111,24 @@ QPopupEmpty {
                 clip: true
                 contentWidth: width
                 contentHeight: _list.height
-                ScrollBar.vertical: QScrollBar { }
+                // BUGFIX: QScrollBar's actual interactive hit-region is wider than its visual 8px
+                // track and overlapped the row's rightmost pixels, blocking the radio icon's
+                // click/hover there. No ScrollBar shown now - the list still scrolls via drag/wheel.
                 Column {
                     id: _list
-                    width: parent.width
+                    // BUGFIX: rows used to sit exactly flush against _listArea's clip edges (x:0 and
+                    // x:width) on both sides - hover/click confirmed dead right at those flush edges
+                    // even though the point is inside both hitArea's own bounds and _listArea's
+                    // viewport. Inset 6px on each side so there's real (non-flush, non-clipped) margin
+                    // for QRadioSelect's -12 hitArea extension to land in.
+                    x: 6
+                    width: parent.width - 12
                     spacing: 0
                     Repeater {
                         model: supportedKeys.listSupportedKeys()
                         QRadioButtonTypeA {
                             id: btn
-                            width: 528
+                            width: parent.width
                             height: 48
                             label: modelData.name
                             layoutDirection: Qt.LeftToRight

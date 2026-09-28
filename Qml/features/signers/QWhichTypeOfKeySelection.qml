@@ -79,19 +79,38 @@ QOnScreenContentTypeB {
 
                 Repeater {
                     model: vm.supportedList
-                    QRadioButtonTypeA {
-                        id: btn
+                    Column {
+                        id: keyItem
                         width: 528
-                        height: 48
-                        label: modelData.name
-                        layoutDirection: Qt.LeftToRight
-                        fontFamily: "Lato"
-                        fontPixelSize: 16
-                        fontWeight: Font.Normal
-                        enabled: modelData.is_enabled
-                        selected: vm.keyType === modelData.type
-                        onButtonClicked: {
-                            vm.selectKeyType(modelData.type);
+                        spacing: 0
+                        // Per-device explanation from backend config (claim_note, NUN-10192); display only.
+                        readonly property string claimNote: SignerManagement.claimNoteForTag(modelData.tag, "MULTI_SIG")
+
+                        QRadioButtonTypeA {
+                            id: btn
+                            width: 528
+                            height: 48
+                            label: modelData.name
+                            layoutDirection: Qt.LeftToRight
+                            fontFamily: "Lato"
+                            fontPixelSize: 16
+                            fontWeight: Font.Normal
+                            enabled: modelData.is_enabled
+                            selected: vm.keyType === modelData.type
+                            onButtonClicked: {
+                                vm.selectKeyType(modelData.type);
+                            }
+                        }
+
+                        QLato {
+                            width: parent.width
+                            visible: keyItem.claimNote !== ""
+                            height: visible ? implicitHeight + 8 : 0
+                            text: keyItem.claimNote
+                            font.pixelSize: 11
+                            color: "#757575"
+                            wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignLeft
                         }
                     }
                 }

@@ -762,20 +762,24 @@ void ClientController::requestSignout()
     // current Matrix attempt stale first so its keychain/network continuations
     // cannot resume while the server sign-out request is in flight.
     setIsNunchukLoggedIn(false);
-    Draco::instance()->signout();
-    bridge::stopNunchuk();
-    QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
-    setAttachmentEnable(false);
-    deleteStayLoggedInData();
-    setSubscriptions(QJsonArray());
-    AppSetting::instance()->setGroupSetting("");
-    AppModel::instance()->requestClearData();
-    if(rooms()){
-        rooms()->removeAll();
-    }
-    if(contacts()){
-        contacts()->removeAll();
-    }
+    // Queue: signout()'s nested event loop can process a pending item
+    // delete from this same click and crash if run synchronously.
+    QMetaObject::invokeMethod(this, [this](){
+        Draco::instance()->signout();
+        bridge::stopNunchuk();
+        QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+        setAttachmentEnable(false);
+        deleteStayLoggedInData();
+        setSubscriptions(QJsonArray());
+        AppSetting::instance()->setGroupSetting("");
+        AppModel::instance()->requestClearData();
+        if(rooms()){
+            rooms()->removeAll();
+        }
+        if(contacts()){
+            contacts()->removeAll();
+        }
+    }, Qt::QueuedConnection);
 }
 
 void ClientController::forgetRoom(const int index)

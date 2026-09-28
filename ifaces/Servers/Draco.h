@@ -171,15 +171,12 @@ class Draco : public QObject {
     bool lockdownBySignDummyTx(const QStringList &signatures, const QString &passwordToken, const QString &period_id, const QString &wallet_id,
                                QString &until_time, QString &errormsg);
 
-    bool UserKeysMarkAKeyAsVerified(const QString &xfpOrId, const QString &key_checksum, const QString &verification_type, QJsonObject &output,
-                                    QString &errormsg);
     bool UserKeysRequestRecoveryKey(const QString &xfpOrId, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken,
                                     const QString &confirmToken, const QJsonObject &body, QJsonObject &output, QString &errormsg);
     bool UserKeysRecoveryKey(const QString &xfpOrId, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken,
                              QJsonObject &output, QString &errormsg);
     bool UserKeysMarkRecoverStatus(const QString &xfpOrId, QJsonObject &output, QString &errormsg);
     bool UserKeysCalculateRequiredSignatures(const QString &xfpOrId, QJsonObject &output, QString &errormsg);
-    bool UserKeysUploadBackup();
     bool UserKeysGetListUserKey(const QString &passwordToken, QJsonArray &output, QString &errormsg);
 
     bool UserKeysGetUserKey(const QString &xfpOrId, const QString &passwordToken, QJsonObject &output, QString &errormsg);

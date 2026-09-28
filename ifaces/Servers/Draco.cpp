@@ -2629,39 +2629,6 @@ bool Draco::lockdownBySignDummyTx(const QStringList &signatures,
     return false;
 }
 
-bool Draco::UserKeysMarkAKeyAsVerified(const QString &xfpOrId,
-                                       const QString &key_checksum,
-                                       const QString &verification_type,
-                                       QJsonObject &output,
-                                       QString &errormsg)
-{
-    QJsonObject body;
-    body["key_checksum"] = key_checksum;
-    body["verification_type"] = verification_type;
-
-    QString cmd = commands[Premium::CMD_IDX::USER_KEYS_MARK_A_KEY_AS_VERIFIED];
-    cmd.replace("{key_id_or_xfp}", xfpOrId);
-    int     reply_code = -1;
-    QString reply_msg  = "";
-    QJsonObject jsonObj = m_rest->postSync(cmd, {}, {}, body, reply_code, reply_msg);
-    if(reply_code == DRACO_CODE::SUCCESSFULL){
-        QJsonObject errorObj = jsonObj["error"].toObject();
-        int response_code = errorObj["code"].toInt();
-        QString response_msg = errorObj["message"].toString();
-        if(response_code == DRACO_CODE::RESPONSE_OK){
-            output = jsonObj["data"].toObject();
-            return true;
-        }
-        else{
-            errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
-            return false;
-        }
-    }
-    errormsg = reply_msg;
-    return false;
-}
-
 bool Draco::UserKeysRequestRecoveryKey(const QString &xfpOrId,
                                        const QStringList &signatures,
                                        const QString &passwordToken,

@@ -63,9 +63,25 @@ QtObject {
         if (isKeyHolderLimitedRestricted(tag)) return false
         return SignerManagement.isSupportedInheritance(tag, walletType)
     }
+    // Regular (non-inheritance) hardware-key add does not need backend gating - confirmed via
+    // [DEBUG] log that configs/setup currently only returns is_inheritance_key:true rows for
+    // wallet_type MULTI_SIG, which made this return empty for every tag. Restored the pre-NUN-10192
+    // static list (as MULTI_SIG already used before this CR) so add-key isn't blocked by that gap.
     function isSupportedNotInheritance(tag) {
         if (isKeyHolderLimitedRestricted(tag)) return false
-        return SignerManagement.isSupportedNotInheritance(tag, walletType)
+        if (isMiniscript) {
+            return SignerManagement.isSupportedNotInheritance(tag, walletType)
+        }
+        switch (tag) {
+        case "BITBOX":
+        case "COLDCARD":
+        case "LEDGER":
+        case "TREZOR":
+        case "JADE":
+            return true
+        default:
+            return false
+        }
     }
 
     function listSupportedKeys() {
