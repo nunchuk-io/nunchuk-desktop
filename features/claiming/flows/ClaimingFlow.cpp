@@ -189,24 +189,30 @@ void ClaimingFlow::bind(QObject *vm) {
             realVm6->setwithdrawAmountSats(withdrawAmountSats());
             realVm6->setbalanceDisplay(availableBalanceDisplay());
             realVm6->setbalanceCurrency(availableBalanceCurrency());
+            realVm6->setmaxWithdrawSats(availableBalanceSats());
         } else {
             realVm6->setbalanceDisplay(balanceDisplay());
             realVm6->setbalanceCurrency(balanceCurrency());
+            realVm6->setmaxWithdrawSats(balanceSats());
         }
     }
 
-    auto realVm7 = qobject_cast<WidthdrawToAddressViewModel *>(vm);
-    if (realVm7) {
-        realVm7->setwithdrawAmountSats(withdrawAmountSats());
-        setisAddressFlow(true);
-        connect(this, &ClaimingFlow::forwardTransaction, realVm7, &WidthdrawToAddressViewModel::proceedTransactionResult);
-    }
-
+    // BUGFIX: WithdrawSelectWalletViewModel IS-A WidthdrawToAddressViewModel and doesn't override
+    // proceedTransactionResult(), so qobject_cast<WidthdrawToAddressViewModel*> also matched a
+    // WithdrawSelectWalletViewModel instance - both blocks used to run for it, connecting the same
+    // signal->slot twice (proceedTransactionResult() firing twice per transaction, starting
+    // ClaimTransactionFlow/showing qconfirmtransaction twice) and leaving isAddressFlow correct only
+    // by accident of block order. Checking the more-derived type first and excluding it below fixes
+    // both. Qt::UniqueConnection added as a defensive backstop against any future double-bind.
     auto realVm8 = qobject_cast<WithdrawSelectWalletViewModel *>(vm);
     if (realVm8) {
         realVm8->setwithdrawAmountSats(withdrawAmountSats());
         setisAddressFlow(false);
-        connect(this, &ClaimingFlow::forwardTransaction, realVm8, &WithdrawSelectWalletViewModel::proceedTransactionResult);
+        connect(this, &ClaimingFlow::forwardTransaction, realVm8, &WithdrawSelectWalletViewModel::proceedTransactionResult, Qt::UniqueConnection);
+    } else if (auto realVm7 = qobject_cast<WidthdrawToAddressViewModel *>(vm)) {
+        realVm7->setwithdrawAmountSats(withdrawAmountSats());
+        setisAddressFlow(true);
+        connect(this, &ClaimingFlow::forwardTransaction, realVm7, &WidthdrawToAddressViewModel::proceedTransactionResult, Qt::UniqueConnection);
     }
 
     auto realVm = qobject_cast<TransactionDetailsClaimedViewModel *>(vm);

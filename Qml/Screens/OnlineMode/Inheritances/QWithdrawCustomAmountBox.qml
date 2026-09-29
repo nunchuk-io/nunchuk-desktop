@@ -45,6 +45,12 @@ Rectangle {
 
     property alias toAmount: amountInput.textInputted
     property bool  onCurrency: false
+    // BUGFIX: pass-through so a caller can flag "amount exceeds the max allowed" - previously
+    // isValid was hardcoded true on amountInput with no way for the screen to surface an over-limit
+    // amount before it hit the backend.
+    property alias isValid: amountInput.isValid
+    property alias showError: amountInput.showError
+    property alias errorText: amountInput.errorText
 
     signal sendAllRequest()
 

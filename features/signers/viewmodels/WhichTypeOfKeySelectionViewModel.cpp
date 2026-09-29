@@ -3,6 +3,7 @@
 #include "generated_qml_keys.hpp"
 #include "core/common/resources/AppStrings.h"
 #include "features/signers/flows/KeySetupFlow.h"
+#include "Models/Signers/QSignerManagement.h"
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
 using namespace features::signers::usecases;
@@ -73,11 +74,27 @@ void WhichTypeOfKeySelectionViewModel::setupSupportedList() {
     {
     case FeatureOption::ClaimOffChain:{
         setheightOffset(516);
-        list.append(add(SignerKeyType::ColdcardHW));
+        // Figma D04 note: "Use the five desktop Add Key hardware types via USB. The backend
+        // controls availability within this list. Always show Software." Gated by
+        // supported_signers[].is_inheritance_key for wallet_type MULTI_SIG (NUN-10192,
+        // GET /configs/setup) - same backend-driven pattern already used for the owner-side
+        // "Add inheritance key" screens (see QSupportedKeys.qml::isSupportedInheritance()).
+        // Software is unconditional per the note; TapSigner stays disabled (NFC, not one of the
+        // "five... via USB").
+        auto *signerMng = QSignerManagement::instance();
+        for (auto hw : {SignerKeyType::ColdcardHW, SignerKeyType::LedgerHW, SignerKeyType::TrezorHW,
+                        SignerKeyType::JadeHW, SignerKeyType::BitBoxHW}) {
+            QString tag = getKeyInfoByType(hw).value("tag").toString();
+            if (signerMng->isSupportedInheritance(tag, "MULTI_SIG")) {
+                list.append(add(hw));
+            }
+        }
         list.append(add(SignerKeyType::Software));
         list.append(add(SignerKeyType::TapSignerHW, false));
         setsupportedList(list.toVariantList());
-        setkeyType((int)SignerKeyType::ColdcardHW);
+        // Default to the first enabled entry rather than a hardcoded Coldcard that filtering may
+        // have excluded from the list.
+        setkeyType(list.first().toObject().value("type").toInt());
         break;
     }
     
@@ -98,7 +115,11 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain() {
     input.wallet_type = walletType();
     switch (static_cast<SignerKeyType>(keyType()))
     {
-    case SignerKeyType::ColdcardHW:        
+    case SignerKeyType::ColdcardHW:
+    case SignerKeyType::LedgerHW:
+    case SignerKeyType::TrezorHW:
+    case SignerKeyType::JadeHW:
+    case SignerKeyType::BitBoxHW:
         setsignerType(nunchuk::SignerType::HARDWARE);
         break;
     case SignerKeyType::Software: {
@@ -128,7 +149,13 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain(bool isExisting) {
     if (isExisting) {
         switch (static_cast<SignerKeyType>(keyType()))
         {
-        case SignerKeyType::ColdcardHW:        
+        case SignerKeyType::ColdcardHW:
+        case SignerKeyType::LedgerHW:
+        case SignerKeyType::TrezorHW:
+        case SignerKeyType::JadeHW:
+        case SignerKeyType::BitBoxHW:
+            // AddHardwareExistingKeyViewModel is generic across all 5 wired vendors (it branches on
+            // keyType()/hardwareTag() internally for guide text and "add new" routing).
             subMng->show(qml::features::signers::qaddhardwareexistingkey);
             break;
         case SignerKeyType::Software: {
@@ -140,8 +167,16 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain(bool isExisting) {
     } else {
         switch (static_cast<SignerKeyType>(keyType()))
         {
-        case SignerKeyType::ColdcardHW:        
+        case SignerKeyType::ColdcardHW:
             subMng->show(qml::features::signers::qcoldcardrefreshdevices);
+            break;
+        case SignerKeyType::LedgerHW:
+        case SignerKeyType::TrezorHW:
+        case SignerKeyType::JadeHW:
+        case SignerKeyType::BitBoxHW:
+            // Generic wired-USB flow shared by these 4 vendors (HardwareRefreshDevicesViewModel
+            // already branches on hardwareTag() and special-cases FeatureOption::ClaimOffChain).
+            subMng->show(qml::features::signers::qhardwarerefreshdevices);
             break;
         case SignerKeyType::Software: {
             subMng->show(qml::features::signers::qrecoveryaddsoftwarekey);
