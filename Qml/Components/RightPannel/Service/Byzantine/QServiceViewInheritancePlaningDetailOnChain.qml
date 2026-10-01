@@ -41,7 +41,9 @@ Item {
     property var    inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property var    planInfo: inheritancePlanInfo.planInfo
     property string walletName: ServiceSetting.walletInfo.walletName
-    property string myRole: ServiceSetting.walletInfo.myRole
+    // BUGFIX: see OffChain sibling - ServiceSetting.walletInfo.myRole falls back to a possibly-stale
+    // cached role; read it straight off the dashboard instead (no cache fallback).
+    property string myRole: ServiceSetting.walletInfo.dashboardInfo.myRole
     property bool   isEdit: myRole === "MASTER" || myRole === "ADMIN"
     QContextMenu {
         id: optionMenu

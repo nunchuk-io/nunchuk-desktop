@@ -116,9 +116,19 @@ void WhichTypeOfKeySelectionViewModel::selectKeyType(int type)  {
 }
 
 void WhichTypeOfKeySelectionViewModel::continueOffChain() {
+    // BUGFIX: double-click (or any re-entrant call) on Continue used to stack a 2nd
+    // setOverrideCursor() while the 1st m_supportedSignersUC call was still in flight;
+    // WorkerConcurrent::run() silently drops the 2nd request (busy guard), so its callback -
+    // and the matching restoreOverrideCursor() - never fired, leaving the wait cursor stuck
+    // forever. Guard re-entrancy here instead. Also moved the GUARD_APP_MODEL() check before
+    // setOverrideCursor() so a null appModel can no longer leak the cursor either.
+    if (m_isSubmitting) {
+        return;
+    }
+    GUARD_APP_MODEL()
+    m_isSubmitting = true;
     qApp->setOverrideCursor(Qt::WaitCursor);
     setwalletType(nunchuk::WalletType::MULTI_SIG);
-    GUARD_APP_MODEL()
     SupportedSignersInput input;
     input.wallet_type = walletType();
     switch (static_cast<SignerKeyType>(keyType()))
@@ -147,6 +157,7 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain() {
     }
     input.signer_tags = tags;
     m_supportedSignersUC.addParameter(appModel).executeAsync(input, [this](core::usecase::Result<SupportedSignersResult> result) {
+        m_isSubmitting = false;
         qApp->restoreOverrideCursor();
         continueOffChain(result.isSuccess());
     });

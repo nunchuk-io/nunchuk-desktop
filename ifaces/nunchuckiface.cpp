@@ -21,6 +21,15 @@
 #include "nunchucklistener.h"
 #include "QOutlog.h"
 #include "utils/enumconverter.hpp"
+#include <mutex>
+
+// BUGFIX: libnunchuk's HWIService (contrib/libnunchuk, not modifiable here) keeps a single
+// in-flight child-process handle shared by every device call on the same nunchuk instance. Two
+// overlapping scans (e.g. two "Refresh devices" triggers hitting GetDevices() around the same
+// time) can clobber/race each other's wait() on that handle, surfacing as
+// "[-4099] Wait error: No child processes". Serialize scans at this layer instead so at most one
+// GetDevices() call reaches libnunchuk at a time.
+static std::mutex s_getDevicesMutex;
 
 nunchukiface::nunchukiface(): nunchukMode_(LOCAL_MODE){}
 
@@ -383,6 +392,7 @@ nunchuk::Wallet nunchukiface::ImportWalletDescriptor(const std::string& file_pat
 
 std::vector<nunchuk::Device> nunchukiface::GetDevices(QWarningMessage& msg){
     std::vector<nunchuk::Device> ret;
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetDevices();

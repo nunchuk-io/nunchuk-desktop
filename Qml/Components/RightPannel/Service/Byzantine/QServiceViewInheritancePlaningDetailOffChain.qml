@@ -43,7 +43,12 @@ Item {
     property var    inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property var    planInfo: inheritancePlanInfo.planInfo
     property string walletName: ServiceSetting.walletInfo.walletName
-    property string myRole: ServiceSetting.walletInfo.myRole
+    // BUGFIX: ServiceSetting.walletInfo.myRole (AssistedWallet::myRole()) falls back to a
+    // possibly-stale cached role whenever the dashboard's live role hasn't loaded yet, so a real
+    // MASTER/ADMIN user could still read as some other/empty role here and stay stuck on the
+    // disabled "..." button. Read it straight off the dashboard instead (dashboardInfo.myRole ->
+    // QGroupDashboard::myRole(), no cache fallback) - the same path QHomePendingWallet.qml uses.
+    property string myRole: ServiceSetting.walletInfo.dashboardInfo.myRole
     property bool   isEdit: myRole === "MASTER" || myRole === "ADMIN"
 
     // BUGFIX (confirmed via inheritanceGetPlan response log): claim_options ships directly on each

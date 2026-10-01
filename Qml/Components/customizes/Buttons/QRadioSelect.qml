@@ -41,6 +41,9 @@ Item {
     property alias content: loader.sourceComponent
     readonly property Item contentItem: loader.item
     property bool isOverlay: false
+    // Opt-in only: lets content (e.g. QRadioButtonTypeB's editable field) win
+    // clicks over hitArea below. Default false keeps every other caller as-is.
+    property bool contentOnTop: false
     signal buttonClicked()
     Row {
         id: row
@@ -70,6 +73,7 @@ Item {
     // rows are packed with spacing:0) as a general safety margin for any such flush-edge usage.
     MouseArea {
         id: hitArea
+        z: contentOnTop ? -1 : 0
         anchors.fill: parent
         anchors.leftMargin: -12
         anchors.rightMargin: -12
