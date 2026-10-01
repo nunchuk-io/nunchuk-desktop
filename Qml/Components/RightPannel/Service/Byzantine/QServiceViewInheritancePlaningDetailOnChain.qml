@@ -115,6 +115,10 @@ Item {
                         height: 48
                         anchors.right: parent.right
                         visible: inheritancePlanInfo.isActived
+                        // Keep the button visible so users know the menu exists; grey it out instead of
+                        // hiding it when the role has nothing to do there (optionMenu is empty).
+                        enabled: isEdit
+                        opacity: isEdit ? 1.0 : 0.4
                         bgColor: "#D0E2FF"
                         icon: "qrc:/Images/Images/more-horizontal-dark.svg"
                         onClicked: {

@@ -324,7 +324,10 @@ QPopupOverlayScreen {
                                     type: eTypeB
                                     label.font.pixelSize: 14
                                     label.text: STR.STR_QML_2281
-                                    onButtonClicked: _backupSeedFlow.startFlow()
+                                    // BUGFIX: pass the actual key (with a real derivation_path) instead of
+                                    // letting startFlow() read the unset global SignerManagement.currentSigner -
+                                    // root cause of the seed-phrase re-verify HWI "Run command exit error!".
+                                    onButtonClicked: _backupSeedFlow.startFlow(_root.currentKey())
                                 }
                                 QLato {
                                     id: _seedSkippedLabel

@@ -125,7 +125,13 @@ Item {
                     delegate: Item {
                         width: 342
                         height: 44
-                        visible: device_type === _HARDWARE_TYPE
+                        // BUGFIX: "_HARDWARE_TYPE" was never defined in this file's scope (that
+                        // property only exists on QScreenAdd.qml, an unrelated base used by the old
+                        // add-key flow) - this filter was always evaluating against undefined. The
+                        // scan usecase already filters server-side by hardwareTag, but keep this as
+                        // a defensive client-side filter too. device_type is lowercase ("ledger"),
+                        // vm.hardwareTag is uppercase ("LEDGER") - compare case-insensitively.
+                        visible: device_type.toUpperCase() === vm.hardwareTag
                         Rectangle {
                             id: rect
                             anchors.horizontalCenter: parent.horizontalCenter

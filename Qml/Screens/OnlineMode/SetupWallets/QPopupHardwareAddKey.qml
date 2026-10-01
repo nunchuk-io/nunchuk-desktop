@@ -42,7 +42,8 @@ QPopupEmpty {
     property bool isMiniscript: false
     property bool isInheritance: false
     signal nextClicked()
-    property string titleText: STR.STR_QML_942
+    // BUGFIX (design update): inheritance add-key uses its own title; non-inheritance keeps STR_QML_942.
+    property string titleText: isInheritance ? STR.STR_QML_2339 : STR.STR_QML_942
     property string subtitleText: isKeyHolderLimited ? STR.STR_QML_1282 : ""
     property bool   supportWarning: true
     onOpened: {

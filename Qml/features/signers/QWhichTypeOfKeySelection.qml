@@ -43,7 +43,8 @@ QOnScreenContentTypeB {
 
     content: Item {
         Column {
-            anchors.fill: parent
+            id: headerCol
+            anchors { top: parent.top; left: parent.left; right: parent.right }
             spacing: 0
 
             QLato {
@@ -73,44 +74,51 @@ QOnScreenContentTypeB {
                 verticalAlignment: Text.AlignVCenter
                 visible: vm.subtitle != ""
             }
+        }
+
+        // BUGFIX: list used to be a plain Column with no bounded height, so once the backend-driven
+        // list grew past ~2 items (NUN-10192 filtering) it overflowed past the info box below and the
+        // two visually overlapped. Bounded between the header and the info box, with its own scrollbar,
+        // so the info box always stays put as the bottom edge - it never gets pushed or covered.
+        Flickable {
+            id: listArea
+            anchors {
+                top: headerCol.bottom
+                left: parent.left
+                right: parent.right
+                bottom: infoBoxMulti.visible ? infoBoxMulti.top : (infoBoxOneLine.visible ? infoBoxOneLine.top : parent.bottom)
+                // 12px gap so the last list row doesn't sit flush against the gray info box.
+                bottomMargin: (infoBoxMulti.visible || infoBoxOneLine.visible) ? 12 : 0
+            }
+            clip: true
+            contentWidth: width
+            contentHeight: listColumn.height
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: ScrollBar {}
 
             Column {
+                id: listColumn
+                width: parent.width
                 spacing: 0
 
                 Repeater {
                     model: vm.supportedList
-                    Column {
-                        id: keyItem
+                    // BUGFIX (design update): no per-device caption on this screen (matches
+                    // QPopupHardwareAddKey.qml's inheritance list, which is plain rows only) - removed
+                    // the claim_note text that didn't appear in the Figma reference.
+                    QRadioButtonTypeA {
+                        id: btn
                         width: 528
-                        spacing: 0
-                        // Per-device explanation from backend config (claim_note, NUN-10192); display only.
-                        readonly property string claimNote: SignerManagement.claimNoteForTag(modelData.tag, "MULTI_SIG")
-
-                        QRadioButtonTypeA {
-                            id: btn
-                            width: 528
-                            height: 48
-                            label: modelData.name
-                            layoutDirection: Qt.LeftToRight
-                            fontFamily: "Lato"
-                            fontPixelSize: 16
-                            fontWeight: Font.Normal
-                            enabled: modelData.is_enabled
-                            selected: vm.keyType === modelData.type
-                            onButtonClicked: {
-                                vm.selectKeyType(modelData.type);
-                            }
-                        }
-
-                        QLato {
-                            width: parent.width
-                            visible: keyItem.claimNote !== ""
-                            height: visible ? implicitHeight + 8 : 0
-                            text: keyItem.claimNote
-                            font.pixelSize: 11
-                            color: "#757575"
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignLeft
+                        height: 48
+                        label: modelData.name
+                        layoutDirection: Qt.LeftToRight
+                        fontFamily: "Lato"
+                        fontPixelSize: 16
+                        fontWeight: Font.Normal
+                        enabled: modelData.is_enabled
+                        selected: vm.keyType === modelData.type
+                        onButtonClicked: {
+                            vm.selectKeyType(modelData.type);
                         }
                     }
                 }
@@ -118,15 +126,19 @@ QOnScreenContentTypeB {
         }
 
         QWarningBgMulti {
+            id: infoBoxMulti
             width: 528
             visible: vm.description !== ""
-            height: 108
+            // BUGFIX: explicit height here overrode QWarningBgMulti's own self-sizing (height:
+            // _content.height + 2*12), defeating the 12px-margin fix - removed, matches
+            // QPopupHardwareAddKey.qml's usage which leaves height unset.
             icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: vm.description
             anchors.bottom: parent.bottom
         }
 
         QWarningBg {
+            id: infoBoxOneLine
             width: 528
             visible: vm.descriptionOneLine !== ""
             height: 60

@@ -995,8 +995,19 @@ bool QGroupDashboard::canEntryClickAlert() {
     DBG_INFO << ".qml " << IntToString(flow()) << alertJson();
     QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
     QString xfp = payload["xfp"].toString();
+    // BUGFIX: dummyXfp locks the Sign button to ONE specific key (see
+    // BaseTransaction::updateSignaturesForDummyTx). That's correct only for per-key
+    // health-check/claim-key alerts; group-signing alerts (inheritance plan, server key,
+    // etc.) need ANY eligible key to sign, so don't lock/carry over xfp for those -
+    // otherwise an unrelated "xfp" left in the payload wrongly hides the Sign button for
+    // every key except that one (e.g. missing Sign button on inheritance-plan dummy tx).
+    AlertEnum::E_Alert_t alertFlow = (AlertEnum::E_Alert_t)flow();
+    bool isSingleKeyFlow = (alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST ||
+                            alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING ||
+                            alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_REMINDER ||
+                            alertFlow == AlertEnum::E_Alert_t::GROUP_WALLET_SETUP);
     if (auto dummy = groupDummyTxPtr()) {
-        dummy->setCurrentXfp(xfp);
+        dummy->setCurrentXfp(isSingleKeyFlow ? xfp : QString());
     }
     if (!dummy_transaction_id.isEmpty()) {
         if (healthPtr()) {
@@ -1632,9 +1643,16 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const {
         QJsonObject signer = js.toObject();
         if (signer["xfp"].toString() == xfp) {
             QJsonArray tags = signer["tags"].toArray();
+            // BUGFIX: "tags" can hold both the hardware tag (BITBOX/JADE/...) and the
+            // "INHERITANCE" marker together; blindly taking the last entry picked up
+            // "INHERITANCE" instead of the hardware tag, so QSignerBadgeName.qml's tag
+            // switch fell through to "Unknown" for inheritance-tagged BitBox/Jade keys.
             signer["tag"] = "";
             for (auto tag : tags) {
-                signer["tag"] = tag.toString();
+                QString tagStr = tag.toString();
+                if (tagStr != "INHERITANCE") {
+                    signer["tag"] = tagStr;
+                }
             }
             signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
             signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());

@@ -1719,9 +1719,14 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_1600, "Inheritance")
     DEFINE_STRING_PROPERTY(STR_QML_1601, "Add inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_1602, "Add hardware key")
+    // BUGFIX: stale text said only "COLDCARD and TAPSIGNER" - this is the C++-side string table
+    // actually read by Strings.STR_QML_1603() (STR_QML.js is a separate, QML-only i18n source and
+    // was NOT what rendered on screen). Reverted to the generic wording per design (Figma, matches
+    // STR_QML_943/QPopupHardwareAddKey's non-inheritance variant) - covers all types not in the
+    // backend-driven list (Keystone/Passport/KeepKey/Krux/TapSigner), not just TapSigner specifically.
     DEFINE_STRING_PROPERTY(
         STR_QML_1603,
-        "Currently, COLDCARD and TAPSIGNER are supported for the inheritance key. To add TAPSIGNER as the inheritance key, please use the mobile app.")
+        "To add other types of hardware keys, please use the mobile app.")
     DEFINE_STRING_PROPERTY(STR_QML_1604, "I don't have a passphrase")
     DEFINE_STRING_PROPERTY(STR_QML_1605, "I have a passphrase")
     DEFINE_STRING_PROPERTY(STR_QML_1606, "Are you using a passphrase with your COLDCARD?")
@@ -2251,6 +2256,9 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2073, "You are locking these funds for approximately %1 years. Your Beneficiary cannot access these funds until the lock "
                                          "expires, even if you pass away sooner. Are you sure?")
     DEFINE_STRING_PROPERTY(STR_QML_2074, "Invalid date")
+    // Inheritance-specific title for the "which type of key" screen (Figma), shared by the
+    // pending-wallet add-key popup (STR_QML.js STR_QML_2339) and the claim-flow D04 screen.
+    DEFINE_STRING_PROPERTY(STR_QML_2339, "Let's now add the inheritance key to Nunchuk. Select your key type:")
     DEFINE_STRING_PROPERTY(STR_QML_2075, "The timelock date cannot be in the past. Please select a future date.")
     DEFINE_STRING_PROPERTY(STR_QML_2076, "Change on-chain timelock")
     DEFINE_STRING_PROPERTY(STR_QML_2077, "Timelock is active")

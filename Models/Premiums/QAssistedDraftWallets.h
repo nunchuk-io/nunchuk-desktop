@@ -110,7 +110,13 @@ class QAssistedDraftWallets : public QSwitchAPI {
     void requestAddOrReplacementWithIndexAsync(const QString &xfp, int index);
     QString bip32path(const QString &xfp, int index);
     QString reuseKeyXfp(const QString &fileName);
-    void requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE");
+    // BUGFIX (root cause of "Run command exit error!" / "This key doesn't match" on seed-phrase
+    // re-verify): xfp/derivationPath used to be re-read live from QSignerManagement::currentSignerJs(),
+    // but QVerifyBothBackups.qml/QBackupSeedPhraseFlow.qml never populate that global - they thread
+    // their own xfp/signerTag instead (see QEncryptedBackupFlow::startFlow(tag, keyXfp) for the same
+    // pattern) - so derivation_path was always empty, and hwi_.GetXpubAtPath(device, "") always failed.
+    // Now accepts both explicitly; falls back to the live global only if the caller omits them.
+    void requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE", const QString &xfp = QString(), const QString &derivationPath = QString());
     void requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE");
     void requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE");
     bool requestVerifySingleSigner(const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE", const QString &keyChecksum = "");

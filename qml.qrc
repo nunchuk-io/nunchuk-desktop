@@ -769,6 +769,7 @@
         <file>Qml/features/signers/QWhichTypeOfKeySelection.qml</file>
         <file>Qml/features/signers/QColdcardRefreshDevices.qml</file>
         <file>Qml/features/signers/QHardwareRefreshDevices.qml</file>
+        <file>Qml/features/signers/QHardwareRefreshDevicesScreen.qml</file>
         <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR.qml</file>
         <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR_1_2.qml</file>
         <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR_2_2.qml</file>

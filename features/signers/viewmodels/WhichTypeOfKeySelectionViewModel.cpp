@@ -58,7 +58,9 @@ void WhichTypeOfKeySelectionViewModel::setupGuide() {
     {
     case FeatureOption::ClaimOffChain:{
         setheadline(Strings.STR_QML_1601());
-        settitle(Strings.STR_QML_942());        
+        // Design update: inheritance-specific title, shared with QPopupHardwareAddKey.qml's
+        // isInheritance case (STR_QML.js STR_QML_2339) for UI consistency between the two flows.
+        settitle(Strings.STR_QML_2339());
         setdescription(Strings.STR_QML_1603());
         break;
     }
@@ -90,7 +92,13 @@ void WhichTypeOfKeySelectionViewModel::setupSupportedList() {
             }
         }
         list.append(add(SignerKeyType::Software));
-        list.append(add(SignerKeyType::TapSignerHW, false));
+        // TapSigner: same backend-gated inclusion as the owner-side screen (QSupportedKeys.qml) -
+        // only shown (disabled, NFC not supported via USB) if the backend actually lists an
+        // is_inheritance_key entry for signer_tag "INHERITANCE"; omitted entirely otherwise, matching
+        // the design (Figma) which shows no TapSigner row when that entry isn't present.
+        if (signerMng->isSupportedInheritance("INHERITANCE", "MULTI_SIG")) {
+            list.append(add(SignerKeyType::TapSignerHW, false));
+        }
         setsupportedList(list.toVariantList());
         // Default to the first enabled entry rather than a hardcoded Coldcard that filtering may
         // have excluded from the list.
@@ -176,7 +184,10 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain(bool isExisting) {
         case SignerKeyType::BitBoxHW:
             // Generic wired-USB flow shared by these 4 vendors (HardwareRefreshDevicesViewModel
             // already branches on hardwareTag() and special-cases FeatureOption::ClaimOffChain).
-            subMng->show(qml::features::signers::qhardwarerefreshdevices);
+            // BUGFIX: qhardwarerefreshdevices is content-only (no title/Prev/Continue chrome, no
+            // "vm" of its own) - showing it bare left this screen with no title/button and broken
+            // bindings for every vendor except COLDCARD. Show the wrapped screen instead.
+            subMng->show(qml::features::signers::qhardwarerefreshdevicesscreen);
             break;
         case SignerKeyType::Software: {
             subMng->show(qml::features::signers::qrecoveryaddsoftwarekey);

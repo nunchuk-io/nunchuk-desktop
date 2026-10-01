@@ -43,10 +43,12 @@ Rectangle {
 
     Row {
         id: _content
+        // Anchored from the bottom (per design) so the 12px gap is measured against the text itself,
+        // not the row's fixed-lineHeight box - top spacing still comes out to 12px via the height formula.
         anchors {
             left: parent.left
             right: parent.right
-            top: parent.top
+            bottom: parent.bottom
             margins: 12
         }
         spacing: 12

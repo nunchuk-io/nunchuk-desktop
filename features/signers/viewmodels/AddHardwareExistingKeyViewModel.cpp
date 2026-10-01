@@ -81,7 +81,9 @@ void AddHardwareExistingKeyViewModel::onTakeMeAddNewKeyClicked() {
     case SignerKeyType::BitBoxHW:
         // Generic wired USB flow shared by these four vendors (HardwareRefreshDevicesViewModel
         // already branches on hardwareTag() and on FeatureOption::ClaimOffChain).
-        subMng->show(qml::features::signers::qhardwarerefreshdevices);
+        // BUGFIX: qhardwarerefreshdevices is content-only (no chrome, no "vm" of its own) - show
+        // the wrapped screen instead, same fix as WhichTypeOfKeySelectionViewModel::continueOffChain.
+        subMng->show(qml::features::signers::qhardwarerefreshdevicesscreen);
         break;
     default:
         break;

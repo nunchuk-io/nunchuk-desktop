@@ -14,9 +14,9 @@ if(POLICY CMP0091)
 endif()
 
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 2.6.7)
+    project(Nunchuk VERSION 2.9.0)
 else()
-    project(nunchuk-qt VERSION 2.6.7)
+    project(nunchuk-qt VERSION 2.9.0)
 endif()
 
 set(CMAKE_CXX_STANDARD 23)

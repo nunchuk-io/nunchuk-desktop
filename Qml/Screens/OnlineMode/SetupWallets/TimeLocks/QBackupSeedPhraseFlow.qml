@@ -44,23 +44,30 @@ QPopupOverlayScreen {
     // BUGFIX: backend error message for the failed-verify screen (Setup 13cD) - not the exact
     // "expected/actual XFP" the mockup shows, since no such structured field is returned by the API.
     property string verify_error_msg: ""
-    // BUGFIX: snapshot the signer identity once at startFlow(), instead of reading the mutable global
-    // SignerManagement.currentSigner throughout the whole multi-screen flow (the re-add-device step
-    // connects a different physical device without repointing currentSigner, but nothing guarantees
-    // that stays true forever - QEncryptedBackupFlow.qml/QVerifyBothBackups.qml already thread their
-    // own xfp/signerTag this same way for the same reason).
+    // BUGFIX (real root cause of "Run command exit error!" on re-verify, confirmed): this used to
+    // ALWAYS snapshot from the mutable global SignerManagement.currentSigner - fine for the 3 call
+    // sites that call dashInfo.startAddKeyAtIndex(index) (which sets that global) right before
+    // startFlow(), but QVerifyBothBackups.qml never sets that global at all (it threads its own
+    // xfp/signerTag instead, same as QEncryptedBackupFlow.qml), so derivation_path (and possibly xfp)
+    // read empty there, and hwi_.GetXpubAtPath(device, "") always exits with an error during the
+    // re-add-device verify step. Now startFlow(key) accepts the actual key object explicitly
+    // (QVerifyBothBackups.currentKey(), which carries a real derivation_path) and prefers it when
+    // given; falls back to the global for the other 3 call sites that still call startFlow() bare.
     property string xfp: ""
     property string signerTag: ""
     property string signerName: ""
     property string signerType: ""
+    property string derivationPath: ""
     QScreenStateFlow {
         id: stateFlow
     }
-    function startFlow() {
-        xfp = SignerManagement.currentSigner.xfp !== undefined ? SignerManagement.currentSigner.xfp : ""
-        signerTag = SignerManagement.currentSigner.tag !== undefined ? SignerManagement.currentSigner.tag : ""
-        signerName = SignerManagement.currentSigner.name !== undefined ? SignerManagement.currentSigner.name : ""
-        signerType = SignerManagement.currentSigner.type !== undefined ? SignerManagement.currentSigner.type : ""
+    function startFlow(key) {
+        var k = key !== undefined && key !== null ? key : SignerManagement.currentSigner
+        xfp = k.xfp !== undefined ? k.xfp : ""
+        signerTag = k.tag !== undefined ? k.tag : ""
+        signerName = k.name !== undefined ? k.name : ""
+        signerType = k.type !== undefined ? k.type : ""
+        derivationPath = k.derivation_path !== undefined ? k.derivation_path : ""
         _infoPopup.open()
         stateFlow.setScreenFlow("backup-your-inheritance-key-seed-phrase")
     }
@@ -216,7 +223,7 @@ QPopupOverlayScreen {
                         type: eTypeE
                         enabled: _refresh.contentItem.isEnable()
                         onButtonClicked: {
-                            draftWallet.requestVerifySingleSignerViaConnectDevice(_refresh.contentItem.mDevicelist.currentIndex, selected_verify_option)
+                            draftWallet.requestVerifySingleSignerViaConnectDevice(_refresh.contentItem.mDevicelist.currentIndex, selected_verify_option, "SEED_PHRASE", _infoPopup.xfp, _infoPopup.derivationPath)
                         }
                     }
                 }

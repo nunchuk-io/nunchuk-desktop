@@ -54,7 +54,9 @@ void RefreshDevicesViewModel::scanDevice() {
                 setdeviceList(deviceListModel);
             }
         } else {
-            // Handle error (e.g., log it, show a message, etc.)
+            // BUGFIX: same stub as HardwareRefreshDevicesViewModel::scanDevice() - a scan failure
+            // (e.g. HWI not available) silently looked identical to "no device plugged in".
+            emit showToast(result.code(), result.error(), EWARNING::WarningType::ERROR_MSG);
         }
         setisLoading(false);
     });

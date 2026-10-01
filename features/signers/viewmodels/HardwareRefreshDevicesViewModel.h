@@ -12,6 +12,12 @@ class HardwareRefreshDevicesViewModel : public AddKeyBaseViewModel {
     DEFINE_QT_PROPERTY(bool, isLoading)
   public:
     explicit HardwareRefreshDevicesViewModel(QObject *parent = nullptr);
+    // BUGFIX: title used to be hardcoded to the COLDCARD copy (constructor-only) regardless of
+    // which of the 4 generic wired vendors (Ledger/Trezor/Jade/BitBox) was actually selected.
+    // Mirrors AddHardwareExistingKeyViewModel::initializeTextGuide()'s per-keyType() switch.
+    void initializeTextGuide();
+  protected:
+    void onInit() override;
   public slots:
     void scanDevice();
     void requestCreateSigner();

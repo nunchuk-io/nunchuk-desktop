@@ -157,8 +157,15 @@ Item {
                         width: 48
                         height: 48
                         anchors.right: parent.right
-                        // BUGFIX: optionMenu has 0 items for non-MASTER/ADMIN roles; hide the button too.
-                        visible: inheritancePlanInfo.isActived && isEdit
+                        // BUGFIX: restore parity with OnChain/HoneyBadger-IronHand siblings, which only
+                        // gate on isActived - the extra "&& isEdit" added here hid the "..." (cancel
+                        // inheritance plan) menu even for MASTER/ADMIN in some cases, regressing the
+                        // existing behavior.
+                        visible: inheritancePlanInfo.isActived
+                        // Keep the button visible so users know the menu exists; grey it out instead of
+                        // hiding it when the role has nothing to do there (optionMenu is empty).
+                        enabled: isEdit
+                        opacity: isEdit ? 1.0 : 0.4
                         bgColor: "#D0E2FF"
                         icon: "qrc:/Images/Images/more-horizontal-dark.svg"
                         onClicked: {

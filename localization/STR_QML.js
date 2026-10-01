@@ -2477,3 +2477,6 @@ var STR_QML_2336 = qsTr("You are solely responsible for sharing these secrets wi
 var STR_QML_2337 = qsTr("You are solely responsible for sharing these secrets. Failure to share will result in the inheritance being unclaimable.")
 // Joint control extra note under the Secret 2 bullets (mockup 05D only).
 var STR_QML_2338 = qsTr("Both unlock the same key, so they must go to the same party. Splitting them would give each party a copy of the key and leave the Magic Phrase unmatched.")
+// Inheritance-specific title for the "which type of key" screen (Figma), shared by the pending-wallet
+// add-key popup and the claim-flow D04 screen - distinct from STR_QML_942 which stays for non-inheritance adds.
+var STR_QML_2339 = qsTr("Let's now add the inheritance key to Nunchuk. Select your key type:")

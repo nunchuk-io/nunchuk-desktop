@@ -62,14 +62,14 @@ the first tag build or manual `workflow_dispatch` run.
 
 ## Build an exact Linux version
 
-The release tag is expected to use the numeric form `2.6.7`, without a leading
+The release tag is expected to use the numeric form `2.9.0`, without a leading
 `v`. Set `ARCH` to `x86_64` or `aarch64` for the architecture you want; the
 other variables below follow from it (see `build-linux.yml`'s matrix for the
 same mapping).
 
 ```bash
 export PROJECT_DIR="$HOME/nunchuk-desktop"
-export VERSION="2.6.7"
+export VERSION="2.9.0"
 export ARCH="x86_64"   # or: aarch64
 
 case "$ARCH" in

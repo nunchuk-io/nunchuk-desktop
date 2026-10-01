@@ -11,6 +11,7 @@
 #include "ColdcardRefreshDevicesViewModel.h"
 #include "EditPlatformKeyPoliciesViewModel.h"
 #include "GlobalPlatformKeyPoliciesViewModel.h"
+#include "HardwareRefreshDevicesViewModel.h"
 #include "PerKeyPlatformKeyPoliciesViewModel.h"
 #include "PlatformKeyPoliciesViewModel.h"
 #include "RecoverAnExistingSeedViewModel.h"
@@ -29,6 +30,11 @@ static inline void registerViewModels() {
     REGISTER_VIEWMODEL(RecoverAnExistingSeedViewModel)
     REGISTER_VIEWMODEL(WhichTypeOfKeySelectionViewModel)
     REGISTER_VIEWMODEL(ColdcardRefreshDevicesViewModel)
+    // BUGFIX: HardwareRefreshDevicesViewModel is the "vm" QHardwareRefreshDevices.qml expects, but
+    // was never registered as a QML type - it only compiled before because nothing ever actually
+    // instantiated it from QML (QHardwareRefreshDevices.qml was shown bare, with no wrapper
+    // providing "vm" at all). Needed by the new QHardwareRefreshDevicesScreen.qml wrapper.
+    REGISTER_VIEWMODEL(HardwareRefreshDevicesViewModel)
     REGISTER_VIEWMODEL(AddBlockstreamJadeViaQRViewModel)
     REGISTER_VIEWMODEL(AddColdcardViaFileViewModel)
     REGISTER_VIEWMODEL(AddHardwareExistingKeyViewModel)

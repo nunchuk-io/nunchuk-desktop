@@ -644,20 +644,22 @@ ENUNCHUCK::WalletType QAssistedDraftWallets::walletType() const {
     }
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod) {
+void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod, const QString &xfp, const QString &derivationPath) {
 
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, verifyType, verificationMethod, index]() ->bool{
+    runInConcurrent([this, verifyType, verificationMethod, index, xfp, derivationPath]() ->bool{
+        // Prefer the caller-provided xfp/derivationPath (see header comment); only fall back to the
+        // global for any other caller that still doesn't pass them.
         auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
-        auto xfpSelected = currentSigerInfo.value("xfp").toString();
-        DBG_INFO << "index: " << index << "verifyType: " << verifyType << "currentSigerInfo: " << currentSigerInfo;
+        auto xfpSelected = !xfp.isEmpty() ? xfp : currentSigerInfo.value("xfp").toString();
+        DBG_INFO << "index: " << index << "verifyType: " << verifyType << "xfpSelected: " << xfpSelected << "derivationPath: " << derivationPath;
         QWarningMessage msg;
         QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
         if (deviceList) {
             auto device = deviceList->getDeviceByIndex(qMax(0, index));
             if (device) {
                 QWarningMessage msg;
-                auto derivation_path = currentSigerInfo.value("derivation_path").toString();
+                auto derivation_path = !derivationPath.isEmpty() ? derivationPath : currentSigerInfo.value("derivation_path").toString();
                 auto signer = bridge::nunchukGetSignerFromMasterSigner(xfpSelected, derivation_path, msg);
                 if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                     msg.resetWarningMessage();

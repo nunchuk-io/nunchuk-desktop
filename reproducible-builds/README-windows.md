@@ -71,7 +71,7 @@ The build rejects any vcpkg-provided OpenSSL package. A small Qt program is also
 compiled and run from the staged payload to require the `openssl` TLS backend,
 `QSslSocket::supportsSsl()`, and the exact OpenSSL 3.5.7 runtime version.
 
-The release tag must be a numeric version such as `2.6.7`, without a leading
+The release tag must be a numeric version such as `2.9.0`, without a leading
 `v`. CI requires that tag, both CMake `project(... VERSION ...)` declarations,
 and `QCoreApplication::setApplicationVersion()` all contain the same version and
 that the tag points exactly to the checked-out commit. `SOURCE_DATE_EPOCH` is

@@ -12,9 +12,49 @@ const QMap<QString, QString> map_keys = {
     {"LEDGER", "ledger"}, {"TREZOR", "trezor"}, {"COLDCARD", "coldcard"}, {"BITBOX", "bitbox02"}, {"JADE", "jade"},
 };
 HardwareRefreshDevicesViewModel::HardwareRefreshDevicesViewModel(QObject *parent) : AddKeyBaseViewModel(parent) {
-    settitle(Strings.STR_QML_911());
+    // Safe default before keyType() is known from the flow; onInit() below picks the right one.
+    setheadline(Strings.STR_QML_811());
+    settitle(Strings.STR_QML_824());
     setsignerName(Strings.STR_QML_1618());
     setisLoading(false);
+}
+
+// BUGFIX: this screen is shared by 4 vendors (Ledger/Trezor/Jade/BitBox) but headline/title were
+// always the COLDCARD copy. Same per-keyType() pattern as
+// AddHardwareExistingKeyViewModel::initializeTextGuide(). "headline" is the short screen-chrome
+// title ("Add Ledger"), "title" is the longer in-content instruction ("Connect your Ledger
+// device...") - same split already used by QScreenAddLedger.qml/QColdcardRefreshDevices.qml.
+void HardwareRefreshDevicesViewModel::initializeTextGuide() {
+    switch (static_cast<SignerKeyType>(keyType()))
+    {
+    case SignerKeyType::LedgerHW:
+        setheadline(Strings.STR_QML_811());
+        settitle(Strings.STR_QML_824());
+        break;
+    case SignerKeyType::TrezorHW:
+        setheadline(Strings.STR_QML_814());
+        settitle(Strings.STR_QML_830());
+        break;
+    case SignerKeyType::JadeHW:
+        setheadline(Strings.STR_QML_1535());
+        settitle(Strings.STR_QML_1538());
+        break;
+    case SignerKeyType::BitBoxHW:
+        setheadline(Strings.STR_QML_923());
+        settitle(Strings.STR_QML_929());
+        break;
+    case SignerKeyType::ColdcardHW:
+        setheadline(Strings.STR_QML_904());
+        settitle(Strings.STR_QML_911());
+        break;
+    default:
+        break;
+    }
+}
+
+void HardwareRefreshDevicesViewModel::onInit() {
+    initializeTextGuide();
+    AddKeyBaseViewModel::onInit();
 }
 
 void HardwareRefreshDevicesViewModel::scanDevice() {
@@ -41,7 +81,10 @@ void HardwareRefreshDevicesViewModel::scanDevice() {
                 }
             }
         } else {
-            // Handle error (e.g., log it, show a message, etc.)
+            // BUGFIX: was a no-op stub - a scan failure (e.g. HWI not available/linked in this build)
+            // silently fell through to the empty "No devices available" state with zero indication of
+            // why, indistinguishable from "no device plugged in".
+            emit showToast(result.code(), result.error(), EWARNING::WarningType::ERROR_MSG);
         }
         setisLoading(false);
     });
