@@ -4,6 +4,7 @@
 #include "features/signers/flows/KeyProceedFlow.h"
 #include "features/signers/flows/KeySetupFlow.h"
 #include "generated_qml_keys.hpp"
+#include "bridgeifaces.h"
 
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;

@@ -2444,6 +2444,8 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2252, "No buffer period is set.")
     DEFINE_STRING_PROPERTY(STR_QML_2253, "Fallback date must be later than the final scheduled payout.")
     DEFINE_STRING_PROPERTY(STR_QML_2254, "Learn more")
+    // Hardware device scan: button label while the just-cancelled scan is still unwinding.
+    DEFINE_STRING_PROPERTY(STR_QML_2340, "Cancelling...")
 
   public:
     static AppStrings &instance();

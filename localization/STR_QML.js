@@ -2480,3 +2480,5 @@ var STR_QML_2338 = qsTr("Both unlock the same key, so they must go to the same p
 // Inheritance-specific title for the "which type of key" screen (Figma), shared by the pending-wallet
 // add-key popup and the claim-flow D04 screen - distinct from STR_QML_942 which stays for non-inheritance adds.
 var STR_QML_2339 = qsTr("Let's now add the inheritance key to Nunchuk. Select your key type:")
+// Hardware device scan: button label while the just-cancelled scan is still unwinding in the background.
+var STR_QML_2340 = qsTr("Cancelling...")

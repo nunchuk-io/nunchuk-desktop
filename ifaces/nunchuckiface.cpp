@@ -2265,6 +2265,8 @@ nunchuk::Transaction nunchukiface::ImportPassportTransaction(const std::string &
 
 void nunchukiface::killHwiProcessAllInstance()
 {
+    // Same hazard as stopInstance() below: must not destroy/kill while GetDevices() is in flight.
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     for (int i = 0; i < 2; ++i) {
         if (nunchuk_instance_[i]) {
             try {
@@ -2287,6 +2289,11 @@ void nunchukiface::stopInstance(int mode)
         DBG_ERROR << "Invalid Nunchuk instance mode:" << mode;
         return;
     }
+    // BUGFIX: take the same lock as GetDevices() before killing/resetting the instance,
+    // otherwise this can destroy the HWIService (and its boost::process child) while a
+    // background GetDevices() call is still waiting on it (e.g. during sign-out), crashing
+    // in boost::process::child::wait().
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     if(nunchuk_instance_[mode]){
         try {
             nunchuk_instance_[mode]->KillHwiProcess();
@@ -2301,6 +2308,8 @@ void nunchukiface::stopInstance(int mode)
 void nunchukiface::stopAllInstance()
 {
     killHwiProcessAllInstance();
+    // Same lock as stopInstance(): don't reset while GetDevices() may still be running.
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     nunchuk_instance_[LOCAL_MODE].reset();
     nunchuk_instance_[LOCAL_MODE] = NULL;
     nunchuk_instance_[ONLINE_MODE].reset();

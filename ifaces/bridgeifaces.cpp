@@ -29,6 +29,9 @@
 #include "utils/enumconverter.hpp"
 #include "Servers/Draco.h"
 #include "ProfileSetting.h"
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#endif
 
 namespace {
 
@@ -113,8 +116,28 @@ bool bridge::configureFilesystemPaths(nunchuk::AppSettings &settings,
             storagePath);
     }
 
-    DBG_INFO << "DATAPATH" << storagePath;
-    settings.set_storage_path(storagePath.toStdString());
+    QString effectiveStoragePath = storagePath;
+#if defined(Q_OS_WIN)
+    // libnunchuk links its own static CRT (/MT) that is never configured for
+    // UTF-8 narrow-string conversion, so std::filesystem calls inside it fail
+    // silently on non-ASCII paths (e.g. a Windows username with diacritics).
+    // The 8.3 short path is pure ASCII, so converting here avoids the problem
+    // without touching libnunchuk/contrib at all. Directory existence was
+    // already verified above, which GetShortPathNameW requires.
+    const std::wstring wPath = storagePath.toStdWString();
+    wchar_t shortPathBuffer[MAX_PATH] = {};
+    const DWORD shortPathLen = GetShortPathNameW(wPath.c_str(), shortPathBuffer, MAX_PATH);
+    if (shortPathLen > 0 && shortPathLen < MAX_PATH) {
+        effectiveStoragePath = QString::fromWCharArray(shortPathBuffer, static_cast<int>(shortPathLen));
+    } else {
+        // 8.3 name generation can be disabled per-volume (fsutil 8dot3name) -
+        // fall back to the original path, i.e. today's (buggy) behavior.
+        DBG_ERROR << "Could not resolve 8.3 short path, falling back to:" << storagePath;
+    }
+#endif
+
+    DBG_INFO << "DATAPATH" << storagePath << "-> libnunchuk:" << effectiveStoragePath;
+    settings.set_storage_path(effectiveStoragePath.toStdString());
     return true;
 }
 
@@ -435,6 +458,15 @@ QDeviceListModelPtr bridge::nunchukGetDevices(QWarningMessage& msg) {
 std::vector<nunchuk::Device> bridge::nunchukGetOriginDevices(QWarningMessage &msg)
 {
     return nunchukiface::instance()->GetDevices(msg);
+}
+
+// BUGFIX: a stuck HWI child process (device not responding) can block GetDevices()/
+// SignHealthCheckMessage() indefinitely with no timeout inside libnunchuk. Expose
+// KillHwiProcess() so app-layer watchdog timers can force the stuck call to return
+// (terminating the child unblocks its getline/wait()), instead of waiting forever.
+void bridge::cancelHwiScan()
+{
+    nunchukiface::instance()->killHwiProcessAllInstance();
 }
 
 nunchuk::HealthStatus bridge::nunchukHealthCheckMasterSigner(const QString& xfp,

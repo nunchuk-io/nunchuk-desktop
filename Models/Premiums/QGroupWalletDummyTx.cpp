@@ -75,7 +75,22 @@ bool QGroupWalletDummyTx::requestForceSyncTx(const QString &group_id, const QStr
 
 bool QGroupWalletDummyTx::requestSignTx(const QString &xfp) {
     if (transactionPtr()) {
-        setCurrentXfp(xfp);
+        // BUGFIX: unconditionally locking dummyXfp to the just-signed key clobbered the ""
+        // that canEntryClickAlert() sets for multi-signature flows (e.g. inheritance plan
+        // setup), hiding the Sign button on every remaining key after the first one signed.
+        // Only lock for the same single-key flows canEntryClickAlert() recognizes.
+        if (auto dash = dashBoardPtr()) {
+            AlertEnum::E_Alert_t alertFlow = (AlertEnum::E_Alert_t)dash->flow();
+            bool isSingleKeyFlow = (alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST ||
+                                    alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING ||
+                                    alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_REMINDER ||
+                                    alertFlow == AlertEnum::E_Alert_t::GROUP_WALLET_SETUP);
+            if (isSingleKeyFlow) {
+                setCurrentXfp(xfp);
+            }
+        } else {
+            setCurrentXfp(xfp);
+        }
         QWarningMessage warningmsg;
         nunchuk::Wallet wallet = bridge::nunchukGetOriginWallet(wallet_id(), warningmsg);
         if ((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()) {

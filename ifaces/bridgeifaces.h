@@ -315,6 +315,10 @@ QDeviceListModelPtr nunchukGetDevices(QWarningMessage& msg);
 
 std::vector<nunchuk::Device> nunchukGetOriginDevices(QWarningMessage& msg);
 
+// Force-terminate any in-flight HWI child process (e.g. a scan stuck waiting on an
+// unresponsive device). Safe to call from another thread/call than the stuck one.
+void cancelHwiScan();
+
 QMasterSignerPtr nunchukCreateMasterSigner(const QString &name,
                                            const QString &xfp,
                                            QWarningMessage &msg);
