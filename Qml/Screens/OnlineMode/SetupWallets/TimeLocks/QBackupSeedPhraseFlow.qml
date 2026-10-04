@@ -68,6 +68,17 @@ QPopupOverlayScreen {
         signerName = k.name !== undefined ? k.name : ""
         signerType = k.type !== undefined ? k.type : ""
         derivationPath = k.derivation_path !== undefined ? k.derivation_path : ""
+        // BUGFIX: the "re-add-the-stored-key" screen's QScreenAdd computes _HARDWARE_TAG/_HARDWARE_TYPE
+        // (used by QAddKeyRefreshDevices to filter the scanned device list) from
+        // draftWallet.qAddHardware - but this flow never set it, so it stayed at whatever a PRIOR,
+        // unrelated "add hardware key" action last left it as. The device list then filtered by the
+        // wrong vendor type (or an empty one), hiding every device a successful scan actually found -
+        // "No devices available" even with the right hardware connected, for any vendor. Set it here
+        // from the key's own hwType (same field QWalletCreationPendingRead.qml etc. use), falling back
+        // to SignerManagement.currentSigner.hwType for the 3 call sites that call startFlow() bare.
+        var hwType = k.hwType !== undefined ? k.hwType : SignerManagement.currentSigner.hwType
+        var draft = GroupWallet.qIsByzantine ? GroupWallet : UserWallet
+        draft.qAddHardware = hwType
         _infoPopup.open()
         stateFlow.setScreenFlow("backup-your-inheritance-key-seed-phrase")
     }

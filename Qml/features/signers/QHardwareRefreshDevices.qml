@@ -125,13 +125,15 @@ Item {
                     delegate: Item {
                         width: 342
                         height: 44
-                        // BUGFIX: "_HARDWARE_TYPE" was never defined in this file's scope (that
-                        // property only exists on QScreenAdd.qml, an unrelated base used by the old
-                        // add-key flow) - this filter was always evaluating against undefined. The
-                        // scan usecase already filters server-side by hardwareTag, but keep this as
-                        // a defensive client-side filter too. device_type is lowercase ("ledger"),
-                        // vm.hardwareTag is uppercase ("LEDGER") - compare case-insensitively.
-                        visible: device_type.toUpperCase() === vm.hardwareTag
+                        // BUGFIX: was comparing against vm.hardwareTag (e.g. "BITBOX", the SignerTag
+                        // string), which only coincidentally matches the uppercased raw HWI
+                        // device_type ("LEDGER", "TREZOR", "JADE") - never for BitBox ("BITBOX02" !=
+                        // "BITBOX"), hiding every BitBox device a successful scan found. Compare
+                        // against vm.hardwareDeviceType instead (the actual mapped HWI type string,
+                        // same value the scan usecase itself filters by). includes() (not exact ===)
+                        // to match ScanDeviceUsecase's own contains()-based filter - safe here since
+                        // none of ledger/trezor/jade/bitbox02 is a substring of another.
+                        visible: device_type.toUpperCase().includes(vm.hardwareDeviceType.toUpperCase())
                         Rectangle {
                             id: rect
                             anchors.horizontalCenter: parent.horizontalCenter

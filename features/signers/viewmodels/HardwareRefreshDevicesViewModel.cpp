@@ -55,6 +55,14 @@ void HardwareRefreshDevicesViewModel::initializeTextGuide() {
 
 void HardwareRefreshDevicesViewModel::onInit() {
     initializeTextGuide();
+    // BUGFIX: QHardwareRefreshDevices.qml's per-row filter was comparing a device's raw HWI type
+    // (device_type, e.g. "bitbox02") against hardwareTag() (e.g. "BITBOX") - those only happen to
+    // match for Ledger/Trezor/Jade (tag == uppercased device_type by coincidence), but NEVER for
+    // BitBox ("BITBOX02" != "BITBOX"), silently hiding every BitBox device a successful scan found.
+    // Expose the actual mapped device-type string (same value ScanDeviceUsecase filters by) so QML
+    // compares like with like. hardwareTag() is already populated by KeySetupFlow::bind() (called
+    // from BaseViewModel::initialize() before onInit()), so it's safe to read here.
+    sethardwareDeviceType(map_keys.value(hardwareTag(), ""));
     AddKeyBaseViewModel::onInit();
 }
 

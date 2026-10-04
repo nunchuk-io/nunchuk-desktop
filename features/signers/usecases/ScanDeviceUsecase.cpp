@@ -19,8 +19,12 @@ Result<ScanDeviceResult> ScanDeviceUsecase::execute(const ScanDeviceInput &input
     deviceList_result = qUtils::GetDevices(bridge::hwiCommand(), msg);
     if (!input.deviceType.isEmpty()) {
         std::vector<nunchuk::Device> filteredDevices;
-        for (const auto &device : deviceList_result) {            
-            if (QString::fromStdString(device.get_type()).toUpper() == input.deviceType.toUpper()) {
+        for (const auto &device : deviceList_result) {
+            // BUGFIX: exact match silently drops a device whose HWI-reported type carries any
+            // variant suffix we don't know about (e.g. a future/alternate model string) - contains()
+            // is a safer match here since none of the known device-type tags (ledger/trezor/jade/
+            // coldcard/bitbox02) are substrings of one another, so this can't cross-match vendors.
+            if (QString::fromStdString(device.get_type()).toUpper().contains(input.deviceType.toUpper())) {
                 filteredDevices.push_back(device);
             }
         }
