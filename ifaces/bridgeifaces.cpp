@@ -30,6 +30,9 @@
 #include "Servers/Draco.h"
 #include "ProfileSetting.h"
 #if defined(Q_OS_WIN)
+// Excludes rpc.h/objidl.h (OLE) so their global `byte` typedef doesn't clash with std::byte (using namespace std above).
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #endif
 
