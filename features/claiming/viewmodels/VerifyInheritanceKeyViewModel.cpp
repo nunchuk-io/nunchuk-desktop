@@ -4,6 +4,7 @@
 #include "core/ui/UiServices.inc"
 #include "core/utils/Utils.h"
 #include "features/claiming/flows/OffChainClaimingFlow.h"
+#include "features/signers/flows/KeySetupFlow.h"
 #include "generated_qml_keys.hpp"
 
 namespace features::claiming::viewmodels {
@@ -11,6 +12,7 @@ using namespace core::viewmodels;
 using namespace features::claiming::usecases;
 using namespace features::signers::usecases;
 using features::claiming::flows::OffChainClaimingFlow;
+using namespace features::signers::flows;
 
 VerifyInheritanceKeyViewModel::VerifyInheritanceKeyViewModel(QObject *parent) : ActionViewModel(parent) {
     setisVerified(false);
@@ -132,8 +134,12 @@ void VerifyInheritanceKeyViewModel::next() {
         flow->claimStatus();
         close();
     } else {
+        // Skip the "Added x/N keys" interstitial - go straight to key-type selection for the next key
+        // (same handoff as YourPlanRequireInheritanceKeys::onAddSecondKeyClicked()).
         GUARD_SUB_SCREEN_MANAGER()
-        subMng->show(qml::features::claiming::offchain::qyourplanrequirestwoinheritancekeysaddedone);
+        auto keySetupFlow = flowMng->startFlow<KeySetupFlow>();
+        keySetupFlow->setworkFlowId(flow->id());
+        subMng->show(qml::features::signers::qwhichtypeofkeyselection);
     }
 }
 

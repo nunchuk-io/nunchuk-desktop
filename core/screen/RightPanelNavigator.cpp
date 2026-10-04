@@ -39,8 +39,11 @@ void RightPanelNavigator::registerObject(QObject *object) {
 }
 
 void RightPanelNavigator::unregisterObject() {
+    // BUGFIX: used to also reset m_currentScreenId, so a host recreated mid-flow (e.g. the reactive
+    // Loader hosting QServiceClaimAnInheritance rebuilding) would re-register with an empty screen id
+    // and registerObject()'s guard below would skip resyncing - silently dropping whatever screen was
+    // last requested. Keep m_currentScreenId so re-registration can replay it.
     m_registeredObjects.clear();
-    m_currentScreenId = "";
 }
 
 void RightPanelNavigator::qmlSyncup() {

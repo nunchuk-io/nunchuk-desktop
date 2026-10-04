@@ -26,8 +26,11 @@ void YourPlanRequireInheritanceKeys::onAddSecondKeyClicked() {
     auto currentFlowId = flowMng->currentFlow()->id();
     auto flow = flowMng->startFlow<KeySetupFlow>();
     flow->setworkFlowId(currentFlowId);
+    // BUGFIX: do NOT call close() here - unlike onAddFirstKeyClicked() (which navigates via
+    // rightPanel->request(), a separate stack), this screen uses subMng->show(), and
+    // close()/subMng->clear() runs synchronously on the same stack, wiping out the show()
+    // above before the user ever sees it (blank subscreen).
     subMng->show(qml::features::signers::qwhichtypeofkeyselection);
-    close();
 }
 
 } // namespace features::claiming::viewmodels
