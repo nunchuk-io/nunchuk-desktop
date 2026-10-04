@@ -16,6 +16,10 @@ export PROJECT_DIR="$HOME/nunchuk-desktop"
 export VERSION="2.9.0"
 export ARCH="x86_64"   # or: aarch64
 
+# Keep in sync with build-linux.yml's HWI_TAG/HWI_COMMIT job env.
+export HWI_TAG="3.2.0-bitbox-verification"
+export HWI_COMMIT="415310a14d3d1ebb9620783be5dcca437626b587"
+
 case "$ARCH" in
   x86_64)  PLATFORM=linux/amd64; QT_HOST=linux;      QT_ARCH=linux_gcc_64;      QT_DIR_NAME=gcc_64 ;;
   aarch64) PLATFORM=linux/arm64; QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64;  QT_DIR_NAME=gcc_arm64 ;;
@@ -42,19 +46,23 @@ docker buildx build \
 ### Build HWI (required, both architectures built from source)
 
 ```bash
-git clone --branch 3.2.0-displayaddress --depth 1 \
+git clone --branch "$HWI_TAG" --depth 1 \
   https://github.com/nogibi/HWI.git /tmp/hwi-src
+test "$(git -C /tmp/hwi-src rev-parse HEAD)" = "$HWI_COMMIT"
+
 docker buildx build \
   --platform "$PLATFORM" --load \
   --file /tmp/hwi-src/contrib/build.Dockerfile \
   --tag hwi-builder:local \
   /tmp/hwi-src
+
 mkdir -p "$PROJECT_DIR/hwi-prebuilt"
 docker run --platform "$PLATFORM" --rm \
+  --volume /tmp/hwi-src:/hwi-src \
   --volume "$PROJECT_DIR/hwi-prebuilt:/out" \
+  --workdir /hwi-src \
   hwi-builder:local \
-  bash -c 'cd "$(dirname "$(dirname "$(find / -xdev -maxdepth 8 -path "*/contrib/build_bin.sh" -print -quit)")")" \
-    && bash contrib/build_bin.sh --without-gui \
+  bash -c 'bash contrib/build_bin.sh --without-gui \
     && install -m 0755 "$(find dist -type f -name hwi -print -quit)" /out/hwi'
 ```
 

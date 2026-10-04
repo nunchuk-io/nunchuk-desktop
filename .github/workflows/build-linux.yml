@@ -70,6 +70,14 @@ jobs:
       contents: read
       packages: write
 
+    env:
+      # Single pin point for the HWI source used by the "Build HWI from
+      # source" step below; keep in sync with HWI_VERSION/HWI_COMMIT in
+      # reproducible-builds/macos.lock.env and the "hwi" entry in
+      # reproducible-builds/windows-dependencies.lock.json.
+      HWI_TAG: 3.2.0-bitbox-verification
+      HWI_COMMIT: 415310a14d3d1ebb9620783be5dcca437626b587
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -162,10 +170,7 @@ jobs:
       # invoked (it does `pip install poetry` / `poetry install` against the
       # pyproject.toml next to it, and calls `pyenv init` itself).
       #
-      # needs confirmation: this step still pins the HWI source by tag only,
-      # not tag + verified commit SHA like the other pinned dependencies in
-      # this Dockerfile (QTKEYCHAIN_COMMIT/OLM_COMMIT). Also unconfirmed:
-      # whether pyenv resolves the repo's ".python-version" (which pins "3.9",
+      # needs confirmation: whether pyenv resolves the repo's ".python-version" (which pins "3.9",
       # not the exact "3.9.19" the image installs) to the installed version
       # without an explicit `pyenv global`/`pyenv local` -- if pyenv errors on
       # that instead of resolving it, build_bin.sh's own `pyenv init` calls
@@ -174,8 +179,9 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          git clone --branch 3.2.0-displayaddress --depth 1 \
+          git clone --branch "${HWI_TAG}" --depth 1 \
             https://github.com/nogibi/HWI.git /tmp/hwi-src
+          test "$(git -C /tmp/hwi-src rev-parse HEAD)" = "${HWI_COMMIT}"
 
           docker buildx build \
             --platform ${{ matrix.platform }} \

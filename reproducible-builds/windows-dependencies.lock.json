@@ -102,9 +102,9 @@
       ]
     },
     "hwi": {
-      "version": "3.2.0-displayaddress",
-      "url": "https://github.com/nogibi/HWI/releases/download/3.2.0-displayaddress/hwi-3.2.0-windows-x86_64.zip",
-      "sha256": "936b57ed68d6f949fbade7b6e4352c6fef5a851d341052ceaefd050abf317644"
+      "version": "3.2.0-bitbox-verification",
+      "url": "https://github.com/nogibi/HWI/releases/download/3.2.0-bitbox-verification/hwi-3.2.0-windows-x86_64.zip",
+      "sha256": "ffe5e48d1f89048ace8d04c093de1f8894e94162b1ff93a636dc37674ea07daf"
     }
   },
   "actions": {

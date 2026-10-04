@@ -348,8 +348,13 @@ QStringList BaseWallet::unUsedAddressList() const {
 }
 
 void BaseWallet::setunUsedAddressList(const QStringList &d) {
-    m_unUsedAddressList = d;
-    emit unUsedAddressChanged();
+    // BUGFIX: emitting unconditionally forces QML's ListView (bound to this plain
+    // QStringList) to rebuild all delegates even when content is unchanged, which can
+    // reset the verify-address popup's displayed text mid-request. Guard like setUsedAddressList().
+    if (d != m_unUsedAddressList) {
+        m_unUsedAddressList = d;
+        emit unUsedAddressChanged();
+    }
     if (m_unUsedAddressList.isEmpty()) {
         setAddress("There is no avaialable address");
     } else {
