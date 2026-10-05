@@ -4,7 +4,6 @@
 #include "core/ui/UiServices.inc"
 #include "core/utils/Utils.h"
 #include "features/claiming/flows/OffChainClaimingFlow.h"
-#include "features/signers/flows/KeySetupFlow.h"
 #include "generated_qml_keys.hpp"
 
 namespace features::claiming::viewmodels {
@@ -12,7 +11,6 @@ using namespace core::viewmodels;
 using namespace features::claiming::usecases;
 using namespace features::signers::usecases;
 using features::claiming::flows::OffChainClaimingFlow;
-using namespace features::signers::flows;
 
 VerifyInheritanceKeyViewModel::VerifyInheritanceKeyViewModel(QObject *parent) : ActionViewModel(parent) {
     setisVerified(false);
@@ -32,6 +30,8 @@ void VerifyInheritanceKeyViewModel::proceedVerification(const nunchuk::SingleSig
 }
 
 void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
+    // Confirmed with backend: one signing-challenge message is shared by all keys in a claim
+    // session - fetch once, cache in OffChainClaimingFlow, and reuse for subsequent keys.
     SigningChallengeInput input;
     input.magic = magicWord();
     m_signingChallengeUC.executeAsync(input, [this](const core::usecase::Result<SigningChallengeResult> &result) {
@@ -41,8 +41,6 @@ void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
             auto messageId = message.value("id").toString();
             setmessage(guide);
             setmessageId(messageId);
-            // Cache on the flow so the next key in this claim session can reuse it instead of
-            // requesting a new one (see OffChainClaimingFlow::bind()).
             GUARD_FLOW_MANAGER()
             auto flow = flowMng->startFlow<OffChainClaimingFlow>();
             flow->setchallengeMessage(guide);
@@ -54,9 +52,6 @@ void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
 }
 
 void VerifyInheritanceKeyViewModel::onInit() {
-    // BUGFIX: only fetch a fresh challenge message if one wasn't already reused from the flow
-    // (set via OffChainClaimingFlow::bind() for key 2+) - avoids hitting the backend's throttle and
-    // leaving the Sign Message box empty.
     if (message().isEmpty()) {
         initializeChallengeMessage();
     }
@@ -145,12 +140,11 @@ void VerifyInheritanceKeyViewModel::next() {
         flow->claimStatus();
         close();
     } else {
-        // Skip the "Added x/N keys" interstitial - go straight to key-type selection for the next key
-        // (same handoff as YourPlanRequireInheritanceKeys::onAddSecondKeyClicked()).
+        // Per design spec (Claim D12): show the "Added 1/N keys" interstitial first - user must
+        // explicitly tap "Add the second inheritance key" (YourPlanRequireInheritanceKeys::onAddSecondKeyClicked())
+        // before proceeding to key-type selection (D04) for the next key.
         GUARD_SUB_SCREEN_MANAGER()
-        auto keySetupFlow = flowMng->startFlow<KeySetupFlow>();
-        keySetupFlow->setworkFlowId(flow->id());
-        subMng->show(qml::features::signers::qwhichtypeofkeyselection);
+        subMng->show(qml::features::claiming::offchain::qyourplanrequirestwoinheritancekeysaddedone);
     }
 }
 

@@ -30,9 +30,7 @@ void OffChainClaimingFlow::bind(QObject *vm) {
         realVm1->setmagicWord(magicWord());
         realVm1->setwalletType(walletType());
         realVm1->setaddressType(addressType());
-        // BUGFIX: reuse the challenge message fetched for the first key instead of letting each
-        // key's onInit() request a brand new one - a second request shortly after the first was
-        // getting throttled by the backend, leaving the Sign Message box empty for key 2+.
+        // Confirmed with backend: one signing-challenge message is shared across all keys in a session.
         if (!challengeMessage().isEmpty()) {
             realVm1->setmessage(challengeMessage());
             realVm1->setmessageId(challengeMessageId());
