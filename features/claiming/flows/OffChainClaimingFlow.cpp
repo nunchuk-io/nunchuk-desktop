@@ -30,6 +30,13 @@ void OffChainClaimingFlow::bind(QObject *vm) {
         realVm1->setmagicWord(magicWord());
         realVm1->setwalletType(walletType());
         realVm1->setaddressType(addressType());
+        // BUGFIX: reuse the challenge message fetched for the first key instead of letting each
+        // key's onInit() request a brand new one - a second request shortly after the first was
+        // getting throttled by the backend, leaving the Sign Message box empty for key 2+.
+        if (!challengeMessage().isEmpty()) {
+            realVm1->setmessage(challengeMessage());
+            realVm1->setmessageId(challengeMessageId());
+        }
         realVm1->proceedVerification(currentSigner());
     }
 
@@ -119,7 +126,13 @@ bool OffChainClaimingFlow::isCorrectXFP(const QString &xfp) {
     auto keyOriginsArray = keyOrigins();
     for (const auto &origin : keyOriginsArray) {
         QString originXfp = origin.toObject().value("xfp").toString();
-        if (originXfp == xfp) {
+        // BUGFIX: MasterSigner::get_id() (the xfp of a just-added hardware signer) is always
+        // lowercased by libnunchuk (storage.cpp: to_lower_copy(...)), while key_origins[].xfp from
+        // the backend is uppercase - a case-sensitive compare here always failed for freshly-added
+        // hardware keys, silently stopping the flow (toast only, no screen transition) even though
+        // the signer was created successfully. Use the project's existing qUtils::strCompare()
+        // (case-insensitive, trimmed) instead of raw == - same helper used for other string matches.
+        if (qUtils::strCompare(originXfp, xfp)) {
             return true;
         }
     }
@@ -130,7 +143,7 @@ int OffChainClaimingFlow::expectedAccountIndex(const QString &xfp) {
     auto keyOriginsArray = keyOrigins();
     for (const auto &origin : keyOriginsArray) {
         QString originXfp = origin.toObject().value("xfp").toString();
-        if (originXfp == xfp) {
+        if (qUtils::strCompare(originXfp, xfp)) {
             QString derivation_path = origin.toObject().value("derivation_path").toString();
             return qUtils::GetIndexFromPath(derivation_path);
         }

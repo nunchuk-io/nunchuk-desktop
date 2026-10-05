@@ -1620,7 +1620,9 @@ QJsonObject QGroupDashboard::GetDraftSigner(const QString &xfp) const {
     QJsonArray signers = m_walletDraftInfo["signers"].toArray();
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
-        if (signer["xfp"].toString() == xfp) {
+        // BUGFIX: callers can pass a libnunchuk-sourced xfp (lowercase) against this backend
+        // JSON (uppercase) - raw == silently never matched.
+        if (qUtils::strCompare(signer["xfp"].toString(), xfp)) {
             return signer;
         }
     }
@@ -1641,7 +1643,8 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const {
     }
     for (QJsonValue js : m_signerInfo) {
         QJsonObject signer = js.toObject();
-        if (signer["xfp"].toString() == xfp) {
+        // BUGFIX: same xfp case mismatch as GetDraftSigner() above - use case-insensitive compare.
+        if (qUtils::strCompare(signer["xfp"].toString(), xfp)) {
             QJsonArray tags = signer["tags"].toArray();
             // BUGFIX: "tags" can hold both the hardware tag (BITBOX/JADE/...) and the
             // "INHERITANCE" marker together; blindly taking the last entry picked up
@@ -1979,7 +1982,9 @@ bool QGroupDashboard::enoughKeyAdded(const QString &xfp) {
     QString wallet_type = m_walletDraftInfo.value("wallet_type").toString();
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
-        if (signer.value("xfp").toString() == xfp) {
+        // BUGFIX: xfp here comes from SignerManagement.currentSigner.xfp (libnunchuk, lowercase)
+        // compared against this backend draft-signer JSON (uppercase) - raw == undercounted.
+        if (qUtils::strCompare(signer.value("xfp").toString(), xfp)) {
             count++;
         }
     }

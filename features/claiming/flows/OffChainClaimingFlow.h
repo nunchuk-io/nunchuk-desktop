@@ -15,6 +15,10 @@ class OffChainClaimingFlow : public ClaimingFlow {
     }
     DEFINE_SET_GET(nunchuk::SingleSigner, currentSigner)
     DEFINE_SET_GET(QJsonArray, keyOrigins)
+    // Cached signing-challenge message - fetched once for the first key, reused for the rest of the
+    // keys in this claim session (see VerifyInheritanceKeyViewModel::onInit()).
+    DEFINE_SET_GET(QString, challengeMessage)
+    DEFINE_SET_GET(QString, challengeMessageId)
 
     void proceedResult(const nunchuk::SingleSigner &single) override;
     void proceedAfterFileImportColdcard(const std::vector<nunchuk::SingleSigner> &signers, const QString &signerName) override;

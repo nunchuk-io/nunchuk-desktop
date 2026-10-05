@@ -41,6 +41,12 @@ void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
             auto messageId = message.value("id").toString();
             setmessage(guide);
             setmessageId(messageId);
+            // Cache on the flow so the next key in this claim session can reuse it instead of
+            // requesting a new one (see OffChainClaimingFlow::bind()).
+            GUARD_FLOW_MANAGER()
+            auto flow = flowMng->startFlow<OffChainClaimingFlow>();
+            flow->setchallengeMessage(guide);
+            flow->setchallengeMessageId(messageId);
         } else {
             emit showToast(-1, result.error(), EWARNING::WarningType::ERROR_MSG);
         }
@@ -48,7 +54,12 @@ void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
 }
 
 void VerifyInheritanceKeyViewModel::onInit() {
-    initializeChallengeMessage();
+    // BUGFIX: only fetch a fresh challenge message if one wasn't already reused from the flow
+    // (set via OffChainClaimingFlow::bind() for key 2+) - avoids hitting the backend's throttle and
+    // leaving the Sign Message box empty.
+    if (message().isEmpty()) {
+        initializeChallengeMessage();
+    }
 }
 
 void VerifyInheritanceKeyViewModel::createTokenAfterSign(const QString &sig) {
@@ -153,11 +164,20 @@ void VerifyInheritanceKeyViewModel::onSignClicked() {
     }
     case nunchuk::SignerType::HARDWARE:
     case nunchuk::SignerType::SOFTWARE: {
+        // BUGFIX: guard re-entrancy (e.g. a 2nd click on Sign while the 1st is still in flight) -
+        // m_signMessageUC's WorkerConcurrent silently drops a 2nd request, so its callback - and the
+        // matching restoreOverrideCursor() - never fires, leaving the wait cursor stuck forever even
+        // though the 1st request completes and the screen shows "Signed".
+        if (m_isSigning) {
+            return;
+        }
+        m_isSigning = true;
         qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
         SignMessageInput input;
         input.message = message();
         input.signers = {currentSigner()};
         m_signMessageUC.executeAsync(input, [this](const core::usecase::Result<SignMessageResult> &result) {
+            m_isSigning = false;
             if (result.isSuccess()) {
                 auto signatures = result.value().signatures.values();
                 createTokenAfterSign(signatures.first());

@@ -895,7 +895,10 @@ void BaseTransaction::updateSignaturesForDummyTx() {
                 --i;
             }
             if (!dummyXfp().isEmpty()) {
-                if (dummyXfp() != signer->masterFingerPrint()) {
+                // BUGFIX: dummyXfp() comes from a backend alert payload (uppercase), while
+                // masterFingerPrint() is libnunchuk-sourced (always lowercase) - raw != always
+                // mismatched, hiding the Sign button on the correct key.
+                if (!qUtils::strCompare(dummyXfp(), signer->masterFingerPrint())) {
                     signer->setHasSignBtn(false);
                 }
             }

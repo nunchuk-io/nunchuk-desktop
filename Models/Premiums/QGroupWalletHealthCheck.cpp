@@ -364,7 +364,9 @@ QJsonObject QGroupWalletHealthCheck::GetReminder(const QString &xfp) const {
     QJsonArray all_reminders = reminders();
     for (auto one_reminder : all_reminders) {
         QJsonObject obj = one_reminder.toObject();
-        if (obj["xfp"].toString() == xfp) {
+        // BUGFIX: some callers pass a libnunchuk-sourced xfp (always lowercase, e.g. m_keyXfp)
+        // against this backend-sourced (uppercase) list - raw == silently never matched for those.
+        if (qUtils::strCompare(obj["xfp"].toString(), xfp)) {
             return obj;
         }
     }
@@ -431,7 +433,9 @@ QVariant QGroupWalletHealthCheck::aKeyStatus() const {
         auto reminder = GetReminder(m_keyXfp);
         for (auto status : m_healthStatuses) {
             QJsonObject statusObj = status.toObject();
-            if (statusObj["xfp"].toString() == m_keyXfp) {
+            // BUGFIX: m_keyXfp is libnunchuk-sourced (lowercase), m_healthStatuses is backend JSON
+            // (uppercase) - raw == always missed, falling back to the "NotCheckedYet" placeholder.
+            if (qUtils::strCompare(statusObj["xfp"].toString(), m_keyXfp)) {
                 if (reminder.isEmpty()) {
                     statusObj["reminder"] = {};
                 } else {

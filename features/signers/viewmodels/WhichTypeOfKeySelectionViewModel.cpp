@@ -4,6 +4,8 @@
 #include "core/common/resources/AppStrings.h"
 #include "features/signers/flows/KeySetupFlow.h"
 #include "Models/Signers/QSignerManagement.h"
+#include <QElapsedTimer>
+#include <QThreadPool>
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
 using namespace features::signers::usecases;
@@ -156,7 +158,16 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain() {
         }
     }
     input.signer_tags = tags;
-    m_supportedSignersUC.addParameter(appModel).executeAsync(input, [this](core::usecase::Result<SupportedSignersResult> result) {
+    // DIAGNOSTIC: investigating a reported ~50-60s stall between clicking Continue and the next
+    // screen appearing, even though SupportedSignersUseCase is local-only (no network call).
+    // Logging thread pool occupancy + elapsed time to check for QThreadPool contention from other
+    // QtConcurrent::run() network tasks sharing the global pool. Remove once root-caused.
+    auto *pool = QThreadPool::globalInstance();
+    DBG_INFO << "[DIAG] continueOffChain start - activeThreadCount:" << pool->activeThreadCount() << "/ maxThreadCount:" << pool->maxThreadCount();
+    auto timer = std::make_shared<QElapsedTimer>();
+    timer->start();
+    m_supportedSignersUC.addParameter(appModel).executeAsync(input, [this, pool, timer](core::usecase::Result<SupportedSignersResult> result) {
+        DBG_INFO << "[DIAG] continueOffChain callback after" << timer->elapsed() << "ms - activeThreadCount:" << pool->activeThreadCount() << "/ maxThreadCount:" << pool->maxThreadCount();
         m_isSubmitting = false;
         qApp->restoreOverrideCursor();
         continueOffChain(result.isSuccess());
