@@ -117,6 +117,16 @@ void OffChainClaimingFlow::proceedAfterRecoverViaXprv(const QString &xfp) {
 }
 
 void OffChainClaimingFlow::proceedAfterAddedViaUSB(const QString &xfp) {
+    // BUGFIX: on wrong xfp, addKey() only shows a toast - it never leaves the "Adding [Device]..."
+    // loading screen (pushed by HardwareRefreshDevicesViewModel::requestCreateSigner()), so the user
+    // was stuck there forever with no visible error. Pop it here, scoped to the USB path only - the
+    // other 3 addKey() callers (select-existing-key, recover-via-seed, recover-via-xprv) call
+    // proceedAfterXxx() directly from their own screen with no loading screen pushed, so back() there
+    // would incorrectly pop the user's current screen instead.
+    if (!isCorrectXFP(xfp)) {
+        GUARD_SUB_SCREEN_MANAGER()
+        subMng->back();
+    }
     addKey(xfp);
 }
 

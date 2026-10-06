@@ -13,18 +13,32 @@ RightPanelNavigator::RightPanelNavigator(QObject *parent) : QObject(parent) {}
 
 void RightPanelNavigator::request(const QString &screenId) {
     if (!m_currentScreenId.isEmpty()) {
-        m_historyStack.push(m_currentScreenId);
+        m_historyStack.push({m_currentScreenId, m_isTerminal});
     }
     m_currentScreenId = screenId;
+    m_isTerminal = false;
     qmlSyncup();
+}
+
+void RightPanelNavigator::requestTerminal(const QString &screenId) {
+    request(screenId);
+    m_isTerminal = true;
 }
 
 void RightPanelNavigator::back() {
     if (m_historyStack.isEmpty()) {
         return;
     }
-    m_currentScreenId = m_historyStack.pop();
+    auto entry = m_historyStack.pop();
+    m_currentScreenId = entry.screenId;
+    m_isTerminal = entry.isTerminal;
     qmlSyncup();
+}
+
+void RightPanelNavigator::reset() {
+    m_currentScreenId.clear();
+    m_historyStack.clear();
+    m_isTerminal = false;
 }
 
 void RightPanelNavigator::registerObject(QObject *object) {

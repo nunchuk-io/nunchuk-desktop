@@ -113,10 +113,13 @@ void ClaimingFlow::displayStatusInfo(const ClaimStatusResult &status) {
 void ClaimingFlow::proceedClaimStatusResult(const ClaimStatusResult &status) {
     displayStatusInfo(status);
     GUARD_RIGHT_PANEL_NAV()
+    // requestTerminal(): these are end states (nothing to resume into) - mark them so a later fresh
+    // entry into "Claim an inheritance" (see ServiceSetting::setOptionIndex()) knows to reset instead
+    // of replaying this result forever.
     if (!status.buffer_period_countdown.isEmpty()) { // Buffer period has started
-        rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritancebufferperiodhasstarted);
+        rightPanel->requestTerminal(qml::components::rightpannel::service::common::qserviceclaiminheritancebufferperiodhasstarted);
     } else if (!status.inheritance.isEmpty()) { // Inheritance found
-        rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritanceyourinheritance);
+        rightPanel->requestTerminal(qml::components::rightpannel::service::common::qserviceclaiminheritanceyourinheritance);
     }
 }
 
