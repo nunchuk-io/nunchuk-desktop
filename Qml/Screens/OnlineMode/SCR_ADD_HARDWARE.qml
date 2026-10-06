@@ -146,14 +146,14 @@ QScreen {
                 GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
             }
         } else {
+            // BUGFIX: MINISCRIPT (on-chain/timelock) branch - never show the off-chain-only
+            // "distribution choice" screen here, even if is_inheritance is true (that tag is shared
+            // with on-chain timelock inheritance keys). Matches QScreenAddColdcard.qml's MINISCRIPT
+            // branch, which never consults is_inheritance at all.
             var xfp = SignerManagement.currentSigner.xfp
             if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
-                if (is_inheritance) {
-                    showDistributionChoice = true
-                } else {
-                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                    AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
-                }
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
             }
             else {
                 var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner

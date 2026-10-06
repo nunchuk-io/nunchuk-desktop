@@ -36,7 +36,9 @@ Item {
     // BUGFIX: row was a fixed 72px, so the Setup 20D-20gD caption line(s) (File/Seed or "Sharing
     // method not set") overflowed into the next row. Grow the row by 16px per visible caption line.
     readonly property int captionLines: {
-        if (!modelData.is_inheritance || !modelData.has) return 0
+        // BUGFIX: these captions are off-chain (MULTI_SIG, NUN-10192) only - never show them for an
+        // on-chain MINISCRIPT key even if is_inheritance/claim_options data exists for it.
+        if (!modelData.is_inheritance || !modelData.has || modelData.wallet_type !== "MULTI_SIG") return 0
         if (inheritanceState() === "SET_UP") return 1
         var n = 0
         if (hasClaimOption("ENCRYPTED_BACKUP")) n++
@@ -161,7 +163,11 @@ Item {
     }
 
     // Setup 20D-20gD: separate File/Seed status for inheritance keys (NUN-10192). Empty claim_options = legacy.
+    // BUGFIX: claim_options is an off-chain (MULTI_SIG) concept only - guard here (the single source feeding
+    // hasClaimOption()/captionLines/inheritanceState()) so no caller can leak off-chain data onto an
+    // on-chain MINISCRIPT key, even if the backend ever sends claim_options for one.
     function claimOptions() {
+        if (modelData.wallet_type !== "MULTI_SIG") return []
         return modelData.claim_options !== undefined ? modelData.claim_options : []
     }
     function hasClaimOption(method) {
@@ -203,11 +209,18 @@ Item {
     // Single source of truth for row state ("ADD"/"BACKUP"/"VERIFY_BACKUP"/"ADDED"), shared by the
     // component/color/isDashed logic below to avoid branch duplication and drift.
     function inheritanceState() {
+        // BUGFIX: check wallet_type FIRST, like QReplaceRequestKey.qml's inheritanceRowState() already
+        // does - claim_options is an off-chain (MULTI_SIG) concept only; must never show an off-chain
+        // backup/verify-backup button/caption for an on-chain MINISCRIPT key, regardless of claim_options.
+        if (modelData.wallet_type !== "MULTI_SIG") {
+            // Outside NUN-10192 scope - unchanged legacy behavior.
+            return inheritance("ADD", "BACKUP", "ADDED")
+        }
         var opts = claimOptions()
         if (opts.length === 0) {
-            // Setup 20dD (NUN-10192): for MULTI_SIG, empty claim_options always means "Set up", regardless
-            // of whether it's a true legacy key or one that exited the popup mid-setup. Non-MULTI_SIG keeps old behavior.
-            return modelData.wallet_type === "MULTI_SIG" ? "SET_UP" : inheritance("ADD", "BACKUP", "ADDED")
+            // Setup 20dD (NUN-10192): empty claim_options always means "Set up", regardless of whether
+            // it's a true legacy key or one that exited the popup mid-setup.
+            return "SET_UP"
         }
         if (hasClaimOption("ENCRYPTED_BACKUP") && methodState("ENCRYPTED_BACKUP") === "NOT_UPLOADED") {
             return "BACKUP" // Setup 20fD
@@ -398,7 +411,9 @@ Item {
                     Column {
                         width: parent.width
                         spacing: 2
-                        visible: modelData.is_inheritance
+                        // BUGFIX: is_inheritance alone is wallet-type-agnostic (also true for on-chain
+                        // timelock inheritance keys) - gate the whole off-chain caption block by MULTI_SIG too.
+                        visible: modelData.is_inheritance && modelData.wallet_type === "MULTI_SIG"
                         // Setup 20dD: "Sharing method not set" caption for the SET_UP state.
                         QLato {
                             width: parent.width

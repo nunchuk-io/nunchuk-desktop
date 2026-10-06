@@ -37,7 +37,9 @@ Item {
     // BUGFIX: same as QAddRequestKey.qml - the Setup 20D-20gD caption line(s) (File/Seed or "Sharing
     // method not set") need extra row height, or they overflow into the row below.
     readonly property int captionLines: {
-        if (!modelData.is_inheritance || !modelData.has) return 0
+        // BUGFIX: these captions are off-chain (MULTI_SIG, NUN-10192) only - never show them for an
+        // on-chain MINISCRIPT key even if is_inheritance/claim_options data exists for it.
+        if (!modelData.is_inheritance || !modelData.has || modelData.wallet_type !== "MULTI_SIG") return 0
         if (inheritanceRowState() === "SET_UP") return 1
         var n = 0
         if (hasClaimOption("ENCRYPTED_BACKUP")) n++
@@ -229,7 +231,10 @@ Item {
         }
     }
     // claim_options/verifications (NUN-10192), applies once replacements.length >= 2 and MULTI_SIG.
+    // BUGFIX: guard here (the single source feeding hasClaimOption()/captionLines/inheritanceRowState())
+    // so no caller can leak off-chain claim_options onto an on-chain MINISCRIPT key.
     function claimOptions() {
+        if (modelData.wallet_type !== "MULTI_SIG") return []
         return modelData.claim_options !== undefined ? modelData.claim_options : []
     }
     function hasClaimOption(method) {
@@ -453,7 +458,9 @@ Item {
                     Column {
                         width: parent.width
                         spacing: 2
-                        visible: modelData.is_inheritance
+                        // BUGFIX: is_inheritance alone is wallet-type-agnostic (also true for on-chain
+                        // timelock inheritance keys) - gate the whole off-chain caption block by MULTI_SIG too.
+                        visible: modelData.is_inheritance && modelData.wallet_type === "MULTI_SIG"
                         // Setup 20dD: "Sharing method not set" caption for the SET_UP state.
                         QLato {
                             width: parent.width

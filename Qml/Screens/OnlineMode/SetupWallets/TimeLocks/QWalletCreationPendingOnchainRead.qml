@@ -160,25 +160,34 @@ QOnScreenContentTypeB {
                                     }
                                     onBackupClicked: {
                                         dashInfo.startAddKeyAtIndex(index)
-                                        // Route by claim_options (NUN-10192) chosen in Key Distribution Choice.
-                                        // BUGFIX: single-option keys (seed-only/encrypted-only) used to skip
-                                        // straight into their own flow; now every configured key (1 or 2
-                                        // options) always goes through the Verify-your-backups checklist
-                                        // (Setup 12c), which shows only the row(s) matching claim_options and
-                                        // picks startFlow()/startVerifyOnly() itself based on upload state.
-                                        var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
-                                        var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                                        var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                                        if (hasSeed || hasEncrypted) {
-                                            _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
-                                        } else if (modelData.wallet_type === "MULTI_SIG") {
-                                            // Setup 20dD (NUN-10192): empty claim_options reopens Key
-                                            // Distribution Choice instead of the old Coldcard-import flow.
-                                            // ROLLOUT WARNING: NUN-10192 is still "To Do" on backend - until
-                                            // deployed, claim_options is empty for all existing inheritance
-                                            // MULTI_SIG keys, so this FE must ship in sync with the backend.
-                                            _changeDistribution.hwType = modelData.hwType
-                                            _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
+                                        // (MULTI_SIG, NUN-10192) concept only; checking it before wallet_type
+                                        // risked routing an on-chain MINISCRIPT key into the off-chain
+                                        // verify-backups/distribution-choice screens if claim_options were
+                                        // ever non-empty for it. MINISCRIPT must always keep the pre-existing
+                                        // on-chain flow below, untouched by the off-chain feature.
+                                        if (modelData.wallet_type === "MULTI_SIG") {
+                                            // Route by claim_options (NUN-10192) chosen in Key Distribution
+                                            // Choice. BUGFIX: single-option keys (seed-only/encrypted-only)
+                                            // used to skip straight into their own flow; now every configured
+                                            // key (1 or 2 options) always goes through the Verify-your-backups
+                                            // checklist (Setup 12c), which shows only the row(s) matching
+                                            // claim_options and picks startFlow()/startVerifyOnly() itself
+                                            // based on upload state.
+                                            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+                                            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                                            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                                            if (hasSeed || hasEncrypted) {
+                                                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
+                                            } else {
+                                                // Setup 20dD (NUN-10192): empty claim_options reopens Key
+                                                // Distribution Choice instead of the old Coldcard-import flow.
+                                                // ROLLOUT WARNING: NUN-10192 is still "To Do" on backend - until
+                                                // deployed, claim_options is empty for all existing inheritance
+                                                // MULTI_SIG keys, so this FE must ship in sync with the backend.
+                                                _changeDistribution.hwType = modelData.hwType
+                                                _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                            }
                                         } else {
                                             GroupWallet.qAddHardware = modelData.hwType
                                             _backupSeedPhraseFlow.startFlow()

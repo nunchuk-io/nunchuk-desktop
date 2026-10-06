@@ -23,12 +23,19 @@ using namespace features::transactions::usecases;
 ClaimingFlow::ClaimingFlow(FlowContext *ctx, QObject *parent) : KeyProceedFlow(ctx, parent) {}
 
 void ClaimingFlow::claimStatus() {
+    // BUGFIX: guard re-entrancy (e.g. double-click) - WorkerConcurrent silently drops a 2nd
+    // request while the 1st is in flight, so a double-click would otherwise just do nothing.
+    if (m_isClaimingStatus) {
+        return;
+    }
+    m_isClaimingStatus = true;
     ClaimStatusInput input;
     input.magic = magicWord();
     input.bsms = bsms();
     input.authos = tokenList();
     input.messageId = messageId();
     m_claimStatusUC.executeAsync(input, [this](const core::usecase::Result<ClaimStatusResult> &result) {
+        m_isClaimingStatus = false;
         if (result.isSuccess()) {
             proceedClaimStatusResult(result.value());
         } else {
@@ -38,6 +45,12 @@ void ClaimingFlow::claimStatus() {
 }
 
 void ClaimingFlow::createTransaction() {
+    // BUGFIX: same re-entrancy guard as claimStatus() - prevents a double-click on Confirm from
+    // silently dropping the 2nd withdraw/claim-transaction request.
+    if (m_isCreatingTransaction) {
+        return;
+    }
+    m_isCreatingTransaction = true;
     CreateTransactionInput input;
     input.magic = magicWord();
     input.address = withdrawAddress();
@@ -49,6 +62,7 @@ void ClaimingFlow::createTransaction() {
     input.authos = tokenList();
     input.messageId = messageId();
     m_createTransactionUC.executeAsync(input, [this](const core::usecase::Result<CreateTransactionResult> &result) {
+        m_isCreatingTransaction = false;
         if (result.isSuccess()) {
             proceedClaimTransactionResult(result.value());
         } else {

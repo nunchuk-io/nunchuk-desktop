@@ -189,17 +189,22 @@ QOnScreenContentTypeB {
                                         // options) always goes through the Verify-your-backups checklist
                                         // (Setup 12c), which shows only the row(s) matching claim_options and
                                         // picks startFlow()/startVerifyOnly() itself based on upload state.
+                                        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
+                                        // (MULTI_SIG) concept only; must never route a MINISCRIPT key into
+                                        // the off-chain screens even if claim_options is ever non-empty.
                                         dashInfo.startReplaceKeyAtIndex(index)
-                                        var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
-                                        var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                                        var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                                        if (hasSeed || hasEncrypted) {
-                                            _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
-                                        } else if (modelData.wallet_type === "MULTI_SIG") {
-                                            // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
-                                            // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
-                                            _changeDistribution.hwType = modelData.hwType
-                                            _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                        if (modelData.wallet_type === "MULTI_SIG") {
+                                            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+                                            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                                            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                                            if (hasSeed || hasEncrypted) {
+                                                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
+                                            } else {
+                                                // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
+                                                // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
+                                                _changeDistribution.hwType = modelData.hwType
+                                                _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                            }
                                         } else {
                                             GroupWallet.qAddHardware = modelData.hwType
                                             _backupSeedPhraseFlow.startFlow()

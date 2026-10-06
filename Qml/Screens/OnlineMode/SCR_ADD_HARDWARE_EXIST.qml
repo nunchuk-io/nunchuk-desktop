@@ -124,8 +124,10 @@ QScreen {
     }
     function doneAddHardwareKey() {
         // BUGFIX: this function ignored is_inheritance, so reusing a key as inheritance key here closed
-        // like a normal key, never prompting Key Distribution Choice. Synced with SCR_ADD_HARDWARE.qml,
-        // including the MINISCRIPT branch.
+        // like a normal key, never prompting Key Distribution Choice. Synced with SCR_ADD_HARDWARE.qml -
+        // but NOT the MINISCRIPT branch: is_inheritance is a wallet-type-agnostic tag shared with
+        // on-chain timelock inheritance keys, so the off-chain-only distribution-choice screen must stay
+        // MULTI_SIG-only (the isNormalFlow branch below), matching QScreenAddColdcardExist.qml.
         var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
         var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
         if (isNormalFlow) {
@@ -138,12 +140,8 @@ QScreen {
         } else {
             var xfp = SignerManagement.currentSigner.xfp
             if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
-                if (is_inheritance) {
-                    showDistributionChoice = true
-                } else {
-                    AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
-                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                }
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             } else {
                 var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner
                 if (onlyUseForClaimBanner) {
