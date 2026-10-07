@@ -96,9 +96,28 @@ jobs:
           chmod 700 "${GNUPGHOME}"
           echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
 
-          printf '%s' "${RELEASE_GPG_PRIVATE_KEY_B64}" | base64 -d \
-            | gpg --batch --pinentry-mode loopback \
-                  --passphrase-fd 3 --import 3< <(printf '%s' "${RELEASE_GPG_PASSPHRASE}")
+          # Giải mã ra file tạm (nằm trong GNUPGHOME, bị xóa ở cleanup); bỏ khoảng trắng/CR/dấu nháy.
+          keyfile="${GNUPGHOME}/release-key.bin"
+          umask 077
+          printf '%s' "${RELEASE_GPG_PRIVATE_KEY_B64}" | tr -d '[:space:]"'"'" | base64 -d > "${keyfile}"
+
+          # Nếu chưa phải OpenPGP hợp lệ thì thử giải mã thêm 1 lần (phòng secret bị base64 hai lần).
+          if ! gpg --batch --list-packets "${keyfile}" >/dev/null 2>&1; then
+            tr -d '[:space:]' < "${keyfile}" | base64 -d > "${keyfile}.2" 2>/dev/null || true
+            if gpg --batch --list-packets "${keyfile}.2" >/dev/null 2>&1; then
+              mv "${keyfile}.2" "${keyfile}"
+            fi
+          fi
+          if ! gpg --batch --list-packets "${keyfile}" >/dev/null 2>&1; then
+            # Chỉ in metadata, không in nội dung key.
+            echo "RELEASE_GPG_PRIVATE_KEY_B64 is not valid OpenPGP data after base64 decode (decoded size: $(wc -c < "${keyfile}") bytes)" >&2
+            exit 1
+          fi
+
+          gpg --batch --pinentry-mode loopback \
+              --passphrase-fd 3 --import "${keyfile}" \
+              3< <(printf '%s' "${RELEASE_GPG_PASSPHRASE}")
+          rm -f "${keyfile}" "${keyfile}.2"
 
           # Key import phải khớp primary fingerprint đã cấu hình.
           imported="$(gpg --batch --list-secret-keys --with-colons \
