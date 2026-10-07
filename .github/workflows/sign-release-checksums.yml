@@ -1,0 +1,157 @@
+name: Sign release checksums
+
+# Ký SHA256SUMS của các package trong 1 GitHub Release theo version (tag).
+# Output đính kèm vào Release: SHA256SUMS + SHA256SUMS.asc (detached, armored).
+run-name: sign-checksums-${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag/version cần ký (vd 1.2.3)
+        required: true
+        type: string
+      upload_to_release:
+        description: Upload SHA256SUMS + .asc lên GitHub Release (bỏ check = chỉ lưu workflow artifact)
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      upload_to_release:
+        required: false
+        type: boolean
+        default: true
+
+# Dùng chung group với các workflow publish để không race khi sửa cùng release.
+concurrency:
+  group: release-publish-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sign-checksums:
+    runs-on: ubuntu-24.04
+    # Nếu secrets/variables nằm trong environment thì bỏ comment dòng dưới.
+    # environment: release-signing
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ inputs.version }}
+      RELEASE_GPG_FINGERPRINT: ${{ vars.RELEASE_GPG_FINGERPRINT }}
+    steps:
+      - name: Validate input and signing config
+        env:
+          RELEASE_GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
+          RELEASE_GPG_PRIVATE_KEY_B64: ${{ secrets.RELEASE_GPG_PRIVATE_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          # Chặn ký tự lạ trong version (tránh injection vào path/lệnh).
+          if [[ ! "${VERSION}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Invalid version: ${VERSION}" >&2; exit 1
+          fi
+          for v in RELEASE_GPG_FINGERPRINT RELEASE_GPG_PASSPHRASE RELEASE_GPG_PRIVATE_KEY_B64; do
+            if [[ -z "${!v:-}" ]]; then
+              echo "Missing required variable/secret: ${v}" >&2; exit 1
+            fi
+          done
+          gh release view "${VERSION}" >/dev/null
+
+      - name: Download release assets
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          # Bỏ qua file chữ ký/checksum tổng cũ để ký lại sạch.
+          gh release download "${VERSION}" --dir assets --pattern '*' \
+            --skip-existing
+          rm -f assets/SHA256SUMS assets/SHA256SUMS.asc
+          shopt -s nullglob
+          files=(assets/*)
+          if [[ "${#files[@]}" -eq 0 ]]; then
+            echo "Release ${VERSION} has no assets" >&2; exit 1
+          fi
+          ls -l assets
+
+      - name: Generate SHA256SUMS
+        run: |
+          set -euo pipefail
+          cd assets
+          # LC_ALL=C để thứ tự file ổn định giữa các lần chạy.
+          LC_ALL=C sha256sum -- * | LC_ALL=C sort -k2 > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Import signing key
+        env:
+          RELEASE_GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
+          RELEASE_GPG_PRIVATE_KEY_B64: ${{ secrets.RELEASE_GPG_PRIVATE_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          # Keyring tạm, xóa ở bước cleanup.
+          export GNUPGHOME="$(mktemp -d)"
+          chmod 700 "${GNUPGHOME}"
+          echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
+
+          printf '%s' "${RELEASE_GPG_PRIVATE_KEY_B64}" | base64 -d \
+            | gpg --batch --pinentry-mode loopback \
+                  --passphrase-fd 3 --import 3< <(printf '%s' "${RELEASE_GPG_PASSPHRASE}")
+
+          # Key import phải khớp primary fingerprint đã cấu hình.
+          imported="$(gpg --batch --list-secret-keys --with-colons \
+            | awk -F: '/^sec/{s=1;next} s&&/^fpr/{print $10;exit}')"
+          if [[ "${imported^^}" != "${RELEASE_GPG_FINGERPRINT^^}" ]]; then
+            echo "Imported primary fingerprint (${imported}) != RELEASE_GPG_FINGERPRINT" >&2
+            exit 1
+          fi
+
+      - name: Sign SHA256SUMS
+        env:
+          RELEASE_GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          cd assets
+          # Dùng primary fingerprint, gpg tự chọn signing subkey đã import.
+          gpg --batch --yes --pinentry-mode loopback \
+              --passphrase-fd 3 \
+              --local-user "${RELEASE_GPG_FINGERPRINT}" \
+              --armor --detach-sign --output SHA256SUMS.asc SHA256SUMS \
+              3< <(printf '%s' "${RELEASE_GPG_PASSPHRASE}")
+
+      - name: Verify signature and checksums
+        run: |
+          set -euo pipefail
+          cd assets
+          status="$(gpg --batch --status-fd 1 --verify SHA256SUMS.asc SHA256SUMS 2>/dev/null)"
+          # VALIDSIG: field cuối là primary key fingerprint.
+          primary="$(awk '/VALIDSIG/{print $NF}' <<<"${status}")"
+          if [[ "${primary^^}" != "${RELEASE_GPG_FINGERPRINT^^}" ]]; then
+            echo "Signature primary fingerprint mismatch: ${primary}" >&2; exit 1
+          fi
+          sha256sum -c SHA256SUMS
+
+      - name: Upload SHA256SUMS and signature to release
+        if: ${{ inputs.upload_to_release }}
+        run: |
+          set -euo pipefail
+          gh release upload "${VERSION}" assets/SHA256SUMS assets/SHA256SUMS.asc --clobber
+
+      - name: Upload signed checksums as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunchuk-checksums-signed-v${{ inputs.version }}
+          path: |
+            assets/SHA256SUMS
+            assets/SHA256SUMS.asc
+          if-no-files-found: error
+
+      - name: Cleanup keyring
+        if: always()
+        run: |
+          if [[ -n "${GNUPGHOME:-}" && -d "${GNUPGHOME}" ]]; then
+            gpgconf --kill gpg-agent || true
+            rm -rf "${GNUPGHOME}"
+          fi
