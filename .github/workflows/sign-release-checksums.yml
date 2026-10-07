@@ -140,17 +140,74 @@ jobs:
               --armor --detach-sign --output SHA256SUMS.asc SHA256SUMS \
               3< <(printf '%s' "${RELEASE_GPG_PASSPHRASE}")
 
-      - name: Verify signature and checksums
+      - name: Verify signature and checksums (report)
+        env:
+          UPLOAD_TO_RELEASE: ${{ inputs.upload_to_release }}
         run: |
           set -euo pipefail
           cd assets
-          status="$(gpg --batch --status-fd 1 --verify SHA256SUMS.asc SHA256SUMS 2>/dev/null)"
-          # VALIDSIG: last field is the primary key fingerprint.
-          primary="$(awk '/VALIDSIG/{print $NF}' <<<"${status}")"
-          if [[ "${primary^^}" != "${RELEASE_GPG_FINGERPRINT^^}" ]]; then
-            echo "Signature primary fingerprint mismatch: ${primary}" >&2; exit 1
+
+          # Signature check (do not abort yet, the report must be written first).
+          sig_ok=0
+          status="$(gpg --batch --status-fd 1 --verify SHA256SUMS.asc SHA256SUMS 2>/dev/null || true)"
+          # VALIDSIG: field 2 = signing subkey fpr, field 3 = date, last field = primary fpr.
+          signer="$(sed -n 's/^\[GNUPG:\] GOODSIG [0-9A-F]* //p' <<<"${status}")"
+          subkey="$(awk '/VALIDSIG/{print $3}' <<<"${status}" | head -n1)"
+          primary="$(awk '/VALIDSIG/{print $NF}' <<<"${status}" | head -n1)"
+          signed_ts="$(awk '/VALIDSIG/{print $5}' <<<"${status}" | head -n1)"
+          signed_at="n/a"
+          [[ -n "${signed_ts}" ]] && signed_at="$(date -u -d "@${signed_ts}" '+%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo n/a)"
+          if [[ -n "${signer}" && "${primary^^}" == "${RELEASE_GPG_FINGERPRINT^^}" ]]; then
+            sig_ok=1
           fi
-          sha256sum -c SHA256SUMS
+
+          # Per-file checksum check.
+          sums_ok=1
+          rows=""
+          while read -r hash name; do
+            [[ -z "${hash}" ]] && continue
+            name="${name#\*}"
+            size="$(wc -c < "${name}" | tr -d ' ')"
+            if sha256sum -c --status <<<"${hash}  ${name}" 2>/dev/null; then
+              res="OK"
+            else
+              res="FAILED"; sums_ok=0
+            fi
+            rows+="| \`${name}\` | ${size} | \`${hash}\` | ${res} |"$'\n'
+          done < SHA256SUMS
+
+          {
+            echo "## Signed checksums report: ${VERSION}"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| Signature (SHA256SUMS.asc) | $([[ ${sig_ok} -eq 1 ]] && echo 'GOOD' || echo 'BAD') |"
+            echo "| Signer | ${signer:-n/a} |"
+            echo "| Primary fingerprint | \`${primary:-n/a}\` |"
+            echo "| Expected fingerprint | \`${RELEASE_GPG_FINGERPRINT}\` |"
+            echo "| Signing subkey | \`${subkey:-n/a}\` |"
+            echo "| Signed at | ${signed_at} |"
+            echo "| Checksums | $([[ ${sums_ok} -eq 1 ]] && echo 'ALL OK' || echo 'MISMATCH') |"
+            echo "| Upload to release | ${UPLOAD_TO_RELEASE} |"
+            echo
+            echo "### Files"
+            echo
+            echo "| File | Size (bytes) | SHA-256 | Result |"
+            echo "|---|---|---|---|"
+            printf '%s' "${rows}"
+            echo
+            echo "### Verify locally"
+            echo
+            echo '```'
+            echo "gpg --verify SHA256SUMS.asc SHA256SUMS"
+            echo "shasum -a 256 -c SHA256SUMS"
+            echo '```'
+          } | tee -a "${GITHUB_STEP_SUMMARY}"
+
+          if [[ ${sig_ok} -ne 1 || ${sums_ok} -ne 1 ]]; then
+            echo "Verification failed (signature_ok=${sig_ok}, checksums_ok=${sums_ok})" >&2
+            exit 1
+          fi
 
       - name: Upload SHA256SUMS and signature to release
         if: ${{ inputs.upload_to_release }}
