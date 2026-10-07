@@ -4389,7 +4389,12 @@ bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, c
     if (wallet_id.isEmpty() || xfp.isEmpty()) return false;
 
     QJsonObject data;
-    data["verification_method"] = verification_method;
+    // BUGFIX: verification_method ("SEED_PHRASE"/"ENCRYPTED_BACKUP") only means something for an
+    // off-chain claim_options key; omit it for on-chain callers (old behavior) instead of always
+    // sending "SEED_PHRASE", which made the backend wrongly validate MINISCRIPT keys as off-chain.
+    if (!verification_method.isEmpty()) {
+        data["verification_method"] = verification_method;
+    }
     data["verification_type"] = type;
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;
@@ -5121,7 +5126,10 @@ bool Draco::DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBo
 bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg)
 {
     QJsonObject data;
-    data["verification_method"] = verification_method;
+    // BUGFIX: see VerifyKeyReplacement() above - omit for on-chain (empty) callers.
+    if (!verification_method.isEmpty()) {
+        data["verification_method"] = verification_method;
+    }
     data["verification_type"] = type;
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;

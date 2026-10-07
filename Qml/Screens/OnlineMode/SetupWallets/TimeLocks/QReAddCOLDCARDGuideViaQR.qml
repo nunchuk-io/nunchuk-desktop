@@ -148,7 +148,7 @@ QOnScreenContentTypeA {
         id: qrscaner
         onTagFound: {
             if(qrscaner.complete) {
-                draftWallet.requestVerifySingleSignerViaQR(qrscaner.tags, selected_verify_option)
+                draftWallet.requestVerifySingleSignerViaQR(qrscaner.tags, selected_verify_option, verificationMethod)
                 qrscaner.close()
             }
         }

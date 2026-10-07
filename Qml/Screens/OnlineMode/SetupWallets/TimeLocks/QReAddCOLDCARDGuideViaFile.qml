@@ -148,7 +148,7 @@ QOnScreenContentTypeA {
         id: fileDialog
         fileMode: FileDialog.OpenFile
         onAccepted: {
-            draftWallet.requestVerifySingleSignerViaFile(fileDialog.file, selected_verify_option)
+            draftWallet.requestVerifySingleSignerViaFile(fileDialog.file, selected_verify_option, verificationMethod)
         }
     }
 }

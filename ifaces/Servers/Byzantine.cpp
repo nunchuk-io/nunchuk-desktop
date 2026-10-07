@@ -2481,7 +2481,10 @@ bool Byzantine::VerifyKeyReplacement(const QString &group_id, const QString &wal
     cmd.replace("{xfp}", xfp);
 
     QJsonObject data;
-    data["verification_method"] = verification_method;
+    // BUGFIX: omit for on-chain (empty) callers - see Draco::VerifyKeyReplacement().
+    if (!verification_method.isEmpty()) {
+        data["verification_method"] = verification_method;
+    }
     data["verification_type"] = type;
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;
@@ -2827,7 +2830,10 @@ bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QJsonOb
 bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg)
 {
     QJsonObject data;
-    data["verification_method"] = verification_method;
+    // BUGFIX: omit for on-chain (empty) callers - see Draco::DraftWalletSignerVerify().
+    if (!verification_method.isEmpty()) {
+        data["verification_method"] = verification_method;
+    }
     data["verification_type"] = type;
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;

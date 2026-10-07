@@ -58,11 +58,22 @@ QPopupOverlayScreen {
     property string signerName: ""
     property string signerType: ""
     property string derivationPath: ""
+    // BUGFIX: this flow is shared - called bare (no key) from the on-chain MINISCRIPT replace-key
+    // screens, and with an explicit key from QVerifyBothBackups.qml for off-chain claim_options.
+    // verification_method ("SEED_PHRASE") only has meaning for an off-chain claim_options key; the
+    // on-chain path must follow the old on-chain logic and not send it at all (empty), otherwise the
+    // backend wrongly validates a MINISCRIPT key as an off-chain inheritance key ([400]).
+    property string verificationMethod: ""
+    // BUGFIX: tracks which caller started this flow, so verifyResult() below can follow old on-chain
+    // logic exactly (silent close / toast-only on failure) instead of the new off-chain result screens.
+    property bool isOffChain: false
     QScreenStateFlow {
         id: stateFlow
     }
     function startFlow(key) {
-        var k = key !== undefined && key !== null ? key : SignerManagement.currentSigner
+        isOffChain = key !== undefined && key !== null
+        var k = isOffChain ? key : SignerManagement.currentSigner
+        verificationMethod = isOffChain ? "SEED_PHRASE" : ""
         xfp = k.xfp !== undefined ? k.xfp : ""
         signerTag = k.tag !== undefined ? k.tag : ""
         signerName = k.name !== undefined ? k.name : ""
@@ -123,7 +134,10 @@ QPopupOverlayScreen {
                 onNextClicked: {
                     selected_verify_option = verify_option
                     if (verify_option === "SKIPPED_VERIFICATION") {
-                        draftWallet.requestVerifySingleSigner(selected_verify_option)
+                        // BUGFIX: same as the Verify button below - must thread verificationMethod
+                        // explicitly, otherwise this falls back to the C++ default "SEED_PHRASE" even
+                        // for on-chain MINISCRIPT keys.
+                        draftWallet.requestVerifySingleSigner(selected_verify_option, verificationMethod)
                     } else {
                         stateFlow.setScreenFlow("important-notice-about-passphrase-guide")
                     }
@@ -149,16 +163,22 @@ QPopupOverlayScreen {
             onNextClicked: stateFlow.setScreenFlow("re-add-the-stored-key")
         }
     }
-    // BUGFIX (Setup 13bD/13cD): after re-adding the device, success used to just close the popup
-    // silently, and failure did nothing at all (backend never emitted a failure signal at all before
-    // this fix - see QAssistedDraftWallets.cpp). Now routes to the matching result screen either way.
+    // Off-chain (Setup 13bD/13cD) routes to the new result screens either way. On-chain must follow
+    // the old on-chain logic: success still refreshes+closes silently; failure gets a short toast
+    // only (old baseline showed nothing at all on failure - confirmed too silent, kept a toast here).
     function verifyResult(result, errorMsg) {
         if (result == 1) {
             GroupWallet.refresh()
-            stateFlow.setScreenFlow("result-restore-key")
-        } else {
+            if (isOffChain) {
+                stateFlow.setScreenFlow("result-restore-key")
+            } else {
+                _infoPopup.close()
+            }
+        } else if (isOffChain) {
             verify_error_msg = errorMsg !== undefined ? errorMsg : ""
             stateFlow.setScreenFlow("result-restore-key-failed")
+        } else {
+            AppModel.showToast(-1, errorMsg !== undefined && errorMsg !== "" ? errorMsg : STR.STR_QML_2329, EWARNING.ERROR_MSG)
         }
     }
     Component {
@@ -234,7 +254,7 @@ QPopupOverlayScreen {
                         type: eTypeE
                         enabled: _refresh.contentItem.isEnable()
                         onButtonClicked: {
-                            draftWallet.requestVerifySingleSignerViaConnectDevice(_refresh.contentItem.mDevicelist.currentIndex, selected_verify_option, "SEED_PHRASE", _infoPopup.xfp, _infoPopup.derivationPath)
+                            draftWallet.requestVerifySingleSignerViaConnectDevice(_refresh.contentItem.mDevicelist.currentIndex, selected_verify_option, _infoPopup.verificationMethod, _infoPopup.xfp, _infoPopup.derivationPath)
                         }
                     }
                 }

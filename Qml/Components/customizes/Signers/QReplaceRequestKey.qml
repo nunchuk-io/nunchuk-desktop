@@ -345,6 +345,7 @@ Item {
                 sourceComponent: addButton
             }
             // Setup 01aD: "Inheritance" corner ribbon, per Figma asset Inheritance_badge.svg (81x14 Hug).
+            // Shared design for on-chain and off-chain inheritance keys alike - no wallet_type gate.
             QImage {
                 anchors {
                     top: parent.top
