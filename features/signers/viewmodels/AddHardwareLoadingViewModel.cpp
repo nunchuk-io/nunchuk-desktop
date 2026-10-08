@@ -61,7 +61,14 @@ void AddHardwareLoadingViewModel::proceedAddSignerViaUSB(const nunchuk::Device &
                 flowResult->proceedAfterAddedViaUSB(xfp);
             }
         } else {
+            // BUGFIX: this loading screen (qaddkeyprocessloading, pushed by
+            // HardwareRefreshDevicesViewModel::requestCreateSigner()) was never popped on failure -
+            // only a toast fired, leaving it stuck forever. Same fix as
+            // OffChainClaimingFlow::proceedAfterAddedViaUSB(); safe here too since this screen has
+            // exactly one push site, always from the device-scan screen underneath.
             emit showToast(0, result.error(), EWARNING::WarningType::ERROR_MSG);
+            GUARD_SUB_SCREEN_MANAGER()
+            subMng->back();
         }
     });
 }

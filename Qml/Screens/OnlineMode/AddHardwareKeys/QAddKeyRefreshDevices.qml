@@ -222,8 +222,12 @@ Item {
             "signerNameInputted"    : signerName,
             "xfpSelected"          : selected_xfp
         };
-        vm.forceCreateMaster(masterSignerObj)
-        stateScreen.setScreenFlow("eSCREEN_LOADING")
+        // BUGFIX: only transition to the loading screen if forceCreateMaster() actually started an
+        // async op - it silently bails (toast only) when the device needs PIN/passphrase, which used
+        // to leave this screen stuck on "Adding [Device]..." forever with no pending operation at all.
+        if (vm.forceCreateMaster(masterSignerObj)) {
+            stateScreen.setScreenFlow("eSCREEN_LOADING")
+        }
     }
     QPopupInfoTwoButtons {
         id: _info

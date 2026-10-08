@@ -936,7 +936,14 @@ Controller::Controller() {
     connect(worker, &Worker::createMasterSignerFailed, this, [](const WorkerWarningData &warning) {
         const int last = QEventProcessor::instance()->getCurrentStates().last();
         if (last == E::STATE_ID_SCR_ADD_HARDWARE) {
+            // BUGFIX: this screen's "Adding [Device]..." loading state (eSCREEN_LOADING) is only ever
+            // dismissed by resultAddOrUpdateAKeyToDraftWallet() on the SUCCESS path - on failure (e.g.
+            // re-adding a key that already exists as a different signer) nothing called setScreenFlow(),
+            // leaving the loading screen stuck forever with just a toast (easy to miss/dismiss). Mirror
+            // the success path's eSCREEN_ERROR transition here. setAddSignerWizard(1) kept as-is (unread
+            // by this screen, but left for any other consumer relying on it).
             AppModel::instance()->setAddSignerWizard(1);
+            QSignerManagement::instance()->setScreenFlow("eSCREEN_ERROR");
         }
         AppModel::instance()->showToast(warning.code,
                                         warning.what,

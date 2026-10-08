@@ -16,7 +16,7 @@ class RefreshDevicesViewModel : public BaseViewModel {
   public:
     explicit RefreshDevicesViewModel(QObject *parent = nullptr);
   public slots:
-    void forceCreateMaster(QVariant msg);
+    bool forceCreateMaster(QVariant msg);
     void scanDevice();
     bool startCreateMaster(QVariant msg);
   signals:
