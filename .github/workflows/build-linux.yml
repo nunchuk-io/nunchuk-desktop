@@ -1,26 +1,12 @@
 name: Build linux release
-# run-name can only use trigger-context expressions (no script output), so it
-# cannot reflect a version auto-detected from CMakeLists.txt by the
-# "Determine build version" step below -- it uses github.ref_name directly
-# instead (the raw branch/tag name), matching what a manual run against a
-# branch actually labels itself with anyway (the branch name, not the app
-# version). Three cases:
-#   - manual run, ref is a branch:  nunchuk-linux-<branch>-manual
-#   - manual run, ref is a tag:     nunchuk-linux-v<tag>-manual
-#   - tag push (automatic):         nunchuk-linux-v<tag>
+# Manual runs use the selected branch/tag; release runs use the tag version.
 run-name: ${{ github.ref_type == 'branch' && format('nunchuk-linux-{0}-manual', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-linux-v{0}-manual', github.ref_name) || format('nunchuk-linux-v{0}', github.ref_name) }}
 
 on:
   push:
     tags:     [ "*" ]
   workflow_dispatch:
-    # Manual run: use the "Use workflow from" ref picker on the Actions tab to
-    # choose either a tag (build that tag -- the tag name is used as the
-    # version) or the qt6 branch (build its latest commit -- the version is
-    # auto-detected from CMakeLists.txt by the "Determine build version" step
-    # below). No text input is needed for either case; this form only asks
-    # for the optional reproducibility-check checkbox. Manual runs still
-    # upload the build artifact but never create or update a GitHub release.
+    # Select a branch or tag. Manual runs upload artifacts without publishing a release.
     inputs:
       check_reproducible_build:
         description: Check reproducible build
@@ -34,35 +20,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # linuxdeploy/AppImage-standard architecture name is x86_64;
-          # Docker's platform name is amd64. ubuntu-24.04 is a GitHub-hosted
-          # x86_64 runner.
+          # Native x86_64 runner.
           - name: amd64
             platform: linux/amd64
             appimage_arch: x86_64
             runner: ubuntu-24.04
-            qt_host: linux
-            qt_arch: linux_gcc_64
-            qt_dir_name: gcc_64
-          # linuxdeploy/AppImage-standard architecture name is aarch64;
-          # Docker's platform name is arm64. ubuntu-24.04-arm is GitHub's
-          # hosted arm64 runner (native, no QEMU).
-          #
-          # qt_dir_name is NOT the same string as qt_arch: aqtinstall strips
-          # the "linux_" prefix from the arch identifier when naming the
-          # install directory (confirmed by the working amd64 row above:
-          # arch "linux_gcc_64" installs into "gcc_64", not "linux_gcc_64").
-          # By the same rule, arch "linux_gcc_arm64" installs into
-          # "gcc_arm64". An earlier value of "linux_gcc_arm64" here pointed at
-          # a directory aqtinstall never created, leaving qmake off PATH and
-          # failing the builder image with "qmake_path=" (empty) / exit 127.
+          # Native arm64 runner. aqt installs linux_gcc_arm64 into gcc_arm64.
           - name: arm64
             platform: linux/arm64
             appimage_arch: aarch64
             runner: ubuntu-24.04-arm
-            qt_host: linux_arm64
-            qt_arch: linux_gcc_arm64
-            qt_dir_name: gcc_arm64
 
     runs-on: ${{ matrix.runner }}
 
@@ -70,28 +37,13 @@ jobs:
       contents: read
       packages: write
 
-    env:
-      # Single pin point for the HWI source used by the "Build HWI from
-      # source" step below; keep in sync with HWI_VERSION/HWI_COMMIT in
-      # reproducible-builds/macos.lock.env and the "hwi" entry in
-      # reproducible-builds/windows-dependencies.lock.json.
-      HWI_TAG: 3.2.0-bitbox-verification
-      HWI_COMMIT: 415310a14d3d1ebb9620783be5dcca437626b587
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # A tag push (or a manual run where the ref picker selected a tag) uses
-      # the tag name itself as the version -- unchanged from before. A manual
-      # run against a branch (build latest commit) has no version input to
-      # fill in at all: the version is auto-detected from CMakeLists.txt,
-      # which is already updated for whatever commit got checked out. There
-      # is deliberately no manual-override input for this -- the two cases
-      # below (tag name, or CMakeLists.txt) are the only ways BUILD_VERSION
-      # is produced.
+      # Use the tag version, or read CMakeLists.txt for a manual branch build.
       - name: Determine build version
         shell: bash
         run: |
@@ -99,12 +51,7 @@ jobs:
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             build_version="${{ github.ref_name }}"
           else
-            # CMakeLists.txt has two project() calls guarded by
-            # `if(UNIX AND APPLE) ... else() ... endif()`; the Linux build
-            # always takes the `else` branch (project(nunchuk-qt ...)), so
-            # that is the one to read the version from -- not the `if`
-            # branch's project(Nunchuk ...), which is macOS-only and not
-            # guaranteed to carry the same version string.
+            # Read the Linux project() version, not the separate macOS project().
             match_count="$(grep -c 'project(nunchuk-qt VERSION' CMakeLists.txt)"
             if [[ "${match_count}" -ne 1 ]]; then
               echo "Expected exactly one 'project(nunchuk-qt VERSION ...)' line in CMakeLists.txt, found ${match_count}" >&2
@@ -138,79 +85,21 @@ jobs:
       - name: Build & push builder image
         working-directory: ${{ github.workspace }}
         run: |
+          set -euo pipefail
           docker buildx build \
             --platform ${{ matrix.platform }} \
             -f reproducible-builds/Dockerfile.linux \
             -t ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }} \
-            --build-arg APPIMAGE_ARCH=${{ matrix.appimage_arch }} \
-            --build-arg QT_HOST=${{ matrix.qt_host }} \
-            --build-arg QT_ARCH=${{ matrix.qt_arch }} \
-            --build-arg QT_DIR_NAME=${{ matrix.qt_dir_name }} \
+            -t ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }}:git-${{ github.sha }} \
             --cache-from type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache-${{ matrix.name }} \
             --cache-to   type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache-${{ matrix.name }},mode=max \
+            --metadata-file "${RUNNER_TEMP}/builder-metadata.json" \
             --push .
 
-      # HWI only publishes a prebuilt x86_64 binary upstream, so both
-      # architectures are built from source here for consistency (per the
-      # nogibi/HWI fork's own contrib/build.Dockerfile + contrib/build_bin.sh
-      # --without-gui, which is arch-agnostic for the non-GUI build used by
-      # this app). The resulting binary is bind-mounted into the reproducible
-      # builder container by the packaging step below.
-      #
-      # contrib/build.Dockerfile (fetched and read directly) only builds the
-      # Python 3.9.19/pyenv toolchain and COPYs a single patch file
-      # (contrib/reproducible-python.diff) into the image -- it does NOT COPY
-      # the HWI source tree itself, so contrib/build_bin.sh only exists if the
-      # checkout is bind-mounted in at `docker run` time. An earlier version
-      # of this step tried to locate build_bin.sh by searching the image
-      # filesystem, which can never succeed for exactly that reason (this
-      # failed in practice: "Could not locate contrib/build_bin.sh inside the
-      # HWI build image"). Fixed by bind-mounting /tmp/hwi-src directly and
-      # running from there, matching how build_bin.sh itself expects to be
-      # invoked (it does `pip install poetry` / `poetry install` against the
-      # pyproject.toml next to it, and calls `pyenv init` itself).
-      #
-      # needs confirmation: whether pyenv resolves the repo's ".python-version" (which pins "3.9",
-      # not the exact "3.9.19" the image installs) to the installed version
-      # without an explicit `pyenv global`/`pyenv local` -- if pyenv errors on
-      # that instead of resolving it, build_bin.sh's own `pyenv init` calls
-      # would surface it directly.
-      - name: Build HWI from source
-        working-directory: ${{ github.workspace }}
-        run: |
-          set -euo pipefail
-          git clone --branch "${HWI_TAG}" --depth 1 \
-            https://github.com/nogibi/HWI.git /tmp/hwi-src
-          test "$(git -C /tmp/hwi-src rev-parse HEAD)" = "${HWI_COMMIT}"
-
-          docker buildx build \
-            --platform ${{ matrix.platform }} \
-            --load \
-            -f /tmp/hwi-src/contrib/build.Dockerfile \
-            -t hwi-builder-${{ matrix.name }}:local \
-            /tmp/hwi-src
-
-          mkdir -p "${{ github.workspace }}/hwi-prebuilt"
-          docker run --platform ${{ matrix.platform }} --rm \
-            -v /tmp/hwi-src:/hwi-src \
-            -v "${{ github.workspace }}/hwi-prebuilt:/out" \
-            -w /hwi-src \
-            hwi-builder-${{ matrix.name }}:local \
-            bash -c '
-              set -euo pipefail
-              bash contrib/build_bin.sh --without-gui
-              binary="$(find dist -type f -name hwi -print -quit)"
-              if [[ -z "${binary}" ]]; then
-                  echo "HWI build did not produce a file named \"hwi\" under dist/" >&2
-                  exit 1
-              fi
-              install -m 0755 "${binary}" /out/hwi
-            '
-
-          [[ -x "${{ github.workspace }}/hwi-prebuilt/hwi" ]] || {
-            echo "HWI build did not produce an executable binary" >&2
-            exit 1
-          }
+          # Use this build's digest for every container invocation. A mutable
+          # image tag may be overwritten by another branch or release run.
+          digest="$(jq -er '."containerimage.digest"' "${RUNNER_TEMP}/builder-metadata.json")"
+          echo "BUILDER_IMAGE=ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }}@${digest}" >> "${GITHUB_ENV}"
 
       - name: Build application
         run: |
@@ -219,8 +108,13 @@ jobs:
             -e ARCH=${{ matrix.appimage_arch }} \
             -v ${{ github.workspace }}:/project \
             -w /project \
-            ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }} \
+            "${BUILDER_IMAGE}" \
             bash reproducible-builds/build_linux.sh
+
+      - name: Record builder image
+        run: |
+          release_root="nunchuk-linux-${{ matrix.appimage_arch }}-v${BUILD_VERSION}"
+          printf '%s\n' "${BUILDER_IMAGE}" > "${release_root}/${release_root}.builder-image.txt"
 
       - name: Verify packaged Linux runtime
         shell: bash
@@ -280,7 +174,7 @@ jobs:
             -e APPIMAGE_ARCH="${APPIMAGE_ARCH}" \
             -v "${GITHUB_WORKSPACE}:/project" \
             -w /project \
-            ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }} \
+            "${BUILDER_IMAGE}" \
             bash -s <<'CI_TESTS'
           set -euo pipefail
 
@@ -410,32 +304,20 @@ jobs:
           echo "Linux SSL and smoke tests passed."
           CI_TESTS
 
-      # Artifact display name only (the actual zip filename referenced by
-      # `path:` below is unaffected -- it stays keyed off BUILD_VERSION, per
-      # the "Determine build version" step, since that is what
-      # package_linux.sh actually wrote to disk). Same three cases as
-      # run-name above, plus the arch (matrix.appimage_arch) to keep the two
-      # matrix legs' artifacts from colliding under the same name:
-      #   - manual run, ref is a branch:  nunchuk-linux-<arch>-<branch>-manual
-      #   - manual run, ref is a tag:     nunchuk-linux-<arch>-v<tag>-manual
-      #   - tag push (automatic):         nunchuk-linux-<arch>-v<tag>
+      # Artifact display names follow the selected ref; filenames use BUILD_VERSION.
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.ref_type == 'branch' && format('nunchuk-linux-{0}-{1}-manual', matrix.appimage_arch, github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-linux-{0}-v{1}-manual', matrix.appimage_arch, github.ref_name) || format('nunchuk-linux-{0}-v{1}', matrix.appimage_arch, env.BUILD_VERSION) }}
-          path: nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}.zip
+          path: |
+            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.zip
+            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.zip.sha256
+            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.build-inputs.txt
+            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.builder-image.txt
           if-no-files-found: error
           compression-level: 0
 
-      # Everything below is opt-in, manual-build-only diagnostics (the
-      # "check_reproducible_build" checkbox only exists on the workflow_dispatch
-      # form, so a tag push never has it and these steps never run for a
-      # release). It rebuilds the exact same commit from scratch a second time
-      # in the same job and compares the two ZIPs byte-for-byte. This is a CI
-      # convenience for validating changes to the build/packaging pipeline; the
-      # documented way for anyone to verify a published release stays the
-      # single manual build + diff against the official release described in
-      # reproducible-builds/README.md.
+      # Manual diagnostic: rebuild in the same image and compare the release ZIPs.
       - name: Save first build for reproducibility check
         if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
         env:
@@ -455,7 +337,7 @@ jobs:
             -e ARCH=${{ matrix.appimage_arch }} \
             -v ${{ github.workspace }}:/project \
             -w /project \
-            ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }} \
+            "${BUILDER_IMAGE}" \
             bash reproducible-builds/build_linux.sh
 
       - name: Compare reproducibility check builds
@@ -520,25 +402,14 @@ jobs:
           exit 1
 
   publish-release:
-    # A separate fan-in job so both matrix legs finish (and both upload their
-    # artifact) before any release is created or updated, avoiding a race
-    # between two concurrent `gh release` calls for the same tag.
+    # Wait for both architectures before updating the release.
     needs: build-image-and-app
     if: github.event_name != 'workflow_dispatch' && github.ref_type == 'tag'
     runs-on: ubuntu-24.04
     env:
-      # This job's own `if:` above guarantees ref_type == 'tag' whenever it
-      # actually runs, so the tag name IS the version -- no need for the
-      # CMakeLists.txt-derived fallback in build-image-and-app's "Determine
-      # build version" step. That step's $GITHUB_ENV value is scoped to its
-      # own job's runner and would not be visible here even if it applied.
+      # This job only runs on tag pushes, so the tag is the release version.
       BUILD_VERSION: ${{ github.ref_name }}
-    # Shared with build-windows.yml and build-macos.yml so a tag push cannot
-    # race two `gh release create`/`edit` calls for the same tag across the
-    # three platform workflows. Previously missing here -- build-windows.yml's
-    # own publish-release job already flagged this as a known gap
-    # ("recommend adding the same group name to build-linux.yml (and
-    # build-macos.yml, once it exists)").
+    # Serialize publication across the Linux, macOS and Windows workflows.
     concurrency:
       group: release-publish-${{ github.ref_name }}
       cancel-in-progress: false
@@ -561,11 +432,19 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          assets=(release-assets/*.zip)
-          if [[ "${#assets[@]}" -eq 0 ]]; then
-            echo "No release assets were downloaded" >&2
+          archives=(release-assets/*.zip)
+          if [[ "${#archives[@]}" -ne 2 ]]; then
+            echo "Expected one release ZIP per Linux architecture" >&2
             exit 1
           fi
+          assets=()
+          for archive in "${archives[@]}"; do
+            assets+=("${archive}")
+            for sidecar in "${archive}.sha256" "${archive%.zip}.build-inputs.txt" "${archive%.zip}.builder-image.txt"; do
+              [[ -s "${sidecar}" ]] || { echo "Missing release metadata: ${sidecar}" >&2; exit 1; }
+              assets+=("${sidecar}")
+            done
+          done
 
           if gh release view "${BUILD_VERSION}" >/dev/null 2>&1; then
             gh release edit "${BUILD_VERSION}" \

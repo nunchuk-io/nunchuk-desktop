@@ -11,10 +11,8 @@ if [[ "${ARCH}" != "x86_64" && "${ARCH}" != "aarch64" ]]; then
     echo "Unsupported ARCH: ${ARCH} (expected x86_64 or aarch64)" >&2
     exit 1
 fi
-# HWI is built from source for both architectures (see the "Build HWI from
-# source" workflow step) because upstream only publishes prebuilt x86_64
-# binaries. The built binary is bind-mounted into the container at this path.
-HWI_PREBUILT_BINARY="${PROJECT_DIR}/hwi-prebuilt/hwi"
+# The builder downloads and verifies the locked HWI release asset.
+HWI_PREBUILT_BINARY="/opt/hwi/hwi"
 
 if [[ "${PROJECT_DIR}" != /* || ! -f "${PROJECT_DIR}/CMakeLists.txt" ]]; then
     echo "PROJECT_DIR must be an absolute Nunchuk source directory: ${PROJECT_DIR}" >&2
@@ -26,13 +24,7 @@ if [[ ! "${TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
     exit 1
 fi
 
-# Unlike build_linux.sh, this script does not recompute SOURCE_DATE_EPOCH: it
-# only validates the value build_linux.sh already exported (matching main's
-# package_linux.sh, which likewise just validates rather than deriving its own
-# value). Recomputing here as a "${SOURCE_DATE_EPOCH:-...}" fallback would be
-# redundant at best and, since the Docker image itself always has this env var
-# set to a non-empty builder-image constant, would silently mask a caller that
-# forgot to export the real value instead of failing loudly.
+# Require the source commit epoch exported by build_linux.sh.
 if [[ ! "${SOURCE_DATE_EPOCH:-}" =~ ^[0-9]+$ ]]; then
     echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH:-unset}" >&2
     exit 1
@@ -378,7 +370,7 @@ cmake -E remove_directory "${PACKAGE_DIR}"
 mkdir -p "${APP_DIR}/usr/bin"
 
 if [[ ! -x "${HWI_PREBUILT_BINARY}" ]]; then
-    echo "HWI binary was not found (expected to be built from source by the workflow before packaging): ${HWI_PREBUILT_BINARY}" >&2
+    echo "Locked HWI release binary was not found in the builder: ${HWI_PREBUILT_BINARY}" >&2
     exit 1
 fi
 install -m 0755 "${HWI_PREBUILT_BINARY}" "${APP_DIR}/usr/bin/hwi"
@@ -619,23 +611,9 @@ APPDIR_MANIFEST="${PACKAGE_DIR}/appdir-metadata.manifest"
 APPDIR_AFTER_MANIFEST="${PACKAGE_DIR}/appdir-metadata.after-appimage-plugin.manifest"
 write_appdir_manifest "${APP_DIR}" "${APPDIR_MANIFEST}"
 
-# linuxdeploy's own AppImage output plugin replaces the separate
-# appimagetool/type2-runtime combination used previously (both only ever
-# published prebuilt x86_64 binaries; linuxdeploy-plugin-appimage is
-# published for both x86_64 and aarch64 like linuxdeploy itself).
-# LDAI_RUNTIME_FILE pins the exact runtime bytes, matching the previous
-# --runtime-file behavior.
-#
-# Invoke linuxdeploy-plugin-appimage directly (its own README: "Like all
-# linuxdeploy plugins, linuxdeploy-plugin-appimage is a standalone tool and
-# can be used without linuxdeploy"), NOT via `linuxdeploy --output appimage`.
-# Going through `linuxdeploy` re-runs its full bundling pass first ("After
-# completing the bundling process ... linuxdeploy will then call the
-# AppImage plugin", per the same README) -- confirmed in practice: it
-# re-patchelf'd and re-deployed files already placed by the two passes
-# above, mutating file content (not just metadata) and tripping the
-# manifest-diff check below. Calling the plugin binary standalone skips that
-# redundant, mutating pass entirely.
+# Invoke the AppImage plugin directly: running linuxdeploy again would
+# repeat bundling and modify the already-normalized AppDir.
+# LDAI_RUNTIME_FILE selects the checksum-pinned runtime from the builder.
 (
     cd "${PACKAGE_DIR}"
     LDAI_RUNTIME_FILE="${APPIMAGE_RUNTIME_FILE}" \

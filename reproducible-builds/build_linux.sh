@@ -48,15 +48,7 @@ trap restore_zlib_zconf EXIT
 # isolated builder process.
 git config --global --add safe.directory '*'
 
-# Override the builder image's fallback (Dockerfile.linux's SOURCE_DATE_EPOCH,
-# only meant for timestamps produced while building the image itself) with the
-# timestamp of the actual source revision being packaged. This must be an
-# unconditional assignment, not a "${SOURCE_DATE_EPOCH:-...}" default: the
-# Docker image always has SOURCE_DATE_EPOCH set to a non-empty value, so a
-# "${VAR:-default}" fallback would never take the git-derived value and every
-# release would silently carry the image's fixed timestamp instead of its own
-# commit's. Matches main's build_linux.sh, which uses this same unconditional
-# form.
+# Always replace the image-build epoch with the source commit timestamp.
 SOURCE_DATE_EPOCH="$(git -c safe.directory="${PROJECT_DIR}" -C "${PROJECT_DIR}" log -1 --format=%ct)"
 if [[ ! "${SOURCE_DATE_EPOCH}" =~ ^[0-9]+$ ]]; then
     echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH}" >&2
@@ -129,3 +121,17 @@ assert_cmake_cache_value OPENSSL_SSL_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libssl.a"
 cmake --build build --parallel "$(nproc)"
 
 "${PROJECT_DIR}/reproducible-builds/package_linux.sh"
+
+release_name="nunchuk-linux-${ARCH}-v${TAG}"
+{
+    printf 'source_commit=%s\n' "$(git rev-parse HEAD)"
+    printf 'source_date_epoch=%s\n' "${SOURCE_DATE_EPOCH}"
+    printf 'arch=%s\n' "${ARCH}"
+    cat /opt/builder-inputs.txt
+    printf '\n[submodules]\n'
+    git submodule status --recursive
+    printf '\n[build recipes]\n'
+    sha256sum reproducible-builds/Dockerfile.linux \
+        reproducible-builds/download_hwi.sh reproducible-builds/hwi.lock.env \
+        "reproducible-builds/qt-6.9.3-linux-${ARCH}.sha256"
+} > "${release_name}/${release_name}.build-inputs.txt"

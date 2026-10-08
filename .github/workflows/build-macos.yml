@@ -1,76 +1,16 @@
 name: Build macos release
-# Naming rule (kept in sync with the artifact `name:` fields below -- each
-# derives the same three-case string independently, per architecture, since
-# run-name cannot read job/step outputs or env vars):
-#   - manual run, ref is a branch:  nunchuk-macos-<arch>-<branch>-manual
-#   - manual run, ref is a tag:     nunchuk-macos-<arch>-v<tag>-manual
-#   - tag push (automatic):         nunchuk-macos-<arch>-v<tag>
-# run-name itself has no matrix arch to key off, so it omits that segment.
+# Manual runs use the selected branch/tag; release runs use the tag version.
 run-name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-{0}-manual', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-v{0}-manual', github.ref_name) || format('nunchuk-macos-v{0}', github.ref_name) }}
 
-# Wires reproducible-builds/build_macos.sh + package_macos.sh + sign_macos.sh +
-# macos.lock.env (Qt 6.9.3 / Boost / libevent / Berkeley DB / Olm / QtKeychain /
-# HWI, all hash- or commit-pinned -- see the lock file) into CI. OpenSSL is not
-# an independent input here: it is the copy already vendored inside the
-# contrib/libnunchuk submodule, pinned by that submodule's own commit -- see
-# macos.lock.env's own comment. These versions and build steps were
-# re-derived directly from the manually-run reference workflow below, per an
-# explicit instruction not to trust this workflow's previous (unverified
-# draft) Qt 6.11.1 / standalone-OpenSSL-download / prebuilt-HWI values.
-#
-# Reproducibility model: matches build-linux.yml's (and, as of the same
-# change, build-windows.yml's) single-build-then-optionally-verify model. By
-# default (both a tag push and a plain workflow_dispatch run) each
-# architecture is built ONCE and that single unsigned payload is signed
-# directly -- there is no byte-for-byte gate in front of signing. Checking
-# the "check_reproducible_build" box on a manual workflow_dispatch run adds a
-# second from-scratch rebuild of the same commit in the same job purely to
-# report PASSED/NOT PASSED in the step summary; this never blocks or
-# influences signing, matching how build-linux.yml's own checkbox never
-# blocks or influences that workflow's publish step either. This was a
-# deliberate choice, made explicitly at the user's request, to mirror
-# build-linux.yml's UX instead of keeping this workflow's own previous
-# always-two-replica-then-gate design (what README.md/README-macos.md as
-# originally written both described for macOS). The trade-off accepted here:
-# unlike the previous version of this workflow, a real tag release is no
-# longer cryptographically
-# demonstrated to be reproducible before Apple signs and notarizes it --
-# reproducibility for a published macOS release becomes something anyone can
-# check after the fact (rebuild the tag, compare against the release asset),
-# the same posture build-linux.yml already documents for Linux. See the
-# "Reproducibility model" section added to reproducible-builds/README-macos.md
-# alongside this change.
-#
-# Runner images / Xcode selection carried over from the manually-run
-# reference workflow this was modeled on --
-# https://github.com/tongvanlinh/macdeploynunchuk/blob/main/.github/workflows/nunchuk-macos_matrix.yml
-# -- which selects Xcode 16.4 on the same two runner labels (macos-15-intel,
-# macos-15) and signs/notarizes successfully today. This repository has not
-# independently re-confirmed that GitHub's macos-15 images still ship Xcode
-# 16.4 at the exact 16F6 build recorded in macos.lock.env; needs confirmation
-# on first run. build_macos.sh's own toolchain check (Qt version equality
-# against QT_VERSION in macos.lock.env) fails loudly on drift, but does not
-# itself assert the Xcode build number.
-#
-# Signing/notarization (sign_macos.sh) runs in the "release-signing" GitHub
-# Environment, using the secrets named in reproducible-builds/README-macos.md
-# ("Locked inputs and secrets"): PROD_MACOS_CERTIFICATE,
-# PROD_MACOS_CERTIFICATE_PWD, PROD_MACOS_CERTIFICATE_NAME,
-# PROD_MACOS_CI_KEYCHAIN_PWD, IO_APPLE_ID, IO_APPLE_TEAM_ID,
-# IO_APPLE_APP_PASSWORD -- see that file's "CI signing setup checklist" for
-# whether those already exist on this repository or still need adding.
+# Build unsigned payloads with build_macos.sh, then sign them with sign_macos.sh.
+# The optional manual rebuild check is diagnostic; tag releases build once.
+# Signing credentials are supplied by the release-signing environment below.
 
 on:
   push:
     tags: [ "*" ]
   workflow_dispatch:
-    # Manual run: use the "Use workflow from" ref picker on the Actions tab to
-    # choose either a tag (build that tag) or a branch (build its latest
-    # commit -- the resolve-version job below then reads the version straight
-    # out of that commit's CMakeLists.txt, so no version has to be typed in by
-    # hand and it can never drift from what the build itself produces).
-    # Manual runs still upload build/signing artifacts but never create or
-    # update a GitHub release (see publish-release's `if:` below).
+    # Select a branch or tag. Manual runs upload artifacts without publishing a release.
     inputs:
       check_reproducible_build:
         description: Check reproducible build (diagnostic only -- rebuilds a second time and reports PASSED/NOT PASSED; never blocks signing)
@@ -189,13 +129,7 @@ jobs:
           xcodebuild -version
           clang --version
 
-      # Qt 6.9.3 via the same jurplel/install-qt-action the reference
-      # workflow uses, with the exact same module list -- not aqt/pip, and
-      # not Qt 6.11.1 (both were the previous, unverified draft's own
-      # invented choices, never validated against a real build). Python is
-      # no longer installed here at all: build_macos.sh now sets up its own
-      # pyenv Python 3.9 internally, only for building HWI from source,
-      # matching how the reference workflow scopes Python to that one step.
+      # Keep the Qt version and module list aligned with macos.lock.env.
       - name: Install pinned Qt 6.9.3
         uses: jurplel/install-qt-action@v4
         with:
@@ -415,12 +349,8 @@ jobs:
           set -euo pipefail
           name_prefix="nunchuk-macos-x86_64-v${BUILD_VERSION}-unsigned"
           archive="unsigned/${name_prefix}.tar"
-          # Confirms the tar survived actions/upload-artifact +
-          # download-artifact intact; this is a self-consistency check
-          # against build_macos.sh's own recorded checksum, not a
-          # reproducibility gate -- see the workflow's header comment and
-          # README-macos.md "Reproducibility model" for why there is no
-          # second independent build to compare against here.
+          # Check archive integrity after transfer. The optional rebuild
+          # comparison runs separately in the build job.
           ( cd unsigned && shasum -a 256 --check "${name_prefix}.tar.sha256" )
 
           mkdir -p payload
