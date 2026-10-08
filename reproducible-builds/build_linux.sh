@@ -70,10 +70,10 @@ for required_tool in "${CC}" "${CXX}" "${AR}" "${NM}" "${RANLIB}"; do
 done
 
 readonly PREFIX_MAP_FLAGS="-ffile-prefix-map=${PROJECT_DIR}=. -fdebug-prefix-map=${PROJECT_DIR}=. -fmacro-prefix-map=${PROJECT_DIR}=."
-export CPPFLAGS="-I${OPENSSL_ROOT_DIR}/include ${PREFIX_MAP_FLAGS}"
+export CPPFLAGS="${PREFIX_MAP_FLAGS}"
 export CFLAGS="${CPPFLAGS}"
 export CXXFLAGS="${CPPFLAGS}"
-export LDFLAGS="-L${OPENSSL_ROOT_DIR}/lib -static-libgcc -static-libstdc++"
+export LDFLAGS="-static-libgcc -static-libstdc++"
 
 # A clean build directory is required for comparable outputs and prevents a
 # stale Qt5 CMake cache from being reused after the Qt6 migration.
@@ -87,16 +87,9 @@ cmake -S . -B build -G Ninja \
     -DCMAKE_AR="${AR}" \
     -DCMAKE_NM="${NM}" \
     -DCMAKE_RANLIB="${RANLIB}" \
-    -DCMAKE_PREFIX_PATH="${OPENSSL_ROOT_DIR};${QT_INSTALLED_PREFIX};/usr" \
-    -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+    -DCMAKE_PREFIX_PATH="${QT_INSTALLED_PREFIX};/usr" \
     -DQt6_DIR="${QT6_DIR}" \
     -DUR__DISABLE_TESTS=ON
-
-openssl_runtime_version="$(LD_LIBRARY_PATH="${OPENSSL_ROOT_DIR}/lib" "${OPENSSL_ROOT_DIR}/bin/openssl" version | awk '{ print $2 }')"
-if [[ "${openssl_runtime_version}" != "${OPENSSL_VERSION}" ]]; then
-    echo "Unexpected builder OpenSSL version: ${openssl_runtime_version}" >&2
-    exit 1
-fi
 
 assert_cmake_cache_value() {
     local key="$1"
@@ -115,8 +108,10 @@ assert_cmake_cache_value CMAKE_CXX_COMPILER "${CXX}"
 assert_cmake_cache_value CMAKE_AR "${AR}"
 assert_cmake_cache_value CMAKE_NM "${NM}"
 assert_cmake_cache_value CMAKE_RANLIB "${RANLIB}"
-assert_cmake_cache_value OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a"
-assert_cmake_cache_value OPENSSL_SSL_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libssl.a"
+# libnunchuk must use the static libraries from the frozen Ubuntu packages.
+openssl_libdir="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+assert_cmake_cache_value OPENSSL_CRYPTO_LIBRARY "${openssl_libdir}/libcrypto.a"
+assert_cmake_cache_value OPENSSL_SSL_LIBRARY "${openssl_libdir}/libssl.a"
 
 cmake --build build --parallel "$(nproc)"
 

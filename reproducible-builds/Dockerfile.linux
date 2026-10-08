@@ -41,8 +41,6 @@ ARG LINUXDEPLOY_QT_SHA256_AARCH64=bf1c24aff6d749b5cf423afad6f15abd4440f81dec1aab
 ARG LINUXDEPLOY_PLUGIN_APPIMAGE_VERSION=1-alpha-20250213-1
 ARG LINUXDEPLOY_PLUGIN_APPIMAGE_SHA256_X86_64=992d502a248e14ab185448ddf6f6e7d25558cb84d4623c354c3af350c25fccb3
 ARG LINUXDEPLOY_PLUGIN_APPIMAGE_SHA256_AARCH64=83c292149274965a865dcd44c135cfca8ba28c6b7de3eb628d4b8b5f248af17c
-ARG OPENSSL_VERSION=3.5.7
-ARG OPENSSL_SHA256=a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8
 ARG APPIMAGE_RUNTIME_VERSION=20251108
 # Per-arch checksums for the runtime binary declared just before its RUN step
 # below (kept there, next to its usage, rather than duplicated here).
@@ -58,8 +56,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     QT_VERSION=${QT_VERSION} \
     QT_INSTALLED_PREFIX=/opt/Qt/${QT_VERSION}/${QT_DIR_NAME} \
     QT6_DIR=/opt/Qt/${QT_VERSION}/${QT_DIR_NAME}/lib/cmake/Qt6 \
-    OPENSSL_VERSION=${OPENSSL_VERSION} \
-    OPENSSL_ROOT_DIR=/opt/openssl-${OPENSSL_VERSION} \
     APPIMAGE_RUNTIME_FILE=/usr/local/lib/appimage-runtime
 
 ENV PATH=${QT_INSTALLED_PREFIX}/bin:${PATH} \
@@ -128,6 +124,7 @@ RUN printf '%s\n' \
         libsecret-1-dev \
         libsnappy1v5 \
         libsqlite3-dev \
+        libssl-dev \
         libudev-dev \
         libusb-1.0-0-dev \
         libwebp7 \
@@ -159,6 +156,7 @@ RUN printf '%s\n' \
         make \
         mesa-common-dev \
         ninja-build \
+        openssl \
         p7zip-full \
         patchelf \
         python3-pip \
@@ -267,21 +265,6 @@ RUN set -eux; \
     echo "${linuxdeploy_plugin_appimage_sha256}  /usr/local/bin/linuxdeploy-plugin-appimage" | sha256sum --check --strict; \
     chmod 0755 /usr/local/bin/linuxdeploy /usr/local/bin/linuxdeploy-plugin-qt /usr/local/bin/linuxdeploy-plugin-appimage
 
-RUN curl --fail --location --show-error \
-        --output /tmp/openssl.tar.gz \
-        "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
-    && echo "${OPENSSL_SHA256}  /tmp/openssl.tar.gz" | sha256sum --check --strict \
-    && tar -xzf /tmp/openssl.tar.gz -C /tmp \
-    && cd "/tmp/openssl-${OPENSSL_VERSION}" \
-    && ./config \
-        --prefix="${OPENSSL_ROOT_DIR}" \
-        --openssldir="${OPENSSL_ROOT_DIR}" \
-        --libdir=lib \
-        shared \
-    && make -j"$(nproc)" \
-    && make install_sw \
-    && rm -rf /tmp/openssl.tar.gz "/tmp/openssl-${OPENSSL_VERSION}"
-
 # The AppImage runtime must match the target architecture.
 # package_linux.sh passes it to the plugin through LDAI_RUNTIME_FILE.
 ARG APPIMAGE_RUNTIME_SHA256_X86_64=2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d
@@ -305,7 +288,8 @@ RUN bash /opt/hwi/download_hwi.sh linux "${ARCH}" /opt/hwi/hwi
 # Keep this inventory outside the AppImage so it cannot affect its bytes.
 RUN { \
         printf 'ubuntu_image=%s\nubuntu_snapshot=%s\n' "${UBUNTU_IMAGE}" "${UBUNTU_SNAPSHOT}"; \
-        printf 'qt=%s\naqt=%s\nopenssl=%s\n' "${QT_VERSION}" "${AQT_VERSION}" "${OPENSSL_VERSION}"; \
+        printf 'qt=%s\naqt=%s\n' "${QT_VERSION}" "${AQT_VERSION}"; \
+        printf 'openssl=%s\n' "$(dpkg-query -W -f='${Version}' libssl-dev)"; \
         printf 'qtkeychain=%s\nolm=%s\n' "${QTKEYCHAIN_COMMIT}" "${OLM_COMMIT}"; \
         printf '\n[apt packages]\n'; \
         dpkg-query -W -f='${Package}\t${Architecture}\t${Version}\n' | LC_ALL=C sort; \
