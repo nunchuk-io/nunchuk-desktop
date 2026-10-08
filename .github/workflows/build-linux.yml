@@ -114,7 +114,8 @@ jobs:
       - name: Record builder image
         run: |
           release_root="nunchuk-linux-${{ matrix.appimage_arch }}-v${BUILD_VERSION}"
-          printf '%s\n' "${BUILDER_IMAGE}" > "${release_root}/${release_root}.builder-image.txt"
+          # The build container creates the release directory as root.
+          printf '%s\n' "${BUILDER_IMAGE}" | sudo tee "${release_root}/${release_root}.builder-image.txt" > /dev/null
 
       - name: Verify packaged Linux runtime
         shell: bash
