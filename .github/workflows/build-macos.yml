@@ -49,7 +49,6 @@ jobs:
     env:
       BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
       ARTIFACT_SUFFIX: ${{ needs.resolve-version.outputs.artifact_suffix }}
-      OUTPUT_DIR: ${{ runner.temp }}/macos-output/${{ matrix.arch }}
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +99,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
           TAG: ${{ env.BUILD_VERSION }}
+          OUTPUT_DIR: ${{ runner.temp }}/macos-output/${{ matrix.arch }}
         run: bash reproducible-builds/build_macos.sh
 
       # Transfer the tar to preserve Unix file modes and symlinks.
@@ -108,8 +108,8 @@ jobs:
         with:
           name: nunchuk-macos-${{ matrix.arch }}-${{ env.ARTIFACT_SUFFIX }}-unsigned
           path: |
-            ${{ env.OUTPUT_DIR }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar
-            ${{ env.OUTPUT_DIR }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar.sha256
+            ${{ runner.temp }}/macos-output/${{ matrix.arch }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar
+            ${{ runner.temp }}/macos-output/${{ matrix.arch }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar.sha256
           if-no-files-found: error
           compression-level: 0
 
