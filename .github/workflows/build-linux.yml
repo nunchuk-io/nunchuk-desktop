@@ -1,10 +1,9 @@
 name: Build linux release
-# Manual runs use the selected branch/tag; release runs use the tag version.
-run-name: ${{ github.ref_type == 'branch' && format('nunchuk-linux-{0}-manual', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-linux-v{0}-manual', github.ref_name) || format('nunchuk-linux-v{0}', github.ref_name) }}
+run-name: nunchuk-linux-${{ github.ref_type == 'tag' && 'v' || '' }}${{ github.ref_name }}${{ github.event_name == 'workflow_dispatch' && '-manual' || '' }}
 
 on:
   push:
-    tags:     [ "*" ]
+    tags: [ "*" ]
   workflow_dispatch:
     # Select a branch or tag. Manual runs upload artifacts without publishing a release.
     inputs:
@@ -20,12 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Native x86_64 runner.
           - name: amd64
             platform: linux/amd64
             appimage_arch: x86_64
             runner: ubuntu-24.04
-          # Native arm64 runner. aqt installs linux_gcc_arm64 into gcc_arm64.
           - name: arm64
             platform: linux/arm64
             appimage_arch: aarch64
@@ -43,13 +40,12 @@ jobs:
         with:
           submodules: recursive
 
-      # Use the tag version, or read CMakeLists.txt for a manual branch build.
-      - name: Determine build version
+      - name: Resolve build version and artifact name
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            build_version="${{ github.ref_name }}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            build_version="${GITHUB_REF_NAME}"
           else
             # Read the Linux project() version, not the separate macOS project().
             match_count="$(grep -c 'project(nunchuk-qt VERSION' CMakeLists.txt)"
@@ -59,23 +55,19 @@ jobs:
             fi
             build_version="$(grep -oP 'project\(nunchuk-qt VERSION \K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt)"
           fi
+          if [[ ! "${build_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
+            echo "Invalid build version: ${build_version}" >&2
+            exit 1
+          fi
           echo "BUILD_VERSION=${build_version}" >> "${GITHUB_ENV}"
           echo "Resolved BUILD_VERSION=${build_version}"
           artifact_ref="$(printf '%s' "${GITHUB_REF_NAME}" | LC_ALL=C tr -c 'A-Za-z0-9._-' '-')"
-          echo "ARTIFACT_REF=${artifact_ref}" >> "${GITHUB_ENV}"
-
-      - name: Validate build version
-        shell: bash
-        run: |
-          if [[ ! "${BUILD_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
-            echo "Invalid build version: ${BUILD_VERSION}"
-            exit 1
-          fi
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then artifact_ref="v${artifact_ref}"; fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then artifact_ref+="-manual"; fi
+          echo "ARTIFACT_NAME=nunchuk-linux-${{ matrix.appimage_arch }}-${artifact_ref}" >> "${GITHUB_ENV}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          install: true
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -85,7 +77,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push builder image
-        working-directory: ${{ github.workspace }}
         run: |
           set -euo pipefail
           docker buildx build \
@@ -234,10 +225,7 @@ jobs:
                      << "ca_certificates=" << certificates.size() << '\n';
               output.flush();
 
-              // The pinned OpenSSL version (Dockerfile.linux's OPENSSL_VERSION)
-              // is checked by the caller against ssl_runtime_version above, so
-              // it isn't hard-coded here and can't go stale when that pin
-              // changes.
+              // The caller also checks the pinned OpenSSL runtime version.
               return supportsSsl &&
                      !certificates.isEmpty() ? 0 : 1;
           }
@@ -311,7 +299,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.ref_type == 'branch' && format('nunchuk-linux-{0}-{1}-manual', matrix.appimage_arch, env.ARTIFACT_REF) || github.event_name == 'workflow_dispatch' && format('nunchuk-linux-{0}-v{1}-manual', matrix.appimage_arch, env.ARTIFACT_REF) || format('nunchuk-linux-{0}-v{1}', matrix.appimage_arch, env.BUILD_VERSION) }}
+          name: ${{ env.ARTIFACT_NAME }}
           path: |
             nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.zip
             nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.zip.sha256
@@ -360,12 +348,7 @@ jobs:
           {
             echo "### Reproducible build check (${{ matrix.name }})"
             echo
-            echo "Comparing \`${release_root}.zip\` (the same release ZIP that gets uploaded"
-            echo "as the build artifact / attached to the GitHub release) between two"
-            echo "from-scratch builds. The ZIP is stored uncompressed"
-            echo "(\`zip -X -0\`) around the single \`.AppImage\` file it contains, so an"
-            echo "identical ZIP hash implies an identical AppImage hash too -- the ZIP"
-            echo "container does not re-encode those bytes."
+            echo "Comparing release ZIPs from two clean builds in the same builder image."
             echo
             echo "| Build | SHA256 of \`${release_root}.zip\` |"
             echo "| --- | --- |"
@@ -449,18 +432,4 @@ jobs:
             done
           done
 
-          if gh release view "${BUILD_VERSION}" >/dev/null 2>&1; then
-            gh release edit "${BUILD_VERSION}" \
-              --title "${BUILD_VERSION}" \
-              --notes-file reproducible-builds/release-notes.md \
-              --draft=false \
-              --prerelease
-            gh release upload "${BUILD_VERSION}" "${assets[@]}" --clobber
-          else
-            gh release create "${BUILD_VERSION}" "${assets[@]}" \
-              --verify-tag \
-              --title "${BUILD_VERSION}" \
-              --notes-file reproducible-builds/release-notes.md \
-              --prerelease \
-              --latest=false
-          fi
+          bash .github/scripts/publish-release.sh "${assets[@]}"
