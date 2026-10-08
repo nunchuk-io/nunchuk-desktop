@@ -1,31 +1,21 @@
-# Windows Build Guide
+# Windows release-build notes
 
-Pinned toolchain (Qt 6.9.3, MSVC 14.44.35207 / SDK 10.0.22621.0, OpenSSL 3.5.7, vcpkg, etc.) is defined in `windows-dependencies.lock.json`. CI runs on `windows-2022` via `.github/workflows/build-windows.yml`, calling `reproducible-builds/build_windows.ps1` then `package_windows.ps1`.
+**Reproducible-build status: standby.** These are developer build instructions;
+independent reproducible-build verification is not yet supported.
 
-## 1. Release build (tag push)
+The Qt6/MSVC pipeline uses `build_windows.ps1`, `package_windows.ps1` and
+`windows-dependencies.lock.json`. HWI 3.2.1 is downloaded and checksum-verified
+automatically. Releases contain an unsigned ZIP, Inno Setup installer, payload
+manifest and build metadata.
 
-1. Bump the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z)`) and in `app/main.cpp` (`QCoreApplication::setApplicationVersion()`) — both must match.
-2. Commit the bump.
-3. Create and push a tag `X.Y.Z` (no leading `v`) on that commit.
-4. CI builds, packages, and publishes the unsigned ZIP + installer to a GitHub prerelease named `X.Y.Z` automatically.
+## GitHub Actions
 
-## 2. Manual build (no release)
+Run **Build windows release** on a branch or tag to download artifacts without
+publishing. Enable **Check reproducible build** for an optional second build.
+Pushing a numeric tag `X.Y.Z` publishes a prerelease; its version must match
+`CMakeLists.txt` and `app/main.cpp`.
 
-1. GitHub → **Actions** → **Build windows release** → **Run workflow**.
-2. Select the branch or tag to build.
-3. Run. Download the artifact from the run page once it finishes.
-
-Artifact naming:
-
-| Trigger | Artifact name |
-| --- | --- |
-| Tag push | `nunchuk-windows-x64-v<tag>` |
-| Manual, off a branch | `nunchuk-windows-x64-<branch>-manual` |
-| Manual, off a tag | `nunchuk-windows-x64-v<tag>-manual` |
-
-Each artifact contains the unsigned ZIP, the Inno Setup installer (`*-setup.exe`), `payload-manifest.sha256`, and `build-info.json`.
-
-## 3. Running the scripts locally
+## Local build
 
 Requires a Windows machine with: MSVC toolset `14.44.35207` / SDK `10.0.22621.0` on `PATH` (via `vcvarsall.bat x64` or equivalent), Python 3.12, NASM.
 
@@ -53,6 +43,6 @@ $version = "X.Y.Z"   # must match CMakeLists.txt / main.cpp
 
 Output is written to `C:\nunchuk-repro\artifacts`.
 
-## 4. Signing
-
-Not wired into CI yet. `sign_windows.ps1` exists but no workflow invokes it, and the `release-signing` environment secrets (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_CODE_SIGNING_NAME`, `AZURE_CERT_PROFILE_NAME`) are not yet configured. Published releases are unsigned.
+Published Windows artifacts are unsigned; Authenticode signing is not configured.
+`sign_windows.ps1` is retained for the planned signing flow, but no current
+workflow invokes it.
