@@ -113,14 +113,9 @@ jobs:
           release_root="nunchuk-linux-${APPIMAGE_ARCH}-v${BUILD_VERSION}"
           app_dir="${release_root}/Appdir"
           appimage="${release_root}/nunchuk-linux-${APPIMAGE_ARCH}-v${BUILD_VERSION}.AppImage"
-          archive="${release_root}/nunchuk-linux-${APPIMAGE_ARCH}-v${BUILD_VERSION}.zip"
 
           if [[ ! -x "${appimage}" ]]; then
             echo "Packaged AppImage was not found or is not executable: ${appimage}"
-            exit 1
-          fi
-          if [[ ! -f "${archive}" ]]; then
-            echo "Release archive was not found: ${archive}"
             exit 1
           fi
 
@@ -141,22 +136,14 @@ jobs:
             "${extracted_appdir}" \
             /dev/stdout
 
-          unzip -tq "${archive}"
-          archive_entries="$(unzip -Z1 "${archive}")"
-          if [[ "${archive_entries}" != "$(basename -- "${appimage}")" ]]; then
-            echo "Release ZIP must contain only the AppImage at its root."
-            echo "${archive_entries}"
-            exit 1
-          fi
-
       # Artifact names use a sanitized ref; filenames use BUILD_VERSION.
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.zip
-            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.zip.sha256
+            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.AppImage
+            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.AppImage.sha256
             nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.build-inputs.txt
             nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.builder-image.txt
           if-no-files-found: error
@@ -193,15 +180,15 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          archives=(release-assets/*.zip)
-          if [[ "${#archives[@]}" -ne 2 ]]; then
-            echo "Expected one release ZIP per Linux architecture" >&2
+          appimages=(release-assets/*.AppImage)
+          if [[ "${#appimages[@]}" -ne 2 ]]; then
+            echo "Expected one AppImage per Linux architecture" >&2
             exit 1
           fi
           assets=()
-          for archive in "${archives[@]}"; do
-            assets+=("${archive}")
-            for sidecar in "${archive}.sha256" "${archive%.zip}.build-inputs.txt" "${archive%.zip}.builder-image.txt"; do
+          for appimage in "${appimages[@]}"; do
+            assets+=("${appimage}")
+            for sidecar in "${appimage}.sha256" "${appimage%.AppImage}.build-inputs.txt" "${appimage%.AppImage}.builder-image.txt"; do
               [[ -s "${sidecar}" ]] || { echo "Missing release metadata: ${sidecar}" >&2; exit 1; }
               assets+=("${sidecar}")
             done

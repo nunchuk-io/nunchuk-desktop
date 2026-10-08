@@ -46,7 +46,6 @@ PACKAGE_DIR="${PROJECT_DIR}/${PACKAGE_NAME}"
 APP_DIR="${PACKAGE_DIR}/Appdir"
 APPIMAGE_NAME="${PACKAGE_NAME}.AppImage"
 APPIMAGE_PATH="${PACKAGE_DIR}/${APPIMAGE_NAME}"
-ZIP_NAME="${PACKAGE_NAME}.zip"
 NUNCHUK_BINARY="${PROJECT_DIR}/build/nunchuk-qt"
 DESKTOP_FILE="${PACKAGE_DIR}/nunchuk.desktop"
 CUSTOM_APPRUN="${PACKAGE_DIR}/nunchuk.AppRun"
@@ -675,8 +674,5 @@ touch --no-dereference --date="@${SOURCE_DATE_EPOCH}" "${APPIMAGE_PATH}"
 
 (
     cd "${PACKAGE_DIR}"
-    # The AppImage payload is already compressed. Store mode avoids coupling
-    # release bytes to a particular zlib implementation.
-    zip -X -0 "${ZIP_NAME}" "${APPIMAGE_NAME}"
-    sha256sum "${ZIP_NAME}" > "${ZIP_NAME}.sha256"
+    sha256sum "${APPIMAGE_NAME}" > "${APPIMAGE_NAME}.sha256"
 )
