@@ -63,15 +63,15 @@ QtObject {
         if (isKeyHolderLimitedRestricted(tag)) return false
         return SignerManagement.isSupportedInheritance(tag, walletType)
     }
-    // Regular (non-inheritance) hardware-key add does not need backend gating - confirmed via
-    // [DEBUG] log that configs/setup currently only returns is_inheritance_key:true rows for
-    // wallet_type MULTI_SIG, which made this return empty for every tag. Restored the pre-NUN-10192
-    // static list (as MULTI_SIG already used before this CR) so add-key isn't blocked by that gap.
-    // BUGFIX: the isMiniscript branch still delegated to the backend list - same blind-trust gap, just
-    // manifesting as an unimplemented/unwired entry (e.g. Krux) showing up instead of an empty list.
-    // Hardware support is wallet-type-agnostic, so use the same static list for both.
+    // BUGFIX: MINISCRIPT (on-chain) hardware support is NOT wallet-type-agnostic (e.g. Trezor/BitBox
+    // can't sign MINISCRIPT yet - confirmed real device test) - must check backend supported_signers[]
+    // for MINISCRIPT. MULTI_SIG (off-chain) keeps the old static list unconditionally (confirmed
+    // backend has no reliable non-inheritance data for MULTI_SIG - avoid any off-chain impact here).
     function isSupportedNotInheritance(tag) {
         if (isKeyHolderLimitedRestricted(tag)) return false
+        if (isMiniscript) {
+            return SignerManagement.isSupportedNotInheritance(tag, walletType)
+        }
         switch (tag) {
         case "BITBOX":
         case "COLDCARD":
@@ -89,9 +89,11 @@ QtObject {
                           ? function(tag) { return isSupportedInheritance(tag) }
                           : function(tag) { return isSupportedNotInheritance(tag) }
 
-        // Filter keys by support predicate, ignoring invalid entries
+        // Filter keys by support predicate, ignoring invalid entries.
+        // BUGFIX: Krux has no real add-key flow wired on Desktop - hide it unconditionally even if
+        // backend supported_signers[] lists it as supported (it's a mobile-only capability for now).
         var ret = allKeys.filter(function(key) {
-            return key && key.tag && isSupported(key.tag)
+            return key && key.tag && key.tag !== "KRUX" && isSupported(key.tag)
         })
         console.log("Supported Keys: ", ret)
         return ret

@@ -40,6 +40,8 @@ Popup {
     readonly property Item itemInfo: contentInfo.item
     closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
     background: Item{}
+    // TEMP DEBUG: log boxmask geometry to diagnose square-corner bug - remove after root cause found.
+    onOpened: console.log("QPopup DEBUG boxmask:", boxmask.width, boxmask.height, "radius:", boxmask.radius, "implicit:", contentInfo.implicitWidth, contentInfo.implicitHeight)
     Rectangle {
         id: boxmask
         width: contentInfo.implicitWidth + offset*2
@@ -61,14 +63,14 @@ Popup {
             sourceComponent: content
         }
     }
-    DropShadow {
-        anchors.fill: boxmask
-        horizontalOffset: 3
-        verticalOffset: 5
-        spread: 0
-        radius: 8
-        samples: 30
-        color: "#aa000000"
-        source: boxmask
-    }
+    // DropShadow {
+    //     anchors.fill: boxmask
+    //     horizontalOffset: 3
+    //     verticalOffset: 5
+    //     spread: 0
+    //     radius: 8
+    //     samples: 30
+    //     color: "#aa000000"
+    //     source: boxmask
+    // }
 }
