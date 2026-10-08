@@ -70,13 +70,23 @@ ENV PATH=${QT_INSTALLED_PREFIX}/bin:${PATH} \
     RANLIB=/usr/bin/gcc-ranlib-14 \
     APPIMAGE_EXTRACT_AND_RUN=1
 
+# The minimal base has no CA roots, and the snapshot service requires HTTPS.
+# BuildKit downloads this pinned package before APT needs certificate trust.
+ADD --checksum=sha256:6bac2a01979e210d9eac1d4d56747ec709ea60654744d66705dc3c36e7629e50 \
+    https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/pool/main/c/ca-certificates/ca-certificates_20260601~24.04.1_all.deb \
+    /tmp/ca-certificates.deb
+RUN dpkg-deb --extract /tmp/ca-certificates.deb /tmp/ca-certificates \
+    && mkdir -p /etc/ssl/certs \
+    && cat /tmp/ca-certificates/usr/share/ca-certificates/mozilla/*.crt > /etc/ssl/certs/ca-certificates.crt \
+    && rm -rf /tmp/ca-certificates /tmp/ca-certificates.deb
+
 # Freeze the complete dependency closure, including libraries bundled into
 # the AppImage. Signature verification stays enabled; only freshness expiry
 # is disabled for this deliberately historical archive. The snapshot serves
 # both amd64 and arm64, replacing the base image's archive/ports sources.
 RUN printf '%s\n' \
         'Types: deb' \
-        "URIs: http://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
+        "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
         'Suites: noble noble-updates noble-security' \
         'Components: main restricted universe multiverse' \
         'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
