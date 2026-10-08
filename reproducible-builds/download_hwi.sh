@@ -29,7 +29,7 @@ curl --fail --location --retry 3 --show-error \
 (
     cd "${work_dir}"
     if command -v sha256sum >/dev/null 2>&1; then
-        printf '%s  %s\n' "${sha256}" "${asset}" | sha256sum --check --strict
+        printf '%s  %s\n' "${sha256}" "${asset}" | sha256sum -c
     else
         printf '%s  %s\n' "${sha256}" "${asset}" | shasum -a 256 --check
     fi
