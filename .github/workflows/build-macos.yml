@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.resolve.outputs.version }}
+      artifact_ref: ${{ steps.resolve.outputs.artifact_ref }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -56,12 +57,15 @@ jobs:
           fi
           echo "Resolved build version: ${version}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          artifact_ref="$(printf '%s' "${GITHUB_REF_NAME}" | LC_ALL=C tr -c 'A-Za-z0-9._-' '-')"
+          echo "artifact_ref=${artifact_ref}" >> "${GITHUB_OUTPUT}"
 
   build:
     name: Build macOS ${{ matrix.arch }}
     needs: resolve-version
     env:
       BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+      ARTIFACT_REF: ${{ needs.resolve-version.outputs.artifact_ref }}
     strategy:
       fail-fast: false
       matrix:
@@ -164,12 +168,8 @@ jobs:
       - name: Upload unsigned payload archive
         uses: actions/upload-artifact@v4
         with:
-          # Same three-case naming as run-name (see top-of-file comment),
-          # keyed per matrix.arch, with "-unsigned" appended -- this is the
-          # unsigned macOS artifact, distinct from the signed one the sign
-          # jobs upload below. The sign jobs' "Download unsigned payload"
-          # steps must derive this exact same string.
-          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-{0}-{1}-manual-unsigned', matrix.arch, github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-{0}-v{1}-manual-unsigned', matrix.arch, github.ref_name) || format('nunchuk-macos-{0}-v{1}-unsigned', matrix.arch, env.BUILD_VERSION) }}
+          # Signing jobs use the same sanitized ref to download this artifact.
+          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-{0}-{1}-manual-unsigned', matrix.arch, env.ARTIFACT_REF) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-{0}-v{1}-manual-unsigned', matrix.arch, env.ARTIFACT_REF) || format('nunchuk-macos-{0}-v{1}-unsigned', matrix.arch, env.BUILD_VERSION) }}
           path: |
             ${{ env.OUTPUT_DIR }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar
             ${{ env.OUTPUT_DIR }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar.sha256
@@ -329,6 +329,7 @@ jobs:
     needs: [resolve-version, build]
     env:
       BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+      ARTIFACT_REF: ${{ needs.resolve-version.outputs.artifact_ref }}
     runs-on: macos-15-intel
     environment: release-signing
     steps:
@@ -340,7 +341,7 @@ jobs:
         with:
           # Must derive the exact same string as the "build" job's "Upload
           # unsigned payload archive" step for x86_64.
-          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-x86_64-{0}-manual-unsigned', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-x86_64-v{0}-manual-unsigned', github.ref_name) || format('nunchuk-macos-x86_64-v{0}-unsigned', env.BUILD_VERSION) }}
+          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-x86_64-{0}-manual-unsigned', env.ARTIFACT_REF) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-x86_64-v{0}-manual-unsigned', env.ARTIFACT_REF) || format('nunchuk-macos-x86_64-v{0}-unsigned', env.BUILD_VERSION) }}
           path: unsigned
 
       - name: Verify and extract payload
@@ -383,12 +384,8 @@ jobs:
       - name: Upload signed release assets (x86_64)
         uses: actions/upload-artifact@v4
         with:
-          # Same three-case naming as run-name/build job (no "-unsigned"/
-          # "-signed" marker: this is the platform's default published
-          # artifact, matching how build-linux.yml/build-windows.yml name
-          # their own single artifact). publish-release's wildcard download
-          # below expects the tag-push ("auto") case of this exact string.
-          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-x86_64-{0}-manual', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-x86_64-v{0}-manual', github.ref_name) || format('nunchuk-macos-x86_64-v{0}', env.BUILD_VERSION) }}
+          # Tag artifact names must match publish-release's download pattern.
+          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-x86_64-{0}-manual', env.ARTIFACT_REF) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-x86_64-v{0}-manual', env.ARTIFACT_REF) || format('nunchuk-macos-x86_64-v{0}', env.BUILD_VERSION) }}
           path: |
             ${{ runner.temp }}/signed-output/nunchuk-macos-x86_64-v${{ env.BUILD_VERSION }}.dmg
             ${{ runner.temp }}/signed-output/nunchuk-macos-x86_64-v${{ env.BUILD_VERSION }}.dmg.sha256
@@ -401,6 +398,7 @@ jobs:
     needs: [resolve-version, build]
     env:
       BUILD_VERSION: ${{ needs.resolve-version.outputs.version }}
+      ARTIFACT_REF: ${{ needs.resolve-version.outputs.artifact_ref }}
     runs-on: macos-15
     environment: release-signing
     steps:
@@ -412,7 +410,7 @@ jobs:
         with:
           # Must derive the exact same string as the "build" job's "Upload
           # unsigned payload archive" step for arm64.
-          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-arm64-{0}-manual-unsigned', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-arm64-v{0}-manual-unsigned', github.ref_name) || format('nunchuk-macos-arm64-v{0}-unsigned', env.BUILD_VERSION) }}
+          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-arm64-{0}-manual-unsigned', env.ARTIFACT_REF) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-arm64-v{0}-manual-unsigned', env.ARTIFACT_REF) || format('nunchuk-macos-arm64-v{0}-unsigned', env.BUILD_VERSION) }}
           path: unsigned
 
       - name: Verify and extract payload
@@ -453,12 +451,8 @@ jobs:
       - name: Upload signed release assets (arm64)
         uses: actions/upload-artifact@v4
         with:
-          # Same three-case naming as run-name/build job (no "-unsigned"/
-          # "-signed" marker: this is the platform's default published
-          # artifact, matching how build-linux.yml/build-windows.yml name
-          # their own single artifact). publish-release's wildcard download
-          # below expects the tag-push ("auto") case of this exact string.
-          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-arm64-{0}-manual', github.ref_name) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-arm64-v{0}-manual', github.ref_name) || format('nunchuk-macos-arm64-v{0}', env.BUILD_VERSION) }}
+          # Tag artifact names must match publish-release's download pattern.
+          name: ${{ github.ref_type == 'branch' && format('nunchuk-macos-arm64-{0}-manual', env.ARTIFACT_REF) || github.event_name == 'workflow_dispatch' && format('nunchuk-macos-arm64-v{0}-manual', env.ARTIFACT_REF) || format('nunchuk-macos-arm64-v{0}', env.BUILD_VERSION) }}
           path: |
             ${{ runner.temp }}/signed-output/nunchuk-macos-arm64-v${{ env.BUILD_VERSION }}.dmg
             ${{ runner.temp }}/signed-output/nunchuk-macos-arm64-v${{ env.BUILD_VERSION }}.dmg.sha256

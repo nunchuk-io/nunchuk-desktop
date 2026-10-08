@@ -23,6 +23,12 @@ jobs:
     runs-on: windows-2022
 
     steps:
+      - name: Prepare artifact names
+        shell: pwsh
+        run: |
+          $artifactRef = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
+          "ARTIFACT_REF=$artifactRef" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       # Must run before checkout.
       #
       # core.longpaths: some recursive submodules (e.g. trezor-firmware's
@@ -261,7 +267,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual-build-log', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual-build-log', github.ref_name)) || format('nunchuk-windows-x64-v{0}-build-log', github.ref_name) }}
+          name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual-build-log', env.ARTIFACT_REF)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual-build-log', env.ARTIFACT_REF)) || format('nunchuk-windows-x64-v{0}-build-log', env.ARTIFACT_REF) }}
           path: |
             ${{ runner.temp }}\nunchuk-windows-build.log
             ${{ runner.temp }}\nunchuk-windows-package.log
@@ -272,12 +278,11 @@ jobs:
         # actions/upload-artifact, pinned per windows-dependencies.lock.json (actions.uploadArtifact).
         # Uploaded unconditionally, before the optional reproducibility check
         # below -- the check's outcome never affects this artifact.
-        # name: must derive the same string as run-name above (see the
-        # naming rule comment there); the tag-push case is also what
-        # publish-release's "Download build artifacts" step expects.
+        # Manual artifact names use a sanitized ref. Tag names must match
+        # publish-release's "Download build artifacts" step.
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual', github.ref_name)) || format('nunchuk-windows-x64-v{0}', github.ref_name) }}
+          name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-x64-{0}-manual', env.ARTIFACT_REF)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-x64-v{0}-manual', env.ARTIFACT_REF)) || format('nunchuk-windows-x64-v{0}', env.ARTIFACT_REF) }}
           path: C:\nunchuk-repro\artifacts
           if-no-files-found: error
 
