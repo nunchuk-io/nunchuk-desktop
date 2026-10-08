@@ -1,39 +1,10 @@
 name: Build windows release
-# Naming rule -- run-name deliberately omits "x64" (kept only in the
-# artifact names below, since a single run only ever targets x64):
-#   - workflow_dispatch off a branch : nunchuk-windows-<branch>-manual
-#   - workflow_dispatch off a tag    : nunchuk-windows-v<tag>-manual
-#   - tag push (automatic)           : nunchuk-windows-v<tag>
+# Manual runs use the selected branch/tag; release runs use the tag version.
 run-name: ${{ (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && format('nunchuk-windows-{0}-manual', github.ref_name)) || (github.event_name == 'workflow_dispatch' && format('nunchuk-windows-v{0}-manual', github.ref_name)) || format('nunchuk-windows-v{0}', github.ref_name) }}
 
-# Wires reproducible-builds/build_windows.ps1 + package_windows.ps1 +
-# windows-dependencies.lock.json (Qt 6.9.3 / OpenSSL 3.5.7 / vcpkg / Olm /
-# QtKeychain, all hash- or commit-pinned) into CI, structured like
-# build-linux.yml: a tag push always builds once and publishes immediately
-# (no gate); a manual workflow_dispatch run can additionally tick
-# "check_reproducible_build" to rebuild the exact same commit a second time
-# in the same job and diff the two unsigned payloads byte-for-byte. That
-# check never runs for a tag push and never blocks publishing -- it exists
-# only to validate changes to this build/packaging pipeline itself, exactly
-# like build-linux.yml's own "check_reproducible_build" checkbox.
-#
-# A manual (workflow_dispatch) run always builds whatever the selected
-# ref's latest commit actually declares -- there is no "version" input to
-# fill in or get wrong. build_windows.ps1/package_windows.ps1 hard-require
-# ReleaseVersion to equal both CMakeLists.txt's project(... VERSION ...) and
-# app/main.cpp's QCoreApplication::setApplicationVersion(), so the "Resolve
-# build version" step below reads that same value straight out of
-# CMakeLists.txt instead of asking the person triggering the run to type a
-# version that has to happen to match the checked-out commit. A tag push
-# still uses the tag name itself (must be plain X.Y.Z), which is the actual
-# release-integrity check: it catches a tag pushed against a commit whose
-# source version was never bumped to match.
-#
-# Deliberately deferred (see reproducible-builds/README-windows.md
-# "Signing and publication"): Azure Artifact Signing / Authenticode.
-# sign_windows.ps1 already exists but is not invoked here. This workflow
-# only produces and publishes the UNSIGNED payload (filenames say
-# "-unsigned"), matching main's Linux release, which is also unsigned.
+# Build and package unsigned Windows artifacts using windows-dependencies.lock.json.
+# The optional manual rebuild check is diagnostic; tag releases build once.
+# Authenticode signing is not part of this workflow.
 
 on:
   push:
@@ -581,11 +552,7 @@ jobs:
     needs: build
     if: github.event_name != 'workflow_dispatch' && github.ref_type == 'tag'
     runs-on: ubuntu-24.04
-    # Shared with build-linux.yml and build-macos.yml's publish-release jobs
-    # (same group name) so a tag push cannot race two `gh release
-    # create`/`edit` calls for the same tag across the three platform
-    # workflows, per reproducible-builds/README.md's "All three publish jobs
-    # share one queued concurrency group".
+    # Serialize publication across the Linux, macOS and Windows workflows.
     concurrency:
       group: release-publish-${{ github.ref_name }}
       cancel-in-progress: false

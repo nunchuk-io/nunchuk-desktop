@@ -1,25 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Codesign/notarize sequence re-derived from the manually-run reference
-# workflow (see build_macos.sh's header for the link and rationale). This
-# intentionally mirrors that reference's actual, proven behavior rather than
-# the previous draft's independently-invented signing design, including two
-# points where they differ:
-# - The reference signs every dylib/so/bundle/plugin and the main executable
-#   with `codesign --deep`, and only signs the outer .app bundle without
-#   --deep at the very end. Apple's own guidance discourages --deep, and the
-#   previous draft avoided it entirely -- but --deep on individual files is
-#   what the reference workflow actually runs today and notarizes
-#   successfully with, so it is kept here rather than "corrected" to a
-#   design that was never validated.
-# - The reference never signs or notarizes the outer DMG at all -- only the
-#   .app bundle inside it is signed and notarized (as a zip), stapled, and
-#   then packaged into a DMG afterward. The DMG wrapper itself carries no
-#   signature or notarization ticket. This script does the same; DMG
-#   creation uses `hdiutil` instead of the reference's `appdmg` (npm
-#   package) purely to avoid adding a Node dependency -- it does not sign or
-#   notarize the DMG either.
+# Sign and notarize the app bundle, staple its ticket, then wrap it in a DMG.
+# The DMG wrapper is not separately signed or notarized.
 
 required_variables=(
     PROJECT_DIR
@@ -352,4 +335,4 @@ with open(output, "w", encoding="utf-8", newline="\n") as destination:
     destination.write("\n")
 PY
 
-printf 'Signed, notarized and stapled: %s (DMG wrapper is unsigned, matching the reference workflow)\n' "${DMG_PATH}"
+printf 'Signed, notarized and stapled: %s (DMG wrapper is unsigned)\n' "${DMG_PATH}"
