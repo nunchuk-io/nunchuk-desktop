@@ -28,10 +28,11 @@ curl --fail --location --retry 3 --show-error \
     "https://github.com/nogibi/HWI/releases/download/${HWI_VERSION}/${asset}"
 (
     cd "${work_dir}"
-    if command -v sha256sum >/dev/null 2>&1; then
-        printf '%s  %s\n' "${sha256}" "${asset}" | sha256sum -c
+    # macOS sha256sum does not support the GNU checksum-checking interface.
+    if [[ "$(uname -s)" == Darwin ]]; then
+        printf '%s  %s\n' "${sha256}" "${asset}" | /usr/bin/shasum -a 256 --check
     else
-        printf '%s  %s\n' "${sha256}" "${asset}" | shasum -a 256 --check
+        printf '%s  %s\n' "${sha256}" "${asset}" | sha256sum --check --strict
     fi
     tar -xzf "${asset}" hwi
 )
