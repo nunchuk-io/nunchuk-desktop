@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.1
+import QtQuick.Controls 1.4
+import QtGraphicalEffects 1.0
+import QtQuick.Controls.Styles 1.4
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -43,56 +45,6 @@ Item {
     property var inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property var planInfo: inheritancePlanInfo.planInfo
     property string walletName: ServiceSetting.walletInfo.walletName
-
-    // NUN-10192: inheritance_keys[] only carries xfp; claim_options lives on the wallet's own key
-    // list, so cross-reference by xfp to know each key's sharing method(s).
-    // BUGFIX (confirmed via inheritanceGetPlan response log): claim_options ships directly on each
-    // inheritance_keys[] entry -- the old dashboardInfo.keys cross-reference always returned [].
-    function keyClaimOptions(xfp) {
-        var keys = planInfo && planInfo.inheritance_keys ? planInfo.inheritance_keys : []
-        for (var i = 0; i < keys.length; i++) {
-            if (String(keys[i].xfp).toUpperCase() === String(xfp).toUpperCase()) {
-                return keys[i].claim_options !== undefined ? keys[i].claim_options : []
-            }
-        }
-        return []
-    }
-    function keyCardIcon(options) {
-        return options.indexOf("SEED_PHRASE") !== -1 ? "qrc:/Images/Images/key-dark.svg" : "qrc:/Images/Images/change-password-dark.svg"
-    }
-    // Seed-capable keys show "Inheritance key (XFP: ...)"; backup-only (or unclassified) keeps the legacy "Backup Password" title.
-    function keyCardTitle(xfp, options, index, total) {
-        if (options.indexOf("SEED_PHRASE") !== -1) {
-            return total > 1 ? QSTR.STR_QML_2038.arg(index + 1).arg(xfp.toUpperCase()) : QSTR.STR_QML_1984.arg(xfp.toUpperCase())
-        }
-        return QSTR.STR_QML_727
-    }
-    function keyCardSubtitle(options, index, total) {
-        var hasSeed = options.indexOf("SEED_PHRASE") !== -1
-        var hasBackup = options.indexOf("ENCRYPTED_BACKUP") !== -1
-        if (hasSeed && hasBackup) return QSTR.STR_QML_2325
-        if (hasSeed) return total > 1 ? QSTR.STR_QML_2039.arg(index + 1) : QSTR.STR_QML_1986
-        return QSTR.STR_QML_917
-    }
-    // BUGFIX: _img_bg was a fixed height sized for exactly 1 key card; grow it for extra stacked cards (mockup 04D).
-    function extraKeyCardsHeight() {
-        var n = planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
-        return n > 1 ? (n - 1) * 104 : 0
-    }
-    function keyInfoClicked(options) {
-        var hasSeed = options.indexOf("SEED_PHRASE") !== -1
-        var hasBackup = options.indexOf("ENCRYPTED_BACKUP") !== -1
-        if (hasSeed && hasBackup) {
-            _BackupPassword.isFinalStep = false
-            _BackupPassword.open()
-        } else if (hasSeed) {
-            _SeedPhraseBackup.isJointVariant = false
-            _SeedPhraseBackup.open()
-        } else {
-            _BackupPassword.isFinalStep = true
-            _BackupPassword.open()
-        }
-    }
     QContextMenu {
         id: optionMenu
         menuWidth: 300
@@ -100,7 +52,7 @@ Item {
             "qrc:/Images/Images/close-24px.svg"
         ]
         labels: [
-            QSTR.STR_QML_844
+            STR.STR_QML_844
         ]
         colors: [
             "#CF4018"
@@ -122,10 +74,7 @@ Item {
         Rectangle {
             id: _img_bg
             width: parent.width
-            // BUGFIX: the "Funds become claimable after" block used to be excluded from CUSTOMIZE's
-            // layout (visible: false -> Column skips it); now it always shows, so CUSTOMIZE's fixed
-            // budget needs +122 (label + 62px card + the Column spacing this block no longer skips).
-            height: (vm.distribution_method == "CUSTOMIZE" ? 376 + 122 : 486) + extraKeyCardsHeight()
+            height: vm.distribution_method == "CUSTOMIZE" ? 376 : 486
             color: "#D0E2FF"
             Column {
                 anchors.fill: parent
@@ -138,7 +87,7 @@ Item {
                         font.pixelSize: 28
                         color: "#031F2B"
                         font.weight: Font.Bold
-                        text: QSTR.STR_QML_843
+                        text: STR.STR_QML_843
                     }
                     QIconButton{
                         width: 48
@@ -188,7 +137,7 @@ Item {
                     id: _save
                     width: 66
                     height: 48
-                    label.text: QSTR.STR_QML_835
+                    label.text: STR.STR_QML_835
                     label.font.pixelSize: 16
                     type: eTypeE
                     enabled: planInfo.edit_isChanged || vm.isDataChanged
@@ -200,7 +149,7 @@ Item {
                 QTextButton {
                     width: 148
                     height: 48
-                    label.text: QSTR.STR_QML_805
+                    label.text: STR.STR_QML_805
                     label.font.pixelSize: 16
                     type: eTypeF
                     enabled: planInfo.edit_isChanged || vm.isDataChanged
@@ -241,7 +190,7 @@ Item {
                                 font.weight: Font.Bold
                                 font.pixelSize: 16
                                 color: "#FFFFFF"
-                                text: QSTR.STR_QML_845
+                                text: STR.STR_QML_845
                             }
                             QLato {
                                 color: "#FFFFFF"
@@ -256,7 +205,7 @@ Item {
                         QTextButton {
                             width: 162
                             height: 48
-                            label.text: QSTR.STR_QML_847
+                            label.text: STR.STR_QML_847
                             label.font.pixelSize: 16
                             anchors.verticalCenter: parent.verticalCenter
                             type: eTypeC
@@ -270,7 +219,7 @@ Item {
                             font.weight: Font.Bold
                             font.pixelSize: 16
                             color: "#FFFFFF"
-                            text: QSTR.STR_QML_846
+                            text: STR.STR_QML_846
                             anchors.verticalCenter: parent.verticalCenter
                             font.underline: false
                             onTextClicked: {
@@ -285,68 +234,61 @@ Item {
                     QLato {
                         font.pixelSize: 16
                         color: "#FFFFFF"
-                        text: QSTR.STR_QML_1983
+                        text: STR.STR_QML_1983
                     }
                     Row {
                         id: row_key
                         spacing: 12
-                        QInheritancePlanMagicPhrases {
-                            magicPhrases: vm.assetAllocation
-                            magic: planInfo.magic
-                        }
-                        // NUN-10192: 1 card per inheritance key, content driven by that key's claim_options (mockup 01D-04D).
-                        Column {
+                        Row {
                             spacing: 12
-                            Repeater {
-                                model: planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
-                                Rectangle {
-                                    property string _xfp: planInfo.inheritance_keys[index].xfp
-                                    property var _claimOptions: viewHBinheritancePlanRoot.keyClaimOptions(_xfp)
-                                    width: 393
-                                    height: 92
-                                    color: "#FFFFFF"
-                                    radius: 12
-                                    Row {
+                            QInheritancePlanMagicPhrases {
+                                magicPhrases: vm.assetAllocation
+                                magic: planInfo.magic
+                            }
+                            Rectangle {
+                                width: 393
+                                height: 92
+                                color: "#FFFFFF"
+                                radius: 12
+                                Row {
+                                    spacing: 12
+                                    anchors.fill: parent
+                                    anchors.margins: 12
+                                    QIcon {
+                                        iconSize: 24
+                                        source: "qrc:/Images/Images/change-password-dark.svg"
+                                    }
+                                    Column {
                                         spacing: 12
-                                        anchors.fill: parent
-                                        anchors.margins: 12
-                                        QIcon {
-                                            iconSize: 24
-                                            source: viewHBinheritancePlanRoot.keyCardIcon(_claimOptions)
-                                        }
-                                        Column {
-                                            spacing: 12
+                                        QLato {
+                                            width: 333
+                                            font.pixelSize: 16
+                                            color: "#1C1C1C"
+                                            text:  STR.STR_QML_727
+                                            font.weight: Font.Bold
                                             QLato {
-                                                width: 333
+                                                anchors.right: parent.right
                                                 font.pixelSize: 16
                                                 color: "#1C1C1C"
-                                                text: viewHBinheritancePlanRoot.keyCardTitle(_xfp, _claimOptions, index, planInfo.inheritance_keys.length)
-                                                textFormat: Text.RichText
+                                                text:  "Info"
+                                                font.underline: true
                                                 font.weight: Font.Bold
-                                                QLato {
-                                                    anchors.right: parent.right
-                                                    font.pixelSize: 16
-                                                    color: "#1C1C1C"
-                                                    text:  "Info"
-                                                    font.underline: true
-                                                    font.weight: Font.Bold
-                                                    MouseArea {
-                                                        anchors.fill: parent
-                                                        hoverEnabled: true
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        onClicked: {
-                                                            viewHBinheritancePlanRoot.keyInfoClicked(_claimOptions)
-                                                        }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        _BackupPassword.open()
                                                     }
                                                 }
                                             }
-                                            QLato {
-                                                font.pixelSize: 16
-                                                color: "#1C1C1C"
-                                                text: viewHBinheritancePlanRoot.keyCardSubtitle(_claimOptions, index, planInfo.inheritance_keys.length)
-                                                width: 333
-                                                wrapMode: Text.WordWrap
-                                            }
+                                        }
+                                        QLato {
+                                            font.pixelSize: 16
+                                            color: "#1C1C1C"
+                                            text: STR.STR_QML_917
+                                            width: 333
+                                            wrapMode: Text.WordWrap
                                         }
                                     }
                                 }
@@ -354,12 +296,12 @@ Item {
                         }
                     }
                     Column {
-                        // BUGFIX: off-chain timelock value is method-agnostic (NUN-10192); must always show.
+                        visible: vm.distribution_method === "LUMP_SUM"
                         spacing: 12
                         QLato {
                             font.pixelSize: 16
                             color: "#FFFFFF"
-                            text: QSTR.STR_QML_2101
+                            text: STR.STR_QML_2101
                         }
                         Rectangle {
                             width: 393
@@ -425,11 +367,11 @@ Item {
                 height: parent.height
                 contentWidth: width
                 contentHeight: _colum.childrenRect.height + 100
-                ScrollBar.vertical: QScrollBar { }
+                ScrollBar.vertical: ScrollBar { active: true }
                 Column {
                     id: _colum
                     anchors.top: parent.top
-                    width: parent.width - 8
+                    width: parent.width
                     spacing: 24
                     QInheritanceOverview {
                         visible: vm.distribution_method == "CUSTOMIZE"
@@ -448,7 +390,7 @@ Item {
                         visible: vm.distribution_method != "CUSTOMIZE"
                         width: 651
                         height: 128
-                        label.text: QSTR.STR_QML_850
+                        label.text: STR.STR_QML_850
                         input.text: planInfo.note
                         input.backgroundColor: "#F5F5F5"
                         input.verticalAlignment: Text.AlignTop
@@ -486,8 +428,8 @@ Item {
                         visible: vm.distribution_method != "CUSTOMIZE" && (vm.beneficiary_mode === "SINGLE" || (vm.beneficiary_mode !== "SINGLE" && vm.release_method === "INDIVIDUAL"))
                         width: 651
                         height: 84
-                        label.text: QSTR.STR_QML_851
-                        input.text: planInfo.buffer_period.id === "" ? QSTR.STR_QML_2252 : planInfo.buffer_period.display_name
+                        label.text: STR.STR_QML_851
+                        input.text: planInfo.buffer_period.id === "" ? STR.STR_QML_921 : planInfo.buffer_period.display_name
                         input.backgroundColor: "#F5F5F5"
                         input.height: 52
                         input.readOnly: true
@@ -526,13 +468,12 @@ Item {
     }
     Connections {
         target: inheritancePlanInfo
-        // BUGFIX: modernize deprecated implicit onFoo Connections syntax (Qt warning), no behavior change.
-        function onSecurityQuestionClosed() {
+        onSecurityQuestionClosed: {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 _Security.close()
             }
         }
-        function onInheritanceDummyTransactionAlert() {
+        onInheritanceDummyTransactionAlert: {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 QMLHandle.sendEvent(EVT.EVT_HEALTH_CHECK_STARTING_REQUEST)
             }

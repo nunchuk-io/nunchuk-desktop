@@ -103,7 +103,7 @@ void QWalletSignersModel::addSigner(SignerAssigned signer)
         signer.isPrimaryKey = qUtils::isPrimaryKey(signer.xfp);
         m_data.append(signer);
     }
-    std::sort(m_data.begin(), m_data.end(), sortWalletSigners);
+    qSort(m_data.begin(), m_data.end(), sortWalletSigners);
     endResetModel();
 }
 

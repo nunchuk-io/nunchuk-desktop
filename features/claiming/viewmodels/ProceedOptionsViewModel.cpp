@@ -12,9 +12,7 @@ using namespace features::signers::flows;
 using namespace features::signers::viewmodels;
 using features::claiming::flows::OffChainClaimingFlow;
 
-ProceedOptionsViewModel::ProceedOptionsViewModel(QObject *parent) : ActionViewModel(parent) {
-    setisBackupPasswordUsed(false);
-}
+ProceedOptionsViewModel::ProceedOptionsViewModel(QObject *parent) : ActionViewModel(parent) {}
 
 void ProceedOptionsViewModel::confirmProceed() {
     if (isBackupPasswordUsed()) {

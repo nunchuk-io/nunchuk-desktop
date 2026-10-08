@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Item {
     id: root
     anchors.fill: parent
-    property alias dataList: subScreenDataList
-    ListModel { id: subScreenDataList }
+    ListModel { id: dataList }
     Repeater {
         id: creator
         transformOrigin: Item.TopLeft
@@ -49,9 +48,9 @@ Item {
         }
     }
     function subScreen_Transition(Onsdata, popCount) {
-        subScreenDataList.clear()
-        for(var onsCnt = 0; onsCnt < popCount; onsCnt++ ) { var data = {'dataSource': Onsdata[onsCnt]}; subScreenDataList.append(data); }
-        creator.model = subScreenDataList
+        dataList.clear()
+        for(var onsCnt = 0; onsCnt < popCount; onsCnt++ ) { var data = {'dataSource': Onsdata[onsCnt]}; dataList.append(data); }
+        creator.model = dataList
         console.log("SubScreenHost - subScreen_Transition - popCount: " + popCount);
     }
 }

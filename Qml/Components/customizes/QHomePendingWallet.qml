@@ -17,11 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.0
+import QtQuick.Controls.Styles 1.3
+import QtGraphicalEffects 1.0
 import Qt.labs.platform 1.1
-import QtQuick.Layouts
+import QtQuick.Layouts 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -55,15 +56,8 @@ Rectangle {
     property bool   isPremierGroup: dashboardInfo.isPremierGroup
     property bool   enableCreateChat: AppModel.walletInfo.enableCreateChat
     property bool hasPro: AppModel.walletInfo.isPro
-    property bool hasServerKey: AppModel.walletInfo && AppModel.walletInfo.serverKeyInfo
-                                ? AppModel.walletInfo.serverKeyInfo.hasServerKey
-                                : false
-    property bool hasViewInheritancePlan: ((AppModel.walletInfo
-                                            && AppModel.walletInfo.inheritancePlanInfo
-                                            && AppModel.walletInfo.inheritancePlanInfo.isActived)
-                                           && hasPro
-                                           && (myRole === "KEYHOLDER" || myRole === "MASTER" || myRole === "ADMIN"))
-                                          || myRole === ""
+    property bool hasServerKey: AppModel.walletInfo.serverKeyInfo.hasServerKey
+    property bool hasViewInheritancePlan: (AppModel.walletInfo.inheritancePlanInfo.isActived && hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")) || myRole === ""
     property bool hasPlatformKeyCoSign: hasServerKey && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN" || isIronHandUser || isHoneyBadgerUser)
     property bool hasWalletLockdown: (myRole === "MASTER" || myRole === "ADMIN") || isIronHandUser || isHoneyBadgerUser
     Loader {
@@ -103,7 +97,7 @@ Rectangle {
                 QLato {
                     font.pixelSize: 28
                     font.weight: Font.Bold
-                    text: dashboardInfo.hasWallet ? AppModel.walletInfo.walletName : QSTR.STR_QML_944
+                    text: dashboardInfo.hasWallet ? AppModel.walletInfo.walletName : STR.STR_QML_944
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Row {
@@ -155,11 +149,11 @@ Rectangle {
                     id: activeOptionMenu
                     menuWidth: 300
                     labels: [
-                        QSTR.STR_QML_875, //Claim an inheritance
-                        QSTR.STR_QML_738, //Platform key co-signing policies
-                        QSTR.STR_QML_697, //Emergency lockdown
-                        QSTR.STR_QML_969, //View recurring payments
-                        QSTR.STR_QML_970  //Manage group chat history
+                        STR.STR_QML_875, //Claim an inheritance
+                        STR.STR_QML_738, //Platform key co-signing policies
+                        STR.STR_QML_697, //Emergency lockdown
+                        STR.STR_QML_969, //View recurring payments
+                        STR.STR_QML_970  //Manage group chat history
                     ]
                     visibles: [
                         !isPremierUser && !isPremierGroup && hasViewInheritancePlan,
@@ -202,8 +196,8 @@ Rectangle {
                     menuWidth: 300
                     colors: [ "#031F2B", "#CF4018" ]
                     labels: [
-                        QSTR.STR_QML_970, //Manage group chat history
-                        QSTR.STR_QML_1049 //Cancel pending wallet
+                        STR.STR_QML_970, //Manage group chat history
+                        STR.STR_QML_1049 //Cancel pending wallet
                     ]
                     visibles: [
                         (dashboardInfo.groupChatExisted),
@@ -224,7 +218,7 @@ Rectangle {
                                 group_id: groupId
                             }
                             _confirm.data = _cancel_pending
-                            _confirm.contentText = QSTR.STR_QML_1156
+                            _confirm.contentText = STR.STR_QML_1156
                             _confirm.open()
                         }
                     ]
@@ -250,7 +244,7 @@ Rectangle {
                     QLato {
                         width: 517
                         height: 24
-                        text:QSTR.STR_QML_2142
+                        text:STR.STR_QML_2142
                         font.weight: Font.Bold
                         color: "#757575"
                         verticalAlignment: Text.AlignVCenter
@@ -280,7 +274,7 @@ Rectangle {
                                 width: 50
                                 height: 24
                                 anchors.verticalCenter: parent.verticalCenter
-                                text:QSTR.STR_QML_934
+                                text:STR.STR_QML_934
                                 font.weight: Font.Bold
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignLeft
@@ -293,38 +287,37 @@ Rectangle {
                         contentWidth: parent.width
                         contentHeight: alertContain.childrenRect.height
                         flickableDirection: Flickable.VerticalFlick
-                        ScrollBar.vertical: QScrollBar { }
+                        ScrollBar.vertical: ScrollBar { active: true }
                         clip: true
                         Column {
                             id: alertContain
                             anchors.fill: parent
-                            anchors.rightMargin: 8
                             spacing: 12
                             Repeater {
                                 id: _alert
                                 model: dashboardInfo.alerts
                                 QDashboardAlert {
-                                    width: parent.width - 8
+                                    width: parent.width
                                     onClickView: {
                                         vm.onViewClicked(modelData.id)
                                         if (modelData.type === AlertType.REQUEST_INHERITANCE_PLANNING_APPROVED) {
                                             _info1.open()
-                                            _info1.contentText = QSTR.STR_QML_1048
+                                            _info1.contentText = STR.STR_QML_1048
                                         } else if (modelData.type === AlertType.KEY_REPLACEMENT_COMPLETED) {
                                             var user = ClientController.user
                                             if (user.isIronHandUser || user.isHoneyBadgerUser) {
                                                 _info1.open()
-                                                _info1.contentText = QSTR.STR_QML_1342
+                                                _info1.contentText = STR.STR_QML_1342
                                             } else {
                                                 _info1.open()
-                                                _info1.contentText = QSTR.STR_QML_1343
+                                                _info1.contentText = STR.STR_QML_1343
                                             }
                                         } else if (modelData.type === AlertType.TRANSFER_FUNDS) {
                                             _info1.open()
-                                            _info1.contentText = QSTR.STR_QML_1346
+                                            _info1.contentText = STR.STR_QML_1346
                                         } else if (modelData.type === AlertType.SETUP_INHERITANCE_PLAN) {
                                             _info1.open()
-                                            _info1.contentText = QSTR.STR_QML_1355
+                                            _info1.contentText = STR.STR_QML_1355
                                         }
                                     }
 
@@ -359,7 +352,7 @@ Rectangle {
                                 width: 123
                                 height: 24
                                 anchors.verticalCenter: parent.verticalCenter
-                                text:QSTR.STR_QML_948
+                                text:STR.STR_QML_948
                                 font.weight: Font.Bold
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignLeft
@@ -431,7 +424,7 @@ Rectangle {
                             width: 123
                             height: 24
                             anchors.verticalCenter: parent.verticalCenter
-                            text:QSTR.STR_QML_472
+                            text:STR.STR_QML_472
                             font.weight: Font.Bold
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignLeft
@@ -441,7 +434,7 @@ Rectangle {
                         id: _edit
                         width: _edit.paintedWidth
                         height: 20
-                        text: QSTR.STR_QML_849
+                        text: STR.STR_QML_849
                         visible: (myRole === "MASTER" || myRole === "ADMIN" || myRole === "FACILITATOR_ADMIN")
                         anchors {
                             verticalCenter: parent.verticalCenter
@@ -459,7 +452,7 @@ Rectangle {
                     height: 350
                     model: dashboardInfo.members
                     clip: true
-                    ScrollBar.vertical: QScrollBar { }
+                    ScrollBar.vertical: ScrollBar { active: true }
                     spacing: 16
                     delegate: QMemberDelegate {
                         width: ListView.view.width - 24

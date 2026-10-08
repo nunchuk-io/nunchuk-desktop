@@ -178,7 +178,6 @@ public:
     bool containsColdcard();
     bool isArchived() const;
     void setArchived(bool archived);
-    Q_INVOKABLE void handleArchiveWallet();
 
     nunchuk::Wallet nunchukWallet() const;
     void setNunchukWallet(const nunchuk::Wallet &data);

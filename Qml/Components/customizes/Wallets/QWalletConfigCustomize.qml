@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick
+import QtQuick 2.12
 import NUNCHUCKTYPE 1.0
 import "../../origins"
 import "../../customizes/Texts"

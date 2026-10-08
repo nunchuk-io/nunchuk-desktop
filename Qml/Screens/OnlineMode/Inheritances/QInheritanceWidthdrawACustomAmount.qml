@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import Features.Claiming.ViewModels 1.0
@@ -36,13 +36,9 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: QSTR.STR_QML_1736
+    label.text: STR.STR_QML_1736
     onCloseClicked: vm.close()
-    // BUGFIX: block Continue when the entered amount is 0 or exceeds vm.maxWithdrawSats (previously
-    // only format was validated - a too-large amount would sail through until the backend rejected it).
-    nextEnable: contentRoot.currentAmountSats() > 0 && contentRoot.currentAmountSats() <= vm.maxWithdrawSats
     content: Item {
-        id: contentRoot
         Column {
             id: destColumn
             spacing: 16
@@ -55,7 +51,7 @@ QOnScreenContentTypeB {
                     spacing: 6
                     QLato {
                         height: parent.height
-                        text: QSTR.STR_QML_259
+                        text: STR.STR_QML_259
                         font.weight: Font.Bold
                         font.pixelSize: 16
                         verticalAlignment: Text.AlignVCenter
@@ -86,11 +82,6 @@ QOnScreenContentTypeB {
                 onSendAllRequest: {
                     destination.toAmount = vm.balanceDisplay
                 }
-                // BUGFIX: surface the over-limit amount inline (red border + message), same signal
-                // the Continue button now gates on via nextEnable above.
-                isValid: destination.toAmount === "" || contentRoot.currentAmountSats() <= vm.maxWithdrawSats
-                showError: !isValid
-                errorText: QSTR.STR_QML_816
             }
             Connections {
                 target: vm
@@ -114,11 +105,6 @@ QOnScreenContentTypeB {
                 return amount
             }
         }
-        // BUGFIX: shared by nextEnable/isValid above to check the currently-typed amount against
-        // vm.maxWithdrawSats before letting the user proceed.
-        function currentAmountSats() {
-            return Number(convertToSatoshi(destination.onCurrency, destination.toAmount)) || 0
-        }
         function withdrawToWallet() {
             var amount = convertToSatoshi(destination.onCurrency, destination.toAmount)
             vm.withdrawAmountSats = amount
@@ -133,15 +119,15 @@ QOnScreenContentTypeB {
     onPrevClicked: vm.close()
     onNextClicked: {
         imExContextMenu.x = _customAmount.width - imExContextMenu.width
-        imExContextMenu.y = _customAmount.height - 102 - imExContextMenu.implicitHeight
+        imExContextMenu.y = _customAmount.height - 102 - imExContextMenu.height
         imExContextMenu.open()
     }
     QContextMenu {
         id: imExContextMenu
         menuWidth: 320
         labels: [
-            QSTR.STR_QML_779,
-            QSTR.STR_QML_780,
+            STR.STR_QML_779,
+            STR.STR_QML_780,
         ]
         icons: [
             "qrc:/Images/Images/wallet-dark.svg",

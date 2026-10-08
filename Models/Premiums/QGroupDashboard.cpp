@@ -1,5 +1,4 @@
 #include "QGroupDashboard.h"
-#include "AppSetting.h"
 #include "Chats/ClientController.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QInheritancePlan.h"
@@ -198,10 +197,6 @@ QJsonObject QGroupDashboard::walletDraftJson() const {
 }
 
 void QGroupDashboard::GetMemberInfo() {
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &QGroupDashboard::GetMemberInfo, Qt::QueuedConnection);
-        return;
-    }
     if (isUserWallet() || isReplaced() || isUserDraftWallet()) {
         return;
     }
@@ -229,15 +224,6 @@ void QGroupDashboard::GetMemberInfo() {
 }
 
 void QGroupDashboard::GetAlertsInfo() {
-    // GetAlertsInfo may be called from pool threads (e.g. QtConcurrent::run blocks).
-    // runInThread() creates a child QFutureWatcher with `this` as parent — this is
-    // undefined behaviour when called from a thread other than this object's thread.
-    // Guard: re-dispatch to the correct thread and return immediately.
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &QGroupDashboard::GetAlertsInfo, Qt::QueuedConnection);
-        return;
-    }
-
     if (isReplaced()) {
         return;
     }
@@ -378,10 +364,6 @@ bool QGroupDashboard::dismissAlert() {
 }
 
 void QGroupDashboard::GetWalletInfo() {
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &QGroupDashboard::GetWalletInfo, Qt::QueuedConnection);
-        return;
-    }
     const bool isDraft = isUserDraftWallet();
     const bool isUser = isUserWallet();
     const QString walletId = wallet_id();
@@ -416,9 +398,6 @@ void QGroupDashboard::GetWalletInfo() {
             safeThis->m_signerInfo = wallet.value("signers").toArray();
             safeThis->checkInheritanceWallet();
             emit safeThis->groupInfoChanged();
-            if (auto health = safeThis->healthPtr()) {
-                health->refreshKeyInfo();
-            }
 
             if (auto info = safeThis->walletInfoPtr()) {
                 if (info->serverKeyPtr()) {
@@ -426,12 +405,8 @@ void QGroupDashboard::GetWalletInfo() {
                 }
                 // Auto-archive replaced wallets so they move to the archived list
                 // instead of remaining visible in the active wallet list.
-                // Skip if the user has explicitly unarchived this wallet (tracked in AppSetting).
                 if (safeThis->isReplaced() && !info->isArchived()) {
-                    QStringList manuallyUnarchived = AppSetting::instance()->value("manually_unarchived_wallets").toStringList();
-                    if (!manuallyUnarchived.contains(info->walletId())) {
-                        info->setArchived(true);
-                    }
+                    info->setArchived(true);
                 }
             }
         });
@@ -450,10 +425,6 @@ void QGroupDashboard::checkInheritanceWallet() {
 }
 
 void QGroupDashboard::GetDraftWalletInfo() {
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &QGroupDashboard::GetDraftWalletInfo, Qt::QueuedConnection);
-        return;
-    }
     const bool isDraft = isUserDraftWallet();
     const bool isUser = isUserWallet();
     const QString gid = groupId();
@@ -480,31 +451,17 @@ void QGroupDashboard::GetDraftWalletInfo() {
             }
 
             DBG_INFO << draft_wallet;
-            auto draftSigners = draft_wallet.value("signers").toArray();
-            if (!draftSigners.isEmpty()) {
-                safeThis->m_signerInfo = draftSigners;
-                if (auto health = safeThis->healthPtr()) {
-                    health->refreshKeyInfo();
-                }
-            }
+            safeThis->m_signerInfo = draft_wallet.value("signers").toArray();
             safeThis->m_walletDraftInfo = draft_wallet;
             safeThis->UpdateKeys(draft_wallet);
         });
 }
 
 void QGroupDashboard::GetHealthCheckInfo() {
-    // GetHealthCheckInfo may be called from pool threads (e.g. QtConcurrent::run blocks,
-    // requestUpdateDummyTx). runInThread() inside GetKeyHealthReminder/GetStatuses creates
-    // a child QFutureWatcher with `this` as parent — undefined behaviour when not on
-    // this object's thread. Guard: re-dispatch to the correct thread and return immediately.
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &QGroupDashboard::GetHealthCheckInfo, Qt::QueuedConnection);
-        return;
-    }
-
     if (!healthPtr() || wallet_id().isEmpty() || isReplaced())
         return;
     healthPtr()->GetKeyHealthReminder();
+    healthPtr()->GetStatuses();
 }
 
 QString QGroupDashboard::getOurId() const {
@@ -530,9 +487,6 @@ const QMap<int, QList<int>> mapIndexMiniscript = {{0, {0 * 2, 0 * 2 + 1}}, {1, {
 const QMap<QString, int> mapTagkeys = {
     {"LEDGER", (int)Key::ADD_LEDGER}, {"TREZOR", (int)Key::ADD_TREZOR}, {"COLDCARD", (int)Key::ADD_COLDCARD},
     {"BITBOX", (int)Key::ADD_BITBOX}, {"JADE", (int)Key::ADD_JADE},
-    // KEEPKEY needs this map or hwType defaults to -1, blanking the add/backup screen.
-    // KRUX omitted: goes through the shared airgap/remote flow instead, like KEYSTONE/PASSPORT.
-    {"KEEPKEY", (int)Key::ADD_KEEPKEY},
 };
 
 QJsonObject QGroupDashboard::createOrUpdateSignerInfo(const QJsonObject &info, int index) {
@@ -881,14 +835,8 @@ bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QStr
         ret = Byzantine::instance()->ReplacementUploadBackupFile(groupId(), wallet_id(), servicesTagPtr()->passwordToken(), body, output, error_msg);
     }
     if (ret) {
-        // NOTE (assumed field name, needs backend confirmation): "key_checksum" used to verify ENCRYPTED_BACKUP later.
-        m_lastUploadedBackupChecksum = output.value("key_checksum").toString();
-        emit lastUploadedBackupChecksumChanged();
         updateSuccess();
     } else {
-        // Defensive: clear stale checksum on failed upload so a later verify can't reuse it.
-        m_lastUploadedBackupChecksum.clear();
-        emit lastUploadedBackupChecksumChanged();
         updateFail();
     }
     return ret;
@@ -910,13 +858,8 @@ bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QStr
         ret = Byzantine::instance()->DraftWalletUploadBackupFile(groupId(), body, output, error_msg);
     }
     if (ret) {
-        m_lastUploadedBackupChecksum = output.value("key_checksum").toString();
-        emit lastUploadedBackupChecksumChanged();
         updateSuccess();
     } else {
-        // Defensive: same reasoning as ReplacementUploadBackupFile.
-        m_lastUploadedBackupChecksum.clear();
-        emit lastUploadedBackupChecksumChanged();
         updateFail();
     }
     return ret;
@@ -995,19 +938,8 @@ bool QGroupDashboard::canEntryClickAlert() {
     DBG_INFO << ".qml " << IntToString(flow()) << alertJson();
     QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
     QString xfp = payload["xfp"].toString();
-    // BUGFIX: dummyXfp locks the Sign button to ONE specific key (see
-    // BaseTransaction::updateSignaturesForDummyTx). That's correct only for per-key
-    // health-check/claim-key alerts; group-signing alerts (inheritance plan, server key,
-    // etc.) need ANY eligible key to sign, so don't lock/carry over xfp for those -
-    // otherwise an unrelated "xfp" left in the payload wrongly hides the Sign button for
-    // every key except that one (e.g. missing Sign button on inheritance-plan dummy tx).
-    AlertEnum::E_Alert_t alertFlow = (AlertEnum::E_Alert_t)flow();
-    bool isSingleKeyFlow = (alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST ||
-                            alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING ||
-                            alertFlow == AlertEnum::E_Alert_t::HEALTH_CHECK_REMINDER ||
-                            alertFlow == AlertEnum::E_Alert_t::GROUP_WALLET_SETUP);
     if (auto dummy = groupDummyTxPtr()) {
-        dummy->setCurrentXfp(isSingleKeyFlow ? xfp : QString());
+        dummy->setCurrentXfp(xfp);
     }
     if (!dummy_transaction_id.isEmpty()) {
         if (healthPtr()) {
@@ -1023,7 +955,6 @@ bool QGroupDashboard::canEntryClickAlert() {
         bool isClaimkey = payload["claim_key"].toBool();
         bool isRegisterkey = register_key_xfps.size() > 0;
         if (isClaimkey) {
-            GetHealthCheckInfo();
             this->setConfigFlow("register-claim");
             return true;
         } else if (isRegisterkey) {
@@ -1176,13 +1107,10 @@ void QGroupDashboard::setHistoryPeriodId(const QString &newHistoryPeriodId) {
 }
 
 void QGroupDashboard::getChatInfo() {
-    QPointer<QGroupDashboard> safeThis(this);
-    QtConcurrent::run([safeThis]() {
-        if (!safeThis)
-            return;
+    QtConcurrent::run([this]() {
         QJsonObject output;
         QString error_msg = "";
-        bool ret = Byzantine::instance()->GetCurrentGroupChat(safeThis->groupId(), output, error_msg);
+        bool ret = Byzantine::instance()->GetCurrentGroupChat(groupId(), output, error_msg);
         if (ret) {
             DBG_INFO << output;
             if (output.contains("chat")) {
@@ -1192,14 +1120,7 @@ void QGroupDashboard::getChatInfo() {
                 ret = (room_id != "");
             }
         }
-        // setGroupChatExisted emits a NOTIFY signal — must run on main thread.
-        QMetaObject::invokeMethod(
-            safeThis,
-            [safeThis, ret]() {
-                if (safeThis)
-                    safeThis->setGroupChatExisted(ret);
-            },
-            Qt::QueuedConnection);
+        setGroupChatExisted(ret);
     });
 }
 
@@ -1620,9 +1541,7 @@ QJsonObject QGroupDashboard::GetDraftSigner(const QString &xfp) const {
     QJsonArray signers = m_walletDraftInfo["signers"].toArray();
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
-        // BUGFIX: callers can pass a libnunchuk-sourced xfp (lowercase) against this backend
-        // JSON (uppercase) - raw == silently never matched.
-        if (qUtils::strCompare(signer["xfp"].toString(), xfp)) {
+        if (signer["xfp"].toString() == xfp) {
             return signer;
         }
     }
@@ -1643,26 +1562,17 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const {
     }
     for (QJsonValue js : m_signerInfo) {
         QJsonObject signer = js.toObject();
-        // BUGFIX: same xfp case mismatch as GetDraftSigner() above - use case-insensitive compare.
-        if (qUtils::strCompare(signer["xfp"].toString(), xfp)) {
+        if (signer["xfp"].toString() == xfp) {
             QJsonArray tags = signer["tags"].toArray();
-            // BUGFIX: "tags" can hold both the hardware tag (BITBOX/JADE/...) and the
-            // "INHERITANCE" marker together; blindly taking the last entry picked up
-            // "INHERITANCE" instead of the hardware tag, so QSignerBadgeName.qml's tag
-            // switch fell through to "Unknown" for inheritance-tagged BitBox/Jade keys.
             signer["tag"] = "";
             for (auto tag : tags) {
-                QString tagStr = tag.toString();
-                if (tagStr != "INHERITANCE") {
-                    signer["tag"] = tagStr;
-                }
+                signer["tag"] = tag.toString();
             }
             signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
             signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());
             auto key = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
             if (!key.isNull()) {
                 signer["signer_type"] = key->signerType();
-                signer["type"] = QString::fromStdString(SignerTypeToStr((nunchuk::SignerType)key->signerType()));
             } else {
                 auto key = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
                 if (!key.isNull()) {
@@ -1695,7 +1605,7 @@ QVariant QGroupDashboard::health() const {
     // Return QObject* null explicitly (not invalid QVariant) so QML sees JS null
     // rather than undefined — preserving the same falsy semantics as before while
     // all guards use truthiness checks.
-    return QVariant::fromValue<QObject *>(m_healthRef ? m_healthRef.data() : nullptr);
+    return QVariant::fromValue<QObject*>(m_healthRef ? m_healthRef.data() : nullptr);
 }
 
 void QGroupDashboard::setAlertId(const QString &alertId) {
@@ -1716,7 +1626,7 @@ void QGroupDashboard::setAlertId(const QJsonObject &alert) {
     }
     QJsonObject tmp_alert = alert;
     tmp_alert["payload"] = payload;
-    DBG_INFO << QString::asprintf("%p", this) << tmp_alert;
+    DBG_INFO << QString().sprintf("%p", this) << tmp_alert;
     m_currentAlertInfo = tmp_alert;
     emit alertInfoChanged();
 }
@@ -1982,9 +1892,7 @@ bool QGroupDashboard::enoughKeyAdded(const QString &xfp) {
     QString wallet_type = m_walletDraftInfo.value("wallet_type").toString();
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
-        // BUGFIX: xfp here comes from SignerManagement.currentSigner.xfp (libnunchuk, lowercase)
-        // compared against this backend draft-signer JSON (uppercase) - raw == undercounted.
-        if (qUtils::strCompare(signer.value("xfp").toString(), xfp)) {
+        if (signer.value("xfp").toString() == xfp) {
             count++;
         }
     }

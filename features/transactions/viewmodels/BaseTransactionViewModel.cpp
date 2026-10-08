@@ -37,9 +37,6 @@ void BaseTransactionViewModel::displayTransactionInfo() {
     QTransactionPtr trans = bridge::convertTransaction(nunTx(), walletId());
     if (trans) {
         trans->setIsClaimTx(isClaimTx());
-        if (isClaimTx() && m_walletInfo) {
-            trans->setSignerWallet(m_walletInfo);
-        }
         settransactionInfo(trans);
     }
 }

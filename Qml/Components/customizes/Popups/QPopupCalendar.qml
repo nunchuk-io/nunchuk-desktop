@@ -17,9 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls 1.4
+import QtGraphicalEffects 1.12
+import QtQuick.Controls.Styles 1.4
+import QtQuick.Layouts 1.3
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -33,194 +36,118 @@ import "../../../../localization/STR_QML.js" as STR
 
 Popup {
     id: _calendar
-
     property string dateString: ""
-    property var minimumDate
-    property alias selectedDate: inputCalendar.selectedDate
+    property date   minimumDate
+    property alias  selectedDate: inputCalendar.selectedDate
 
+    width: inputCalendar.width
+    height: inputCalendar.height
     modal: true
     focus: true
     closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
-    background: Item {}
-
-    x: parent ? Math.round((parent.width - width) / 2) : 0
-    y: parent ? Math.round((parent.height - height) / 2) : 0
-
-    width: inputCalendar.implicitWidth
-    height: inputCalendar.implicitHeight
-
-    contentItem: Rectangle {
+    background: Item{}
+    anchors.centerIn: parent
+    Calendar {
         id: inputCalendar
-
-        property date selectedDate: new Date()
-        property date displayedDate: selectedDate
-
-        readonly property int cellSize: 40
-        readonly property int navBarHeight: 48
-        readonly property int weekHeaderHeight: 40
-
-        color: "#F9F9F9"
-        implicitWidth: 7 * cellSize
-        implicitHeight: navBarHeight + weekHeaderHeight + (6 * cellSize)
-
-        onSelectedDateChanged: displayedDate = selectedDate
-
-        function isSameDay(a, b) {
-            return a
-                    && b
-                    && a.getFullYear() === b.getFullYear()
-                    && a.getMonth() === b.getMonth()
-                    && a.getDate() === b.getDate()
+        anchors.centerIn: parent
+        minimumDate: _calendar.minimumDate
+        onClicked: {
+            dateString = Qt.formatDateTime(date, "MM/dd/yyyy")
+            _calendar.close()
         }
-
-        function hasValidMinimumDate() {
-            return minimumDate && !isNaN(minimumDate.getTime())
-        }
-
-        function isDateEnabled(d) {
-            return !hasValidMinimumDate() || d >= minimumDate
-        }
-
-        function showPreviousMonth() {
-            var d = new Date(displayedDate)
-            d.setMonth(d.getMonth() - 1)
-            displayedDate = d
-        }
-
-        function showNextMonth() {
-            var d = new Date(displayedDate)
-            d.setMonth(d.getMonth() + 1)
-            displayedDate = d
-        }
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: 0
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: inputCalendar.navBarHeight
-                color: "#F9F9F9"
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 1
-                    spacing: 0
-
-                    Button {
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 48
-                        text: ""
-                        icon.source: "qrc:/Images/Images/chevron-left-dark.svg"
-                        background: Item {}
-                        onClicked: inputCalendar.showPreviousMonth()
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        height: 40
-                        text: monthGrid.title
-                        font.pixelSize: 20
-                        font.weight: Font.Normal
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    Button {
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 48
-                        text: ""
-                        icon.source: "qrc:/Images/Images/chevron-right-dark.svg"
-                        background: Item {}
-                        onClicked: inputCalendar.showNextMonth()
-                    }
+        style: CalendarStyle {
+            gridVisible: false
+            navigationBar: Rectangle {
+              height: 48
+              RowLayout {
+                anchors.fill: parent
+                anchors.margins: 1
+                Button {
+                  iconSource: "qrc:/Images/Images/chevron-left-dark.svg"
+                  style: ButtonStyle {
+                      background: Item{}
+                  }
+                  Layout.fillHeight: true
+                  Layout.preferredWidth: 48
+                  onClicked: inputCalendar.showPreviousMonth()
                 }
+                QText {
+                  Layout.fillWidth: true
+                  height: 40
+                  text: styleData.title
+                  font.pixelSize: 20
+                  font.weight: Font.Normal
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                }
+                Button {
+                  iconSource: "qrc:/Images/Images/chevron-right-dark.svg"
+                  style: ButtonStyle {
+                      background: Item{}
+                  }
+                  Layout.fillHeight: true
+                  Layout.preferredWidth: 48
+                  onClicked: inputCalendar.showNextMonth()
+                }
+              }
             }
+            dayOfWeekDelegate: QText {
+              height: 40
+              verticalAlignment: Text.AlignVCenter
+              horizontalAlignment: Text.AlignHCenter
 
-            DayOfWeekRow {
-                Layout.fillWidth: true
-                height: inputCalendar.weekHeaderHeight
-                locale: Qt.locale()
-
-                delegate: Text {
-                    required property string shortName
-                    text: shortName
-                    height: 40
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: 14
+              text: dayOfWeekString(styleData.dayOfWeek)
+              function dayOfWeekString(id){
+                var str;
+                switch(id){
+                case Locale.Sunday:   str="Sun"; break;
+                case Locale.Monday:   str="Mon"; break;
+                case Locale.Tuesday:  str="Tue"; break;
+                case Locale.Wednesday:str="Wed"; break;
+                case Locale.Thursday: str="Thu"; break;
+                case Locale.Friday:   str="Fri"; break;
+                case Locale.Saturday: str="Sat"; break;
+                default:              str="";   break;
                 }
+                return str
+              }
             }
-
-            MonthGrid {
-                id: monthGrid
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                month: inputCalendar.displayedDate.getMonth()
-                year: inputCalendar.displayedDate.getFullYear()
-                locale: Qt.locale()
-
-                onClicked: function(date) {
-                    if (!inputCalendar.isDateEnabled(date)) {
-                        return
+            dayDelegate: Rectangle {
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0.00
+                        color: styleData.selected ? "#111" : (styleData.visibleMonth && styleData.valid ? "#444" : "#666");
                     }
-
-                    inputCalendar.selectedDate = date
-                    dateString = Qt.formatDateTime(date, "MM/dd/yyyy")
-                    _calendar.close()
+                    GradientStop {
+                        position: 1.00
+                        color: styleData.selected ? "#444" : (styleData.visibleMonth && styleData.valid ? "#111" : "#666");
+                    }
+                    GradientStop {
+                        position: 1.00
+                        color: styleData.selected ? "#777" : (styleData.visibleMonth && styleData.valid ? "#111" : "#666");
+                    }
                 }
 
-                delegate: Rectangle {
-                    required property var model
+                Label {
+                    text: styleData.date.getDate()
+                    anchors.centerIn: parent
+                    color: styleData.valid ? "white" : "grey"
+                }
 
-                    implicitWidth: inputCalendar.cellSize
-                    implicitHeight: inputCalendar.cellSize
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#555"
+                    anchors.bottom: parent.bottom
+                }
 
-                    property bool visibleMonth: model.month === monthGrid.month
-                    property bool valid: inputCalendar.isDateEnabled(model.date)
-                    property bool selected: inputCalendar.isSameDay(model.date, inputCalendar.selectedDate)
-
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.00
-                            color: selected ? "#111" : (visibleMonth && valid ? "#444" : "#666")
-                        }
-                        GradientStop {
-                            position: 1.00
-                            color: selected ? "#444" : (visibleMonth && valid ? "#111" : "#666")
-                        }
-                        GradientStop {
-                            position: 1.00
-                            color: selected ? "#777" : (visibleMonth && valid ? "#111" : "#666")
-                        }
-                    }
-
-                    Text {
-                        text: model.day
-                        anchors.centerIn: parent
-                        color: valid ? "white" : "grey"
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: "#555"
-                        anchors.bottom: parent.bottom
-                    }
-
-                    Rectangle {
-                        width: 1
-                        height: parent.height
-                        color: "#555"
-                        anchors.right: parent.right
-                    }
+                Rectangle {
+                    width: 1
+                    height: parent.height
+                    color: "#555"
+                    anchors.right: parent.right
                 }
             }
         }
-
-        Component.onCompleted: displayedDate = selectedDate
     }
-
-    onVisibleChanged: if (visible) inputCalendar.displayedDate = inputCalendar.selectedDate
 }

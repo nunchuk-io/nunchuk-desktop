@@ -15,11 +15,6 @@ class OffChainClaimingFlow : public ClaimingFlow {
     }
     DEFINE_SET_GET(nunchuk::SingleSigner, currentSigner)
     DEFINE_SET_GET(QJsonArray, keyOrigins)
-    // Confirmed with backend: one signing-challenge message is shared by all keys in a claim
-    // session. Fetched once for the first key, reused for the rest (see
-    // VerifyInheritanceKeyViewModel::onInit()/initializeChallengeMessage()).
-    DEFINE_SET_GET(QString, challengeMessage)
-    DEFINE_SET_GET(QString, challengeMessageId)
 
     void proceedResult(const nunchuk::SingleSigner &single) override;
     void proceedAfterFileImportColdcard(const std::vector<nunchuk::SingleSigner> &signers, const QString &signerName) override;

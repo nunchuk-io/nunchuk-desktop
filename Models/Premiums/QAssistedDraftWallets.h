@@ -98,9 +98,7 @@ class QAssistedDraftWallets : public QSwitchAPI {
     void hardwareReqChanged();
     void signerExistListChanged();
     void deviceListChanged();
-    // BUGFIX: was fired only on success (1); QML had no event to react to on failure. Now always
-    // fires (0 = failed, 1 = success), carrying the backend error message on failure.
-    void verifySingleSignerResult(int result, const QString &errorMsg = QString());
+    void verifySingleSignerResult(int result);
   public slots:
     void cancelRequestKey(const QString &request_id, const QString &group_id = "");
     void addHardwareFromConfig(int hardwareType, const QString &group_id, int key_index = -1, bool is_inheritance = false);
@@ -110,20 +108,12 @@ class QAssistedDraftWallets : public QSwitchAPI {
     void requestAddOrReplacementWithIndexAsync(const QString &xfp, int index);
     QString bip32path(const QString &xfp, int index);
     QString reuseKeyXfp(const QString &fileName);
-    // BUGFIX (root cause of "Run command exit error!" / "This key doesn't match" on seed-phrase
-    // re-verify): xfp/derivationPath used to be re-read live from QSignerManagement::currentSignerJs(),
-    // but QVerifyBothBackups.qml/QBackupSeedPhraseFlow.qml never populate that global - they thread
-    // their own xfp/signerTag instead (see QEncryptedBackupFlow::startFlow(tag, keyXfp) for the same
-    // pattern) - so derivation_path was always empty, and hwi_.GetXpubAtPath(device, "") always failed.
-    // Now accepts both explicitly; falls back to the live global only if the caller omits them.
-    void requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE", const QString &xfp = QString(), const QString &derivationPath = QString());
-    void requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE");
-    void requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE");
-    bool requestVerifySingleSigner(const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE", const QString &keyChecksum = "");
-    bool addVerifySingleSigner(const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE", const QString &keyChecksum = "");
-    bool replacementVerifySingleSigner(const QString &verifyType, const QString &verificationMethod = "SEED_PHRASE", const QString &keyChecksum = "");
-    bool requestSetClaimOptions(const QStringList &claimOptions);
-    bool requestVerifyEncryptedBackup(const QString &verifyType);
+    void requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType);
+    void requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType);
+    void requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType);
+    bool requestVerifySingleSigner(const QString &verifyType);
+    bool addVerifySingleSigner(const QString &verifyType);
+    bool replacementVerifySingleSigner(const QString &verifyType);
     bool requestRemoveSingleSigner(const QString &xfp);
     void newAccountIndexCached(const QString &xfp, int index);
     bool requestQRAddOrReplacementWithIndexAsync(const QStringList &qr_data, int index);

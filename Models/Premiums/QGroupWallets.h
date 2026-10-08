@@ -79,7 +79,6 @@ public:
 
 public slots:
     void SyncAllSignerFromDraftWalletInfo();
-    void SyncGroupSignerFromDraftWalletInfo();
     void MakePendingDashboardList(const QJsonArray& groups);
     void dashboard(const QString& group_id, const QString& wallet_id);
     void accept(const QString& group_id);

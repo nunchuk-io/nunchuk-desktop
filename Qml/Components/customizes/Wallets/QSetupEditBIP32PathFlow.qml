@@ -18,10 +18,10 @@
  *                                                                        *
  **************************************************************************/
 // Qt imports
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.3
 import Qt.labs.platform 1.1
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.12
 
 // Application-specific imports
 import "../../../../localization/STR_QML.js" as STR
@@ -91,9 +91,6 @@ Item {
                 gettingPublicKey.close()
                 bip32Path.isShowListDevice = true
                 bip32Path.showError(typeError)
-            } else if (typeError == -4) {
-                // The wallet/template changed while the async lookup was running.
-                gettingPublicKey.close()
             } else {}
         }
        function onDuplicateKeyError(singleData, customData){

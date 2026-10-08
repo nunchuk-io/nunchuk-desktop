@@ -17,8 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -36,8 +37,14 @@ Rectangle {
     radius: 12
     border.color: "#EAEAEA"
     color: "#FFFFFF"
-    // OpacityMask removed — same fix as QSendAddressArea.qml.
-    // Flickable already has clip: true; border now renders natively.
+    layer.enabled: true
+    layer.effect: OpacityMask {
+        maskSource: Rectangle {
+            width: 350
+            height: 480
+            radius: 12
+        }
+    }
     property string myRole: ""
     property var transactionInfo
     signal addrToVerify(var addr)
@@ -48,23 +55,23 @@ Rectangle {
         clip: true
         interactive: contentHeight > height
         contentHeight: contentDisp.height
-        ScrollBar.vertical: QScrollBar { }
+        ScrollBar.vertical: ScrollBar { active: true }
         Column {
             id: contentDisp
-            width: parent.width - 8
+            width: parent.width
             spacing: 12
             anchors.horizontalCenter: parent.horizontalCenter
             QSendToAddressBlock {
                 id: sendToAddress
                 useMouseArea: true
                 anchors.horizontalCenter: parent.horizontalCenter
-                onAddressClicked: (addr) => {
+                onAddressClicked: {
                     addrToVerify(addr)
                 }
             }
             QTransactionNoteBlock {
                 id: transationNote
-                onMemoNotify: (newMemo) => {
+                onMemoNotify: {
                     newMemoNotify(newMemo)
                 }
             }

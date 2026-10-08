@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -34,19 +34,7 @@ import "../../../../localization/STR_QML.js" as STR
 Item {
     width: 322
     height: childrenRect.height
-    // BUGFIX: same as QAddRequestKey.qml - the Setup 20D-20gD caption line(s) (File/Seed or "Sharing
-    // method not set") need extra row height, or they overflow into the row below.
-    readonly property int captionLines: {
-        // BUGFIX: these captions are off-chain (MULTI_SIG, NUN-10192) only - never show them for an
-        // on-chain MINISCRIPT key even if is_inheritance/claim_options data exists for it.
-        if (!modelData.is_inheritance || !modelData.has || modelData.wallet_type !== "MULTI_SIG") return 0
-        if (inheritanceRowState() === "SET_UP") return 1
-        var n = 0
-        if (hasClaimOption("ENCRYPTED_BACKUP")) n++
-        if (hasClaimOption("SEED_PHRASE")) n++
-        return n
-    }
-    signal inheritanceKeyClicked()
+    signal tapsignerClicked()
     signal serkeyClicked()
     signal hardwareClicked()
     signal backupClicked()
@@ -119,7 +107,7 @@ Item {
         Loader {
             id: _source
             width: 346
-            height: 72 + captionLines * 16
+            height: 72
             sourceComponent: getComponent()
         }
         Row {
@@ -154,7 +142,7 @@ Item {
             label.font.pixelSize: 16
             onButtonClicked: {
                 if (modelData.is_inheritance) {
-                    inheritanceKeyClicked()
+                    tapsignerClicked()
                 } else {
                     hardwareClicked()
                 }
@@ -184,7 +172,7 @@ Item {
             label.font.pixelSize: 16
             onButtonClicked: {
                 if (modelData.is_inheritance) {
-                    inheritanceKeyClicked()
+                    tapsignerClicked()
                 } else {
                     hardwareClicked()
                 }
@@ -205,94 +193,6 @@ Item {
             icon: "qrc:/Images/Images/check-circle-dark.svg"
             text: STR.STR_QML_104
             color: "#A7F0BA"
-        }
-    }
-    // Setup 20bD-20eD/20dD (NUN-10192): mirrors QAddRequestKey.qml's claim_options/verifications model.
-    Component {
-        id: verifyBackupButton
-        QTextButton {
-            width: label.paintedWidth + 2*16
-            height: 36
-            type: eTypeB
-            label.text: STR.STR_QML_2309 // "Verify backup"
-            label.font.pixelSize: 16
-            onButtonClicked: backupClicked()
-        }
-    }
-    Component {
-        id: setUpButton
-        QTextButton {
-            width: label.paintedWidth + 2*16
-            height: 36
-            type: eTypeB
-            label.text: STR.STR_QML_2310 // "Set up"
-            label.font.pixelSize: 16
-            onButtonClicked: backupClicked()
-        }
-    }
-    // claim_options/verifications (NUN-10192), applies once replacements.length >= 2 and MULTI_SIG.
-    // BUGFIX: guard here (the single source feeding hasClaimOption()/captionLines/inheritanceRowState())
-    // so no caller can leak off-chain claim_options onto an on-chain MINISCRIPT key.
-    function claimOptions() {
-        if (modelData.wallet_type !== "MULTI_SIG") return []
-        return modelData.claim_options !== undefined ? modelData.claim_options : []
-    }
-    function hasClaimOption(method) {
-        return claimOptions().indexOf(method) !== -1
-    }
-    function verificationFor(method) {
-        var list = modelData.verifications !== undefined ? modelData.verifications : []
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].verification_method === method) return list[i]
-        }
-        return null
-    }
-    function fileStatusText() {
-        var v = verificationFor("ENCRYPTED_BACKUP")
-        if (!v || v.verification_type === "NONE") return STR.STR_QML_2288 // Not uploaded
-        if (v.verification_type === "SKIPPED_VERIFICATION") return STR.STR_QML_2289 // Skipped
-        return STR.STR_QML_2279 // Verified
-    }
-    function seedStatusText() {
-        var v = verificationFor("SEED_PHRASE")
-        if (!v || v.verification_type === "NONE") return STR.STR_QML_2287 // Pending
-        if (v.verification_type === "SKIPPED_VERIFICATION") return STR.STR_QML_2289 // Skipped
-        return STR.STR_QML_2279 // Verified
-    }
-    function methodState(method) {
-        var v = verificationFor(method)
-        if (method === "ENCRYPTED_BACKUP" && !v) return "NOT_UPLOADED"
-        if (!v || v.verification_type === "NONE") return "PENDING"
-        if (v.verification_type === "SKIPPED_VERIFICATION") return "SKIPPED"
-        return "VERIFIED"
-    }
-    // Single source of truth for row state; adds "REPLACE"/"ADD_NEW" tiers before the claim_options tiers.
-    function inheritanceRowState() {
-        if (modelData.wallet_type !== "MULTI_SIG") {
-            // Outside NUN-10192 scope - unchanged legacy behavior.
-            return inheritance("REPLACE", "ADD_NEW", "BACKUP", "ADDED")
-        }
-        if (modelData.replacements.length === 0) return "REPLACE"
-        if (modelData.replacements.length === 1) return "ADD_NEW"
-        var opts = claimOptions()
-        if (opts.length === 0) {
-            // Setup 20dD: "[] means legacy/not configured" - "Set up opens the sharing-method selection".
-            return "SET_UP"
-        }
-        if (hasClaimOption("ENCRYPTED_BACKUP") && methodState("ENCRYPTED_BACKUP") === "NOT_UPLOADED") {
-            return "BACKUP" // Setup 20fD
-        }
-        var allVerified = opts.every(function(m) { return methodState(m) === "VERIFIED" })
-        return allVerified ? "ADDED" : "VERIFY_BACKUP" // Setup 20D (Added) vs 20bD/20cD/20eD (Verify backup)
-    }
-    function inheritanceActionComponent() {
-        switch (inheritanceRowState()) {
-        case "REPLACE": return replaceButton
-        case "ADD_NEW": return addButton
-        case "SET_UP": return setUpButton
-        case "BACKUP": return backupButton
-        case "VERIFY_BACKUP": return verifyBackupButton
-        default: return addedCheck
         }
     }
     Component {
@@ -328,11 +228,21 @@ Item {
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
-                    QAccountIndexs {
-                        height: 16
-                        visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER  && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
-                        accountIndexs: modelData.account_indexs
-                        walletType: modelData.wallet_type
+                    Row {
+                        spacing: 4
+                        QBadge {
+                            width: 77
+                            height: 16
+                            fontSize: 10
+                            text: STR.STR_QML_1600
+                            color: "#EAEAEA"
+                        }
+                        QAccountIndexs {
+                            height: 16
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER  && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
+                            accountIndexs: modelData.account_indexs
+                            walletType: modelData.wallet_type
+                        }
                     }
                 }
             }
@@ -344,37 +254,14 @@ Item {
                 }
                 sourceComponent: addButton
             }
-            // Setup 01aD: "Inheritance" corner ribbon, per Figma asset Inheritance_badge.svg (81x14 Hug).
-            // Shared design for on-chain and off-chain inheritance keys alike - no wallet_type gate.
-            QImage {
-                anchors {
-                    top: parent.top
-                    right: parent.right
-                    topMargin: 0
-                    rightMargin: 1
-                }
-                width: 81
-                height: 14
-                source: "qrc:/Images/Images/Inheritance_badge.svg"
-            }
         }
     }
     Component {
         id: inheritanceAdded
         QDashRectangle {
             anchors.fill: parent
-            // BUGFIX: color/button both now use inheritanceRowState(), matching QAddRequestKey.qml.
-            color: {
-                switch (inheritanceRowState()) {
-                case "REPLACE": return "#FFFFFF"
-                case "ADD_NEW": return "#66A7F0BA"
-                case "SET_UP": return "#FDEBD2"
-                case "BACKUP": return "#FDEBD2"
-                case "VERIFY_BACKUP": return "#FDEBD2"
-                default: return "#A7F0BA"
-                }
-            }
-            isDashed: inheritanceRowState() === "ADD_NEW"
+            color: inheritance("#FFFFFF", "#66A7F0BA", "#FDEBD2", "#A7F0BA")
+            isDashed: inheritance(false, true, false, false)
             radius: 8
             borderWitdh: isDashed ? 2 : 1
             borderColor: isDashed ? "#031F2B" : "#DEDEDE"
@@ -455,39 +342,6 @@ Item {
                             font.pixelSize: 12
                         }
                     }
-                    // Setup 20D-20gD: File/Seed captions, matching QAddRequestKey.qml.
-                    Column {
-                        width: parent.width
-                        spacing: 2
-                        // BUGFIX: is_inheritance alone is wallet-type-agnostic (also true for on-chain
-                        // timelock inheritance keys) - gate the whole off-chain caption block by MULTI_SIG too.
-                        visible: modelData.is_inheritance && modelData.wallet_type === "MULTI_SIG"
-                        // Setup 20dD: "Sharing method not set" caption for the SET_UP state.
-                        QLato {
-                            width: parent.width
-                            visible: inheritanceRowState() === "SET_UP"
-                            text: STR.STR_QML_2311
-                            font.pixelSize: 11
-                            color: "#5B6268"
-                            horizontalAlignment: Text.AlignLeft
-                        }
-                        QLato {
-                            width: parent.width
-                            visible: hasClaimOption("ENCRYPTED_BACKUP")
-                            text: STR.STR_QML_2307.arg(fileStatusText())
-                            font.pixelSize: 11
-                            color: "#5B6268"
-                            horizontalAlignment: Text.AlignLeft
-                        }
-                        QLato {
-                            width: parent.width
-                            visible: hasClaimOption("SEED_PHRASE")
-                            text: STR.STR_QML_2308.arg(seedStatusText())
-                            font.pixelSize: 11
-                            color: "#5B6268"
-                            horizontalAlignment: Text.AlignLeft
-                        }
-                    }
                 }
             }
             Loader {
@@ -496,7 +350,7 @@ Item {
                     right: parent.right
                     rightMargin: 12
                 }
-                sourceComponent: inheritanceActionComponent()
+                sourceComponent: inheritance(replaceButton, addButton, backupButton, addedCheck)
             }
         }
     }

@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -47,10 +49,7 @@ Popup {
         {id: 14, label: STR.STR_QML_1678 },
     ]
     property var walletInfo: AppModel.walletInfo
-    property int retentionDays: 1
-    onOpened: {
-        _infoPopup.retentionDays = _infoPopup.walletInfo ? _infoPopup.walletInfo.retentionDays : 1
-    }
+    property int retentionDays: walletInfo.retentionDays
     Rectangle {
         width: 391
         height: 308
@@ -126,10 +125,8 @@ Popup {
                         label.font.pixelSize: 16
                         type: eTypeE
                         onButtonClicked: {
-                            if (_infoPopup.walletInfo) {
-                                _infoPopup.walletInfo.retentionDays = _infoPopup.retentionDays
-                            }
-                            _infoPopup.close()
+                            walletInfo.retentionDays = retentionDays
+                            close()
                         }
                     }
                 }

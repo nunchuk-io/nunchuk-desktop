@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -34,13 +36,6 @@ import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: homeonlineroot
-
-    readonly property int eRIGHT_EMPTY_ROOM: 0
-    readonly property int eRIGHT_A_NEW_ROOM: 1
-    readonly property int eRIGHT_EXIST_ROOM: 2
-    readonly property int eRIGHT_CONTACT_INFO: 3
-    property bool activeChatInfoCanShow: false
-
     Row {
         anchors.fill: parent
         Item {
@@ -140,57 +135,13 @@ QScreen {
                             font.family: "Lato"
                         }
                     }
-                    // Qt6: TabView (Controls 1.x) replaced with custom Item + tab bar
-                    Item {
+                    TabView {
                         id: tabselect
                         anchors.fill: parent
-                        property int currentIndex: 0
-
-                        // Tab bar — exact same visual as original TabViewStyle
-                        Row {
-                            id: _tabBarRow
-                            width: parent.width
-                            height: 60
-                            Repeater {
-                                model: [STR.STR_QML_366, STR.STR_QML_370]
-                                delegate: Rectangle {
-                                    width: tabselect.width / 2
-                                    height: 60
-                                    color: "transparent"
-                                    QText {
-                                        anchors.centerIn: parent
-                                        text: modelData
-                                        color: "#FFFFFF"
-                                        font.pixelSize: 16
-                                        font.weight: tabselect.currentIndex === index ? Font.Bold : Font.Normal
-                                        font.family: "Lato"
-                                    }
-                                    Rectangle {
-                                        color: tabselect.currentIndex === index ? "#FFFFFF" : "#595959"
-                                        width: tabselect.width / 2
-                                        height: tabselect.currentIndex === index ? 2 : 1
-                                        anchors.bottom: parent.bottom
-                                    }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: tabselect.currentIndex = index
-                                    }
-                                }
-                            }
-                        }
-
-                        // Tab content area
-                        Item {
-                            anchors.top: _tabBarRow.bottom
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-
-                            // Tab 0: Messages
+                        Tab {
+                            title: STR.STR_QML_366
                             Item {
                                 id: chanelList
-                                anchors.fill: parent
-                                visible: tabselect.currentIndex === 0
                                 Column {
                                     width: parent.width
                                     spacing: 12
@@ -267,12 +218,12 @@ QScreen {
                                     }
                                 }
                             }
-
-                            // Tab 1: Contacts
+                        }
+                        Tab {
+                            title: STR.STR_QML_370
                             Column {
                                 width: 305
                                 spacing: 16
-                                visible: tabselect.currentIndex === 1
                                 Column {
                                     id: pendingCtItems
                                     width: parent.width
@@ -414,6 +365,31 @@ QScreen {
                                 }
                             }
                         }
+                        style: TabViewStyle {
+                            frameOverlap: 1
+                            tab: Rectangle {
+                                implicitWidth: tabselect.width/2
+                                implicitHeight: 60
+                                color: "transparent"
+                                QText {
+                                    id: text
+                                    anchors.centerIn: parent
+                                    text: styleData.title
+                                    color: "#FFFFFF"
+                                    font.pixelSize: 16
+                                    font.weight: styleData.selected ? Font.Bold: Font.Normal
+                                    font.family: "Lato"
+                                }
+
+                                Rectangle {
+                                    color: styleData.selected ? "#FFFFFF" : "#595959"
+                                    implicitWidth: tabselect.width/2
+                                    height: styleData.selected ? 2 : 1
+                                    anchors.bottom: parent.bottom
+                                }
+                            }
+                            frame: Rectangle { color: "transparent" }
+                        }
                     }
                 }
             }
@@ -492,36 +468,22 @@ QScreen {
                             eCURRENT_MODE = isEmptyTabContact ? eRIGHT_EMPTY_ROOM : eRIGHT_CONTACT_INFO;
                         }
                     }
+                    console.warn("Change to Room: ", isNewRoom, eCURRENT_MODE)
                 }
             }
             Connections {
                 target: ClientController
-                function onContactsChanged() {
+                function contactsChanged() {
                     conversationContentLoader.changeRoomComponent(false)
-                }
-            }
-            Connections {
-                target: ClientController
-                function onSupportRoomNavigated() {
-                    tabselect.currentIndex = 0
-                    conversationContentLoader.isSandboxRoom = false
-                    conversationContentLoader.changeRoomComponent(false)
-                    Qt.callLater(function() {
-                        var loaderItem = conversationContentLoader.item
-                        var room = RoomWalletData.currentRoom
-                        console.info("[CHAT_INFO_TRACE:v2]",
-                                     "loader:", !!loaderItem,
-                                     "rooms:", ClientController.rooms ? ClientController.rooms.count : -1,
-                                     "currentRoom:", !!room,
-                                     "roomType:", room ? room.roomType : -1,
-                                     "isAnySupport:", room ? room.isAnySupportRoom : false,
-                                     "canShow:", loaderItem
-                                                ? homeonlineroot.activeChatInfoCanShow : "unavailable")
-                    })
                 }
             }
         }
     }
+
+    readonly property int eRIGHT_EMPTY_ROOM: 0
+    readonly property int eRIGHT_A_NEW_ROOM: 1
+    readonly property int eRIGHT_EXIST_ROOM: 2
+    readonly property int eRIGHT_CONTACT_INFO: 3
 
     Rectangle {
         id: editRoomnameModal
@@ -591,11 +553,6 @@ QScreen {
                 label.text: STR.STR_QML_383
                 label.font.pixelSize: 16
                 type: eTypeA
-                enabled: RoomWalletData.currentRoom
-                         && RoomWalletData.currentRoom.canRenameRoom
-                         && !RoomWalletData.currentRoom.roomNameChangeInProgress
-                         && groupnameInput.textInputted.trim() !== ""
-                         && groupnameInput.textInputted.trim() !== RoomWalletData.currentRoom.roomName
                 anchors {
                     right: parent.right
                     rightMargin: 36
@@ -605,6 +562,8 @@ QScreen {
                 onButtonClicked: {
                     if(RoomWalletData.currentRoom !== null) {
                         RoomWalletData.currentRoom.roomName = groupnameInput.textInputted
+                        editRoomnameModal.visible = false
+                        groupnameInput.textInputted = ""
                     }
                 }
             }
@@ -687,12 +646,13 @@ QScreen {
                     bottom: parent.bottom
                     bottomMargin: 36
                 }
-                enabled: RoomWalletData.currentRoom
-                         && RoomWalletData.currentRoom.canInviteMembers
-                         && (addMemberInput.textInputted === suggestItems.userSelected)
-                         && (addMemberInput.textInputted !== "")
+                enabled: (addMemberInput.textInputted === suggestItems.userSelected) && (addMemberInput.textInputted !== "")
                 onButtonClicked: {
                     if(RoomWalletData.currentRoom) { RoomWalletData.currentRoom.inviteToRoom(suggestItems.userSelectedId)}
+                    addMoreMemberModel.visible = false
+                    suggestItems.userSelected = ""
+                    suggestItems.userSelectedId = ""
+                    suggestItems.visible = false
                 }
             }
         }
@@ -820,52 +780,14 @@ QScreen {
         }
     }
 
-    Connections {
-        target: RoomWalletData.currentRoom
-        function onRoomNameChangeSucceeded() {
-            editRoomnameModal.visible = false
-            groupnameInput.textInputted = ""
-        }
-        function onMemberInviteSucceeded(memberId) {
-            if (memberId !== suggestItems.userSelectedId)
-                return
-            addMoreMemberModel.visible = false
-            addMemberInput.textInputted = ""
-            suggestItems.userSelected = ""
-            suggestItems.userSelectedId = ""
-            suggestItems.visible = false
-        }
-    }
-    Connections {
-        target: ClientController.rooms
-        function onCurrentRoomChanged() {
-            editRoomnameModal.visible = false
-            addMoreMemberModel.visible = false
-            confirmRemoveRoomMember.close()
-            confirmRemoveRoomMember.memberId = ""
-            confirmRemoveRoomMember.memberName = ""
-            confirmRemoveRoomMember.roomId = ""
-        }
-    }
-
     Component {
         id: roomChat
         Item {
             anchors.fill: parent
             QConversationPage {
-                id: chatPage
                 anchors.fill: parent
-                Component.onDestruction: homeonlineroot.activeChatInfoCanShow = false
-                onCanShowChatInfoChanged: homeonlineroot.activeChatInfoCanShow = canShowChatInfo
-                Component.onCompleted: homeonlineroot.activeChatInfoCanShow = canShowChatInfo
                 modelCoversation: (RoomWalletData.currentRoom !== null) ? RoomWalletData.currentRoom.conversation : 0
-                onTriggerEditGroupName: {
-                    if (RoomWalletData.currentRoom
-                            && RoomWalletData.currentRoom.canRenameRoom) {
-                        groupnameInput.textInputted = RoomWalletData.currentRoom.roomName
-                        editRoomnameModal.visible = true
-                    }
-                }
+                onTriggerEditGroupName: { editRoomnameModal.visible = true}
                 onTriggerAddMembers: {
                     addMoreMemberModel.visible = true
                     suggestItems.userSelected = ""
@@ -873,22 +795,12 @@ QScreen {
                     addMemberInput.textInputted = ""
                 }
                 onTriggerLeaveGroup: {
-                    var room = RoomWalletData.currentRoom
-                    if (!room) {
-                        return
-                    }
-                    confirmDeleteRoom.indexRequest = -1
-                    confirmDeleteRoom.roomIdRequest = room.roomid
-                    confirmDeleteRoom.supportRoomRequest = room.isAnySupportRoom
-                    confirmDeleteRoom.walletRoomRequest = RoomWalletData.roomWalletReady
-                    confirmDeleteRoom.open()
-                }
-                onTriggerRemoveMember: function(memberId, memberName) {
-                    confirmRemoveRoomMember.memberId = memberId
-                    confirmRemoveRoomMember.memberName = memberName
-                    confirmRemoveRoomMember.roomId = RoomWalletData.currentRoom
-                            ? RoomWalletData.currentRoom.roomid : ""
-                    confirmRemoveRoomMember.open()
+                    if (RoomWalletData.roomWalletReady) {
+                        confirmDeleteRoom.indexRequest = -1
+                        confirmDeleteRoom.open()
+                    } else {
+                        ClientController.leaveCurrentRoom()
+                    }                    
                 }
                 onRequestCancelWallet: {confirmCancelWallet.open()}
             }
@@ -913,10 +825,7 @@ QScreen {
             anchors.fill: parent
             createRoom: true
             modelCoversation: 0
-            onCreateRoomDone: {
-                conversationContentLoader.isSandboxRoom = false
-                conversationContentLoader.changeRoomComponent(false)
-            }
+            onCreateRoomDone: conversationContentLoader.changeRoomComponent(false)
         }
     }
     Component {
@@ -930,11 +839,6 @@ QScreen {
                 content: STR.STR_QML_368
                 height: 180
                 icon:"qrc:/Images/Images/addContact.svg"
-                // Add-contact is a plain REST flow (Draco.requestFriends/inviteFriends),
-                // not a Matrix support-room. It must not be gated by readySupport,
-                // which can stay false while a support-room request is in flight
-                // or stuck (see ClientController::createSupportRoom comment).
-                enabled: ClientController.isMatrixLoggedIn && !preventTimer.running
                 onBtnClicked: {
                     preventTimer.restart()
                     QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
@@ -947,16 +851,14 @@ QScreen {
                 content: STR.STR_QML_1252
                 height: 180
                 icon:"qrc:/Images/Images/person-add-24px.svg"
-                enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
                 onBtnClicked: {
                     OnBoarding.screenFlow = "hotWallet"
                     QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
                 }
             }
+            enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
             onSupportButtonClicked: {
-                tabselect.currentIndex = 0
-                conversationContentLoader.isSandboxRoom = false
-                conversationContentLoader.changeRoomComponent(false)
+                preventTimer.restart()
                 QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ)
             }
             Timer {
@@ -1067,7 +969,9 @@ QScreen {
             model: ClientController.contacts
             clip: true
             currentIndex: ClientController.contacts.currentIndex
-            ScrollBar.vertical: QScrollBar { }
+            ScrollBar.vertical: ScrollBar { active: true }
+            // ScrollBar.vertical: ScrollBar { id: scrollContact; active: true ; function wheel(up){if(up){decrease()}else{increase()}}}
+            // MouseArea { anchors.fill: parent;z: 10;propagateComposedEvents: true;onWheel: { scrollContact.wheel(wheel.angleDelta.y > 0);}}
             delegate: QContactDelegate {
                 contactname: model.name
                 contactAvt: model.avatar
@@ -1179,63 +1083,15 @@ QScreen {
     QConfirmYesNoPopup {
         id: confirmDeleteRoom
         property int indexRequest: -1
-        property string roomIdRequest: ""
-        property bool supportRoomRequest: false
-        property bool walletRoomRequest: false
-        contentText: supportRoomRequest
-                     ? qsTr("Leave this Support chat? You can create a new Support room later.")
-                     : walletRoomRequest
-                       ? STR.STR_QML_1799
-                       : qsTr("Are you sure you want to leave this room?")
+        contentText: STR.STR_QML_1799
         leftBtnLabel: STR.STR_QML_035
-        onConfirmNo: {
-            close()
-            indexRequest = -1
-            roomIdRequest = ""
-            supportRoomRequest = false
-            walletRoomRequest = false
-        }
+        onConfirmNo: close()
         onConfirmYes: {
-            var requestedRoomId = roomIdRequest
-            var requestedIndex = indexRequest
             close()
-            indexRequest = -1
-            roomIdRequest = ""
-            supportRoomRequest = false
-            walletRoomRequest = false
-            if (requestedRoomId !== "") {
-                ClientController.leaveRoomById(requestedRoomId)
-            } else if (requestedIndex === - 1) {
+            if (indexRequest === - 1) {
                 ClientController.leaveCurrentRoom()
             } else {
-                ClientController.leaveRoom(requestedIndex)
-            }
-        }
-    }
-    QConfirmYesNoPopup {
-        id: confirmRemoveRoomMember
-        property string memberId: ""
-        property string memberName: ""
-        property string roomId: ""
-        contentText: qsTr("Remove %1 from this room?").arg(memberName)
-        leftBtnLabel: STR.STR_QML_035
-        onConfirmNo: {
-            close()
-            memberId = ""
-            memberName = ""
-            roomId = ""
-        }
-        onConfirmYes: {
-            var targetId = memberId
-            var targetRoomId = roomId
-            close()
-            memberId = ""
-            memberName = ""
-            roomId = ""
-            if (RoomWalletData.currentRoom
-                    && RoomWalletData.currentRoom.roomid === targetRoomId
-                    && RoomWalletData.currentRoom.canKickMember(targetId)) {
-                RoomWalletData.currentRoom.kickMember(targetId)
+                ClientController.leaveRoom(indexRequest)
             }
         }
     }

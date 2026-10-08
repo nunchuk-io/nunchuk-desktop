@@ -1,5 +1,5 @@
-import QtQuick
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtGraphicalEffects 1.12
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"

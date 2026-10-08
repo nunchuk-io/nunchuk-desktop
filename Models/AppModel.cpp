@@ -29,13 +29,11 @@
 #include "utils/enumconverter.hpp"
 #include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
-#include "Premiums/QKeyRecovery.h"
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QSharedWallets.h"
 #include "ServiceSetting.h"
 #include "OnBoardingModel.h"
 #include "QThreadForwarder.h"
-#include <QThreadPool>
 
 #include "features/wallets/usecases/SyncWalletFromRemoteUseCase.h"
 using features::wallets::usecases::SyncWalletFromRemoteUseCase;
@@ -87,34 +85,9 @@ AppModel::AppModel(): m_inititalized{false},
     m_qrExported.clear();
     m_suggestMnemonics.clear();
 
-    connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
-        DBG_INFO << "[SHUTDOWN] APPLICATION ABOUT TO QUIT BEGIN"
-                 << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
-
-        DBG_INFO << "[SHUTDOWN] stopAllNunchuk BEGIN";
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [] {
+        DBG_INFO << "APPLICATION ABOUT TO QUIT" << QThreadPool::globalInstance()->activeThreadCount();
         bridge::stopAllNunchuk();
-        DBG_INFO << "[SHUTDOWN] stopAllNunchuk END";
-
-        // Clear wallet objects while the event loop is still running so that
-        // OurDeleterWithDeleteLater can use deleteLater() instead of direct
-        // delete. Without this, QGroupDashboard objects survive until the
-        // QWalletManagement static destructor fires (after QCoreApplication is
-        // gone), forcing a direct delete while QML bindings are still alive
-        // → crash in QInputMethod during QQmlData::destroyed().
-        DBG_INFO << "[SHUTDOWN] WalletsMng clear BEGIN";
-        WalletsMng->clear();
-        DBG_INFO << "[SHUTDOWN] WalletsMng clear END";
-
-        DBG_INFO << "[SHUTDOWN] SharedWalletsMng clear BEGIN";
-        SharedWalletsMng->clear();
-        DBG_INFO << "[SHUTDOWN] SharedWalletsMng clear END";
-
-        DBG_INFO << "[SHUTDOWN] shutdownCleanup BEGIN";
-        shutdownCleanup();
-        DBG_INFO << "[SHUTDOWN] shutdownCleanup END";
-
-        DBG_INFO << "[SHUTDOWN] APPLICATION ABOUT TO QUIT END"
-                 << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
         // QThreadPool::globalInstance()->clear();
         // QThreadPool::globalInstance()->setMaxThreadCount(0);
     });
@@ -125,10 +98,8 @@ AppModel::~AppModel(){
     disconnect();
 }
 
-void AppModel::shutdownCleanup()
-{
+void AppModel::shutdownCleanup(){
     m_timerRefreshHealthCheck.stop();
-    m_timerFeeRates.stop();
     m_timerCheckAuthorized.stop();
     m_walletList.clear();
     m_groupWalletList.clear();
@@ -190,14 +161,8 @@ void AppModel::setNewKeySignMessage(const QString &value)
 const std::vector<nunchuk::PrimaryKey> &AppModel::primaryKeys()
 {
     if (m_primaryKeys.size() == 0) {
-        QWarningMessage msg;
         m_primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),
-                                               (nunchuk::Chain)AppSetting::instance()->primaryServer(),
-                                               msg);
-        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-            showToast(msg.code(), msg.what(),
-                      static_cast<EWARNING::WarningType>(msg.type()));
-        }
+                                               (nunchuk::Chain)AppSetting::instance()->primaryServer());
     }
     return m_primaryKeys;
 }
@@ -214,15 +179,7 @@ nunchuk::PrimaryKey AppModel::findPrimaryKey(const QString &fingerprint)
 
 void AppModel::createPrimaryKeyList()
 {
-    QWarningMessage msg;
-    m_primaryKeys = qUtils::GetPrimaryKeys(
-        AppSetting::instance()->storagePath(),
-        (nunchuk::Chain)AppSetting::instance()->primaryServer(), msg);
-    if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-        showToast(msg.code(), msg.what(),
-                  static_cast<EWARNING::WarningType>(msg.type()));
-        return;
-    }
+    m_primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(), (nunchuk::Chain)AppSetting::instance()->primaryServer());
     AppModel::instance()->setPrimaryKey(Draco::instance()->Uid());
 }
 
@@ -296,20 +253,12 @@ void AppModel::setLasttimeCheckEstimatedFee(const QDateTime &lasttime_checkEstim
 
 void AppModel::startCheckAuthorize()
 {
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &AppModel::startCheckAuthorize, Qt::QueuedConnection);
-        return;
-    }
     m_timerCheckAuthorized.stop();
     m_timerCheckAuthorized.start(120000); // Every 2'
 }
 
 void AppModel::stopCheckAuthorize()
 {
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, &AppModel::stopCheckAuthorize, Qt::QueuedConnection);
-        return;
-    }
     m_timerCheckAuthorized.stop();
 }
 
@@ -835,9 +784,6 @@ void AppModel::requestSyncSharedWallets()
 
 void AppModel::requestClearData()
 {
-    // Security Question keeps a request snapshot across authorization screens.
-    // Clear only that scoped context before wallets disappear on logout/account switch.
-    QWalletServicesTag::instance()->keyRecoveryPtr()->resetSecurityQuestionUpdate();
     if(walletList()){
         walletList()->cleardata();
     }
@@ -1150,24 +1096,13 @@ QTransactionPtr AppModel::transactionInfoPtr() const
 
 void AppModel::setTransactionInfo(const QTransactionPtr& d)
 {
-    BaseTransaction::GroupTransactionStateRefreshContext groupStateRefreshContext;
-    if (d && m_transactionInfo && m_transactionInfo.data() != d.data() &&
-        qUtils::strCompare(m_transactionInfo->walletId(), d->walletId()) &&
-        qUtils::strCompare(m_transactionInfo->txid(), d->txid())) {
-        groupStateRefreshContext = m_transactionInfo->groupTransactionStateRefreshContext();
-    }
-
     if(d){
         m_transactionInfo = d;
-        if (groupStateRefreshContext.deadline > 0) {
-            // Continue the asynchronous monitor without adding a synchronous
-            // one-shot request every time wallet sync replaces this object.
-            m_transactionInfo->startGroupTransactionStateRefresh(groupStateRefreshContext);
-        } else {
-            // Recompute the group-cosigning state now that this transaction is
-            // the one actually being viewed.
-            m_transactionInfo->createGroupTransactionState();
-        }
+        // Recompute the group-cosigning state now that this transaction is
+        // the one actually being viewed (BaseTransaction::createGroupTransactionState()
+        // only performs its network call for the "currently viewed" transaction,
+        // so it must be re-triggered explicitly here).
+        m_transactionInfo->createGroupTransactionState();
         emit m_transactionInfo->nunchukTransactionChanged();
     }
     else {
@@ -1327,17 +1262,12 @@ bool AppModel::updateSettingRestartRequired()
 {
     QWarningMessage warningmsg;
     bridge::nunchukUpdateAppSettings(warningmsg);
-    if ((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()) {
+    if((int)EWARNING::WarningType::EXCEPTION_MSG != warningmsg.type()){
         return false;
     }
-
-    if (nunchuk::NunchukException::APP_RESTART_REQUIRED == warningmsg.code()) {
-        return true;
+    else {
+        return (nunchuk::NunchukException::APP_RESTART_REQUIRED == warningmsg.code());
     }
-
-    showToast(warningmsg.code(), warningmsg.what(),
-              static_cast<EWARNING::WarningType>(warningmsg.type()));
-    return false;
 }
 
 QString AppModel::getFilePath(const QString in)
@@ -1468,3 +1398,4 @@ qint64 AppModel::qAmountFromCurrency(const QString &currency)
 {
     return qUtils::QAmountFromCurrency(currency);
 }
+

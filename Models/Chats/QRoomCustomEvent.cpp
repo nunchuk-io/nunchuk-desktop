@@ -19,22 +19,32 @@
  **************************************************************************/
 #include "QRoomCustomEvent.h"
 
-QNunchukWalletEvent::QNunchukWalletEvent(const QJsonObject& json)
-    : RoomEvent(json)
+QNunchukWalletEvent::QNunchukWalletEvent(const QString &matrixType, const QJsonObject &contentJson)
+    : RoomEvent(typeId(), matrixType.toStdString().c_str(), contentJson)
 {
+
 }
 
-QNunchukTransactionEvent::QNunchukTransactionEvent(const QJsonObject& json)
-    : RoomEvent(json)
+QNunchukTransactionEvent::QNunchukTransactionEvent(const QString &matrixType, const QJsonObject &contentJson)
+    : RoomEvent(typeId(), matrixType.toStdString().c_str(), contentJson)
 {
+
 }
 
-QNunchukSyncEvent::QNunchukSyncEvent(const QJsonObject& json)
-    : RoomEvent(json)
+QNunchukSyncEvent::QNunchukSyncEvent(const QString &matrixType, const QJsonObject &contentJson)
+    : RoomEvent(typeId(), matrixType.toStdString().c_str(), contentJson)
 {
+
 }
 
-QNunchukExceptionEvent::QNunchukExceptionEvent(const QJsonObject& json)
-    : RoomEvent(json)
+QNunchukExceptionEvent::QNunchukExceptionEvent(const QString &matrixType, const QJsonObject &contentJson)
+    : RoomEvent(typeId(), matrixType.toStdString().c_str(), contentJson)
 {
+
 }
+
+// QNunchukRentionState::QNunchukRentionState(const QJsonObject &contentJson)
+//     : StateEventBase(typeId(), contentJson)
+// {
+
+// }

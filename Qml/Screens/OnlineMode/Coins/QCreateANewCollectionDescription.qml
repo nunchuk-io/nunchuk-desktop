@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -41,33 +41,17 @@ QOnScreenContentTypeB {
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     extraHeader: Item {}
     content: Item {
-        id: _contentRoot
-        anchors.fill: parent
-        QPicture {
-            id: _pic
+        Column {
             anchors {
                 top: parent.top
                 topMargin: 8
-                left: parent.left
-                right: parent.right
             }
-            fillMode: Image.PreserveAspectFit
-            height: sourceSize.width > 0 ? width * sourceSize.height / sourceSize.width : sourceSize.height
-            source: "qrc:/Images/Images/coin-collection.svg"
-        }
-        Flickable {
-            clip: true
-            anchors {
-                top: _pic.bottom
-                topMargin: 24
-                bottom: parent.bottom
-                left: parent.left
-                right: parent.right
+            spacing: 24
+            QPicture {
+                anchors.horizontalCenter: parent.horizontalCenter
+                source: "qrc:/Images/Images/coin-collection.svg"
             }
-            contentWidth: width
-            contentHeight: _col.implicitHeight
             Column {
-                id: _col
                 width: parent.width
                 spacing: 16
                 QLato {

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -38,10 +38,10 @@ QScreen {
     Loader {
         anchors.centerIn: parent
         sourceComponent: {
-            if (reqiredSignature && reqiredSignature.type === "SECURITY_QUESTION") {
+            if (reqiredSignature.type === "SECURITY_QUESTION") {
                 return security_question
             }
-            else if (reqiredSignature && reqiredSignature.type === "CONFIRMATION_CODE") {
+            else if (reqiredSignature.type === "CONFIRMATION_CODE") {
                 return confirm_code
             }
             return null
@@ -50,31 +50,14 @@ QScreen {
     Component {
         id: security_question
         QAnswerSecurityQuestion {
-            onCloseClicked: {
-                if (submitting || keyRecovery.securityQuestionUpdateInProgress) {
-                    return
-                }
-                ServiceSetting.servicesTag.keyRecovery.resetSecurityQuestionUpdate()
-                closeTo(NUNCHUCKTYPE.SERVICE_TAB)
-            }
+            onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
 
             onPrevClicked: {
-                if (submitting || keyRecovery.securityQuestionUpdateInProgress) {
-                    return
-                }
                 QMLHandle.sendEvent(EVT.EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK)
             }
 
             onNextClicked: {
-                if (submitting) {
-                    return
-                }
-                Qt.inputMethod.commit()
-                submitting = true
-                Qt.callLater(function() {
-                    submitting = false
-                    QMLHandle.sendEvent(EVT.EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ)
-                })
+                QMLHandle.sendEvent(EVT.EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ)
             }
         }
     }
@@ -84,33 +67,15 @@ QScreen {
             id: _confirm_code
             label.text: STR.STR_QML_1064
             description_top: STR.STR_QML_1028_top
-            onCloseClicked: {
-                if (_confirm_code.submitting || _confirm_code.keyRecovery.securityQuestionUpdateInProgress) {
-                    return
-                }
-                ServiceSetting.servicesTag.keyRecovery.resetSecurityQuestionUpdate()
-                closeTo(NUNCHUCKTYPE.SERVICE_TAB)
-            }
+            onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
 
             onPrevClicked: {
-                if (_confirm_code.submitting || _confirm_code.keyRecovery.securityQuestionUpdateInProgress) {
-                    return
-                }
                 QMLHandle.sendEvent(EVT.EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK)
             }
 
             onNextClicked: {
-                if (_confirm_code.submitting) {
-                    return
-                }
-                Qt.inputMethod.commit()
-                _confirm_code.submitting = true
-                Qt.callLater(function() {
-                    var confirmationCode = _confirm_code.code()
-                    _confirm_code.submitting = false
-                    _confirm_code.loading()
-                    QMLHandle.sendEvent(EVT.EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ, confirmationCode)
-                })
+                _confirm_code.loading()
+                QMLHandle.sendEvent(EVT.EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ, _confirm_code.code())
             }
         }
     }

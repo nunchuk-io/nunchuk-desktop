@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick
+import QtQuick 2.0
+import QtQuick 2.0
 import QtQml 2.2
 
 Rectangle{

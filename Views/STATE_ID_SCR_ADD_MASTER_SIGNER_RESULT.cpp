@@ -39,10 +39,8 @@ void SCR_ADD_MASTER_SIGNER_RESULT_Exit(QVariant msg) {
 
 void EVT_ADD_MASTER_SIGNER_RESULT_RUN_HEALTHCHECK_HANDLER(QVariant msg) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-        if (auto health = dashboard->healthPtr()) {
-            if (health->HealthCheckAddReminderClicked(msg)) {
-                return;
-            }
+        if (dashboard->healthPtr()->HealthCheckAddReminderClicked(msg)) {
+            return;
         }
     }
     if(AppModel::instance()->masterSignerInfo()){

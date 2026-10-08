@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
@@ -32,8 +32,8 @@ Item {
     property string optionSelected: "withdraw-a-custom-amount"
     property var optionList: {
         var ls = []
-        ls.push({ id: "withdraw-a-custom-amount",  label: QSTR.STR_QML_1736 })
-        ls.push({ id: "withdraw-available-balance-now", label: QSTR.STR_QML_2244 })
+        ls.push({ id: "withdraw-a-custom-amount",  label: STR.STR_QML_1736 })
+        ls.push({ id: "withdraw-available-balance-now", label: STR.STR_QML_2244 })
         return ls
     }
     Column {
@@ -57,7 +57,7 @@ Item {
                 spacing: 12
                 QLato {
                     width: parent.width
-                    text: QSTR.STR_QML_2243
+                    text: STR.STR_QML_2243
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignHCenter
@@ -107,7 +107,7 @@ Item {
                 spacing: 16
                 QMontserrat {
                     width: 627
-                    text: QSTR.STR_QML_1735
+                    text: STR.STR_QML_1735
                     font.pixelSize: 32
                     font.weight: Font.DemiBold
                     wrapMode: Text.WordWrap
@@ -115,7 +115,7 @@ Item {
                 QTextLink {
                     width: 345
                     height: 20
-                    text: QSTR.STR_QML_2236
+                    text: STR.STR_QML_2236
                     color: "#031F2B"
                     font.pixelSize: 12
                     onTextClicked: {
@@ -124,7 +124,7 @@ Item {
                 }
                 QLato {
                     width: 500
-                    text: QSTR.STR_QML_1738
+                    text: STR.STR_QML_1738
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     lineHeightMode: Text.FixedHeight
@@ -143,7 +143,7 @@ Item {
                         labelMaxWidth: 284
                         labelBottomLineHeight: 20
                         selected: optionSelected === "withdraw-a-custom-amount"
-                        labelTop: "" //QSTR.STR_QML_1736
+                        labelTop: "" //STR.STR_QML_1736
                         labelBottom: ""
                         onButtonClicked: { optionSelected = "withdraw-a-custom-amount" }
                         Item {
@@ -157,7 +157,7 @@ Item {
                             }
                             QTextInputBoxTypeB {
                                 id: _input_balance
-                                label: QSTR.STR_QML_1736
+                                label: STR.STR_QML_1736
                                 boxWidth: parent.width
                                 boxHeight: 48
                                 textInputted: {
@@ -214,7 +214,7 @@ Item {
                         labelMaxWidth: 284
                         labelBottomLineHeight: 20
                         selected: optionSelected === "withdraw-available-balance-now"
-                        labelTop: QSTR.STR_QML_2244
+                        labelTop: STR.STR_QML_2244
                         labelBottom: ""
                         onButtonClicked: { optionSelected = "withdraw-available-balance-now" }
                     }
@@ -230,7 +230,7 @@ Item {
                 QTextButton {
                     width: 100
                     height: 48
-                    label.text: QSTR.STR_QML_265
+                    label.text: STR.STR_QML_265
                     label.font.pixelSize: 16
                     type: eTypeE
                     visible: optionSelected === "withdraw-a-custom-amount"
@@ -246,7 +246,7 @@ Item {
                     width: 220
                     height: 48
                     type: eTHIRT
-                    label: QSTR.STR_QML_778
+                    label: STR.STR_QML_778
                     visible: optionSelected === "withdraw-available-balance-now"
                     optionVisible: imExContextMenu.visible
                     onButtonClicked: {
@@ -258,8 +258,8 @@ Item {
                         id: imExContextMenu
                         menuWidth: 320
                         labels: [
-                            QSTR.STR_QML_779,
-                            QSTR.STR_QML_780,
+                            STR.STR_QML_779,
+                            STR.STR_QML_780,
                         ]
                         icons: [
                             "qrc:/Images/Images/wallet-dark.svg",
@@ -278,8 +278,8 @@ Item {
             }
         }
     }
-    RegularExpressionValidator { id: intvalidator;    regularExpression: /^[1-9][0-9]*$/ }
-    RegularExpressionValidator { id: doubleValidator; regularExpression: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
+    RegExpValidator { id: intvalidator;      regExp: /^[1-9][0-9]*$/ }
+    RegExpValidator { id: doubleValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
     PhaseRolloutWithdrawBitcoinViewModel {
         id: vm
     }

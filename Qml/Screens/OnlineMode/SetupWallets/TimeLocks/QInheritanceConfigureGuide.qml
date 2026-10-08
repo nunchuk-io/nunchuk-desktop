@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -62,8 +62,7 @@ QPopupOverlayScreen {
         id: your_inheritance_key
         QYourInheritanceKey {
             onCloseClicked: _infoPopup.close()
-            // BUGFIX: Back must go to the previous screen, not cancel the whole flow; Close/X does that.
-            onPrevClicked: stateScreen.backScreen()
+            onPrevClicked: _infoPopup.close()
             onNextClicked: stateScreen.setScreenFlow("important-notice-about-passphrase")
         }
     }
@@ -72,8 +71,7 @@ QPopupOverlayScreen {
         id: important_notice_about_passphrase
         QImportantNoticeAboutPassphraseOnchain {
             onCloseClicked: _infoPopup.close()
-            // BUGFIX: Back returns to "your-inheritance-key", it must not cancel the flow.
-            onPrevClicked: stateScreen.backScreen()
+            onPrevClicked: _infoPopup.close()
             onNextClicked: {
                 _infoPopup.close()
                 _infoPopup.nextClicked()

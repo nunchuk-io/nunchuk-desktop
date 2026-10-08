@@ -11,18 +11,8 @@
 #include "Servers/Byzantine.h"
 #include "Premiums/QGroupDashboard.h"
 #include "ifaces/bridgeifaces.h"
-#include "QAppEngine/QEventProcessor/Common/WorkerThread.h"
-#include <QPointer>
 #include <descriptor.h>
-#include <algorithm>
 #include <deque>
-
-namespace {
-QWalletPtr walletById(const QString &walletId) {
-    auto walletList = AppModel::instance()->walletList();
-    return walletList ? walletList->getWalletById(walletId) : QWalletPtr();
-}
-}
 
 MiniscriptTransaction::MiniscriptTransaction() : BaseTransaction() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -34,7 +24,7 @@ MiniscriptTransaction::MiniscriptTransaction(const nunchuk::Transaction &tx) : B
 
 bool MiniscriptTransaction::isScriptPath() const
 {
-    auto wallet = walletById(walletId());
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return false;
@@ -53,7 +43,7 @@ bool MiniscriptTransaction::isScriptPath() const
 
 QJsonArray MiniscriptTransaction::walletTreeMiniscriptJs() const
 {
-    auto wallet = walletById(walletId());
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return {};
@@ -506,7 +496,7 @@ void MiniscriptTransaction::setSigningPathSelected(const QString &path) {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigning() {
-    auto wallet = walletById(walletId());
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return {};
@@ -521,7 +511,7 @@ QVariantList MiniscriptTransaction::miniTreeForSigning() {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigningScriptPath() {
-    auto wallet = walletById(walletId());
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return {};
@@ -576,26 +566,19 @@ QVariantList MiniscriptTransaction::miniTreeForSigningScriptPath() {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigningKeyPath() {
-    auto wallet = walletById(walletId());
+    // auto wallet = AppModel::instance()->walletInfo();
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return {};
     }
-    const auto w = wallet->nunchukWallet();
-    const auto signers = w.get_signers();
-    const int m = w.get_m();
-    const int n = w.get_n();
-    if (m < 0 || static_cast<std::size_t>(m) > signers.size()) {
-        DBG_WARN << "MiniscriptTransaction::miniTreeForSigningKeyPath: ignoring incomplete signer state"
-                 << "m:" << m << "n:" << n << "signers:" << signers.size();
-        return {};
-    }
-
+    auto w = wallet->nunchukWallet();
+    QString tx_id = txid();
     QVariantList miniTreeForSigning;
+    QStringList keypathsList;
     std::vector<std::string> keypaths;
-    keypaths.reserve(static_cast<std::size_t>(m));
-    for (int i = 0; i < m; ++i) {
-        const nunchuk::SingleSigner &signer = signers[static_cast<std::size_t>(i)];
+    for(int i = 0; i < w.get_m(); i++) {
+        const nunchuk::SingleSigner &signer = w.get_signers()[i];
         std::string keypath = nunchuk::GetDescriptorForSigner(signer, nunchuk::DescriptorPath::EXTERNAL_ALL);
         keypaths.push_back(keypath);
     }
@@ -684,6 +667,14 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
     const nunchuk::CoinsGroup &coinsGroup,
     bool parentSatisfiable)
 {
+    // Iterative pre-order walk over the ScriptNode tree, using an explicit
+    // stack instead of recursion. A pathologically deep (or - if the tree
+    // were ever malformed/cyclic - effectively infinite) miniscript policy
+    // used to overflow the C++ call stack here, since each level of nesting
+    // added a full recursive call frame. std::deque is used (not
+    // std::vector) because it never invalidates references to existing
+    // elements when growing, which matters since we keep a reference to the
+    // current frame across pushes of child frames below.
     struct Frame {
         const nunchuk::ScriptNode *node;
         nunchuk::CoinsGroup coinsGroup;
@@ -695,17 +686,16 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
         QJsonArray result;
     };
 
+    auto tx = nunchukTransaction();
+    QWarningMessage msg;
+
     std::deque<Frame> stack;
     stack.push_back(Frame{&node, coinsGroup, parentSatisfiable});
 
     while (!stack.empty()) {
-        Frame &frame = stack.back();
+        Frame &f = stack.back();
 
-        if (!frame.ownEntriesComputed) {
-            // Keep the same per-node snapshot and warning-message lifetime as
-            // the former recursive implementation.
-            auto tx = nunchukTransaction();
-            QWarningMessage msg;
+        if (!f.ownEntriesComputed) {
             int tx_status = (int)tx.get_status();
 
             std::map<std::string, bool> signers;
@@ -719,51 +709,48 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
             }
 
             QJsonObject firstLineObj;
-            frame.selfSatisfiable = frame.parentSatisfiable && frame.node->is_satisfiable(tx);
 
-            QString firstLine = qUtils::ScriptNodeIdToString(frame.node->get_id());
+            // --- Check satisfiable ---
+            f.selfSatisfiable = f.parentSatisfiable && f.node->is_satisfiable(tx);
+
+            // --- Common fields ---
+            QString firstLine = qUtils::ScriptNodeIdToString(f.node->get_id());
             firstLineObj["firstLine"] = firstLine;
-            firstLineObj["satisfiable"] = frame.selfSatisfiable;
+            firstLineObj["satisfiable"] = f.selfSatisfiable;
 
-            switch (frame.node->get_type()) {
-            case nunchuk::ScriptNode::Type::AFTER:
-            case nunchuk::ScriptNode::Type::OLDER: {
-                firstLineObj["hasUnlocked"] = frame.node->is_satisfiable(tx);
-                frame.result.append(firstLineObj);
-                break;
-            }
-
+            // --- Handle different node types ---
+            switch (f.node->get_type()) {
             case nunchuk::ScriptNode::Type::PK: {
-                std::string xfp = qUtils::ParseSignerString(QString::fromStdString(frame.node->get_keys()[0]), msg).get_master_fingerprint();
+                std::string xfp = qUtils::ParseSignerString(QString::fromStdString(f.node->get_keys()[0]),msg).get_master_fingerprint();
                 firstLineObj = processKeyNodeJson(firstLineObj, QString::fromStdString(xfp), tx_status, signers[xfp]);
-                frame.result.append(firstLineObj);
+                f.result.append(firstLineObj);
                 break;
             }
 
             case nunchuk::ScriptNode::Type::MULTI: {
-                nunchuk::Timelock timelock = nunchuk::Timelock::FromK(false, frame.node->get_k());
+                nunchuk::Timelock timelock = nunchuk::Timelock::FromK(false, f.node->get_k());
                 nunchuk::Timelock::Based lockType = timelock.based();
                 firstLineObj["lockType"] = static_cast<int>(lockType);
                 firstLineObj["timelockType"] = static_cast<int>(timelock.type());
-                firstLineObj["coinsGroup"] = generateCoinsGroup(frame.coinsGroup);
-                frame.result.append(firstLineObj);
-                for (int i = 0; i < frame.node->get_keys().size(); i++) {
+                auto tmpCoinsGroup = generateCoinsGroup(f.coinsGroup);
+                firstLineObj["coinsGroup"] = tmpCoinsGroup;
+                f.result.append(firstLineObj);
+                for (int i = 0; i < f.node->get_keys().size(); i++) {
                     QJsonObject keyObj;
                     QString firstLineKey = QString("%1%2.").arg(firstLine).arg(i + 1);
                     keyObj["firstLine"] = firstLineKey;
-                    keyObj["satisfiable"] = frame.selfSatisfiable;
-                    std::string xfp = qUtils::ParseSignerString(QString::fromStdString(frame.node->get_keys()[i]), msg).get_master_fingerprint();
+                    keyObj["satisfiable"] = f.selfSatisfiable; // From parent
+                    std::string xfp = qUtils::ParseSignerString( QString::fromStdString(f.node->get_keys()[i]), msg ).get_master_fingerprint();
                     keyObj = processKeyNodeJson(keyObj, QString::fromStdString(xfp), tx_status, signers[xfp]);
-                    frame.result.append(keyObj);
+                    f.result.append(keyObj);
                 }
                 break;
             }
-
             case nunchuk::ScriptNode::Type::HASH160:
             case nunchuk::ScriptNode::Type::HASH256:
             case nunchuk::ScriptNode::Type::RIPEMD160:
             case nunchuk::ScriptNode::Type::SHA256: {
-                std::vector<uint8_t> hash = frame.node->get_data();
+                std::vector<uint8_t> hash = f.node->get_data();
                 if (qUtils::IsPreimageRevealed(tx.get_psbt(), hash)) {
                     firstLineObj["hasUnlocked"] = true;
                     firstLineObj["hasEnter"] = false;
@@ -772,41 +759,46 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                     firstLineObj["hasEnter"] = true;
                 }
                 firstLineObj["hashData"] = qUtils::BytesToHex(hash);
-                frame.result.append(firstLineObj);
+                f.result.append(firstLineObj);
                 break;
             }
 
             case nunchuk::ScriptNode::Type::ANDOR:
 #if 0
-                if ((!frame.node->get_subs()[0].is_satisfiable(tx))) {
+                if((!f.node->get_subs()[0].is_satisfiable(tx))){
                     firstLineObj["satisfiable"] = false;
                 }
 #endif
             case nunchuk::ScriptNode::Type::OR:
             case nunchuk::ScriptNode::Type::THRESH:
             case nunchuk::ScriptNode::Type::OR_TAPROOT: {
+                // top_level is always INT_MAX on entry here (fresh per
+                // node, same as the original per-call-local variable), so
+                // this always evaluates true - preserved as-is from the
+                // original recursive implementation.
                 int top_level = INT_MAX;
-                int level = frame.node->get_id().size();
+                int level = f.node->get_id().size();
                 if (level < top_level) {
                     top_level = level;
                 }
                 if (level == top_level) {
-                    frame.coinsGroupList = qUtils::GetCoinsGroupedBySubPolicies(*frame.node, coins, chain_tip);
+                    f.coinsGroupList = qUtils::GetCoinsGroupedBySubPolicies(*f.node, coins, chain_tip);
                 }
-                frame.result.append(firstLineObj);
+                f.result.append(firstLineObj);
                 break;
             }
 
             case nunchuk::ScriptNode::Type::MUSIG: {
-                nunchuk::Timelock timelock = nunchuk::Timelock::FromK(false, frame.node->get_k());
+                nunchuk::Timelock timelock = nunchuk::Timelock::FromK(false, f.node->get_k());
                 nunchuk::Timelock::Based lockType = timelock.based();
                 firstLineObj["lockType"] = static_cast<int>(lockType);
                 firstLineObj["timelockType"] = static_cast<int>(timelock.type());
-                firstLineObj["coinsGroup"] = generateCoinsGroup(frame.coinsGroup);
+                auto tmpCoinsGroup = generateCoinsGroup(f.coinsGroup);
+                firstLineObj["coinsGroup"] = tmpCoinsGroup;
                 nunchuk::KeysetStatus keyset;
                 try {
-                    if (!tx.get_keyset_status().empty()) {
-                        keyset = frame.node->get_keyset_status(tx);
+                    if (tx.get_keyset_status().size() > 0) {
+                        keyset = f.node->get_keyset_status(tx);
                     }
                 }
                 catch (const nunchuk::BaseException &ex) {
@@ -817,81 +809,86 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                 }
 
                 tx_status = tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES ? (int)keyset.first : tx_status;
-                nunchuk::KeyStatus keystatus = keyset.second;
+                nunchuk::KeyStatus          keystatus = keyset.second;
 
                 int pending_nonce = 0;
                 if (tx_status == (int)nunchuk::TransactionStatus::PENDING_NONCE) {
-                    for (auto it = keystatus.begin(); it != keystatus.end(); ++it) {
-                        if (!it->second) {
+                    for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++){
+                        QString xfp = QString::fromStdString(it->first);
+                        bool    signedStatus = it->second;
+                        if (!signedStatus) {
                             pending_nonce++;
                         }
                     }
                 }
                 int pending_signature = 0;
                 if (tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES) {
-                    for (auto it = keystatus.begin(); it != keystatus.end(); ++it) {
-                        if (!it->second) {
+                    for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++){
+                        QString xfp = QString::fromStdString(it->first);
+                        bool    signedStatus = it->second;
+                        if (!signedStatus) {
                             pending_signature++;
                         }
                     }
                 }
-                firstLineObj["txStatus"] = tx_status;
-                firstLineObj["pendingNonce"] = pending_nonce;
+                firstLineObj["txStatus"] = (int)tx_status;
+                firstLineObj["pendingNonce"]     = pending_nonce;
                 firstLineObj["pendingSignature"] = pending_signature;
-                firstLineObj["satisfiable"] = frame.selfSatisfiable;
-                frame.result.append(firstLineObj);
+                firstLineObj["satisfiable"]      = f.selfSatisfiable; // From parent
+                f.result.append(firstLineObj);
 
-                std::set<int> valid_numbers = {
-                    (int)nunchuk::TransactionStatus::CONFIRMED,
-                    (int)nunchuk::TransactionStatus::READY_TO_BROADCAST,
-                    (int)nunchuk::TransactionStatus::PENDING_CONFIRMATION
-                };
-                bool allSigned = valid_numbers.find(tx_status) != valid_numbers.end();
+                std::set<int> valid_numbers = {(int)nunchuk::TransactionStatus::CONFIRMED, (int)nunchuk::TransactionStatus::READY_TO_BROADCAST, (int)nunchuk::TransactionStatus::PENDING_CONFIRMATION};
+                bool allSigned = valid_numbers.find((int)tx_status) != valid_numbers.end();
 
-                for (int i = 0; i < (int)frame.node->get_keys().size(); i++) {
+                for (int i = 0; i < (int)f.node->get_keys().size(); i++) {
                     QJsonObject keyObj;
                     QString firstLineKey = QString("%1%2.").arg(firstLine).arg(i + 1);
                     keyObj["firstLine"] = firstLineKey;
-                    keyObj["satisfiable"] = frame.selfSatisfiable;
-                    std::string xfp = qUtils::ParseSignerString(QString::fromStdString(frame.node->get_keys()[i]), msg).get_master_fingerprint();
+                    keyObj["satisfiable"] = f.selfSatisfiable; // From parent
+                    std::string xfp = qUtils::ParseSignerString( QString::fromStdString(f.node->get_keys()[i]), msg ).get_master_fingerprint();
 
                     bool keyset_signed = !tx.get_raw().empty() ? signers[xfp] : allSigned ? true : keystatus[xfp];
-                    keyObj = processKeyNodeJson(keyObj, QString::fromStdString(xfp), tx_status, keyset_signed);
-                    frame.result.append(keyObj);
+                    keyObj = processKeyNodeJson(keyObj, QString::fromStdString(xfp), (int)tx_status, keyset_signed);
+
+                    f.result.append(keyObj);
                 }
+
                 break;
             }
 
             default:
-                frame.result.append(firstLineObj);
+                f.result.append(firstLineObj);
                 break;
             }
 
-            frame.ownEntriesComputed = true;
+            f.ownEntriesComputed = true;
         }
 
-        if (frame.nextSubIndex < frame.node->get_subs().size()) {
-            const size_t childIndex = frame.nextSubIndex++;
-            const auto group = frame.coinsGroupList.empty()
-                ? nunchuk::CoinsGroup()
-                : frame.coinsGroupList[childIndex];
-            const nunchuk::ScriptNode &subNode = frame.node->get_subs()[childIndex];
-            const bool childParentSatisfiable = frame.selfSatisfiable;
+        // --- Recurse into sub-nodes (iteratively) ---
+        if (f.nextSubIndex < f.node->get_subs().size()) {
+            size_t i = f.nextSubIndex;
+            auto group = f.coinsGroupList.empty() ? nunchuk::CoinsGroup() : f.coinsGroupList[i];
+            const nunchuk::ScriptNode &subNode = f.node->get_subs()[i];
+            bool childParentSatisfiable = f.selfSatisfiable;
+            f.nextSubIndex = i + 1;
             stack.push_back(Frame{&subNode, group, childParentSatisfiable});
-            continue;
+            continue; // f may be a dangling reference after the push above
         }
 
-        QJsonArray finished = frame.result;
+        // This frame (and all its sub-nodes) is fully processed - fold its
+        // flattened result into its parent's, then pop it.
+        QJsonArray finished = f.result;
         stack.pop_back();
-        if (stack.empty()) {
+        if (!stack.empty()) {
+            for (int j = 0; j < finished.size(); j++) {
+                stack.back().result.append(finished.at(j).toObject());
+            }
+        } else {
             return finished;
-        }
-        for (int i = 0; i < finished.size(); ++i) {
-            stack.back().result.append(finished.at(i).toObject());
         }
     }
 
-    return {};
+    return QJsonArray();
 }
 
 QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(const std::vector<std::string> &keypaths) {
@@ -916,22 +913,30 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(const std::vec
     firstLineObj["firstLine"] = QString("1.");
     firstLineObj["satisfiable"] = true;
 
-    nunchuk::KeysetStatus keyset{};
-    for (const auto &candidate : tx.get_keyset_status()) {
-        // Preserve the last keyset when every signer has completed, while
-        // stopping at the first keyset that still needs a signer.
-        keyset = candidate;
-        bool hasPendingSigner = false;
-        for (const auto &signerStatus : candidate.second) {
-            if (!signerStatus.second) {
-                hasPendingSigner = true;
-                break;
+    std::function<nunchuk::KeysetStatus(const nunchuk::Transaction &, int)> keysetFunc = [&](const nunchuk::Transaction &tx,
+                                                                                             int index) -> nunchuk::KeysetStatus {
+        std::vector<nunchuk::KeysetStatus> keysets = tx.get_keyset_status();
+        if (keysets.size() == 0) {
+            return {};
+        }
+        nunchuk::KeysetStatus keyset;
+        if (index == (keysets.size() - 1)) {
+            keyset = keysets.back();
+        } else {
+            keyset = keysets[index];
+        }
+        nunchuk::KeyStatus keystatus = keyset.second;
+        for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++) {
+            QString xfp = QString::fromStdString(it->first);
+            bool signedStatus = it->second;
+            if (!signedStatus) {
+                return keyset;
             }
         }
-        if (hasPendingSigner) {
-            break;
-        }
-    }
+        return keysetFunc(tx, index + 1);
+    };
+
+    nunchuk::KeysetStatus keyset = keysetFunc(tx, 0);
     tx_status = tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES ? keyset.first : tx_status;
     nunchuk::KeyStatus keystatus = keyset.second;
     
@@ -1033,21 +1038,17 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
         if (!txJson().isEmpty() || isDummyTx()) {
             line["alreadySigned"] = signer->signerSigned();
         }
-        bool canSign = signer->hasSignBtn();
-        if (!canSign) {
-            line["hasSignOrScan"] = false;
-            line["signerReadyToSign"] = false;
-        } else if (signer->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE) {
-            line["hasSignOrScan"] = true;
+        if(signer->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE) {
+            line["hasSignOrScan"] = true; // always show sign button or scan button
             line["signerReadyToSign"] = AppModel::instance()->deviceList()->contains(QString::fromStdString(xfp.toStdString()));
         } else if (signer->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE) {
-            line["hasSignOrScan"] = true;
+            line["hasSignOrScan"] = true; // always show sign button or scan button
             line["signerReadyToSign"] = true;
         } else if (signer->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP) {
-            line["hasSignOrScan"] = true;
+            line["hasSignOrScan"] = true; // only sign button, no scan button
             line["signerReadyToSign"] = true;
         } else {
-            line["hasSignOrScan"] = false;
+            line["hasSignOrScan"] = false; // no sign button, no scan button
             line["signerReadyToSign"] = false;
         }
         line["signerType"] = signer->signerType();
@@ -1065,7 +1066,7 @@ void MiniscriptTransaction::clearSigningPaths() {
     m_signingPathsAutoChecked.clear();    
     QString tx_id = txid();
     AppSetting::instance()->setTransactionSigningPath(tx_id, "");
-    auto wallet = walletById(walletId());
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (wallet) {
         wallet->convertToMiniscript(wallet->nunchukWallet());
     }
@@ -1082,53 +1083,21 @@ bool MiniscriptTransaction::enterPreimageInput(const QString &hasData, const QSt
         emit preimageInputAlert();
         return false;
     }
-
-    struct RevealPreimageResult {
-        bool success = false;
-        int code = 0;
-        QString what;
-        EWARNING::WarningType type = EWARNING::WarningType::NONE_MSG;
-    };
-
-    const QString walletIdSnapshot = walletId();
-    const QString txidSnapshot = txid();
-    const QString hashSnapshot = hasData;
-    const QString preimageSnapshot = preimage;
-    QPointer<MiniscriptTransaction> guard(this);
-
-    runInThread(
-        this,
-        [walletIdSnapshot, txidSnapshot, hashSnapshot, preimageSnapshot]() -> RevealPreimageResult {
-            RevealPreimageResult result;
-            const std::vector<uint8_t> hashVec = qUtils::HexToBytes(hashSnapshot);
-            const std::vector<uint8_t> preimageVec = qUtils::HexToBytes(preimageSnapshot);
-            QWarningMessage msg;
-            const bool revealed = bridge::nunchukRevealPreimage(walletIdSnapshot, txidSnapshot, hashVec, preimageVec, msg);
-
-            result.success = revealed && msg.type() == static_cast<int>(EWARNING::WarningType::NONE_MSG);
-            result.code = msg.code();
-            result.what = msg.what();
-            result.type = static_cast<EWARNING::WarningType>(msg.type());
-            return result;
-        },
-        [guard, walletIdSnapshot, txidSnapshot](RevealPreimageResult result) {
-            AppModel *appModel = AppModel::instance();
-            const bool sameTransaction = guard && guard->walletId() == walletIdSnapshot && guard->txid() == txidSnapshot;
-
-            if (result.success) {
-                appModel->startGetTransactionHistory(walletIdSnapshot);
-                if (sameTransaction) {
-                    emit guard->nunchukTransactionChanged();
-                }
-                appModel->showToast(result.code, "Hashlock unlocked successfully", EWARNING::WarningType::SUCCESS_MSG);
-            } else {
-                appModel->showToast(result.code, result.what, result.type);
-                if (sameTransaction) {
-                    emit guard->preimageInputAlert();
-                }
-            }
-        });
-
+    QtConcurrent::run([=, this]() {
+        std::vector<uint8_t> hashVec = qUtils::HexToBytes(hasData);
+        std::vector<uint8_t> preimageVec = qUtils::HexToBytes(preimage);
+        QWarningMessage msg;
+        bool result = bridge::nunchukRevealPreimage(walletId(), txid(), hashVec, preimageVec, msg);
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type() && result){ 
+            DBG_INFO << "Reveal preimage success " << result;
+            AppModel::instance()->startGetTransactionHistory(walletId());
+            emit nunchukTransactionChanged();
+            AppModel::instance()->showToast(msg.code(), "Hashlock unlocked successfully", EWARNING::WarningType::SUCCESS_MSG);
+        } else {
+            AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+            emit preimageInputAlert();
+        }
+    });    
     return false;
 }
 

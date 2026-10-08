@@ -60,10 +60,6 @@ class SandboxWallet : public AssistedWallet {
   public slots:
     // Group message
     void startGetUnreadMessage();
-    // Refreshes the cached numberOnline() value asynchronously (safe pattern - see
-    // startGetUnreadMessage() above). numberOnline() itself only returns the cache now;
-    // call this explicitly wherever the UI needs a fresh count.
-    void startGetNumberOnline();
     void startDownloadConversation();
     void startSendGroupMessage(const QString &message);
     void requestAcceptReplaceGroup(const QString &sandbox_id);

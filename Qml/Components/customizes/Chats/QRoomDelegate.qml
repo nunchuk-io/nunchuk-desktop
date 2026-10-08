@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.1
+import QtGraphicalEffects 1.0
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -44,8 +44,6 @@ Rectangle {
     property string lastmessage: "lastmessage"
     property bool isEncrypted: false
     property bool walletReady: false
-    property bool isAnySupportRoom: false
-    property string roomId: ""
     property string usersTyping: ""
     property bool isTyping: usersTyping !== ""
 
@@ -215,18 +213,15 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: function(mouse) {
+        onClicked: {
             if (mouse.button === Qt.RightButton) {
-                var requestedIndex = index
-                var requestedRoomId = roomRoot.roomId
-                var requestedSupportRoom = roomRoot.isAnySupportRoom
-                var requestedWalletRoom = roomRoot.walletReady
                 optionMenu.functions = [function(){
-                    confirmDeleteRoom.indexRequest = requestedIndex
-                    confirmDeleteRoom.roomIdRequest = requestedRoomId
-                    confirmDeleteRoom.supportRoomRequest = requestedSupportRoom
-                    confirmDeleteRoom.walletRoomRequest = requestedWalletRoom
-                    confirmDeleteRoom.open()
+                    if (walletReady) {
+                        confirmDeleteRoom.indexRequest = index
+                        confirmDeleteRoom.open()
+                    } else {
+                        ClientController.leaveRoom(index)
+                    }                    
                 }]
                 optionMenu.popup()
             }
@@ -240,7 +235,7 @@ Rectangle {
         id: optionMenu
         menuWidth: 180
         labels: [
-            qsTr("Leave room")
+            "Delete"
         ]
         colors: [
             "Red"

@@ -26,9 +26,6 @@
 #include <QWebChannel>
 #include <QPointer>
 
-class QTimer;
-class QCloseEvent;
-
 class VerificationBridge : public QObject {
     Q_OBJECT
 public:
@@ -56,14 +53,12 @@ signals:
     void verified(const QString &token);
     void cancelled();
 
-protected:
-    void closeEvent(QCloseEvent *event) override;
-
 private slots:
     void handleToken(const QString &token);
     void onLoadFinished(bool ok);
 
 private:
+    void injectWebChannel();
     void cleanup();
 
 private:
@@ -72,10 +67,8 @@ private:
     QWebChannel*        m_channel = nullptr;
     VerificationBridge* m_bridge = nullptr;
     QLoadingOverlay*    m_loadingOverlay = nullptr;
-    QTimer*             m_timeoutTimer = nullptr;
-    QTimer*             m_challengeReadyPollTimer = nullptr;
-    int  m_challengeReadyElapsedMs = 0;
     bool m_tokenReceived = false;
+    bool m_channelInjected = false;
     bool m_closing = false;
 };
 

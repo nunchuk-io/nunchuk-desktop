@@ -234,7 +234,7 @@ void BaseWallet::setWalletBalance(const qint64 data) {
 }
 
 QString BaseWallet::walletCreateDateDisp() const {
-    if (!walletCreateDate().isValid()) {
+    if (0 == walletCreateDate().toTime_t()) {
         return "--/--/----"; // There is no time
     } else {
         //    return createDate_.toOffsetFromUtc(QDateTime::currentDateTime().offsetFromUtc()).toString(Qt::ISODate);
@@ -243,11 +243,8 @@ QString BaseWallet::walletCreateDateDisp() const {
 }
 
 QDateTime BaseWallet::walletCreateDate() const {
-    // get_create_date() returns time_t (POSIX seconds); use fromSecsSinceEpoch.
-    // fromMSecsSinceEpoch would interpret ~1.7 billion seconds as ~1.7 billion ms
-    // (~20 days from epoch) and display January 1970 instead of the actual date.
     time_t date = nunchukWallet().get_create_date();
-    return date > 0 ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(date)) : QDateTime{};
+    return QDateTime::fromTime_t(date);
 }
 
 int BaseWallet::walletGapLimit() const {
@@ -348,13 +345,8 @@ QStringList BaseWallet::unUsedAddressList() const {
 }
 
 void BaseWallet::setunUsedAddressList(const QStringList &d) {
-    // BUGFIX: emitting unconditionally forces QML's ListView (bound to this plain
-    // QStringList) to rebuild all delegates even when content is unchanged, which can
-    // reset the verify-address popup's displayed text mid-request. Guard like setUsedAddressList().
-    if (d != m_unUsedAddressList) {
-        m_unUsedAddressList = d;
-        emit unUsedAddressChanged();
-    }
+    m_unUsedAddressList = d;
+    emit unUsedAddressChanged();
     if (m_unUsedAddressList.isEmpty()) {
         setAddress("There is no avaialable address");
     } else {
@@ -478,39 +470,13 @@ void BaseWallet::setArchived(bool archived) {
     m_nunchukWallet.set_archived(archived);
     QWarningMessage msg;
     bridge::UpdateWallet(m_nunchukWallet, msg);
+    if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
+        QString msg_content = archived ? "Archived wallet" : "Unarchived wallet";
+        AppModel::instance()->showToast(0, msg_content, EWARNING::WarningType::SUCCESS_MSG);
+    }
     emit walletChanged();
     // Notify WalletListModel so QML roles (wallet_isArchived) and archivedCount refresh.
     AppModel::instance()->walletList()->dataUpdated(walletId());
-}
-
-void BaseWallet::handleArchiveWallet() {
-    DBG_INFO << walletId() << "archived:" << isArchived();
-    bool oldIsArchived = isArchived();
-    setArchived(!oldIsArchived);
-
-    // Track manual archive/unarchive so the system never auto-overrides user intent.
-    // Replaced (deprecated) wallets are auto-archived on every server sync; if the user
-    // explicitly unarchives one, we persist that choice in AppSetting so the auto-archive
-    // logic in QGroupDashboard::GetWalletInfo() can skip it.
-    const QString wid = walletId();
-    QStringList manuallyUnarchived = AppSetting::instance()->value("manually_unarchived_wallets").toStringList();
-    if (!isArchived()) {
-        // User is unarchiving — record this wallet as user-managed.
-        if (!manuallyUnarchived.contains(wid)) {
-            manuallyUnarchived.append(wid);
-            AppSetting::instance()->setValue("manually_unarchived_wallets", manuallyUnarchived);
-        }
-    } else {
-        // User is archiving — clear the override so auto-archive can work again.
-        if (manuallyUnarchived.removeAll(wid) > 0) {
-            AppSetting::instance()->setValue("manually_unarchived_wallets", manuallyUnarchived);
-        }
-    }
-
-    if (isArchived() != oldIsArchived) {
-        QString msg_content = isArchived() ? "Archived wallet" : "Unarchived wallet";
-        AppModel::instance()->showToast(0, msg_content, EWARNING::WarningType::SUCCESS_MSG);
-    }
 }
 
 nunchuk::Wallet BaseWallet::nunchukWallet() const {
@@ -593,7 +559,7 @@ void BaseWallet::exportBitcoinSignedMessage(const QString &xfp, const QString &f
     QFile file(path);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream st(&file);
-        st.setEncoding(QStringConverter::Utf8);
+        st.setCodec("UTF-8");
         st << signMessage << Qt::endl;
         st.flush();
         file.close();

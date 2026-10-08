@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
@@ -100,21 +100,21 @@ Item {
                 spacing: 16
                 QLato {
                     width: 700
-                    text: QSTR.STR_QML_2237
+                    text: STR.STR_QML_2237
                     font.pixelSize: 32
                     font.weight: Font.Medium
                     wrapMode: Text.WordWrap
                 }
                 QLato {
                     width: 700
-                    text: QSTR.STR_QML_2238
+                    text: STR.STR_QML_2238
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     wrapMode: Text.WordWrap
                 }
                 QLato {
                     width: 700
-                    text: QSTR.STR_QML_2239
+                    text: STR.STR_QML_2239
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     wrapMode: Text.WordWrap
@@ -123,7 +123,7 @@ Item {
                 }
                 QLato {
                     width: 700
-                    text: QSTR.STR_QML_2240
+                    text: STR.STR_QML_2240
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     wrapMode: Text.WordWrap
@@ -139,7 +139,7 @@ Item {
                 QIconTextButton {
                     width: 98
                     height: 48
-                    label: QSTR.STR_QML_059
+                    label: STR.STR_QML_059
                     icons: ["left-arrow-dark.svg", "left-arrow-dark.svg", "left-arrow-dark.svg","left-arrow-dark.svg"]
                     fontPixelSize: 16
                     iconSize: 24
@@ -151,7 +151,7 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 32
                     height: 48
-                    label.text: QSTR.STR_QML_097
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {

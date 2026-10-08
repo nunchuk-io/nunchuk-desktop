@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
+import QtQuick 2.15
 import NUNCHUCKTYPE 1.0
 import "../../../../Components/origins"
 import "../../../../Components/customizes"
@@ -30,7 +30,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: vm.valueDate.length > 0 ? QSTR.STR_QML_2076 : QSTR.STR_QML_1992
+    label.text: vm.valueDate.length > 0 ? STR.STR_QML_2076 : STR.STR_QML_1992
     onCloseClicked: vm.close()
     
     content: Item {
@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
             spacing: 24
             QLato {
                 width: 728
-                text: QSTR.STR_QML_1993
+                text: STR.STR_QML_1993
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
                 wrapMode: Text.WordWrap
@@ -48,7 +48,7 @@ QOnScreenContentTypeA {
             }
             QLato {
                 width: 728
-                text: QSTR.STR_QML_1994
+                text: STR.STR_QML_1994
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
                 wrapMode: Text.WordWrap
@@ -57,7 +57,7 @@ QOnScreenContentTypeA {
             }
             QLato {
                 width: 728
-                text: QSTR.STR_QML_1995
+                text: STR.STR_QML_1995
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
                 wrapMode: Text.WordWrap
@@ -74,7 +74,7 @@ QOnScreenContentTypeA {
                         height: _input_date.height
                         QTextInputBoxTypeB {
                             id: _input_date
-                            label: QSTR.STR_QML_1463
+                            label: STR.STR_QML_1463
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -111,7 +111,7 @@ QOnScreenContentTypeA {
                         height: _input_time.height
                         QTextInputBoxTypeB {
                             id: _input_time
-                            label: QSTR.STR_QML_1989
+                            label: STR.STR_QML_1989
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -153,7 +153,7 @@ QOnScreenContentTypeA {
                         height: _input_timezone.height
                         QTextInputBoxTypeB {
                             id: _input_timezone
-                            label: QSTR.STR_QML_1990
+                            label: STR.STR_QML_1990
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -194,9 +194,7 @@ QOnScreenContentTypeA {
                         Connections {
                             target: vm
                             onValueTimezoneChanged: {
-                                if (_timezoneInput.selectedTimezone !== vm.valueTimezone) {
-                                    _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
-                                }
+                                _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
                             }
                             onIsShowBlockHeightChanged: {
                                 if(vm.isShowBlockHeight && !vm.isInit){
@@ -215,7 +213,7 @@ QOnScreenContentTypeA {
                         visible: vm.isShowBlockHeight
                         QTextInputBoxTypeB {
                             id: _blockHeight
-                            label: QSTR.STR_QML_188
+                            label: STR.STR_QML_188
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -230,7 +228,7 @@ QOnScreenContentTypeA {
                     width: 728
                     height: 80
                     icon: "qrc:/Images/Images/warning-dark.svg"
-                    txt.text: QSTR.STR_QML_2069.arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight)))
+                    txt.text: STR.STR_QML_2069.arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight)))
                     color: "#FDEBD2"
                     visible: vm.isShowBlockHeight
                 }
@@ -241,14 +239,14 @@ QOnScreenContentTypeA {
             width: 728
             height: 60
             icon: "qrc:/Images/Images/info-60px.svg"
-            txt.text: QSTR.STR_QML_1996
+            txt.text: STR.STR_QML_1996
             anchors.bottom: parent.bottom
         }
     }
     bottomRight: QTextButton {
         width: label.paintedWidth + 16*2
         height: 48
-        label.text: QSTR.STR_QML_835
+        label.text: STR.STR_QML_835
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {
@@ -287,9 +285,9 @@ QOnScreenContentTypeA {
 
     QPopupInfoTwoButtons {
         id: blockBaseInfo
-        title: QSTR.STR_QML_2070
-        contentText: QSTR.STR_QML_2071
-        labels: [QSTR.STR_QML_1114, QSTR.STR_QML_427]
+        title: STR.STR_QML_2070
+        contentText: STR.STR_QML_2071
+        labels: [STR.STR_QML_1114, STR.STR_QML_427]
         isVertical: false
         funcs: [
             function() {
@@ -300,9 +298,9 @@ QOnScreenContentTypeA {
             }
         ]
         function blockBasedTimelock() {
-            blockBaseInfo.title = QSTR.STR_QML_2070
-            blockBaseInfo.contentText = QSTR.STR_QML_2071
-            blockBaseInfo.labels = [QSTR.STR_QML_1114, QSTR.STR_QML_427]
+            blockBaseInfo.title = STR.STR_QML_2070
+            blockBaseInfo.contentText = STR.STR_QML_2071
+            blockBaseInfo.labels = [STR.STR_QML_1114, STR.STR_QML_427]
             blockBaseInfo.isVertical = false
             blockBaseInfo.funcs = [
                 function() {
@@ -315,9 +313,9 @@ QOnScreenContentTypeA {
             blockBaseInfo.open();
         }
         function confirmTimelockDuration() {
-            blockBaseInfo.title = QSTR.STR_QML_2072
-            blockBaseInfo.contentText = QSTR.STR_QML_2073.arg(ServiceSetting.servicesTag.setupConfig.max_timelock_years)  //vm.xYearsLock)
-            blockBaseInfo.labels = [QSTR.STR_QML_1114, QSTR.STR_QML_427]
+            blockBaseInfo.title = STR.STR_QML_2072
+            blockBaseInfo.contentText = STR.STR_QML_2073.arg(ServiceSetting.servicesTag.setupConfig.max_timelock_years)  //vm.xYearsLock)
+            blockBaseInfo.labels = [STR.STR_QML_1114, STR.STR_QML_427]
             blockBaseInfo.isVertical = false
             blockBaseInfo.funcs = [
                 function() {
@@ -333,9 +331,9 @@ QOnScreenContentTypeA {
 
     QPopupInfo{
         id: _invalidDateAlert
-        title: QSTR.STR_QML_2074
-        contentText: QSTR.STR_QML_2075
-        btnLabel: QSTR.STR_QML_341
+        title: STR.STR_QML_2074
+        contentText: STR.STR_QML_2075
+        btnLabel: STR.STR_QML_341
         action: function() {
                 _invalidDateAlert.close()
             }

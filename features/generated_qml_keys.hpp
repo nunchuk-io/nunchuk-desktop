@@ -33,7 +33,6 @@ QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinherit
 QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaningdetail, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaningdetail");
 QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaningdetailoffchain, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaningdetailoffchain");
 QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaningdetailonchain, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaningdetailonchain");
-QML_KEY_IN(qml::components::rightpannel::service::common, qinheritancenotetobeneficiary, "qml.components.rightpannel.service.common.qinheritancenotetobeneficiary");
 QML_KEY_IN(qml::components::rightpannel::service::common, qinheritanceplanmagicphrases, "qml.components.rightpannel.service.common.qinheritanceplanmagicphrases");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpoliciesbroadcastanddelay, "qml.components.rightpannel.service.common.qpoliciesbroadcastanddelay");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpoliciescosigningspendinglimit, "qml.components.rightpannel.service.common.qpoliciescosigningspendinglimit");
@@ -41,7 +40,6 @@ QML_KEY_IN(qml::components::rightpannel::service::common, qpoliciesspendinglimit
 QML_KEY_IN(qml::components::rightpannel::service::common, qpopupanswersecurityquestion, "qml.components.rightpannel.service.common.qpopupanswersecurityquestion");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpopupprepareinheritancekey, "qml.components.rightpannel.service.common.qpopupprepareinheritancekey");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpopupthebackuppassword, "qml.components.rightpannel.service.common.qpopupthebackuppassword");
-QML_KEY_IN(qml::components::rightpannel::service::common, qpopuptheseedphrasebackup, "qml.components.rightpannel.service.common.qpopuptheseedphrasebackup");
 QML_KEY_IN(qml::components::rightpannel::service::common, qprepareinheritancekey, "qml.components.rightpannel.service.common.qprepareinheritancekey");
 QML_KEY_IN(qml::components::rightpannel::service::common, qrecoverinheritancekey, "qml.components.rightpannel.service.common.qrecoverinheritancekey");
 QML_KEY_IN(qml::components::rightpannel::service::common, qrestoreseedphrasetohardwaredevice, "qml.components.rightpannel.service.common.qrestoreseedphrasetohardwaredevice");
@@ -275,7 +273,6 @@ QML_KEY_IN(qml::components::customizes::wallets, qgroupsandboxsetting, "qml.comp
 QML_KEY_IN(qml::components::customizes::wallets, qgroupwalletarea, "qml.components.customizes.wallets.qgroupwalletarea");
 QML_KEY_IN(qml::components::customizes::wallets, qgroupwalletinfo, "qml.components.customizes.wallets.qgroupwalletinfo");
 QML_KEY_IN(qml::components::customizes::wallets, qgroupwalletkeys, "qml.components.customizes.wallets.qgroupwalletkeys");
-QML_KEY_IN(qml::components::customizes::wallets, qhomereminderbanner, "qml.components.customizes.wallets.qhomereminderbanner");
 QML_KEY_IN(qml::components::customizes::wallets, qintroductiontaprootaddress, "qml.components.customizes.wallets.qintroductiontaprootaddress");
 QML_KEY_IN(qml::components::customizes::wallets, qmemberprimaryowner, "qml.components.customizes.wallets.qmemberprimaryowner");
 QML_KEY_IN(qml::components::customizes::wallets, qminiscriptedittimelock, "qml.components.customizes.wallets.qminiscriptedittimelock");
@@ -639,14 +636,11 @@ QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qcheckyourcoldcard
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qcheckyourhardwarefirmware, "qml.screens.onlinemode.setupwallets.timelocks.qcheckyourhardwarefirmware");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qcheckyourjadefirmware, "qml.screens.onlinemode.setupwallets.timelocks.qcheckyourjadefirmware");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qcheckyourledgerfirmware, "qml.screens.onlinemode.setupwallets.timelocks.qcheckyourledgerfirmware");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qencryptedbackupflow, "qml.screens.onlinemode.setupwallets.timelocks.qencryptedbackupflow");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qhowonchaintimelockworks, "qml.screens.onlinemode.setupwallets.timelocks.qhowonchaintimelockworks");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qimportantnoticeaboutpassphraseonchain, "qml.screens.onlinemode.setupwallets.timelocks.qimportantnoticeaboutpassphraseonchain");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qinheritanceconfigureguide, "qml.screens.onlinemode.setupwallets.timelocks.qinheritanceconfigureguide");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qkeydistributionchoice, "qml.screens.onlinemode.setupwallets.timelocks.qkeydistributionchoice");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qletconfigureyourwallet, "qml.screens.onlinemode.setupwallets.timelocks.qletconfigureyourwallet");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qpopupcheckyourfirmware, "qml.screens.onlinemode.setupwallets.timelocks.qpopupcheckyourfirmware");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qpopupconfirmremovebackup, "qml.screens.onlinemode.setupwallets.timelocks.qpopupconfirmremovebackup");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qreaddblockstreamjadeviaqr, "qml.screens.onlinemode.setupwallets.timelocks.qreaddblockstreamjadeviaqr");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qreaddcoldcardguideviafile, "qml.screens.onlinemode.setupwallets.timelocks.qreaddcoldcardguideviafile");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qreaddcoldcardguideviaqr, "qml.screens.onlinemode.setupwallets.timelocks.qreaddcoldcardguideviaqr");
@@ -654,8 +648,6 @@ QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetupoffchaintime
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetuponchaintimelock, "qml.screens.onlinemode.setupwallets.timelocks.qsetuponchaintimelock");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetuponchaintimelockdraftwallet, "qml.screens.onlinemode.setupwallets.timelocks.qsetuponchaintimelockdraftwallet");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetuponchaintimelockwallet, "qml.screens.onlinemode.setupwallets.timelocks.qsetuponchaintimelockwallet");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qverifybothbackups, "qml.screens.onlinemode.setupwallets.timelocks.qverifybothbackups");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qverifyyourbackup, "qml.screens.onlinemode.setupwallets.timelocks.qverifyyourbackup");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qverifyyourinheritancekeyseedphraseguide, "qml.screens.onlinemode.setupwallets.timelocks.qverifyyourinheritancekeyseedphraseguide");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qverifyyourinheritancekeyseedphrasequestion, "qml.screens.onlinemode.setupwallets.timelocks.qverifyyourinheritancekeyseedphrasequestion");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qwalletcreationpendingonchain, "qml.screens.onlinemode.setupwallets.timelocks.qwalletcreationpendingonchain");
@@ -724,7 +716,6 @@ QML_KEY_IN(qml::features::signers, qeditplatformkeypolicies, "qml.features.signe
 QML_KEY_IN(qml::features::signers, qexistinglistkey, "qml.features.signers.qexistinglistkey");
 QML_KEY_IN(qml::features::signers, qglobalplatformkeypolicies, "qml.features.signers.qglobalplatformkeypolicies");
 QML_KEY_IN(qml::features::signers, qhardwarerefreshdevices, "qml.features.signers.qhardwarerefreshdevices");
-QML_KEY_IN(qml::features::signers, qhardwarerefreshdevicesscreen, "qml.features.signers.qhardwarerefreshdevicesscreen");
 QML_KEY_IN(qml::features::signers, qperkeyplatformkeypolicies, "qml.features.signers.qperkeyplatformkeypolicies");
 QML_KEY_IN(qml::features::signers, qplatformkeypolicies, "qml.features.signers.qplatformkeypolicies");
 QML_KEY_IN(qml::features::signers, qrecoverviaseed, "qml.features.signers.qrecoverviaseed");

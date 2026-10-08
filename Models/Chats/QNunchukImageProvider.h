@@ -21,9 +21,9 @@
 #ifndef QNUNCHUKIMAGEPROVIDER_H
 #define QNUNCHUKIMAGEPROVIDER_H
 #include <QObject>
+#include <QAtomicPointer>
 #include <QQuickImageProvider>
 #include <QtCore/QReadWriteLock>
-#include <QtCore/QSharedPointer>
 #include <QtCore/QThread>
 #include <room.h>
 #include <connection.h>
@@ -39,7 +39,7 @@ class ThumbnailResponse : public QQuickImageResponse
 {
     Q_OBJECT
 public:
-    ThumbnailResponse(QSharedPointer<Connection> connection, QString id, QSize size);
+    ThumbnailResponse(Connection* c, QString id, QSize size);
     ~ThumbnailResponse() override = default;
 
 private slots:
@@ -49,7 +49,7 @@ private slots:
     void doCancel();
 
 private:
-    QSharedPointer<Connection> m_connection;
+    Connection* c;
     const QString mediaId;
     const QSize requestedSize;
     Quotient::MediaThumbnailJob* job = nullptr;
@@ -67,10 +67,9 @@ class QNunchukImageProvider : public QQuickAsyncImageProvider
 public:
     QNunchukImageProvider();
     QQuickImageResponse* requestImageResponse(const QString& id, const QSize& requestedSize) override;
-    void setConnection(const QSharedPointer<Quotient::Connection>& connection);
+    void setConnection(Quotient::Connection* c);
 private:
-    QReadWriteLock m_connectionLock;
-    QSharedPointer<Quotient::Connection> m_connection;
+    QAtomicPointer<Quotient::Connection> m_connection;
     Q_DISABLE_COPY(QNunchukImageProvider)
 };
 

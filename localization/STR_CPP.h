@@ -136,7 +136,4 @@ const static QString STR_CPP_130 = QString("Wallet invitation has been denied");
 const static QString STR_CPP_131 = QString("Address marked as used.");
 const static QString STR_CPP_132 = QString("Add Blockstream Jade to your assisted wallet");
 const static QString STR_CPP_133 = QString("Add Jade");
-// KEEPKEY: used by map_keys in QAssistedDraftWallets.cpp.
-const static QString STR_CPP_134 = QString("Add KeepKey to your assisted wallet");
-const static QString STR_CPP_135 = QString("Add KeepKey");
 #endif // STR_CPP_H

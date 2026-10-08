@@ -1,5 +1,4 @@
 #include "GetInheritancePlanUseCase.h"
-#include "QOutlog.h"
 #include "core/restapi/RestApi.h"
 #include "core/utils/Utils.h"
 
@@ -18,9 +17,6 @@ Result<GetInheritancePlanResult> GetInheritancePlanUseCase::execute(const GetInh
     }
 
     QJsonObject inheritance = output["inheritance"].toObject();
-    // Full response, to check whether claim_options/keys per inheritance key (NUN-10192)
-    // are already present here or still need backend/viewmodel work.
-    DBG_INFO << "inheritanceGetPlan response:" << inheritance;
 #if 0
     QString distribution_method = inheritance.value("distribution_method").toString();
     // Example: Create test data for SINGLE BENEFICIARY with CUSTOMIZE distribution

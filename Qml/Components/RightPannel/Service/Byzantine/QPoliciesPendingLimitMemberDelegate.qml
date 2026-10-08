@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick
+import QtQuick 2.0
 import "./../Common"
 import "../../../customizes/Texts"
 import "../../../RightPannel/Wallet/Dashboard"

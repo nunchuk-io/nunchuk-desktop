@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -57,10 +57,10 @@ Rectangle {
         clip: true
         interactive: contentHeight > flickcontent.height
         contentHeight: contentDisp.height
-        ScrollBar.vertical: QScrollBar { }
+        ScrollBar.vertical: ScrollBar { active: true }
         Column {
             id: contentDisp
-            width: parent.width - 8
+            width: parent.width
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 5
             Rectangle {
@@ -141,7 +141,7 @@ Rectangle {
             QTransactionNoteBlock {
                 id: transationNote
                 visible: !isDummy
-                onMemoNotify: (newMemo) => {
+                onMemoNotify: {
                     newMemoNotify(newMemo)
                 }
             }

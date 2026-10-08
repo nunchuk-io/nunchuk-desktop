@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import "../../../Components/customizes/Texts"
 
 Rectangle {
@@ -51,7 +51,7 @@ Rectangle {
                     left: parent.left
                     verticalCenter: parent.verticalCenter
                 }
-                text: QSTR.STR_QML_2169
+                text: STR.STR_QML_2169
                 font.pixelSize: 16
                 font.weight: Font.Bold
                 color: "#031F2B"
@@ -61,7 +61,7 @@ Rectangle {
                 width: 29
                 height: 20
                 anchors.right: parent.right
-                text: QSTR.STR_QML_849
+                text: STR.STR_QML_849
                 color: "#031F2B"
                 anchors.verticalCenter: parent.verticalCenter
                 onTextClicked: {
@@ -75,13 +75,13 @@ Rectangle {
             width: parent.width
             text: {
                 if (fallback_type == "NONE") {
-                    return QSTR.STR_QML_2251
+                    return STR.STR_QML_2251
                 } else if (fallback_type == "INACTIVITY") {
-                    return QSTR.STR_QML_2250.arg(fallback_interval)
+                    return STR.STR_QML_2250.arg(fallback_interval)
                 } else if (fallback_type == "DATE_BASED") {
-                    return QSTR.STR_QML_2249.arg(fallback_dateTime)
+                    return STR.STR_QML_2249.arg(fallback_dateTime)                    
                 }
-                return QSTR.STR_QML_2251
+                return STR.STR_QML_2251
             }
             font.pixelSize: 16
             lineHeight: 20

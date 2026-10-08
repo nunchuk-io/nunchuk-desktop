@@ -13,7 +13,7 @@ import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.12
 /**************************************************************************
  * This file is part of the Nunchuk software (https://nunchuk.io/)        *
  * Copyright (C) 2020-2022 Enigmo								          *
@@ -33,8 +33,8 @@ import Qt5Compat.GraphicalEffects
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.3
 
 QScreen {
     id: screenTxInfoRoot
@@ -183,14 +183,14 @@ QScreen {
         QSendTransaction {
             transactionInfo: AppModel.transactionInfo
             myRole: AppModel.walletInfo.myRole
-            onAddrToVerify: (addr) => {
+            onAddrToVerify: {
                 displayAddressBusybox.addrToVerify = addr;
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_VERIFY_ADDRESS, addr);
             }
-            onNewMemoNotify: (newMemo) => {
+            onNewMemoNotify: {
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo);
             }
-            onKeyEnterPreImageInput: (hashData, typeNode) => {
+            onKeyEnterPreImageInput: {
                 enterPreimage.clearText()
                 enterPreimage.hashData = hashData
                 enterPreimage.typeNode = typeNode                
@@ -231,7 +231,7 @@ QScreen {
 
         QReceivedTransaction {
             transactionInfo: AppModel.transactionInfo
-            onNewMemoNotify: (newMemo) => {
+            onNewMemoNotify: {
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo);
             }
         }
@@ -366,7 +366,7 @@ QScreen {
                 onShowInvoice: {
                     invoice.open();
                 }
-                onRequestSignature: (membership_id) => {
+                onRequestSignature: {
                     groupMembers.open();
                 }
                 onCancelTransaction: {
@@ -715,7 +715,7 @@ QScreen {
 
     QGroupMembers {
         id: groupMembers
-        onRequestSignature: (membership_id) => {
+        onRequestSignature: {
             AppModel.transactionInfo.requestSignatures(membership_id);
         }
     }

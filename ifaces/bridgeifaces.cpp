@@ -20,129 +20,12 @@
 #include "bridgeifaces.h"
 #include "Chats/matrixbrigde.h"
 #include "Chats/ClientController.h"
+#include <QTextCodec>
 #include <QJsonObject>
 #include <QJsonDocument>
-#include <QDir>
-#include <QFileInfo>
-#include <QRegularExpression>
-#include <QStandardPaths>
 #include "utils/enumconverter.hpp"
 #include "Servers/Draco.h"
 #include "ProfileSetting.h"
-#if defined(Q_OS_WIN)
-// Excludes rpc.h/objidl.h (OLE) so their global `byte` typedef doesn't clash with std::byte (using namespace std above).
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
-#endif
-
-namespace {
-
-bool setInvalidPathError(QWarningMessage &msg, int code,
-                         const QString &description, const QString &path)
-{
-    const QString detail = path.isEmpty()
-        ? description
-        : QString("%1: %2").arg(description, QDir::toNativeSeparators(path));
-    DBG_ERROR << detail;
-    msg.setWarningMessage(code, detail, EWARNING::WarningType::EXCEPTION_MSG);
-    return false;
-}
-
-bool requireLocalPath(const QString &input, QString &localPath,
-                      QWarningMessage &msg)
-{
-    localPath = qUtils::QGetFilePath(input);
-    if (!localPath.isEmpty()) {
-        return true;
-    }
-    return setInvalidPathError(
-        msg, nunchuk::NunchukException::INVALID_PARAMETER,
-        QStringLiteral("Invalid or unsupported local file path"), input);
-}
-
-QString quoteCommandExecutable(QString path)
-{
-    QString escaped = path;
-    escaped.replace("\"", "\\\"");
-    if (escaped.contains(QRegularExpression(QStringLiteral("\\s"))) ||
-        escaped != path) {
-        return QStringLiteral("\"") + escaped + QStringLiteral("\"");
-    }
-    return escaped;
-}
-
-} // namespace
-
-bool bridge::configureFilesystemPaths(nunchuk::AppSettings &settings,
-                                      QWarningMessage &msg)
-{
-    settings.set_hwi_path(bridge::hwiCommand().toStdString());
-
-    if (AppSetting::instance()->enableCertificateFile()) {
-        const QString certificatePath =
-            qUtils::QGetFilePath(AppSetting::instance()->certificateFile());
-        const QFileInfo certificateInfo(certificatePath);
-        if (certificatePath.isEmpty() || !certificateInfo.exists() ||
-            !certificateInfo.isFile() || !certificateInfo.isReadable()) {
-            return setInvalidPathError(
-                msg, nunchuk::NunchukException::INVALID_PARAMETER,
-                QStringLiteral("Certificate file is missing or not readable"),
-                certificatePath);
-        }
-        settings.set_certificate_file(certificatePath.toStdString());
-    } else {
-        settings.set_certificate_file(std::string{});
-    }
-
-    const QString storagePath = AppSetting::instance()->storagePath();
-    const QFileInfo storageInfo(storagePath);
-    if (storagePath.isEmpty()) {
-        return setInvalidPathError(
-            msg, nunchuk::StorageException::INVALID_DATADIR,
-            QStringLiteral("Cannot determine the data directory"), {});
-    }
-    if (!storageInfo.exists()) {
-        return setInvalidPathError(
-            msg, nunchuk::StorageException::INVALID_DATADIR,
-            QStringLiteral("Data directory does not exist"), storagePath);
-    }
-    if (!storageInfo.isDir()) {
-        return setInvalidPathError(
-            msg, nunchuk::StorageException::INVALID_DATADIR,
-            QStringLiteral("Data path is not a directory"), storagePath);
-    }
-    if (!storageInfo.isReadable() || !storageInfo.isWritable()) {
-        return setInvalidPathError(
-            msg, nunchuk::StorageException::INVALID_DATADIR,
-            QStringLiteral("Data directory is not readable and writable"),
-            storagePath);
-    }
-
-    QString effectiveStoragePath = storagePath;
-#if defined(Q_OS_WIN)
-    // libnunchuk links its own static CRT (/MT) that is never configured for
-    // UTF-8 narrow-string conversion, so std::filesystem calls inside it fail
-    // silently on non-ASCII paths (e.g. a Windows username with diacritics).
-    // The 8.3 short path is pure ASCII, so converting here avoids the problem
-    // without touching libnunchuk/contrib at all. Directory existence was
-    // already verified above, which GetShortPathNameW requires.
-    const std::wstring wPath = storagePath.toStdWString();
-    wchar_t shortPathBuffer[MAX_PATH] = {};
-    const DWORD shortPathLen = GetShortPathNameW(wPath.c_str(), shortPathBuffer, MAX_PATH);
-    if (shortPathLen > 0 && shortPathLen < MAX_PATH) {
-        effectiveStoragePath = QString::fromWCharArray(shortPathBuffer, static_cast<int>(shortPathLen));
-    } else {
-        // 8.3 name generation can be disabled per-volume (fsutil 8dot3name) -
-        // fall back to the original path, i.e. today's (buggy) behavior.
-        DBG_ERROR << "Could not resolve 8.3 short path, falling back to:" << storagePath;
-    }
-#endif
-
-    DBG_INFO << "DATAPATH" << storagePath << "-> libnunchuk:" << effectiveStoragePath;
-    settings.set_storage_path(effectiveStoragePath.toStdString());
-    return true;
-}
 
 void bridge::nunchukMakeInstance(const QString& passphrase, QWarningMessage& msg)
 {
@@ -177,11 +60,19 @@ void bridge::nunchukMakeInstance(const QString& passphrase, QWarningMessage& msg
     signetServer.push_back(AppSetting::instance()->secondaryServer().toStdString());
     setting.set_signet_servers(signetServer);
 
-    if (!bridge::configureFilesystemPaths(setting, msg)) {
-        nunchukiface::instance()->stopInstance(LOCAL_MODE);
-        AppModel::instance()->setInititalized(false);
-        return;
+    // hwi path
+    setting.set_hwi_path(bridge::hwiPath().toStdString());
+
+    //  certificate file
+    QString certPath = "";
+    if(AppSetting::instance()->enableCertificateFile()){
+        certPath = AppSetting::instance()->certificateFile();
     }
+    setting.set_certificate_file(certPath.toStdString());
+
+    // Storage path
+    DBG_INFO << "DATAPATH" << AppSetting::instance()->storagePath();
+    setting.set_storage_path(AppSetting::instance()->storagePath().toStdString());
 
     setting.enable_proxy(AppSetting::instance()->enableTorProxy());
     setting.set_proxy_host(AppSetting::instance()->torProxyAddress().toStdString());
@@ -265,11 +156,19 @@ void bridge::nunchukMakeInstanceForAccount(const QString &account,
     signetServer.push_back(AppSetting::instance()->secondaryServer().toStdString());
     setting.set_signet_servers(signetServer);
 
-    if (!bridge::configureFilesystemPaths(setting, msg)) {
-        nunchukiface::instance()->stopInstance(ONLINE_MODE);
-        AppModel::instance()->setInititalized(false);
-        return;
+    // hwi path 
+    setting.set_hwi_path(bridge::hwiPath().toStdString());
+
+    //  certificate file
+    QString certPath = "";
+    if(AppSetting::instance()->enableCertificateFile()){
+        certPath = AppSetting::instance()->certificateFile();
     }
+    setting.set_certificate_file(certPath.toStdString());
+
+    // Storage path
+    DBG_INFO << "DATAPATH" << AppSetting::instance()->storagePath();
+    setting.set_storage_path(AppSetting::instance()->storagePath().toStdString());
 
     setting.enable_proxy(AppSetting::instance()->enableTorProxy());
     setting.set_proxy_host(AppSetting::instance()->torProxyAddress().toStdString());
@@ -431,7 +330,7 @@ QDeviceListModelPtr bridge::nunchukGetDevices(QWarningMessage& msg) {
 
     std::vector<nunchuk::Device> deviceList_result {};
     if (AppModel::instance()->isSignIn()) {
-        deviceList_result = qUtils::GetDevices(bridge::hwiCommand(), msg);
+        deviceList_result = qUtils::GetDevices(bridge::hwiPath(), msg);
         DBG_INFO << "deviceList_result.size():" << deviceList_result.size();
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             msg.resetWarningMessage();
@@ -463,15 +362,6 @@ std::vector<nunchuk::Device> bridge::nunchukGetOriginDevices(QWarningMessage &ms
     return nunchukiface::instance()->GetDevices(msg);
 }
 
-// BUGFIX: a stuck HWI child process (device not responding) can block GetDevices()/
-// SignHealthCheckMessage() indefinitely with no timeout inside libnunchuk. Expose
-// KillHwiProcess() so app-layer watchdog timers can force the stuck call to return
-// (terminating the child unblocks its getline/wait()), instead of waiting forever.
-void bridge::cancelHwiScan()
-{
-    nunchukiface::instance()->killHwiProcessAllInstance();
-}
-
 nunchuk::HealthStatus bridge::nunchukHealthCheckMasterSigner(const QString& xfp,
                                                              const QString& message,
                                                              QString& signature,
@@ -490,25 +380,16 @@ nunchuk::HealthStatus bridge::nunchukHealthCheckSingleSigner(const QSingleSigner
                                                              QWarningMessage &msg)
 {
     if(signer){
-        return nunchukHealthCheckSingleSigner(signer->singleSigner(),
-                                              signer->message(),
-                                              signer->signature(),
-                                              msg);
+        QString message = signer.data()->message();
+        QString signature = signer.data()->signature();
+        return nunchukiface::instance()->HealthCheckSingleSigner(signer->singleSigner(),
+                                                                 message.toStdString(),
+                                                                 signature.toStdString(),
+                                                                 msg);
     }
     else{
         return nunchuk::HealthStatus::NO_SIGNATURE;
     }
-}
-
-nunchuk::HealthStatus bridge::nunchukHealthCheckSingleSigner(const nunchuk::SingleSigner &signer,
-                                                             const QString &message,
-                                                             const QString &signature,
-                                                             QWarningMessage &msg)
-{
-    return nunchukiface::instance()->HealthCheckSingleSigner(signer,
-                                                             message.toStdString(),
-                                                             signature.toStdString(),
-                                                             msg);
 }
 
 QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QString &xfp, QWarningMessage &msg) {
@@ -517,6 +398,11 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QS
         if (devices) {
             QDevicePtr selectedDv = devices->getDeviceByXfp(xfp);
             int deviceIndex = devices->getDeviceIndexByXfp(xfp);
+            if (!selectedDv && devices->deviceCount() == 1
+                && (xfp.isEmpty() || devices->getDeviceByIndex(0)->masterFingerPrint().isEmpty())) {
+                selectedDv = devices->getDeviceByIndex(0);
+                deviceIndex = 0;
+            }
             QString in_message = qUtils::QGenerateRandomMessage();
             AppModel::instance()->setNewKeySignMessage(in_message);
             if (selectedDv.data()) {
@@ -534,7 +420,7 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QS
                                    selectedDv.data()->masterFingerPrint().toStdString(), selectedDv.data()->needsPassPhraseSent(),
                                    selectedDv.data()->needsPinSent());
                 AppModel::instance()->setAddSignerStep(2);
-                nunchuk::MasterSigner masterSigner = nunchukCreateOriginMasterSigner(name, dv, msg);
+                nunchuk::MasterSigner masterSigner = nunchukiface::instance()->CreateMasterSigner(name.toStdString(), dv, msg);
                 if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                     QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner(masterSigner));
                     signer.data()->setMessage(in_message);
@@ -556,13 +442,6 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QS
         }
     }
     return NULL;
-}
-
-nunchuk::MasterSigner bridge::nunchukCreateOriginMasterSigner(const QString &name,
-                                                              const nunchuk::Device &device,
-                                                              QWarningMessage &msg)
-{
-    return nunchukiface::instance()->CreateMasterSigner(name.toStdString(), device, msg);
 }
 
 int bridge::nunchukGetLastUsedSignerIndex(const QString &xfp,
@@ -802,36 +681,10 @@ nunchuk::Wallet bridge::nunchukCreateOriginWallet(const QString& name,
                                                   nunchuk::WalletTemplate walletTemplate,
                                                   QWarningMessage &msg)
 {
-    return nunchukCreateOriginWallet(name,
-                                     m,
-                                     n,
-                                     signers->signers(),
-                                     address_type,
-                                     wallet_type,
-                                     description,
-                                     allow_used_signer,
-                                     decoy_pin,
-                                     walletTemplate,
-                                     msg);
-
-}
-
-nunchuk::Wallet bridge::nunchukCreateOriginWallet(const QString &name,
-                                                  int m,
-                                                  int n,
-                                                  const std::vector<nunchuk::SingleSigner> &signers,
-                                                  nunchuk::AddressType address_type,
-                                                  nunchuk::WalletType wallet_type,
-                                                  const QString &description,
-                                                  bool allow_used_signer,
-                                                  const QString &decoy_pin,
-                                                  nunchuk::WalletTemplate walletTemplate,
-                                                  QWarningMessage &msg)
-{
     return nunchukiface::instance()->CreateWallet(name.toStdString(),
                                                   m,
                                                   n,
-                                                  signers,
+                                                  signers->signers(),
                                                   address_type,
                                                   wallet_type,
                                                   description.toStdString(),
@@ -934,11 +787,7 @@ QStringList bridge::nunchukGetAddresses(const QString &wallet_id, bool used, boo
 QWalletPtr bridge::nunchukImportWallet(const QString &dbFile,
                                        QWarningMessage &msg)
 {
-    QString localPath;
-    if (!requireLocalPath(dbFile, localPath, msg)) {
-        return {};
-    }
-    nunchuk::Wallet walletResult = nunchukiface::instance()->ImportWalletDb(localPath.toStdString(), msg);
+    nunchuk::Wallet walletResult = nunchukiface::instance()->ImportWalletDb(dbFile.toStdString(), msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         return bridge::convertWallet(walletResult);
     }
@@ -953,11 +802,7 @@ QWalletPtr bridge::nunchukImportWalletDescriptor(const QString &dbFile,
                                                  const QString& description,
                                                  QWarningMessage &msg)
 {
-    QString localPath;
-    if (!requireLocalPath(dbFile, localPath, msg)) {
-        return {};
-    }
-    nunchuk::Wallet walletResult = nunchukiface::instance()->ImportWalletDescriptor(localPath.toStdString(),
+    nunchuk::Wallet walletResult = nunchukiface::instance()->ImportWalletDescriptor(dbFile.toStdString(),
                                                                                     name.toStdString(),
                                                                                     description.toStdString(),
                                                                                     msg);
@@ -1091,23 +936,15 @@ bool bridge::nunchukExportTransaction(const QString &wallet_id,
                                       const QString &file_path,
                                       QWarningMessage &msg)
 {
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return false;
-    }
     return nunchukiface::instance()->ExportTransaction(wallet_id.toStdString(),
                                                        tx_id.toStdString(),
-                                                       localPath.toStdString(),
+                                                       file_path.toStdString(),
                                                        msg);
 }
 
 QTransactionPtr bridge::nunchukImportTransaction(const QString &wallet_id, const QString &file_path, QWarningMessage& msg)
 {
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return {};
-    }
-    nunchuk::Transaction trans_result = nunchukiface::instance()->ImportTransaction(wallet_id.toStdString(), localPath.toStdString(), msg);
+    nunchuk::Transaction trans_result = nunchukiface::instance()->ImportTransaction(wallet_id.toStdString(), file_path.toStdString(), msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
         if(final && final.data()->roomId() != ""){
@@ -1631,15 +1468,24 @@ void bridge::nunchukUpdateAppSettings(QWarningMessage &msg)
     signetServer.push_back(AppSetting::instance()->secondaryServer().toStdString());
     ret.set_signet_servers(signetServer);
 
-    if (!bridge::configureFilesystemPaths(ret, msg)) {
-        return;
-    }
+    // hwi path
+    ret.set_hwi_path(bridge::hwiPath().toStdString());
+
+    // Storage path
+    ret.set_storage_path(AppSetting::instance()->storagePath().toStdString());
 
     ret.enable_proxy(AppSetting::instance()->enableTorProxy());
     ret.set_proxy_host(AppSetting::instance()->torProxyAddress().toStdString());
     ret.set_proxy_port(AppSetting::instance()->torProxyPort());
     ret.set_proxy_username(AppSetting::instance()->torProxyName().toStdString());
     ret.set_proxy_password(AppSetting::instance()->torProxyPassword().toStdString());
+
+    //  certificate file
+    QString certPath = "";
+    if(AppSetting::instance()->enableCertificateFile()){
+        certPath = AppSetting::instance()->certificateFile();
+    }
+    ret.set_certificate_file(certPath.toStdString());
 
     // Core RPC
     if(AppSetting::instance()->enableCoreRPC()){
@@ -1661,10 +1507,7 @@ void bridge::nunchukUpdateAppSettings(QWarningMessage &msg)
 bool bridge::nunchukExportWallet(const QString &wallet_id, const QString &file_path, const nunchuk::ExportFormat format)
 {
     QWarningMessage msg;
-    QString path;
-    if (!requireLocalPath(file_path, path, msg)) {
-        return false;
-    }
+    QString path = qUtils::QGetFilePath(file_path);
     return nunchukiface::instance()->ExportWallet(wallet_id.toStdString(),
                                                   path.toStdString(),
                                                   format, msg);
@@ -1684,21 +1527,13 @@ int bridge::nunchukBlockHeight()
 bool bridge::nunchukExportHealthCheckMessage(const QString &message, const QString &file_path)
 {
     QWarningMessage msg;
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return false;
-    }
-    return nunchukiface::instance()->ExportHealthCheckMessage(message.toStdString(), localPath.toStdString(), msg);
+    return nunchukiface::instance()->ExportHealthCheckMessage(message.toStdString(), file_path.toStdString(), msg);
 }
 
 QString bridge::nunchukImportHealthCheckSignature(const QString &file_path)
 {
     QWarningMessage msg;
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return {};
-    }
-    std::string ret = nunchukiface::instance()->ImportHealthCheckSignature(localPath.toStdString(), msg);
+    std::string ret = nunchukiface::instance()->ImportHealthCheckSignature(file_path.toStdString(), msg);
     return QString::fromStdString(ret);
 }
 
@@ -1716,12 +1551,8 @@ QString bridge::nunchukGetHealthCheckPath()
 bool bridge::nunchukExportUnspentOutputs(const QString &wallet_id, const QString &file_path, nunchuk::ExportFormat format)
 {
     QWarningMessage msg;
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return false;
-    }
     return nunchukiface::instance()->ExportUnspentOutputs(wallet_id.toStdString(),
-                                                          localPath.toStdString(),
+                                                          file_path.toStdString(),
                                                           format,
                                                           msg);
 }
@@ -1729,12 +1560,8 @@ bool bridge::nunchukExportUnspentOutputs(const QString &wallet_id, const QString
 bool bridge::nunchukExportTransactionHistory(const QString &wallet_id, const QString &file_path, nunchuk::ExportFormat format)
 {
     QWarningMessage msg;
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return false;
-    }
     return nunchukiface::instance()->ExportTransactionHistory(wallet_id.toStdString(),
-                                                              localPath.toStdString(),
+                                                              file_path.toStdString(),
                                                               format,
                                                               msg);
 }
@@ -1853,25 +1680,15 @@ void bridge::nunchukPromtPinOnDevice(const QDevicePtr &device, QWarningMessage &
 void bridge::nunchukSendPinToDevice(const QDevicePtr &device, const QString &pin, QWarningMessage &msg)
 {
     if(device.data()){
-        nunchukSendPinToDevice(device->originDevice(), pin, msg);
+        nunchukiface::instance()->SendPinToDevice(device->originDevice(), pin.toStdString(), msg);
     }
-}
-
-void bridge::nunchukSendPinToDevice(const nunchuk::Device &device, const QString &pin, QWarningMessage &msg)
-{
-    nunchukiface::instance()->SendPinToDevice(device, pin.toStdString(), msg);
 }
 
 void bridge::nunchukSendPassphraseToDevice(const QDevicePtr &device, const QString &passphrase, QWarningMessage &msg)
 {
     if(device.data()){
-        nunchukSendPassphraseToDevice(device->originDevice(), passphrase, msg);
+        nunchukiface::instance()->SendPassphraseToDevice(device->originDevice(), passphrase.toStdString(), msg);
     }
-}
-
-void bridge::nunchukSendPassphraseToDevice(const nunchuk::Device &device, const QString &passphrase, QWarningMessage &msg)
-{
-    nunchukiface::instance()->SendPassphraseToDevice(device, passphrase.toStdString(), msg);
 }
 
 void bridge::nunchukVerifySingleSigner(const QDevicePtr &device, const QSingleSignerPtr &signer, QWarningMessage &msg) {
@@ -1963,11 +1780,7 @@ QWalletPtr bridge::nunchukImportWalletConfigFile(const QString &file_path,
                                                  const QString &description,
                                                  QWarningMessage &msg)
 {
-    QString localPath;
-    if (!requireLocalPath(file_path, localPath, msg)) {
-        return {};
-    }
-    nunchuk::Wallet walletResult = nunchukiface::instance()->ImportWalletConfigFile(localPath.toStdString(),
+    nunchuk::Wallet walletResult = nunchukiface::instance()->ImportWalletConfigFile(file_path.toStdString(),
                                                                                     description.toStdString(),
                                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
@@ -2051,60 +1864,16 @@ void bridge::nunchukClearSignerPassphrase(const QString &mastersigner_id, QWarni
 
 QString bridge::hwiPath()
 {
-    QString path;
-    const bool isCustomPath =
-        AppSetting::instance()->enableCustomizeHWIDriver();
-    if(isCustomPath){
-        QString configuredPath = AppSetting::instance()->hwiPath();
-        // Accept an old/manual setting that wrapped the executable in quotes;
-        // quoting is applied exactly once after the path has been normalized.
-        if (configuredPath.size() >= 2 && configuredPath.startsWith('"') &&
-            configuredPath.endsWith('"') && !QFileInfo::exists(configuredPath)) {
-            configuredPath = configuredPath.mid(1, configuredPath.size() - 2);
-        }
-        path = qUtils::QGetFilePath(configuredPath);
+    // hwi path
+    QString hwiPath = "";
+    if(AppSetting::instance()->enableCustomizeHWIDriver()){
+        hwiPath = AppSetting::instance()->hwiPath();
     }
     else{
-        path = AppSetting::instance()->executePath() + "/hwi";
+        hwiPath = AppSetting::instance()->executePath() + "/hwi";
     }
-
-    if (path.isEmpty()) {
-        DBG_ERROR << "HWI executable path is empty";
-        return {};
-    }
-
-    const bool hasDirectorySeparator =
-        path.contains('/') || path.contains('\\');
-    if (isCustomPath && QDir::isRelativePath(path) &&
-        !hasDirectorySeparator) {
-        const QString executable = QStandardPaths::findExecutable(path);
-        if (!executable.isEmpty()) {
-            path = executable;
-        }
-    } else if (QDir::isRelativePath(path)) {
-        path = QDir(AppSetting::instance()->executePath()).absoluteFilePath(path);
-    }
-    path = QDir::cleanPath(path);
-
-#ifdef Q_OS_WIN
-    if (!QFileInfo::exists(path) && !path.endsWith(".exe", Qt::CaseInsensitive) &&
-        QFileInfo::exists(path + ".exe")) {
-        path += ".exe";
-    }
-#endif
-
-    const QFileInfo executableInfo(path);
-    if (!executableInfo.exists() || !executableInfo.isFile()) {
-        DBG_ERROR << "HWI executable does not exist:" << path;
-    }
-
-    DBG_INFO << "hwiPath:" << path;
-    return path;
-}
-
-QString bridge::hwiCommand()
-{
-    return quoteCommandExecutable(bridge::hwiPath());
+    DBG_INFO << "hwiPath: " << hwiPath;
+    return hwiPath;
 }
 
 
@@ -2320,47 +2089,40 @@ nunchuk::SingleSigner bridge::nunchukParseQRSigners(const QStringList &qr_data, 
     bool foundNetworkMatch = false;
     bool foundPurposeMatch = false;
     bool foundAccountMatch = false;
-    // BUGFIX (Setup 13cD): same gap as nunchukParseJSONSigners(..., account_index, ...) above -- invalid/
-    // unmatched QR content that yields zero parsed signers used to leave msg as NONE_MSG (looking like
-    // success) instead of failing explicitly.
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        if (signers.size() > 0) {
-            for (auto s : signers) {
-                int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
-                if (coinType == AppSetting::instance()->primaryServer()) {
-                    foundNetworkMatch = true;
-                    DBG_INFO << "coinType matched:" << coinType;
-                    int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
-                    if (purpose == 48) {
-                        foundPurposeMatch = true;
-                        DBG_INFO << "purpose matched:" << purpose;
-                        int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
-                        if (index == account_index) {
-                            foundAccountMatch = true;
-                            signer = s;
-                            DBG_INFO << "account_index matched:" << index;
-                            break;
-                        } else if (account_index == -1) {
-                            // If account_index is -1, return the first matching purpose and network
-                            foundAccountMatch = true;
-                            signer = s;
-                            DBG_INFO << "account_index matched any:" << index;
-                            break;
-                        }
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
+        for (auto s : signers) {
+            int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
+            if (coinType == AppSetting::instance()->primaryServer()) {
+                foundNetworkMatch = true;
+                DBG_INFO << "coinType matched:" << coinType;
+                int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
+                if (purpose == 48) {
+                    foundPurposeMatch = true;
+                    DBG_INFO << "purpose matched:" << purpose;
+                    int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
+                    if (index == account_index) {
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched:" << index;
+                        break;
+                    } else if (account_index == -1) {
+                        // If account_index is -1, return the first matching purpose and network
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched any:" << index;
+                        break;
                     }
                 }
             }
-            if (!foundNetworkMatch) {
-                msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
-            }
-            else if (!foundPurposeMatch) {
-                msg.setWarningMessage(-101, "No signer found with purpose m/48h'", EWARNING::WarningType::EXCEPTION_MSG);
-            }
-            else if (!foundAccountMatch) {
-                msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
-            }
-        } else {
-            msg.setWarningMessage(-100, "No signer found in QR", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        if (!foundNetworkMatch) {
+            msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundPurposeMatch) {
+            msg.setWarningMessage(-101, "No signer found with purpose m/48h'", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundAccountMatch) {
+            msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return signer;
@@ -2368,9 +2130,8 @@ nunchuk::SingleSigner bridge::nunchukParseQRSigners(const QStringList &qr_data, 
 
 QString bridge::loadJsonFile(const QString &filePathName)
 {
-    const QString localPath = qUtils::QGetFilePath(filePathName);
-    DBG_INFO << localPath;
-    QFile file(localPath);
+    DBG_INFO << filePathName;
+    QFile file(filePathName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return NULL;
     QTextStream in(&file);
@@ -2460,51 +2221,40 @@ nunchuk::SingleSigner bridge::nunchukParseJSONSigners(const QString &filePathNam
     bool foundPurposeMatch = false;
     bool foundAccountMatch = false;
     nunchuk::SingleSigner signer("","","","", {},"",0,"");
-    // BUGFIX (Setup 13cD): the error-setting logic below used to only run when signers.size() > 0, so a
-    // wrong-format/invalid file (e.g. a .bsms file fed in here instead of a Coldcard JSON export) that
-    // yields zero parsed signers left msg as NONE_MSG -- looking like success -- while returning this
-    // empty default signer. Callers compared that empty signer's descriptor as if it were a real result,
-    // which could read as "verified" instead of failing. Now always fails explicitly when nothing is found.
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        if (signers.size() > 0) {
-            for (auto s : signers) {
-                int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
-                if (coinType == AppSetting::instance()->primaryServer()) {
-                    foundNetworkMatch = true;
-                    DBG_INFO << "coinType matched:" << coinType;
-                    int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
-                    if (purpose == 48) {
-                        foundPurposeMatch = true;
-                        DBG_INFO << "purpose matched:" << purpose;
-                        int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
-                        if (index == account_index) {
-                            foundAccountMatch = true;
-                            signer = s;
-                            DBG_INFO << "account_index matched:" << index;
-                            break;
-                        } else if (account_index == -1) {
-                            // If account_index is -1, return the first matching purpose and network
-                            foundAccountMatch = true;
-                            signer = s;
-                            DBG_INFO << "account_index matched any:" << index;
-                            break;
-                        }
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
+        for (auto s : signers) {
+            int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
+            if (coinType == AppSetting::instance()->primaryServer()) {
+                foundNetworkMatch = true;
+                DBG_INFO << "coinType matched:" << coinType;
+                int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
+                if (purpose == 48) {
+                    foundPurposeMatch = true;
+                    DBG_INFO << "purpose matched:" << purpose;
+                    int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
+                    if (index == account_index) {
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched:" << index;
+                        break;
+                    } else if (account_index == -1) {
+                        // If account_index is -1, return the first matching purpose and network
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched any:" << index;
+                        break;
                     }
                 }
             }
-            if (!foundNetworkMatch) {
-                msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
-            }
-            // BUGFIX: this was a duplicate `!foundNetworkMatch` check, so a purpose mismatch never got
-            // reported and silently fell through to the account-index branch below.
-            else if (!foundPurposeMatch) {
-                msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
-            }
-            else if (!foundAccountMatch) {
-                msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
-            }
-        } else {
-            msg.setWarningMessage(-100, "No signer found in file", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        if (!foundNetworkMatch) {
+            msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundNetworkMatch) {
+            msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundAccountMatch) {
+            msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return signer;
@@ -3511,7 +3261,7 @@ QJsonArray bridge::makeExistingSigners(const nunchuk::AddressType& address_type,
         }
         list.append(signerObj);
     }
-    std::sort(list.begin(), list.end(),
+    qSort(list.begin(), list.end(),
               [](const QJsonObject &a, const QJsonObject &b) -> bool {
                   bool enabledA = a["single_signer_enabled"].toBool();
                   bool enabledB = b["single_signer_enabled"].toBool();

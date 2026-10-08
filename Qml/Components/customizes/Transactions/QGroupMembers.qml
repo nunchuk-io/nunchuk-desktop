@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import Qt5Compat.GraphicalEffects
-import QtQuick.Controls
+import QtQuick 2.4
+import QtGraphicalEffects 1.12
+import QtQuick.Controls 2.5
 import QRCodeItem 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
@@ -98,7 +98,7 @@ Popup {
                     anchors.fill: parent
                     model: dashboardInfo.memberSignatures
                     clip: true
-                    ScrollBar.vertical: QScrollBar { }
+                    ScrollBar.vertical: ScrollBar { active: true }
                     spacing: 16
                     delegate: QMemberDelegate {
                         width: ListView.view.width - 24

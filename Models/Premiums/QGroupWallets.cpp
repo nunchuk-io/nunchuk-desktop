@@ -485,17 +485,12 @@ void QGroupWallets::reset()
 
 void QGroupWallets::SyncAllSignerFromDraftWalletInfo()
 {
-    SyncGroupSignerFromDraftWalletInfo();
-    QUserWallets::instance()->GetDraftWallet();
-}
-
-void QGroupWallets::SyncGroupSignerFromDraftWalletInfo()
-{
     for (auto ptr : mPendingWallets) {
         if (ptr) {
             ptr->GetDraftWalletInfo();
         }
     }
+    QUserWallets::instance()->GetDraftWallet();
 }
 
 

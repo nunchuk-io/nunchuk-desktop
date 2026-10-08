@@ -17,9 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -60,7 +61,7 @@ Column {
             interactive: contentHeight > height
             flickableDirection: Flickable.VerticalFlick
             contentY : contentHeight > height ? contentHeight - height + 10 : 0
-            ScrollBar.vertical: QScrollBar { }
+            ScrollBar.vertical: ScrollBar { active: true }
             Flow {
                 id: flowemail
                 spacing: 6

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.0
+import QtGraphicalEffects 1.0
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -33,33 +33,17 @@ Flickable {
 
     property int globalCurrentIndex: 0
     property int totalCount: roomlist.count + groupwallets.count
-    property string pendingCreatedRoomId: ""
     signal itemClicked(var index)
     signal itemGroupWalletClick(var index)
-
-    function syncCurrentRoomSelection(forceMatrixRoom, expectedRoomId) {
-        var rooms = ClientController.rooms
-        if (!rooms || !rooms.currentRoom)
-            return false
-        if (expectedRoomId !== "" && rooms.currentRoom.roomid !== expectedRoomId)
-            return false
-
-        var roomIndex = rooms.getIndex(rooms.currentRoom.roomid)
-        if (roomIndex < 0)
-            return false
-        if (forceMatrixRoom || flickerRooms.globalCurrentIndex >= groupwallets.count)
-            flickerRooms.globalCurrentIndex = roomIndex + groupwallets.count
-        return true
-    }
 
     clip: true
     flickableDirection: Flickable.VerticalFlick
     interactive: true
     contentHeight: roomsDisplay.height
-    ScrollBar.vertical: QScrollBar { }
+    ScrollBar.vertical: ScrollBar { active: true }
     Column {
         id: roomsDisplay
-        width: parent.width - 8
+        width: parent.width
         QListView {
             id: groupwallets
             clip: true
@@ -85,7 +69,7 @@ Flickable {
         }
         Connections {
             target: AppModel.groupWalletList
-            function onRefreshWalletList() {
+            onRefreshWalletList: {
                 if (flickerRooms.globalCurrentIndex < groupwallets.count) {
                     var index = AppModel.groupWalletList.getWalletIndexById(AppModel.groupWalletList.currentWallet.walletId)
                     flickerRooms.globalCurrentIndex = index
@@ -109,8 +93,6 @@ Flickable {
                 isCurrentItem: (index + groupwallets.count) === flickerRooms.globalCurrentIndex
                 lasttimestamp: model.lasttimestamp
                 walletReady: model.wallet_ready
-                isAnySupportRoom: model.is_any_support
-                roomId: model.id
                 usersTyping: model.typing_users
                 lastmessage: model.last_message
                 isEncrypted: model.is_encrypted
@@ -123,25 +105,12 @@ Flickable {
         }
         Connections {
             target: ClientController.rooms
-            function onRoomCreationSucceeded(roomId) {
-                flickerRooms.pendingCreatedRoomId = roomId
-                if (flickerRooms.syncCurrentRoomSelection(true, roomId))
-                    flickerRooms.pendingCreatedRoomId = ""
-            }
-            function onRoomCreationFailed(error) {
-                flickerRooms.pendingCreatedRoomId = ""
-            }
-            function onCurrentRoomChanged() {
-                if (flickerRooms.pendingCreatedRoomId !== ""
-                        && flickerRooms.syncCurrentRoomSelection(
-                            true, flickerRooms.pendingCreatedRoomId)) {
-                    flickerRooms.pendingCreatedRoomId = ""
-                    return
+            onRefreshRoomList: {
+                if (flickerRooms.globalCurrentIndex >= groupwallets.count) {
+                    var index = ClientController.rooms.getIndex(ClientController.rooms.currentRoom.roomid)
+                    flickerRooms.globalCurrentIndex = index + groupwallets.count
+                    ClientController.rooms.currentIndex = index
                 }
-                flickerRooms.syncCurrentRoomSelection(false, "")
-            }
-            function onRefreshRoomList() {
-                flickerRooms.syncCurrentRoomSelection(false, "")
             }
         }
     }

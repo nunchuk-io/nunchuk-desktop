@@ -18,8 +18,8 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import DRACO_CODE 1.0
 import DataPool 1.0
 import EWARNING 1.0
@@ -28,7 +28,7 @@ import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.0
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Buttons"
@@ -57,8 +57,7 @@ Item {
             color: "#D0E2FF"
 
             QPicture {
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectFit
+                anchors.centerIn: parent
                 source: "qrc:/Images/Images/claim-inheritance-illustration.svg"
             }
 
@@ -66,7 +65,7 @@ Item {
 
         QMontserrat {
             id: title
-            text: QSTR.STR_QML_747
+            text: STR.STR_QML_747
             font.pixelSize: 32
             font.weight: Font.Medium
         }
@@ -89,7 +88,7 @@ Item {
                 spacing: 16
 
                 QText {
-                    text: QSTR.STR_QML_1987
+                    text: STR.STR_QML_1987
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 16
@@ -98,7 +97,7 @@ Item {
 
                 QTextInputBoxTypeB {
                     id: backupPassword
-                    label: QSTR.STR_QML_727
+                    label: STR.STR_QML_727
                     boxWidth: 537
                     boxHeight: 48
                     isValid: true
@@ -115,7 +114,7 @@ Item {
 
                 QTextInputBoxTypeB {
                     id: backupPassword_two
-                    label: QSTR.STR_QML_727_optinal
+                    label: STR.STR_QML_727_optinal
                     boxWidth: 537
                     boxHeight: 48
                     isValid: true
@@ -148,7 +147,7 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 2 * 16
                     height: 48
-                    label.text: QSTR.STR_QML_265
+                    label.text: STR.STR_QML_265
                     label.font.pixelSize: 16
                     type: eTypeE
                     enabled: vm.backupPwd !== ""

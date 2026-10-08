@@ -17,28 +17,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import "../../../Components/customizes/Texts"
 import "../../../Components/origins"
 
 Row {
     id: root
     width: parent.width
-    height: wrap ? Math.max(16, _innerRow.implicitHeight) : 16
+    height: 16
     spacing: 6
 
     // Properties
     property var buffer_period
     property bool buffer_period_changed: false
     property string buffer_apply_on: "FIRST_WITHDRAWAL"
-    property bool wrap: false
 
     function bufferPeriod()
     {
         var ret = ""
         if (!buffer_period || !buffer_period.id || buffer_period.id === "") {
-            ret = QSTR.STR_QML_2252
+            ret = STR.STR_QML_2252
         } else {
             ret = buffer_period.display_name
         }
@@ -52,7 +51,6 @@ Row {
     }
 
     QIcon {
-        id: _icon
         anchors.verticalCenter: parent.verticalCenter
         source: "qrc:/Images/Images/period.svg"
         width: 16
@@ -60,23 +58,19 @@ Row {
     }
 
     Row {
-        id: _innerRow
         spacing: 2
 
         QLato {
-            id: _lbl
-            text: QSTR.STR_QML_2173
+            text: STR.STR_QML_2173
             font.pixelSize: 12
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignLeft
         }
 
         QLato {
-            width: root.wrap ? (root.width - _icon.width - root.spacing - _lbl.implicitWidth - _innerRow.spacing) : implicitWidth
             text: bufferPeriod()
             color: buffer_period_changed ? "#CF4018" : "#031F2B"
             font.pixelSize: 12
-            wrapMode: root.wrap ? Text.WordWrap : Text.NoWrap
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignLeft
         }

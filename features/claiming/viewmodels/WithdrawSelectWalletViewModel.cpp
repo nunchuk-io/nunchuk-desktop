@@ -51,16 +51,12 @@ void WithdrawSelectWalletViewModel::createTransactionToWallet(const QString& wal
         }
         DBG_INFO << withdrawAddress;
     }
-    // BUGFIX: createTransactionToAddress() now clears destinationWalletId first (to avoid leaking a
-    // stale value into plain address withdrawals), so it must be called BEFORE re-setting it here,
-    // not after - createTransaction() inside it is async, so this still runs before the result
-    // callback reads destinationWalletId back in WidthdrawToAddressViewModel::proceedTransactionResult().
-    createTransactionToAddress(withdrawAddress);
     GUARD_FLOW_MANAGER()
     auto currentFlow = flowMng->currentFlow();
     auto claimingFlow = qobject_cast<ClaimingFlow*>(currentFlow);
     if (claimingFlow) {
         claimingFlow->setdestinationWalletId(wallet_id); // remember which wallet the user chose to receive the claim
+        createTransactionToAddress(withdrawAddress);
     }
 }
 

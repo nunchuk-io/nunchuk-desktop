@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.0
 import NUNCHUCKTYPE 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"

@@ -33,8 +33,9 @@ void SCR_SETUP_SECURITY_QUESTION_Exit(QVariant msg) {
 }
 
 void EVT_INPUT_SECURITY_QUESTION_REQUEST_HANDLER(QVariant msg) {
-    ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->submitSecurityQuestionUpdate(msg.toString());
+    ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->UpdateSecurityQuestionsRequiredSignatures();
 }
 
 void EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ_HANDLER(QVariant msg) {
 }
+

@@ -8,7 +8,6 @@
 #include "TypeDefine.h"
 #include <QTimeZone>
 #include "features/common/models/QWalletTimezoneModel.h"
-#include <functional>
 
 class ScriptNodeHelper : public QObject {
     Q_OBJECT
@@ -77,7 +76,7 @@ public:
 
 Miniscript:
     void convert(const nunchuk::Wallet w) override;
-    void convertToMiniscript(const nunchuk::Wallet &w, bool invalidateAsyncRequests = true);
+    void convertToMiniscript(const nunchuk::Wallet &w);
 
 CreateMiniscript:
     int newWalletN() const;
@@ -192,12 +191,6 @@ signals:
     void timeLockedChanged();
 
 private:
-    using SignerAddedCallback = std::function<void()>;
-
-    bool addMasterToWallet(SignerAddedCallback completion);
-    bool addRemoteToWallet(SignerAddedCallback completion);
-    bool addSignerToWallet(const QSingleSignerPtr &signer, SignerAddedCallback completion);
-
     QString m_customizeMiniscript {};
     int m_newWalletN {0};
     int m_newWalletM {0};
@@ -209,10 +202,6 @@ private:
     QJsonArray m_keypaths {}; // Keypath information for the wallet, if applicable
     QMap<QString, QSingleSignerPtr> m_signersMiniscript {}; // <key, Signers>
     QString m_keySelected {}; // Selected key for operations
-    quint64 m_signerStructureGeneration {0}; // Invalidates requests after wallet/template changes
-    QMap<QString, quint64> m_signerRequestGenerations; // Latest request per independent key group
-    QMap<QString, quint64> m_editBIP32RequestGenerations; // Active edit request owning the loading state
-    QString m_duplicateCheckKey; // Target captured before the delayed duplicate check
     QSingleSignerListModelPtr   m_signersKeyPath {nullptr}; // Model for keypath signers
     QWalletTimezoneModelPtr m_timezones; // Model for timezones
     QMap<QString, int> m_defaultKeys;

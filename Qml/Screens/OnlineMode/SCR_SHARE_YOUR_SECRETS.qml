@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -31,7 +31,6 @@ import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/services"
 import "../../Components/customizes/Popups"
-import "../../Components/RightPannel/Service/Common"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -88,12 +87,11 @@ QScreen {
                         height: 440
                         contentWidth: width
                         contentHeight: _colum.childrenRect.height
-                        ScrollBar.vertical: QScrollBar { }
+                        ScrollBar.vertical: ScrollBar { active: true }
                         clip: true
                         Column {
                             id: _colum
                             anchors.fill: parent
-                            anchors.rightMargin: 8
                             spacing: 16
                             QRadioButtonTypeF {
                                 width: 539
@@ -171,12 +169,11 @@ QScreen {
                         height: 440
                         contentWidth: width
                         contentHeight: _colum.childrenRect.height
-                        ScrollBar.vertical: QScrollBar { }
+                        ScrollBar.vertical: ScrollBar { active: true }
                         clip: true
                         Column {
                             id: _colum
                             anchors.fill: parent
-                            anchors.rightMargin: 8
                             spacing: 16
                             QRadioButtonTypeF {
                                 width: 539
@@ -243,23 +240,13 @@ QScreen {
         }
     }
 
-    // NUN-10192: "Learn more" targets from the Secret 2 bullets (Post 02D-05D). Independent, not chained
-    // like the View Plan card's combined flow, since each bullet has its own link.
-    QPopupTheBackupPassword {
-        id: _BackupPassword
-        isFinalStep: true
-    }
-    QPopupTheSeedPhraseBackup {
-        id: _SeedPhraseBackup
-    }
-
     Component {
         id: _directInheritance
         QOnScreenContentTypeB {
             width: popupWidth
             height: popupHeight
             anchors.centerIn: parent
-            label.text: STR.STR_QML_847
+            label.text: STR.STR_QML_881
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             content: Item {
                 Row {
@@ -270,26 +257,17 @@ QScreen {
                         radius: 24
                         color: "#D0E2FF"
                         QPicture {
-                            width: _details.illustrationWidth
-                            height: _details.illustrationHeight
+                            width: 153
+                            height: 214
                             anchors.centerIn: parent
-                            source: _details.illustrationSource
+                            source: "qrc:/Images/Images/inheritance_backup_password.svg"
                         }
                     }
                     QInheritanceDetailsOffChain {
-                        id: _details
                         width: 346
                         height: 512
                         title: STR.STR_QML_887
-                        shareMode: 0
-                        onLearnMoreClicked: function(kind) {
-                            if (kind === "backup") {
-                                _BackupPassword.open()
-                            } else {
-                                _SeedPhraseBackup.isJointVariant = false
-                                _SeedPhraseBackup.open()
-                            }
-                        }
+                        warning: STR.STR_QML_890
                     }
                 }
             }
@@ -304,11 +282,7 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_UPDATE_YOUR_SECRET_REQUEST)
                 }
             }
-            bottomLeft: QButtonTextLink {
-                height: 48
-                label: STR.STR_QML_079
-                onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            }
+            bottomLeft: Item {}
             onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onNextClicked: {
                 inheritancePlanInfo.secret = selectedOption
@@ -430,7 +404,7 @@ QScreen {
             width: popupWidth
             height: popupHeight
             anchors.centerIn: parent
-            label.text: STR.STR_QML_847
+            label.text: STR.STR_QML_883
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             content: Item {
                 Row {
@@ -441,26 +415,17 @@ QScreen {
                         radius: 24
                         color: "#D0E2FF"
                         QPicture {
-                            width: _details.illustrationWidth
-                            height: _details.illustrationHeight
+                            width: 153
+                            height: 214
                             anchors.centerIn: parent
-                            source: _details.illustrationSource
+                            source: "qrc:/Images/Images/inheritance_backup_password.svg"
                         }
                     }
                     QInheritanceDetailsOffChain {
-                        id: _details
                         width: 346
                         height: 512
                         title: STR.STR_QML_891
-                        shareMode: 1
-                        onLearnMoreClicked: function(kind) {
-                            if (kind === "backup") {
-                                _BackupPassword.open()
-                            } else {
-                                _SeedPhraseBackup.isJointVariant = false
-                                _SeedPhraseBackup.open()
-                            }
-                        }
+                        warning: STR.STR_QML_893
                     }
                 }
             }
@@ -475,11 +440,7 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_UPDATE_YOUR_SECRET_REQUEST)
                 }
             }
-            bottomLeft: QButtonTextLink {
-                height: 48
-                label: STR.STR_QML_079
-                onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            }
+            bottomLeft: Item {}
             onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onNextClicked: {
                 inheritancePlanInfo.secret = selectedOption
@@ -600,7 +561,7 @@ QScreen {
             width: popupWidth
             height: popupHeight
             anchors.centerIn: parent
-            label.text: STR.STR_QML_847
+            label.text: STR.STR_QML_885
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             content: Item {
                 Row {
@@ -611,26 +572,17 @@ QScreen {
                         radius: 24
                         color: "#D0E2FF"
                         QPicture {
-                            width: _details.illustrationWidth
-                            height: _details.illustrationHeight
+                            width: 153
+                            height: 214
                             anchors.centerIn: parent
-                            source: _details.illustrationSource
+                            source: "qrc:/Images/Images/inheritance_backup_password.svg"
                         }
                     }
                     QInheritanceDetailsOffChain {
-                        id: _details
                         width: 346
                         height: 512
                         title: STR.STR_QML_892
-                        shareMode: 2
-                        onLearnMoreClicked: function(kind) {
-                            if (kind === "backup") {
-                                _BackupPassword.open()
-                            } else {
-                                _SeedPhraseBackup.isJointVariant = true
-                                _SeedPhraseBackup.open()
-                            }
-                        }
+                        warning: STR.STR_QML_894
                     }
                 }
             }
@@ -645,11 +597,7 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_UPDATE_YOUR_SECRET_REQUEST)
                 }
             }
-            bottomLeft: QButtonTextLink {
-                height: 48
-                label: STR.STR_QML_079
-                onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            }
+            bottomLeft: Item {}
             onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onNextClicked: {
                 inheritancePlanInfo.secret = selectedOption

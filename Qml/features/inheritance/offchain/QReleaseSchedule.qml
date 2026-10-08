@@ -1,6 +1,6 @@
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -22,7 +22,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: QSTR.STR_QML_2151
+    label.text: STR.STR_QML_2151
     extraHeader: Item {}
     
     onCloseClicked: vm.close()
@@ -42,7 +42,7 @@ QOnScreenContentTypeA {
                 
                 QLato {
                     id: descText
-                    text: QSTR.STR_QML_2178
+                    text: STR.STR_QML_2178
                     font.pixelSize: 16
                     wrapMode: Text.WordWrap
                     lineHeight: 20
@@ -67,11 +67,11 @@ QOnScreenContentTypeA {
                         height: parent.height
                         contentHeight: stagesColumn.height
                         clip: true
-                        ScrollBar.vertical: QScrollBar { }
-
+                        ScrollBar.vertical: ScrollBar { active: true }
+                        
                         Column {
                             id: stagesColumn
-                            width: parent.width - 8  // leave room for QScrollBar (8px)
+                            width: parent.width
                             spacing: 0
                             
                             Repeater {
@@ -107,15 +107,13 @@ QOnScreenContentTypeA {
                     width: 346
                     spacing: 10                   
                     Rectangle {
-                        id: _bufferRect
                         width: 346
-                        height: Math.max(48, _bpRow.height + 16)
+                        height: 48
                         color: "#F5F5F5"
                         radius: 12
                         QBufferPeriodRow {
-                            id: _bpRow
-                            width: parent.width - 12 - 12 - _editBtn.width - 4
-                            wrap: true
+                            width: 346
+                            height: 16
                             buffer_period: vm.buffer_period
                             buffer_apply_on: vm.buffer_apply_on
                             anchors {
@@ -125,15 +123,14 @@ QOnScreenContentTypeA {
                             }
                         }
                         QTextLink {
-                            id: _editBtn
                             width: 29
                             height: 20
                             anchors {
                                 right: parent.right
                                 rightMargin: 12
-                                top: _bpRow.top
+                                verticalCenter: parent.verticalCenter
                             }
-                            text: QSTR.STR_QML_849
+                            text: STR.STR_QML_849
                             color: "#031F2B"
                             onTextClicked: {
                                 vm.onBufferPeriodonClicked()
@@ -158,7 +155,7 @@ QOnScreenContentTypeA {
                                     spacing: 0
                                     
                                     QLato {
-                                        text: QSTR.STR_QML_2179 + ": "
+                                        text: STR.STR_QML_2179 + ": "
                                         font.pixelSize: 12
                                         font.weight: Font.Bold
                                     }
@@ -191,7 +188,7 @@ QOnScreenContentTypeA {
                                 height: 16
                                 color: "#CF4018"
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: QSTR.STR_QML_2221.arg(100)
+                                text: STR.STR_QML_2221.arg(100)
                                 horizontalAlignment: Text.AlignLeft
                                 verticalAlignment: Text.AlignVCenter
                             }
@@ -206,7 +203,7 @@ QOnScreenContentTypeA {
         QButtonTextLink {
             width: 97
             height: 48
-            label: QSTR.STR_QML_059
+            label: STR.STR_QML_059
             visible: (vm.beneficiary_mode === "MULTIPLE" && vm.release_method === "INDIVIDUAL")
             onButtonClicked: {
                 vm.back()
@@ -216,7 +213,7 @@ QOnScreenContentTypeA {
             width: 100
             height: 48
             visible: vm.beneficiary_mode === "SINGLE" || (vm.beneficiary_mode === "MULTIPLE" && vm.release_method === "SHARED")
-            label.text: QSTR.STR_QML_245
+            label.text: STR.STR_QML_245
             label.font.pixelSize: 14
             type: eTypeF
             onButtonClicked: vm.close()
@@ -227,7 +224,7 @@ QOnScreenContentTypeA {
         QIconTextButton {
             width: 133
             height: 48
-            label: QSTR.STR_QML_2204
+            label: STR.STR_QML_2204
             icons: ["add-dark.svg", "add-dark.svg", "add-dark.svg","add-dark.svg"]
             fontPixelSize: 16
             iconSize: 16
@@ -241,7 +238,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: 66
             height: 48
-            label.text: QSTR.STR_QML_835
+            label.text: STR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
             enabled: vm.totalPercentage == 100

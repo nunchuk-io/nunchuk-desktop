@@ -72,19 +72,17 @@ void AddHardwareExistingKeyViewModel::onTakeMeAddNewKeyClicked() {
     GUARD_SUB_SCREEN_MANAGER()
     switch (static_cast<SignerKeyType>(keyType()))
     {
-    case SignerKeyType::ColdcardHW:
+    case SignerKeyType::ColdcardHW:        
         subMng->show(qml::features::signers::qcoldcardrefreshdevices);
         break;
     case SignerKeyType::TrezorHW:
+       break;
     case SignerKeyType::LedgerHW:
+       break;
     case SignerKeyType::JadeHW:
+       break;
     case SignerKeyType::BitBoxHW:
-        // Generic wired USB flow shared by these four vendors (HardwareRefreshDevicesViewModel
-        // already branches on hardwareTag() and on FeatureOption::ClaimOffChain).
-        // BUGFIX: qhardwarerefreshdevices is content-only (no chrome, no "vm" of its own) - show
-        // the wrapped screen instead, same fix as WhichTypeOfKeySelectionViewModel::continueOffChain.
-        subMng->show(qml::features::signers::qhardwarerefreshdevicesscreen);
-        break;
+      break;
     default:
         break;
     }

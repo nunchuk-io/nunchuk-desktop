@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.0
 import "../../origins"
 
 QSvgImage {

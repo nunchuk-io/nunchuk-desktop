@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.0
+import QtGraphicalEffects 1.0
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -74,13 +74,13 @@ Column {
         width: _walletConfig.width
         height: 200
         flickableDirection: Flickable.VerticalFlick
-        ScrollBar.vertical: QScrollBar { }
+        ScrollBar.vertical: ScrollBar { active: true }
         contentHeight: _colWalletConfig.childrenRect.height + 50
         contentWidth: _walletConfig.width
         clip: true
         Column {
             id: _colWalletConfig
-            width: _walletConfig.width - 8
+            width: _walletConfig.width
             spacing: 8
             Repeater {
                 id: repeater

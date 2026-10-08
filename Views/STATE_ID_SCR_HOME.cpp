@@ -64,25 +64,12 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
     QString type = maps["type"].toString();
     QString group_id = maps["group_id"].toString();
     QString wallet_id = maps["wallet_id"].toString();
-    const auto resolveWalletIndex = [&maps, &wallet_id]() {
-        const int fallbackIndex = maps.value("data", -1).toInt();
-        if (wallet_id.isEmpty()) {
-            return fallbackIndex; // Backward compatibility for legacy senders.
-        }
-        auto *walletList = AppModel::instance()->walletList();
-        if (!walletList || !walletList->containsId(wallet_id)) {
-            return -1;
-        }
-        return walletList->getWalletIndexById(wallet_id);
-    };
     DBG_INFO << type << "group:" << group_id;
     if (qUtils::strCompare(type, "selected")) {
-        const int index = resolveWalletIndex();
-        if (index < 0) {
-            DBG_WARN << "Ignoring stale wallet selection";
-            return;
+        int index = maps["data"].toInt();
+        if (index >= 0) {
+            AppModel::instance()->setWalletListCurrentIndex(index);
         }
-        AppModel::instance()->setWalletListCurrentIndex(index);
         QString myRole = AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->dashboard()
                              ? AppModel::instance()->walletInfo()->dashboard()->myRole()
                              : "";
@@ -105,13 +92,11 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
         QGroupWallets::instance()->dashboard(group_id, wallet_id);
     } else if (qUtils::strCompare(type, "wallet_dashboard")) {
         DBG_INFO << "Go to wallet dashboard directly" << group_id << wallet_id;
-        const int index = resolveWalletIndex();
-        if (index < 0) {
-            DBG_WARN << "Ignoring stale wallet dashboard selection";
-            return;
-        }
         QGroupWallets::instance()->dashboard(group_id, wallet_id);
-        AppModel::instance()->setWalletListCurrentIndex(index);
+        int index = maps["data"].toInt();
+        if (index >= 0) {
+            AppModel::instance()->setWalletListCurrentIndex(index);
+        }
     } else if (qUtils::strCompare(type, "deny")) {
         QGroupWallets::instance()->deny(group_id);
     } else if (qUtils::strCompare(type, "accept")) {

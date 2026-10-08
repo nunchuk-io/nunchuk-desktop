@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import "../../../Components/customizes/Texts"
 import "../../../Components/origins"
 
@@ -43,7 +43,7 @@ Row {
         spacing: 2
 
         QLato {
-            text: QSTR.STR_QML_2172
+            text: STR.STR_QML_2172
             font.pixelSize: 12
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignLeft

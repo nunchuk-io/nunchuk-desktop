@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.4
 
 QtObject {
     property var master_id

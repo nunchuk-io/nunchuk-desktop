@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -103,7 +103,7 @@ QOnScreenContentTypeA {
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
                 othersContextMenu.x = 20
-                othersContextMenu.y = 20 - othersContextMenu.implicitHeight
+                othersContextMenu.y = 20 - othersContextMenu.height
                 othersContextMenu.open()
             }
             QMultiContextMenu {
@@ -119,13 +119,6 @@ QOnScreenContentTypeA {
                     }
                 }
                 property bool isCanDeleted: !walletInfo.isAssistedWallet || isAssisted
-                // isAssistedWallet becomes false after replacement, so retain the
-                // underlying assisted-account identity through the service type.
-                property bool isAssistedAccount: walletInfo.isUserWallet || walletInfo.isGroupWallet
-                property bool canToggleArchive: walletInfo.isArchived
-                                                || !isAssistedAccount
-                                                || ((walletInfo.isReplaced || walletInfo.isLocked)
-                                                    && walletInfo.walletBalanceSats === 0)
                 property bool isPrimaryOwner: (myRole === "MASTER" || myRole === "ADMIN") && (walletInfo.ownerMembers.length > 0)
                 menuWidth: 300
                 property var exportMenu: [
@@ -312,19 +305,16 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: canToggleArchive,
+                        visible: !walletInfo.isAssistedWallet,
                         label: (walletInfo.isArchived ? STR.STR_QML_1728 : STR.STR_QML_1727),
                         icon: (walletInfo.isArchived ? "qrc:/Images/Images/Archived1.png" : "qrc:/Images/Images/Archived2.png"),
                         iconRight: "",
                         color: "#031F2B",
-                        enable: canToggleArchive,
+                        enable: !walletInfo.isAssistedWallet,
                         subMenu: null,
                         action: function(){
-                            if (!canToggleArchive) {
-                                return
-                            }
                             othersContextMenu.close()
-                            walletInfo.handleArchiveWallet()
+                            walletInfo.isArchived = !walletInfo.isArchived
                         }
                     },
                     {
@@ -362,7 +352,7 @@ QOnScreenContentTypeA {
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
                 exportContextMenu.x = 20
-                exportContextMenu.y = 20 - exportContextMenu.implicitHeight
+                exportContextMenu.y = 20 - exportContextMenu.height
                 exportContextMenu.open()
             }
 
@@ -484,15 +474,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        // NOTE: "To BitBox" temporarily hidden - not supported yet.
-                        // The action below references `displayAddressBusybox`,
-                        // which is not declared in this component's scope (it only
-                        // exists as a sibling id in SCR_WALLET_INFO.qml, and QML id
-                        // scope does not cross component boundaries), so clicking
-                        // this used to throw a ReferenceError and do nothing.
-                        // Re-enable only after the actual BitBox export/registration
-                        // flow is implemented and wired up correctly.
-                        visible: false,
+                        visible: walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT,
                         label: STR.STR_QML_1749, // To BitBox
                         icon: "",
                         iconRight: "",

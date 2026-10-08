@@ -405,7 +405,7 @@ QVariant MasterSignerListModel::data(const QModelIndex &index, int role) const {
     case master_signer_name_Role:
         return d_[index.row()]->name();
     case master_signer_device_Role:
-        return QVariant::fromValue((QDevice *)d_[index.row()]->device());
+        return qVariantFromValue((QDevice *)d_[index.row()]->device());
     case master_signer_checked_Role:
         return d_[index.row()]->checked();
     case master_signer_fingerPrint_Role:
@@ -670,9 +670,9 @@ void MasterSignerListModel::requestSort(int role, int order) {
         switch (role) {
         case master_signer_name_Role: {
             if (Qt::DescendingOrder == order) {
-                std::sort(d_.begin(), d_.end(), sortMasterSignerByNameDescending);
+                qSort(d_.begin(), d_.end(), sortMasterSignerByNameDescending);
             } else {
-                std::sort(d_.begin(), d_.end(), sortMasterSignerByNameAscending);
+                qSort(d_.begin(), d_.end(), sortMasterSignerByNameAscending);
             }
         } break;
         default:

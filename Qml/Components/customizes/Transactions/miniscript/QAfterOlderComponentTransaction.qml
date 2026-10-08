@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -35,7 +35,6 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Item {
     property bool hasUnlocked: miniscript.hasUnlocked !== undefined ? miniscript.hasUnlocked : false
-    property string description: getDescription()
 
     QAfterOlderComponent {
         id: baseCommon
@@ -47,34 +46,15 @@ Item {
     Loader {
         id: actionLoader
         anchors {
+            top: parent.top
+            topMargin: 8
             right: parent.right
             rightMargin: 12
+            verticalCenter: parent.verticalCenter
         }
         height: 36
         visible: miniscript.type ===  ScriptNodeHelper.Type.OLDER || miniscript.type ===  ScriptNodeHelper.Type.AFTER
         sourceComponent: lock
-        states: [
-            State {
-                when: description === ""
-                AnchorChanges {
-                    target: actionLoader
-                    anchors.top: parent.top
-                    anchors.verticalCenter: undefined
-                }
-                PropertyChanges {
-                    target: actionLoader
-                    anchors.topMargin: 0
-                }
-            },
-            State {
-                when: description !== ""
-                AnchorChanges {
-                    target: actionLoader
-                    anchors.top: undefined
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-        ]
     }
     
     Component {

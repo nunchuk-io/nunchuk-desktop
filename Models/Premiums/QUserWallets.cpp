@@ -30,19 +30,9 @@ QUserWallets *QUserWallets::instance()
 void QUserWallets::GetDraftWallet()
 {
     QJsonObject output;
-    QString errorMessage;
-    const bool fetched = FetchDraftWallet(output, errorMessage);
-    ApplyDraftWallet(fetched, output);
-}
-
-bool QUserWallets::FetchDraftWallet(QJsonObject &output, QString &errorMessage)
-{
-    return Draco::instance()->DraftWalletGetCurrent(output, errorMessage);
-}
-
-void QUserWallets::ApplyDraftWallet(bool fetched, const QJsonObject &output)
-{
-    if (fetched) {
+    QString error_msg = "";
+    bool ret = Draco::instance()->DraftWalletGetCurrent(output, error_msg);
+    if (ret) {
         QJsonObject draft_wallet = output["draft_wallet"].toObject();
         if (draft_wallet.isEmpty()) {
             mDashboard.clear();

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
+import QtQuick 2.12
 import QRCodeItem 1.0
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.0
 
 Rectangle {
     property int iconSize: 48

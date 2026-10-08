@@ -1,7 +1,7 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.12
+import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.12
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -43,7 +43,7 @@ QOnScreenContentTypeB {
                 
                 QLato {
                     id: descText
-                    text: QSTR.STR_QML_2178
+                    text: STR.STR_QML_2178
                     font.pixelSize: 16
                     wrapMode: Text.WordWrap
                     lineHeight: 20
@@ -68,11 +68,11 @@ QOnScreenContentTypeB {
                         height: parent.height
                         contentHeight: stagesColumn.height
                         clip: true
-                        ScrollBar.vertical: QScrollBar { }
-
+                        ScrollBar.vertical: ScrollBar { active: true }
+                        
                         Column {
                             id: stagesColumn
-                            width: parent.width - 8  // leave room for QScrollBar (8px)
+                            width: parent.width
                             spacing: 0
                             
                             Repeater {
@@ -122,7 +122,7 @@ QOnScreenContentTypeB {
                                 spacing: 0
                                 
                                 QLato {
-                                    text: QSTR.STR_QML_2179 + ": "
+                                    text: STR.STR_QML_2179 + ": "
                                     font.pixelSize: 12
                                     font.weight: Font.Bold
                                 }
@@ -156,7 +156,7 @@ QOnScreenContentTypeB {
                             height: 16
                             color: "#CF4018"
                             anchors.verticalCenter: parent.verticalCenter
-                            text: QSTR.STR_QML_2221.arg(100)
+                            text: STR.STR_QML_2221.arg(100)
                             horizontalAlignment: Text.AlignLeft
                             verticalAlignment: Text.AlignVCenter
                         }
@@ -171,7 +171,7 @@ QOnScreenContentTypeB {
         QIconTextButton {
             width: 133
             height: 48
-            label: QSTR.STR_QML_2204
+            label: STR.STR_QML_2204
             icons: ["add-dark.svg", "add-dark.svg", "add-dark.svg","add-dark.svg"]
             fontPixelSize: 16
             iconSize: 16
@@ -185,7 +185,7 @@ QOnScreenContentTypeB {
         QTextButton {
             width: 100
             height: 48
-            label.text: QSTR.STR_QML_097
+            label.text: STR.STR_QML_097
             label.font.pixelSize: 14
             type: eTypeE
             enabled: vm.totalPercentage == 100

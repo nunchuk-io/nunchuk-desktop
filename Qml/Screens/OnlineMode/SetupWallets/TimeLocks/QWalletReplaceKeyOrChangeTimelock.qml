@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.3
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import HMIEVENTS 1.0
@@ -128,10 +128,10 @@ QOnScreenContentTypeB {
                     anchors.fill: parent
                     contentHeight: _contentColumn.height
                     clip: true
-                    ScrollBar.vertical: QScrollBar { }
+                    ScrollBar.vertical: ScrollBar { active: true }
                     Column {
                         id: _contentColumn
-                        width: parent.width - 8  // leave room for QScrollBar (8px) — was 346
+                        width: 346
                         spacing: 4
                         QLato {
                             width: parent.width
@@ -150,8 +150,8 @@ QOnScreenContentTypeB {
                                 id: signers
                                 model: dashInfo.replaceKeys
                                 QReplaceRequestKey {
-                                    width: parent.width  // = _contentColumn.width - 8 = 338
-                                    onInheritanceKeyClicked: {
+                                    width: 346
+                                    onTapsignerClicked: {
                                         dashInfo.startReplaceKeyAtIndex(index)
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {
@@ -167,9 +167,7 @@ QOnScreenContentTypeB {
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {
                                             _hardwareAddKey.key_index = modelData.key_index
-                                            // BUGFIX: was hardcoded false; any hardware slot can now be an
-                                            // inheritance key per backend is_inheritance, so read it from modelData.
-                                            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
+                                            _hardwareAddKey.isInheritance = false
                                             _hardwareAddKey.open()
                                         } else {
                                             GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
@@ -181,34 +179,19 @@ QOnScreenContentTypeB {
                                         _info.open()
                                     }
                                     onBackupClicked: {
-                                        // BUGFIX (NUN-10192): Replace Key now routes by claim_options like Add Key.
-                                        // startReplaceKeyAtIndex() moved to the top - must set currentSigner
-                                        // before requestSetClaimOptions/requestVerifyX read it.
-                                        // BUGFIX: single-option keys (seed-only/encrypted-only) used to skip
-                                        // straight into their own flow; now every configured key (1 or 2
-                                        // options) always goes through the Verify-your-backups checklist
-                                        // (Setup 12c), which shows only the row(s) matching claim_options and
-                                        // picks startFlow()/startVerifyOnly() itself based on upload state.
-                                        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
-                                        // (MULTI_SIG) concept only; must never route a MINISCRIPT key into
-                                        // the off-chain screens even if claim_options is ever non-empty.
-                                        dashInfo.startReplaceKeyAtIndex(index)
-                                        if (modelData.wallet_type === "MULTI_SIG") {
-                                            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
-                                            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                                            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                                            if (hasSeed || hasEncrypted) {
-                                                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
-                                            } else {
-                                                // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
-                                                // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
-                                                _changeDistribution.hwType = modelData.hwType
-                                                _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                        if(modelData.wallet_type === "MULTI_SIG") {
+                                            _importColdcardBackup.xfp = modelData.xfp
+                                            _importColdcardBackup.open()
+                                            var _input = {
+                                                type: "open-import-encrypted-backup",
+                                                fingerPrint: modelData.xfp,
                                             }
+                                            dashInfo.requestBackupColdcard(_input)
                                         } else {
                                             GroupWallet.qAddHardware = modelData.hwType
                                             _backupSeedPhraseFlow.startFlow()
                                         }
+                                        dashInfo.startReplaceKeyAtIndex(index)
                                     }
                                 }
                             }
@@ -255,7 +238,7 @@ QOnScreenContentTypeB {
                                 Column {
                                     spacing: 4
                                     QDashRectangle {
-                                        width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
+                                        width: 346
                                         height: 72
                                         radius: 8
                                         isDashed: false
@@ -336,7 +319,7 @@ QOnScreenContentTypeB {
                                 Column {
                                     spacing: 4
                                     QDashRectangle {
-                                        width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
+                                        width: 346
                                         height: 72
                                         radius: 8
                                         isDashed: false
@@ -470,60 +453,6 @@ QOnScreenContentTypeB {
 
     QBackupSeedPhraseFlow {
         id: _backupSeedPhraseFlow
-    }
-    QEncryptedBackupFlow {
-        id: _encryptedBackupFlow
-    }
-    QVerifyBothBackups {
-        id: _verifyBothBackups
-        onChangeShareMethod: {
-            // Same as QWalletCreationPendingOnchainRead.qml: reopen Key Distribution Choice, no dead-end.
-            var idx = findReplaceKeyIndexByXfp(_verifyBothBackups.xfp)
-            if (idx < 0) return
-            _changeDistribution.hwType = dashInfo.replaceKeys[idx].hwType
-            _changeDistribution.openFor(_verifyBothBackups.xfp, _verifyBothBackups.signerTag)
-        }
-    }
-    function findReplaceKeyIndexByXfp(xfp) {
-        var keys = dashInfo.replaceKeys
-        for (var i = 0; i < keys.length; i++) {
-            if (keys[i].xfp === xfp) return i
-        }
-        return -1
-    }
-    QPopupOverlayScreen {
-        id: _changeDistribution
-        property string xfp: ""
-        property string signerTag: ""
-        property int hwType: -1
-        content: _changeDistributionComp
-        Component {
-            id: _changeDistributionComp
-            QKeyDistributionChoice {
-                onDistributionChosen: function(claimOptions) {
-                    var idx = findReplaceKeyIndexByXfp(_changeDistribution.xfp)
-                    if (idx < 0) { _changeDistribution.close(); return }
-                    dashInfo.startReplaceKeyAtIndex(idx)
-                    if (!(GroupWallet.qIsByzantine ? GroupWallet : UserWallet).requestSetClaimOptions(claimOptions)) {
-                        return
-                    }
-                    GroupWallet.refresh()
-                    _changeDistribution.close()
-                    // BUGFIX: always go through the Verify-your-backups checklist (Setup 12c), same as onBackupClicked.
-                    var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                    var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                    if (hasSeed || hasEncrypted) {
-                        _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag, claimOptions)
-                    }
-                }
-            }
-        }
-        function openFor(keyXfp, tag) {
-            xfp = keyXfp
-            signerTag = tag
-            open()
-            if (itemInfo) itemInfo.refresh(tag)
-        }
     }
 
     ReplaceKeyOrChangeTimelockViewModel {

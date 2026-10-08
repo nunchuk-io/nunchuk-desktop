@@ -18,8 +18,8 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.0
 import DRACO_CODE 1.0
 import DataPool 1.0
 import EWARNING 1.0
@@ -28,7 +28,7 @@ import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.0
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Buttons"
@@ -38,10 +38,13 @@ import "./../../../customizes/Texts"
 Item {
     Column {
         id: _claim
+        anchors.fill: parent
         spacing: 24
+
         anchors {
-            fill: parent
+            left: parent.left
             leftMargin: 24
+            top: parent.top
             topMargin: 24
         }
 
@@ -54,8 +57,7 @@ Item {
             color: "#D0E2FF"
 
             QPicture {
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectFit
+                anchors.centerIn: parent
                 source: "qrc:/Images/Images/claim-inheritance-illustration.svg"
             }
 
@@ -63,7 +65,7 @@ Item {
 
         QMontserrat {
             id: title
-            text: QSTR.STR_QML_747
+            text: STR.STR_QML_747
             font.pixelSize: 32
             font.weight: Font.Medium
         }
@@ -123,7 +125,7 @@ Item {
                 spacing: 16
 
                 QText {
-                    text: QSTR.STR_QML_2062
+                    text: STR.STR_QML_2062
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 16
@@ -133,7 +135,7 @@ Item {
                 QTextInputBoxTypeB {
                     id: magicPhrase
 
-                    label: QSTR.STR_QML_749
+                    label: STR.STR_QML_749
                     boxWidth: 537
                     boxHeight: 48
                     isValid: true
@@ -263,7 +265,9 @@ Item {
                                 model: modelSearch
                                 clip: true
 
-                                ScrollBar.vertical: QScrollBar {}
+                                ScrollBar.vertical: ScrollBar {
+                                    active: true
+                                }
 
                                 delegate: Rectangle {
                                     property bool shown: textsuggest.visible
@@ -321,11 +325,9 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 2 * 16
                     height: 48
-                    label.text: QSTR.STR_QML_265
+                    label.text: STR.STR_QML_265
                     label.font.pixelSize: 16
                     type: eTypeE
-                    // Disable Continue while the magic phrase box is empty.
-                    enabled: magicPhrase.textInputted.trim().length > 0
                     onButtonClicked: {
                         vm.claimInit(magicPhrase.textInputted);
                     }

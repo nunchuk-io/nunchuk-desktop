@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -35,7 +37,7 @@ QPopup {
     height: parent.height
     signal confirmSave()
     signal confirmCancel()
-    readonly property int maxGapLimit: 200
+    readonly property int maxGapLimit: ClientController.user.isSubscribedUser ? 2000 : 100
     content: Item {
         id: boxmask
         width: 300
@@ -97,7 +99,7 @@ QPopup {
                     type: eTypeE
                     onButtonClicked: {
                         if (parseInt(inputGapLimit.textInputted) > maxGapLimit) {
-                            inputGapLimit.errorText = STR.STR_QML_834
+                            inputGapLimit.errorText = STR.STR_QML_834.arg(maxGapLimit)
                             inputGapLimit.isValid = false
                             inputGapLimit.showError = true;
                         } else {

@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.0
 import "../../../../Components/origins"
 import "../../../../Components/customizes/Texts"
 import "../../../../../localization/STR_QML.js" as STR

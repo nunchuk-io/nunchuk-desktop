@@ -10,9 +10,6 @@
 #include "ViewsEnums.h"
 #include "nunchuckiface.h"
 #include "Signers/QSignerManagement.h"
-#include "app/AppContext.h"
-#include "core/screen/RightPanelNavigator.h"
-#include "generated_qml_keys.hpp"
 
 ServiceSetting::ServiceSetting(QObject *parent) : QStateFlow(), walletInfo_(QWalletPtr(new Wallet())) {}
 
@@ -56,24 +53,6 @@ int ServiceSetting::optionIndex() const {
 }
 
 void ServiceSetting::setOptionIndex(int index) {
-    // BUGFIX: every sidebar/CTA path into "Claim an inheritance" sets optionIndex through this one
-    // setter, so this is the single safe place to detect a fresh entry - unlike register/unregister on
-    // the claim screen's host object, which also fires on incidental Loader rebuilds unrelated to user
-    // action (see core::screen::RightPanelNavigator). Checked BEFORE the no-op guard below: optionIndex
-    // normally never leaves this value for the whole claim session (entry screen through terminal
-    // result), so re-clicking "Claim an inheritance" after finishing one is usually a same-value call
-    // that guard would otherwise swallow before this ever runs - and since the QServiceClaimAnInheritance
-    // host stays mounted in that case (no property change -> no Loader rebuild), only an immediate
-    // request() here (not just clearing bookkeeping) actually re-syncs the still-visible screen.
-    if (index == OPTION_CLAIM_AN_INHERITANCE) {
-        if (auto *rightPanel = app::AppContext::instance()->rightPanelNavigator()) {
-            if (rightPanel->isTerminalScreen()) {
-                rightPanel->reset();
-                rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritanceinputmagicphrase);
-            }
-        }
-    }
-
     if (m_optionIndex == index)
         return;
 

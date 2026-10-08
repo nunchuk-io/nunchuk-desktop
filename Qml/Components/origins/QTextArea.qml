@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.1
 
 TextArea {
     id: textEdit
@@ -54,20 +54,12 @@ TextArea {
         }
         if(initialized === true) inputIdentify.restart()
     }
-    // On macOS, text input goes through the IME layer and appears as preeditText
-    // (uncommitted) rather than text, so onTextChanged never fires.
-    onPreeditTextChanged: {
-        if(initialized === true) inputIdentify.restart()
-    }
 
     property bool initialized: false
     Timer {
         id: inputIdentify
         interval: 250
-        onTriggered: {
-            var fullText = text + preeditText
-            if(fullText !== "") typingFinished(fullText)
-        }
+        onTriggered: { if(lastValidText !== "") typingFinished(lastValidText) }
     }
     Component.onCompleted: initialized = true
 }

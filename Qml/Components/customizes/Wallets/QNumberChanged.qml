@@ -20,10 +20,10 @@
 // Application-specific imports
 
 // Application-specific imports
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.3
 import Qt.labs.platform 1.1
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.12
 
 // Application-specific imports
 import "../../../../localization/STR_QML.js" as STR
@@ -58,7 +58,7 @@ Row {
             width: parent.width
             height: 20
             text: headline
-            font.weight: Font.Normal
+            font.weight: Font.Bold
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignLeft
         }

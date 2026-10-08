@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.5
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import HMIEVENTS 1.0
@@ -75,10 +75,10 @@ Item {
                 }
                 model: signerInfo.healthCheckHistory
                 clip: true
-                ScrollBar.vertical: QScrollBar { }
+                ScrollBar.vertical: ScrollBar { active: true }
                 spacing: 16
                 delegate: Item {
-                    width: _history.width - 8  // leave room for QScrollBar (8px) — was 326
+                    width: 326
                     height: 40
                     Column {
                         anchors.fill: parent

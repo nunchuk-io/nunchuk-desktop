@@ -4,7 +4,6 @@
 #include "features/common/viewmodels/DefineViewModel.hpp"
 #include "features/draftwallets/onchain/viewmodels/DefineViewModel.hpp"
 #include "features/draftwallets/sandbox/viewmodels/DefineViewModel.hpp"
-#include "features/home/viewmodels/DefineViewModel.hpp"
 #include "features/inheritance/common/viewmodels/DefineViewModel.hpp"
 #include "features/inheritance/offchain/viewmodels/DefineViewModel.hpp"
 #include "features/inheritance/onchain/viewmodels/DefineViewModel.hpp"
@@ -27,7 +26,6 @@ void registerViewModels() {
     features::rightpanel::viewmodels::registerViewModels();
     features::transactions::viewmodels::registerViewModels();
     features::draftwallets::sandbox::viewmodels::registerViewModels();
-    features::home::viewmodels::registerViewModels();
     features::inheritance::common::viewmodels::registerViewModels();
 }
 } // namespace app

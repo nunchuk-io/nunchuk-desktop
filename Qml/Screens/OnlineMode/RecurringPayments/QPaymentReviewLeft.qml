@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.0
 import "../../../Components/origins"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
@@ -53,7 +53,7 @@ Item {
             address_width: 257
             qrCanClick: true
             address: payment.destination_payload.first_address
-            onQrClicked: (address) => {
+            onQrClicked: {
                 _exportAddress.address = address
                 _exportAddress.open()
             }
@@ -70,7 +70,7 @@ Item {
                 width: left_width
                 address_width: 257
                 qrCanClick: true
-                onQrClicked: (address) => {
+                onQrClicked: {
                     _exportAddress.address = address
                     _exportAddress.open()
                 }

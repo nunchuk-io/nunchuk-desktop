@@ -3,9 +3,6 @@
 #include "generated_qml_keys.hpp"
 #include "core/common/resources/AppStrings.h"
 #include "features/signers/flows/KeySetupFlow.h"
-#include "Models/Signers/QSignerManagement.h"
-#include <QElapsedTimer>
-#include <QThreadPool>
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
 using namespace features::signers::usecases;
@@ -60,9 +57,7 @@ void WhichTypeOfKeySelectionViewModel::setupGuide() {
     {
     case FeatureOption::ClaimOffChain:{
         setheadline(Strings.STR_QML_1601());
-        // Design update: inheritance-specific title, shared with QPopupHardwareAddKey.qml's
-        // isInheritance case (STR_QML.js STR_QML_2339) for UI consistency between the two flows.
-        settitle(Strings.STR_QML_2339());
+        settitle(Strings.STR_QML_942());        
         setdescription(Strings.STR_QML_1603());
         break;
     }
@@ -78,33 +73,11 @@ void WhichTypeOfKeySelectionViewModel::setupSupportedList() {
     {
     case FeatureOption::ClaimOffChain:{
         setheightOffset(516);
-        // Figma D04 note: "Use the five desktop Add Key hardware types via USB. The backend
-        // controls availability within this list. Always show Software." Gated by
-        // supported_signers[].is_inheritance_key for wallet_type MULTI_SIG (NUN-10192,
-        // GET /configs/setup) - same backend-driven pattern already used for the owner-side
-        // "Add inheritance key" screens (see QSupportedKeys.qml::isSupportedInheritance()).
-        // Software is unconditional per the note; TapSigner stays disabled (NFC, not one of the
-        // "five... via USB").
-        auto *signerMng = QSignerManagement::instance();
-        for (auto hw : {SignerKeyType::ColdcardHW, SignerKeyType::LedgerHW, SignerKeyType::TrezorHW,
-                        SignerKeyType::JadeHW, SignerKeyType::BitBoxHW}) {
-            QString tag = getKeyInfoByType(hw).value("tag").toString();
-            if (signerMng->isSupportedInheritance(tag, "MULTI_SIG")) {
-                list.append(add(hw));
-            }
-        }
+        list.append(add(SignerKeyType::ColdcardHW));
         list.append(add(SignerKeyType::Software));
-        // TapSigner: same backend-gated inclusion as the owner-side screen (QSupportedKeys.qml) -
-        // only shown (disabled, NFC not supported via USB) if the backend actually lists an
-        // is_inheritance_key entry for signer_tag "INHERITANCE"; omitted entirely otherwise, matching
-        // the design (Figma) which shows no TapSigner row when that entry isn't present.
-        if (signerMng->isSupportedInheritance("INHERITANCE", "MULTI_SIG")) {
-            list.append(add(SignerKeyType::TapSignerHW, false));
-        }
+        list.append(add(SignerKeyType::TapSignerHW, false));
         setsupportedList(list.toVariantList());
-        // Default to the first enabled entry rather than a hardcoded Coldcard that filtering may
-        // have excluded from the list.
-        setkeyType(list.first().toObject().value("type").toInt());
+        setkeyType((int)SignerKeyType::ColdcardHW);
         break;
     }
     
@@ -118,28 +91,14 @@ void WhichTypeOfKeySelectionViewModel::selectKeyType(int type)  {
 }
 
 void WhichTypeOfKeySelectionViewModel::continueOffChain() {
-    // BUGFIX: double-click (or any re-entrant call) on Continue used to stack a 2nd
-    // setOverrideCursor() while the 1st m_supportedSignersUC call was still in flight;
-    // WorkerConcurrent::run() silently drops the 2nd request (busy guard), so its callback -
-    // and the matching restoreOverrideCursor() - never fired, leaving the wait cursor stuck
-    // forever. Guard re-entrancy here instead. Also moved the GUARD_APP_MODEL() check before
-    // setOverrideCursor() so a null appModel can no longer leak the cursor either.
-    if (m_isSubmitting) {
-        return;
-    }
-    GUARD_APP_MODEL()
-    m_isSubmitting = true;
     qApp->setOverrideCursor(Qt::WaitCursor);
     setwalletType(nunchuk::WalletType::MULTI_SIG);
+    GUARD_APP_MODEL()
     SupportedSignersInput input;
     input.wallet_type = walletType();
     switch (static_cast<SignerKeyType>(keyType()))
     {
-    case SignerKeyType::ColdcardHW:
-    case SignerKeyType::LedgerHW:
-    case SignerKeyType::TrezorHW:
-    case SignerKeyType::JadeHW:
-    case SignerKeyType::BitBoxHW:
+    case SignerKeyType::ColdcardHW:        
         setsignerType(nunchuk::SignerType::HARDWARE);
         break;
     case SignerKeyType::Software: {
@@ -158,18 +117,7 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain() {
         }
     }
     input.signer_tags = tags;
-    // DIAGNOSTIC: investigating a reported ~50-60s stall between clicking Continue and the next
-    // screen appearing, even though SupportedSignersUseCase is local-only (no network call).
-    // Logging thread pool occupancy + elapsed time to check for QThreadPool contention from other
-    // QtConcurrent::run() network tasks sharing the global pool. Remove once root-caused.
-    auto *pool = QThreadPool::globalInstance();
-    DBG_INFO << "[DIAG] continueOffChain start - activeThreadCount:" << pool->activeThreadCount() << "/ maxThreadCount:" << pool->maxThreadCount();
-    auto timer = std::make_shared<QElapsedTimer>();
-    timer->start();
-    m_supportedSignersUC.addParameter(appModel).executeAsync(input, [this, pool, timer](core::usecase::Result<SupportedSignersResult> result) {
-        DBG_INFO << "[DIAG] continueOffChain callback after" << timer->elapsed() << "ms - activeThreadCount:" << pool->activeThreadCount() << "/ maxThreadCount:" << pool->maxThreadCount();
-        m_isSubmitting = false;
-        qApp->restoreOverrideCursor();
+    m_supportedSignersUC.addParameter(appModel).executeAsync(input, [this](core::usecase::Result<SupportedSignersResult> result) {
         continueOffChain(result.isSuccess());
     });
 }
@@ -179,13 +127,7 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain(bool isExisting) {
     if (isExisting) {
         switch (static_cast<SignerKeyType>(keyType()))
         {
-        case SignerKeyType::ColdcardHW:
-        case SignerKeyType::LedgerHW:
-        case SignerKeyType::TrezorHW:
-        case SignerKeyType::JadeHW:
-        case SignerKeyType::BitBoxHW:
-            // AddHardwareExistingKeyViewModel is generic across all 5 wired vendors (it branches on
-            // keyType()/hardwareTag() internally for guide text and "add new" routing).
+        case SignerKeyType::ColdcardHW:        
             subMng->show(qml::features::signers::qaddhardwareexistingkey);
             break;
         case SignerKeyType::Software: {
@@ -197,19 +139,8 @@ void WhichTypeOfKeySelectionViewModel::continueOffChain(bool isExisting) {
     } else {
         switch (static_cast<SignerKeyType>(keyType()))
         {
-        case SignerKeyType::ColdcardHW:
+        case SignerKeyType::ColdcardHW:        
             subMng->show(qml::features::signers::qcoldcardrefreshdevices);
-            break;
-        case SignerKeyType::LedgerHW:
-        case SignerKeyType::TrezorHW:
-        case SignerKeyType::JadeHW:
-        case SignerKeyType::BitBoxHW:
-            // Generic wired-USB flow shared by these 4 vendors (HardwareRefreshDevicesViewModel
-            // already branches on hardwareTag() and special-cases FeatureOption::ClaimOffChain).
-            // BUGFIX: qhardwarerefreshdevices is content-only (no title/Prev/Continue chrome, no
-            // "vm" of its own) - showing it bare left this screen with no title/button and broken
-            // bindings for every vendor except COLDCARD. Show the wrapped screen instead.
-            subMng->show(qml::features::signers::qhardwarerefreshdevicesscreen);
             break;
         case SignerKeyType::Software: {
             subMng->show(qml::features::signers::qrecoveryaddsoftwarekey);

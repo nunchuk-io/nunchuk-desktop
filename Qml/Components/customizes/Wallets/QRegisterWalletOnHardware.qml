@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -135,7 +135,7 @@ QOnScreenContentTypeB {
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
                 exportContextMenu.x = 20
-                exportContextMenu.y = 20 - exportContextMenu.implicitHeight
+                exportContextMenu.y = 20 - exportContextMenu.height
                 exportContextMenu.open()
             }
 
@@ -252,14 +252,7 @@ QOnScreenContentTypeB {
                         }
                     },
                     {
-                        // NOTE: "To BitBox" temporarily hidden - not supported yet.
-                        // The action below references `displayAddressBusybox`, which
-                        // is not declared anywhere in this component's scope (QML id
-                        // scope does not cross component boundaries), so clicking
-                        // this used to throw a ReferenceError and do nothing.
-                        // Re-enable only after the actual BitBox export/registration
-                        // flow is implemented and wired up correctly.
-                        visible: false,
+                        visible: true,
                         label: STR.STR_QML_1749, // To BitBox
                         icon: "",
                         iconRight: "",

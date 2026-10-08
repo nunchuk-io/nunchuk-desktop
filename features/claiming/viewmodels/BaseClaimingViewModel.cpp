@@ -42,8 +42,7 @@ void BaseClaimingViewModel::handleErrorCode(int error_code, const QString &error
         emit serviceTag->securityDepositRequiredAlert(error_msg);
         break;
     default:
-        // Show the API's own error content instead of a hardcoded string.
-        showToast(error_code, error_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        showToast(error_code, "Invalid Magic Phrase", EWARNING::WarningType::EXCEPTION_MSG);
         break;
     }
 }

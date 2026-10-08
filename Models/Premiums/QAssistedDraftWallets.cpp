@@ -23,8 +23,6 @@ const QMap<Key, StructAddHardware> map_keys = {
     {Key::ADD_COLDCARD, {"COLDCARD", "coldcard", STR_CPP_126, STR_CPP_125, 152}},
     {Key::ADD_BITBOX, {"BITBOX", "bitbox02", STR_CPP_128, STR_CPP_127, 124}},
     {Key::ADD_JADE, {"JADE", "jade", STR_CPP_133, STR_CPP_132, 152}},
-    // KEEPKEY: assumed Trezor-like protocol, timeout copied from Trezor (unconfirmed).
-    {Key::ADD_KEEPKEY, {"KEEPKEY", "keepkey", STR_CPP_135, STR_CPP_134, 124}},
 };
 
 namespace {
@@ -90,7 +88,7 @@ void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray &groups)
                             QAssistedDraftWallets::addRequest(data.value("requests").toArray(), group_id);
 
                         for (auto it = tmps.begin(); it != tmps.end(); ++it) {
-                            requests.insert(it.key(), it.value());
+                            requests.insertMulti(it.key(), it.value());
                         }
                     }
                 }
@@ -165,7 +163,7 @@ QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray 
         QString request_id = requestObj.value("id").toString();
         int key_index = requestObj.value("key_index").toInt(-1);
         if (status == "PENDING") {
-            for (Key key : map_keys.keys()) {
+            for (Key key : map_keys.uniqueKeys()) {
                 StructAddHardware hardware = map_keys.value(key);
                 if (tags.contains(hardware.mTag) && status == "PENDING") {
                     hardware.mGroupId = group_id;
@@ -644,35 +642,29 @@ ENUNCHUCK::WalletType QAssistedDraftWallets::walletType() const {
     }
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod, const QString &xfp, const QString &derivationPath) {
-
+void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType) {
+    
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, verifyType, verificationMethod, index, xfp, derivationPath]() ->bool{
-        // Prefer the caller-provided xfp/derivationPath (see header comment); only fall back to the
-        // global for any other caller that still doesn't pass them.
+    runInConcurrent([this, verifyType, index]() ->bool{
         auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
-        auto xfpSelected = !xfp.isEmpty() ? xfp : currentSigerInfo.value("xfp").toString();
-        DBG_INFO << "index: " << index << "verifyType: " << verifyType << "xfpSelected: " << xfpSelected << "derivationPath: " << derivationPath;
+        auto xfpSelected = currentSigerInfo.value("xfp").toString();
+        DBG_INFO << "index: " << index << "verifyType: " << verifyType << "currentSigerInfo: " << currentSigerInfo;
         QWarningMessage msg;
         QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
         if (deviceList) {
             auto device = deviceList->getDeviceByIndex(qMax(0, index));
             if (device) {
                 QWarningMessage msg;
-                auto derivation_path = !derivationPath.isEmpty() ? derivationPath : currentSigerInfo.value("derivation_path").toString();
+                auto derivation_path = currentSigerInfo.value("derivation_path").toString();
                 auto signer = bridge::nunchukGetSignerFromMasterSigner(xfpSelected, derivation_path, msg);
                 if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                     msg.resetWarningMessage();
                     bridge::nunchukVerifySingleSigner(device, signer, msg);
                 }
-                // BUGFIX (Setup 13cD root cause): a pubkey mismatch is detected HERE, client-side,
-                // before requestVerifySingleSigner() (the backend call) is ever reached - so the API-level
-                // emit added there can never fire for this case. Only a toast was shown, with no signal for
-                // QML to route to a result screen. Now emits the same signal the API path uses.
                 if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-                    emit verifySingleSignerResult(0, msg.what());
+                    AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
                 } else {
-                    requestVerifySingleSigner(verifyType, verificationMethod);
+                    requestVerifySingleSigner(verifyType);
                 }
             }
         }
@@ -682,141 +674,91 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
     });
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType, const QString &verificationMethod) {
+void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType) {
     DBG_INFO << "verifyType: " << verifyType << "qr_data size: " << qr_data.size();
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, qr_data, verifyType, verificationMethod]() ->bool{
+    runInConcurrent([this, qr_data, verifyType]() ->bool{
         QWarningMessage msg;
         nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
-        // BUGFIX (Setup 13cD): invalid/unmatched QR content used to fall through to the descriptor
-        // comparison below with an empty signer instead of failing immediately here, same as ViaConnectDevice.
-        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-            emit verifySingleSignerResult(0, msg.what());
-            return true;
-        }
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
         auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
-        // BUGFIX (Setup 13cD root cause): same as ViaConnectDevice - descriptor mismatch is caught here,
-        // before the backend call, so it must emit the result signal too, not just a toast.
         if (signer.get_descriptor() != qrSigner.get_descriptor()) {
-            emit verifySingleSignerResult(0, msg.what());
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         } else {
-            requestVerifySingleSigner(verifyType, verificationMethod);
-        }
+            requestVerifySingleSigner(verifyType);
+        }        
         return true;
     },[](bool ret) {
         qApp->restoreOverrideCursor();
     });
 }
 
-void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType, const QString &verificationMethod) {
+void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType) {
     DBG_INFO << "verifyType: " << verifyType << "fileName: " << fileName;
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([this, fileName, verifyType, verificationMethod]() ->bool{
+    runInConcurrent([this, fileName, verifyType]() ->bool{
         QWarningMessage msg;
         QString file_path = qUtils::QGetFilePath(fileName);
         nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
-        // BUGFIX (Setup 13cD): a wrong-format/invalid file (e.g. a .bsms file instead of a Coldcard JSON
-        // export) used to fall through to the descriptor comparison below with an empty signer instead
-        // of failing immediately here, same as ViaConnectDevice - this is why an invalid file could still
-        // show "Seed phrase verified".
-        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-            emit verifySingleSignerResult(0, msg.what());
-            return true;
-        }
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
         auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
-        // BUGFIX (Setup 13cD root cause): same as ViaConnectDevice.
         if (signer.get_descriptor() != fileSigner.get_descriptor()) {
-            emit verifySingleSignerResult(0, msg.what());
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         } else {
-            requestVerifySingleSigner(verifyType, verificationMethod);
-        }
+            requestVerifySingleSigner(verifyType);
+        }        
         return true;
     },[](bool ret) {
         qApp->restoreOverrideCursor();
     });
 }
 
-bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
+bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         if (dashboard->canReplaceKey()) {
-            return replacementVerifySingleSigner(verifyType, verificationMethod, keyChecksum);
+            return replacementVerifySingleSigner(verifyType);
         } else {
-            return addVerifySingleSigner(verifyType, verificationMethod, keyChecksum);
+            return addVerifySingleSigner(verifyType);
         }
     }
     return false;
 }
 
-bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
+bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         QString error_msg;
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         bool ret{false};
         if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
+            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verifyType, error_msg);
         } else {
-            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
+            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verifyType, error_msg);
         }
-        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "ret: " << ret << "error_msg: " << error_msg;
-        // BUGFIX: used to only emit on success, so QML had no way to detect/route a failed verify
-        // (e.g. re-added device derives a different pubkey) - now always emits, carrying error_msg on failure.
-        emit verifySingleSignerResult(ret ? 1 : 0, ret ? QString() : error_msg);
+        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "ret: " << ret << "error_msg: " << error_msg;
+        if (ret) {
+            emit verifySingleSignerResult(1);
+        }
         return ret;
     }
     return false;
 }
 
-bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
+bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyType) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         QJsonObject result;
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         bool ret{false};
         if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
+            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verifyType, servicesTagPtr()->passwordToken(), result);
         } else {
-            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
+            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verifyType, servicesTagPtr()->passwordToken(), result);
         }
-        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "result: " << result;
-        // BUGFIX: same as addVerifySingleSigner - always emit; on failure, "result" is the server's
-        // errorObj (VerifyKeyReplacement contract), so forward its "message" field.
-        emit verifySingleSignerResult(ret ? 1 : 0, ret ? QString() : result.value("message").toString());
-        return ret;
-    }
-    return false;
-}
-
-bool QAssistedDraftWallets::requestVerifyEncryptedBackup(const QString &verifyType) {
-    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-        QString keyChecksum = dashboard->lastUploadedBackupChecksum();
-        return requestVerifySingleSigner(verifyType, "ENCRYPTED_BACKUP", keyChecksum);
-    }
-    return false;
-}
-
-bool QAssistedDraftWallets::requestSetClaimOptions(const QStringList &claimOptions) {
-    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
-        QJsonObject output;
-        QString error_msg;
-        bool ret{false};
-        if (dashboard->canReplaceKey()) {
-            if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-                ret = Draco::instance()->SetClaimOptionsKeyReplacement(dashboard->wallet_id(), xfpSelected, claimOptions, servicesTagPtr()->passwordToken(), output, error_msg);
-            } else {
-                ret = Byzantine::instance()->SetClaimOptionsKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, claimOptions, servicesTagPtr()->passwordToken(), output, error_msg);
-            }
-        } else {
-            if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-                ret = Draco::instance()->DraftWalletSetClaimOptions(xfpSelected, claimOptions, output, error_msg);
-            } else {
-                ret = Byzantine::instance()->DraftWalletSetClaimOptions(dashboard->groupId(), xfpSelected, claimOptions, output, error_msg);
-            }
+        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "result: " << result;
+        if (ret) {
+            emit verifySingleSignerResult(1);
         }
-        DBG_INFO << "xfpSelected: " << xfpSelected << "claimOptions: " << claimOptions << "ret: " << ret << "error_msg: " << error_msg;
         return ret;
     }
     return false;

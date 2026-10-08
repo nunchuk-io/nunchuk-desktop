@@ -14,7 +14,7 @@ public:
 
   
 public slots:
-    bool requestExportWalletViaBSMS(const QString &file);
+    void requestExportWalletViaBSMS(const QString &file);
     void requestExportWalletViaQRBCUR2Legacy();
     void requestExportWalletViaQRBCUR2();
     void requestExportWalletViaQRBBQRColdcard();

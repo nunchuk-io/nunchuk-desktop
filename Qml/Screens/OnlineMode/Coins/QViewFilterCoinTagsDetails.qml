@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -118,8 +118,8 @@ QOnScreenContentTypeA {
                             enabled: true
                             maxLength: 40
                             spacing: 1
-                            validator: RegularExpressionValidator {
-                                regularExpression: /^[^\s]*$/  // Allows letters, numbers, and symbols, no spaces
+                            validator: RegExpValidator {
+                                regExp: /^[^\s]*$/  // Allows letters, numbers, and symbols, no spaces
                             }
                             visible: isEditing
                         }
@@ -262,9 +262,9 @@ QOnScreenContentTypeA {
                 clip: true
                 model: walletInfo.utxoFilterTag
                 interactive: true
-                ScrollBar.vertical: QScrollBar { }
+                ScrollBar.vertical: ScrollBar { active: true }
                 delegate: QSingleCoinDetailDelegate {
-                    width: _listView.width - 8  // leave room for QScrollBar (8px)
+                    width: _listView.width
                     amount: utxo_amount
                     currency: qsTr("%1").arg(RoomWalletData.unitValue)
                     amount_currency: utxo_amount_currency

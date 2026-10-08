@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -45,12 +45,6 @@ Rectangle {
 
     property alias toAmount: amountInput.textInputted
     property bool  onCurrency: false
-    // BUGFIX: pass-through so a caller can flag "amount exceeds the max allowed" - previously
-    // isValid was hardcoded true on amountInput with no way for the screen to surface an over-limit
-    // amount before it hit the backend.
-    property alias isValid: amountInput.isValid
-    property alias showError: amountInput.showError
-    property alias errorText: amountInput.errorText
 
     signal sendAllRequest()
 
@@ -63,7 +57,7 @@ Rectangle {
             height: childrenRect.height
             QTextInputBoxTypeB {
                 id: amountInput
-                label: QSTR.STR_QML_214
+                label: STR.STR_QML_214
                 boxWidth: 693
                 boxHeight: 48
                 isValid: true
@@ -116,7 +110,7 @@ Rectangle {
             }
             QButtonTextLink {
                 height: 24
-                label: QSTR.STR_QML_2112
+                label: STR.STR_QML_2112
                 displayIcon: false
                 btnText.font.underline: true
                 anchors.top: amountInput.top
@@ -127,6 +121,6 @@ Rectangle {
             }
         }
     }
-    RegularExpressionValidator { id: intvalidator;      regularExpression: /^[1-9][0-9]*$/ }
-    RegularExpressionValidator { id: doubleValidator;   regularExpression: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
+    RegExpValidator { id: intvalidator;      regExp: /^[1-9][0-9]*$/ }
+    RegExpValidator { id: doubleValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
 }

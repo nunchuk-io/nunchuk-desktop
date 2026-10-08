@@ -30,8 +30,6 @@ void VerifyInheritanceKeyViewModel::proceedVerification(const nunchuk::SingleSig
 }
 
 void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
-    // Confirmed with backend: one signing-challenge message is shared by all keys in a claim
-    // session - fetch once, cache in OffChainClaimingFlow, and reuse for subsequent keys.
     SigningChallengeInput input;
     input.magic = magicWord();
     m_signingChallengeUC.executeAsync(input, [this](const core::usecase::Result<SigningChallengeResult> &result) {
@@ -41,10 +39,6 @@ void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
             auto messageId = message.value("id").toString();
             setmessage(guide);
             setmessageId(messageId);
-            GUARD_FLOW_MANAGER()
-            auto flow = flowMng->startFlow<OffChainClaimingFlow>();
-            flow->setchallengeMessage(guide);
-            flow->setchallengeMessageId(messageId);
         } else {
             emit showToast(-1, result.error(), EWARNING::WarningType::ERROR_MSG);
         }
@@ -52,9 +46,7 @@ void VerifyInheritanceKeyViewModel::initializeChallengeMessage() {
 }
 
 void VerifyInheritanceKeyViewModel::onInit() {
-    if (message().isEmpty()) {
-        initializeChallengeMessage();
-    }
+    initializeChallengeMessage();
 }
 
 void VerifyInheritanceKeyViewModel::createTokenAfterSign(const QString &sig) {
@@ -83,12 +75,9 @@ void VerifyInheritanceKeyViewModel::exportFileSignMessage(const QString &filenam
     QString data = qUtils::GenerateColdCardHealthCheckMessage(QString::fromStdString(currentSigner().get_derivation_path()), message(), addressType(), msg);
     if (msg.isSuccess()) {
         QString file_path = qUtils::QGetFilePath(filename);
-        if (qUtils::ExportDataViaFile(file_path, data)) {
-            GUARD_SUB_SCREEN_MANAGER()
-            subMng->show(qml::features::claiming::offchain::qexportcompleted);
-        } else {
-            emit showToast(-1, "Unable to write the signed message file.", EWARNING::WarningType::ERROR_MSG);
-        }
+        qUtils::ExportDataViaFile(file_path, data);
+        GUARD_SUB_SCREEN_MANAGER()
+        subMng->show(qml::features::claiming::offchain::qexportcompleted);
     } else {
         emit showToast(-1, msg.what(), EWARNING::WarningType::ERROR_MSG);
     }
@@ -140,9 +129,6 @@ void VerifyInheritanceKeyViewModel::next() {
         flow->claimStatus();
         close();
     } else {
-        // Per design spec (Claim D12): show the "Added 1/N keys" interstitial first - user must
-        // explicitly tap "Add the second inheritance key" (YourPlanRequireInheritanceKeys::onAddSecondKeyClicked())
-        // before proceeding to key-type selection (D04) for the next key.
         GUARD_SUB_SCREEN_MANAGER()
         subMng->show(qml::features::claiming::offchain::qyourplanrequirestwoinheritancekeysaddedone);
     }
@@ -158,20 +144,11 @@ void VerifyInheritanceKeyViewModel::onSignClicked() {
     }
     case nunchuk::SignerType::HARDWARE:
     case nunchuk::SignerType::SOFTWARE: {
-        // BUGFIX: guard re-entrancy (e.g. a 2nd click on Sign while the 1st is still in flight) -
-        // m_signMessageUC's WorkerConcurrent silently drops a 2nd request, so its callback - and the
-        // matching restoreOverrideCursor() - never fires, leaving the wait cursor stuck forever even
-        // though the 1st request completes and the screen shows "Signed".
-        if (m_isSigning) {
-            return;
-        }
-        m_isSigning = true;
         qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
         SignMessageInput input;
         input.message = message();
         input.signers = {currentSigner()};
         m_signMessageUC.executeAsync(input, [this](const core::usecase::Result<SignMessageResult> &result) {
-            m_isSigning = false;
             if (result.isSuccess()) {
                 auto signatures = result.value().signatures.values();
                 createTokenAfterSign(signatures.first());

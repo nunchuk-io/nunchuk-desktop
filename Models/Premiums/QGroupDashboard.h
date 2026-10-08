@@ -129,7 +129,6 @@ class QGroupDashboard : public QBasePremium {
     Q_PROPERTY(QString timeLock READ timeLock NOTIFY draftWalletChanged)
     Q_PROPERTY(QVariantMap timelockObj READ timelockObj NOTIFY groupInfoChanged)
     Q_PROPERTY(QString timelockDisplay READ timelockDisplay NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString lastUploadedBackupChecksum READ lastUploadedBackupChecksum NOTIFY lastUploadedBackupChecksumChanged)
 
   public:
     QGroupDashboard(const QString &wallet_id);
@@ -176,7 +175,6 @@ class QGroupDashboard : public QBasePremium {
     QMap<QString, QVariant> requestBodyUploadBackupFile(const QString &xfp, const QString &filePath);
     bool ReplacementUploadBackupFile(const QString &xfp, const QString &filePath);
     bool DraftWalletUploadBackupFile(const QString &xfp, const QString &filePath);
-    QString lastUploadedBackupChecksum() const { return m_lastUploadedBackupChecksum; }
 
     QVariantList alerts() const;
     QVariant alert() const;
@@ -303,7 +301,6 @@ class QGroupDashboard : public QBasePremium {
     void inheritanceCountChanged();
     void historyPeriodIdChanged();
     void groupChatExistedChanged();
-    void lastUploadedBackupChecksumChanged();
 
     void editMembersChanged();
     void editMembersSuccessChanged();
@@ -329,7 +326,6 @@ class QGroupDashboard : public QBasePremium {
     QStringList m_registered_key_xfps{};
     int m_inheritanceCount{0};
     QString mHistoryPeriodId{};
-    QString m_lastUploadedBackupChecksum{};
     bool m_groupChatExisted{false};
     QJsonArray m_editMembers;
     QTimer *mTimer{nullptr};

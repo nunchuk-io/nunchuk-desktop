@@ -48,9 +48,6 @@ class ViewInheritancePlanViewModel : public OffChainTimelockViewModel {
     void securityQuestionVerified();
     void cancelInheritancePlan();
 
-  private slots:
-    void onTimelockChanged(const QString &date, const QString &timezone);
-
   private:
     GetInheritancePlanUseCase m_getInheritancePlanUC;
 };

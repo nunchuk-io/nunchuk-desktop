@@ -18,10 +18,10 @@
  *                                                                        *
  **************************************************************************/
 // Qt imports
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.3
 import Qt.labs.platform 1.1
-import Qt5Compat.GraphicalEffects
+import QtGraphicalEffects 1.12
 
 // Application-specific imports
 import "../../../../localization/STR_QML.js" as STR

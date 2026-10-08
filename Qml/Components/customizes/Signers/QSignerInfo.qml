@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.4
+import QtQuick.Controls 2.5
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -49,7 +49,7 @@ Item {
                 boxHeight: 48
                 textInputted: signerName
                 anchors.horizontalCenter: parent.horizontalCenter
-                onTypingFinished: (currentText) => {
+                onTypingFinished: {
                     if(currentText !== signerName && currentText !== ""){
                         requestRename(currentText)
                     }

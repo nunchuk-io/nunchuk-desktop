@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.4
 import RegisterTypes 1.0
 
 Image {

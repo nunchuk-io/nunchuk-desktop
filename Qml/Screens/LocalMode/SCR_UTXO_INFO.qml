@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
@@ -72,7 +72,7 @@ QScreen {
             contentHeight: contentDisplay.height
             flickableDirection: Flickable.VerticalFlick
             clip: true
-            ScrollBar.vertical: QScrollBar { }
+            ScrollBar.vertical: ScrollBar { active: true }
             interactive: height < contentHeight
             anchors {
                 horizontalCenter: parent.horizontalCenter
@@ -81,7 +81,7 @@ QScreen {
             }
             Column {
                 id: contentDisplay
-                width: 712  // 720 (Flickable width) - 8 (QScrollBar width) — prevents scrollbar overlap
+                width: 720
                 spacing: 16
 
                 Row {

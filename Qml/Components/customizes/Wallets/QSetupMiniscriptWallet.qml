@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -42,7 +42,7 @@ QOnScreenContentTypeA {
     readonly property int widthHalf: 450
     content: Flickable {
         flickableDirection: Flickable.VerticalFlick
-        ScrollBar.vertical: QScrollBar { }
+        ScrollBar.vertical: ScrollBar { active: true }
         contentHeight: columnMiniscript.childrenRect.height
         contentWidth: 504
         clip: true    
@@ -55,7 +55,6 @@ QOnScreenContentTypeA {
                 height: 24
                 Row {
                     anchors.fill: parent
-                    anchors.rightMargin: 8
                     spacing: 8
                     QIcon {
                         iconSize: 24
@@ -90,7 +89,8 @@ QOnScreenContentTypeA {
                     height: 16
                     text: STR.STR_QML_1858
                     fontColor: "#FFFFFF"
-                    color: "#66031F2B"
+                    color: "#031F2B"
+                    opacity: 0.4
                     font.pixelSize: 10
                     font.weight: Font.Black
                     anchors.bottom: parent.bottom

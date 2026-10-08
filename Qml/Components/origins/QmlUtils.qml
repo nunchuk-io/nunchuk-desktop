@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick
+import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
 
 QtObject {

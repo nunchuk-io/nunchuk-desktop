@@ -38,18 +38,12 @@ matrixifaces *matrixifaces::instance()
     return &mInstance;
 }
 
-void matrixifaces::resetMatrixInstance()
-{
-    matrix_instance.reset();
-}
-
 void matrixifaces::makeMatrixInstance(const nunchuk::AppSettings &appsettings,
                                       const std::string &passphrase,
                                       const std::string &account,
                                       const std::string& device_id,
                                       QWarningMessage &msg)
 {
-    matrixlistener::prepareMainThreadDispatch();
     matrix_instance = NULL;
     try {
         matrix_instance = nunchuk::MakeNunchukMatrixForAccount(appsettings, passphrase, account, device_id, SendFunction);
@@ -64,7 +58,6 @@ void matrixifaces::makeMatrixInstance(const nunchuk::AppSettings &appsettings,
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION " << e.what();
-        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         matrix_instance = NULL;
     }
 }
@@ -72,10 +65,11 @@ void matrixifaces::makeMatrixInstance(const nunchuk::AppSettings &appsettings,
 nunchuk::NunchukMatrixEvent matrixifaces::SendErrorEvent(const string &room_id, int code, const QString &message)
 {
     nunchuk::NunchukMatrixEvent ret;
-    if (!matrixlistener::canSendErrorEvent()) {
-        return ret;
+    if(ClientController::instance()->rooms()){
+        if(ClientController::instance()->rooms()->allHisLoaded() == false){
+            return ret;
+        }
     }
-
     QWarningMessage msg;
     try {
         if(matrix_instance){

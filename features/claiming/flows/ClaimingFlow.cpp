@@ -23,19 +23,12 @@ using namespace features::transactions::usecases;
 ClaimingFlow::ClaimingFlow(FlowContext *ctx, QObject *parent) : KeyProceedFlow(ctx, parent) {}
 
 void ClaimingFlow::claimStatus() {
-    // BUGFIX: guard re-entrancy (e.g. double-click) - WorkerConcurrent silently drops a 2nd
-    // request while the 1st is in flight, so a double-click would otherwise just do nothing.
-    if (m_isClaimingStatus) {
-        return;
-    }
-    m_isClaimingStatus = true;
     ClaimStatusInput input;
     input.magic = magicWord();
     input.bsms = bsms();
     input.authos = tokenList();
     input.messageId = messageId();
     m_claimStatusUC.executeAsync(input, [this](const core::usecase::Result<ClaimStatusResult> &result) {
-        m_isClaimingStatus = false;
         if (result.isSuccess()) {
             proceedClaimStatusResult(result.value());
         } else {
@@ -45,12 +38,6 @@ void ClaimingFlow::claimStatus() {
 }
 
 void ClaimingFlow::createTransaction() {
-    // BUGFIX: same re-entrancy guard as claimStatus() - prevents a double-click on Confirm from
-    // silently dropping the 2nd withdraw/claim-transaction request.
-    if (m_isCreatingTransaction) {
-        return;
-    }
-    m_isCreatingTransaction = true;
     CreateTransactionInput input;
     input.magic = magicWord();
     input.address = withdrawAddress();
@@ -62,7 +49,6 @@ void ClaimingFlow::createTransaction() {
     input.authos = tokenList();
     input.messageId = messageId();
     m_createTransactionUC.executeAsync(input, [this](const core::usecase::Result<CreateTransactionResult> &result) {
-        m_isCreatingTransaction = false;
         if (result.isSuccess()) {
             proceedClaimTransactionResult(result.value());
         } else {
@@ -127,13 +113,10 @@ void ClaimingFlow::displayStatusInfo(const ClaimStatusResult &status) {
 void ClaimingFlow::proceedClaimStatusResult(const ClaimStatusResult &status) {
     displayStatusInfo(status);
     GUARD_RIGHT_PANEL_NAV()
-    // requestTerminal(): these are end states (nothing to resume into) - mark them so a later fresh
-    // entry into "Claim an inheritance" (see ServiceSetting::setOptionIndex()) knows to reset instead
-    // of replaying this result forever.
     if (!status.buffer_period_countdown.isEmpty()) { // Buffer period has started
-        rightPanel->requestTerminal(qml::components::rightpannel::service::common::qserviceclaiminheritancebufferperiodhasstarted);
+        rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritancebufferperiodhasstarted);
     } else if (!status.inheritance.isEmpty()) { // Inheritance found
-        rightPanel->requestTerminal(qml::components::rightpannel::service::common::qserviceclaiminheritanceyourinheritance);
+        rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritanceyourinheritance);
     }
 }
 
@@ -206,30 +189,24 @@ void ClaimingFlow::bind(QObject *vm) {
             realVm6->setwithdrawAmountSats(withdrawAmountSats());
             realVm6->setbalanceDisplay(availableBalanceDisplay());
             realVm6->setbalanceCurrency(availableBalanceCurrency());
-            realVm6->setmaxWithdrawSats(availableBalanceSats());
         } else {
             realVm6->setbalanceDisplay(balanceDisplay());
             realVm6->setbalanceCurrency(balanceCurrency());
-            realVm6->setmaxWithdrawSats(balanceSats());
         }
     }
 
-    // BUGFIX: WithdrawSelectWalletViewModel IS-A WidthdrawToAddressViewModel and doesn't override
-    // proceedTransactionResult(), so qobject_cast<WidthdrawToAddressViewModel*> also matched a
-    // WithdrawSelectWalletViewModel instance - both blocks used to run for it, connecting the same
-    // signal->slot twice (proceedTransactionResult() firing twice per transaction, starting
-    // ClaimTransactionFlow/showing qconfirmtransaction twice) and leaving isAddressFlow correct only
-    // by accident of block order. Checking the more-derived type first and excluding it below fixes
-    // both. Qt::UniqueConnection added as a defensive backstop against any future double-bind.
+    auto realVm7 = qobject_cast<WidthdrawToAddressViewModel *>(vm);
+    if (realVm7) {
+        realVm7->setwithdrawAmountSats(withdrawAmountSats());
+        setisAddressFlow(true);
+        connect(this, &ClaimingFlow::forwardTransaction, realVm7, &WidthdrawToAddressViewModel::proceedTransactionResult);
+    }
+
     auto realVm8 = qobject_cast<WithdrawSelectWalletViewModel *>(vm);
     if (realVm8) {
         realVm8->setwithdrawAmountSats(withdrawAmountSats());
         setisAddressFlow(false);
-        connect(this, &ClaimingFlow::forwardTransaction, realVm8, &WithdrawSelectWalletViewModel::proceedTransactionResult, Qt::UniqueConnection);
-    } else if (auto realVm7 = qobject_cast<WidthdrawToAddressViewModel *>(vm)) {
-        realVm7->setwithdrawAmountSats(withdrawAmountSats());
-        setisAddressFlow(true);
-        connect(this, &ClaimingFlow::forwardTransaction, realVm7, &WidthdrawToAddressViewModel::proceedTransactionResult, Qt::UniqueConnection);
+        connect(this, &ClaimingFlow::forwardTransaction, realVm8, &WithdrawSelectWalletViewModel::proceedTransactionResult);
     }
 
     auto realVm = qobject_cast<TransactionDetailsClaimedViewModel *>(vm);

@@ -260,20 +260,10 @@ public:
     bool VerifyKeyReplacement(const QString &group_id,
                                 const QString &wallet_id,
                                 const QString &xfp,
-                                const QString& verification_method,
                                 const QString& type,
-                                const QString& key_checksum,
                                 const QString& passwordToken,
                                 QJsonObject& result);
-
-    bool SetClaimOptionsKeyReplacement(const QString &group_id,
-                                const QString &wallet_id,
-                                const QString &xfp,
-                                const QStringList &claim_options,
-                                const QString& passwordToken,
-                                QJsonObject& output,
-                                QString &errormsg);
-
+  
     bool RemoveKeyReplacement(const QString &group_id,
                                 const QString &wallet_id,
                                 const QString &xfp,
@@ -304,8 +294,7 @@ public:
     bool DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
 
     bool DraftWalletUpdateTimelock(const QString& group_id, const QJsonObject& request_body, QJsonObject& output, QString& errormsg);
-    bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg);
-    bool DraftWalletSetClaimOptions(const QString &group_id, const QString& xfp, const QStringList& claim_options, QJsonObject& output, QString& errormsg);
+    bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& type, QString& errormsg);
 
     bool walletChangeTimelock(const QString &wallet_id, const QString& group_id, const QJsonObject& request_body, const QString &verify_token, QJsonObject& output);
 private:

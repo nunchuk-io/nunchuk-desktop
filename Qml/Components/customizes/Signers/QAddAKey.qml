@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: QSTR.STR_QML_1725
+    label.text: STR.STR_QML_1725
     extraHeader: Item {}
     readonly property var widthItem: 210    
     readonly property var heightItem: 268   
@@ -80,7 +80,7 @@ QOnScreenContentTypeB {
                             QLato {
                                 width: 210
                                 height: 28
-                                text: QSTR.STR_QML_084
+                                text: STR.STR_QML_084
                                 horizontalAlignment: Text.AlignHCenter
                                 font.pixelSize: 20
                                 font.weight: Font.Bold
@@ -91,7 +91,7 @@ QOnScreenContentTypeB {
                             QLato {
                                 width: 210
                                 height: 56
-                                text: QSTR.STR_QML_085
+                                text: STR.STR_QML_085
                                 font.pixelSize: 16
                                 font.weight: Font.Normal
                                 wrapMode: Text.WordWrap
@@ -103,7 +103,7 @@ QOnScreenContentTypeB {
                         QTextButton {
                             width: 180
                             height: 48
-                            label.text: QSTR.STR_QML_086
+                            label.text: STR.STR_QML_086
                             label.font.pixelSize: 16
                             enabled: vm.canAddHardwareKey
                             type: eTypeR
@@ -139,7 +139,7 @@ QOnScreenContentTypeB {
                             QLato {
                                 width: 210
                                 height: 28
-                                text: QSTR.STR_QML_087
+                                text: STR.STR_QML_087
                                 horizontalAlignment: Text.AlignHCenter
                                 font.pixelSize: 20
                                 font.weight: Font.Bold
@@ -149,7 +149,7 @@ QOnScreenContentTypeB {
                             QLato {
                                 width: 210
                                 height: 56
-                                text: QSTR.STR_QML_088
+                                text: STR.STR_QML_088
                                 font.pixelSize: 16
                                 font.weight: Font.Normal
                                 wrapMode: Text.WordWrap
@@ -160,7 +160,7 @@ QOnScreenContentTypeB {
                         QTextButton {
                             width: 180
                             height: 48
-                            label.text: enabled ? QSTR.STR_QML_089 : QSTR.STR_QML_090
+                            label.text: enabled ? STR.STR_QML_089 : STR.STR_QML_090
                             label.font.pixelSize: 16
                             type: eTypeR
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -175,7 +175,6 @@ QOnScreenContentTypeB {
             Item {
                 width: widthItem
                 height: heightItem
-                visible: vm.platformKeyAvailable
                 Column {
                     spacing: 24
                     Rectangle {
@@ -197,7 +196,7 @@ QOnScreenContentTypeB {
                             QLato {
                                 width: 210
                                 height: 28
-                                text: QSTR.STR_QML_957
+                                text: STR.STR_QML_957
                                 horizontalAlignment: Text.AlignHCenter
                                 font.pixelSize: 20
                                 font.weight: Font.Bold
@@ -207,7 +206,7 @@ QOnScreenContentTypeB {
                             QLato {
                                 width: 210
                                 height: 56
-                                text: QSTR.STR_QML_2119
+                                text: STR.STR_QML_2119
                                 font.pixelSize: 16
                                 font.weight: Font.Normal
                                 wrapMode: Text.WordWrap
@@ -218,10 +217,11 @@ QOnScreenContentTypeB {
                         QTextButton {
                             width: 180
                             height: 48
-                            label.text: QSTR.STR_QML_2120
+                            label.text: STR.STR_QML_2120
                             label.font.pixelSize: 16
                             type: eTypeR
                             anchors.horizontalCenter: parent.horizontalCenter
+                            enabled: vm.platformKeyAvailable
                             onButtonClicked: {
                                 vm.onAddPlatformKeyClicked()
                             }

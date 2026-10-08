@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
 import NUNCHUCKTYPE 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes/Texts"
@@ -74,13 +74,11 @@ QBadge {
                     case "TREZOR":      value = "Wired"; break
                     case "BITBOX":      value = "Wired"; break
                     case "JADE":        value = "Wired"; break
-                    case "KEEPKEY":     value = "Wired"; break
                     case "PLATFORM":    value = "Platform"; break
                     case "INHERITANCE":
                     case "KEYSTONE":
                     case "PASSPORT":
                     case "SEEDSIGNER":
-                    case "KRUX":
                     default:value = "Unknown"; break
                     }
                 }

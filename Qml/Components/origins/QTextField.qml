@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Controls 2.1
 
 TextField {
     id: textEdit
@@ -41,45 +41,16 @@ TextField {
     selectByMouse: true
     renderType: Text.QtRendering
     wrapMode: Text.WrapAnywhere
-    inputMethodHints: Qt.ImhNoPredictiveText
-    property bool emitEmptyTypingFinished: false
     signal typingFinished(var currentText)
-    onTextChanged: if (initialized && !inputMethodComposing) inputIdentify.restart()
-    onInputMethodComposingChanged: {
-        if (!initialized) {
-            return
-        }
-        if (textEdit.emitEmptyTypingFinished && !textEdit.inputMethodComposing) {
-            inputIdentify.stop()
-            textEdit.typingFinished(textEdit.text + textEdit.preeditText)
-        } else {
-            inputIdentify.restart()
-        }
-    }
-    // On macOS, text input goes through the IME layer and appears as preeditText
-    // (uncommitted) rather than text, so onTextChanged never fires.
-    onPreeditTextChanged: {
-        if (!initialized) {
-            return
-        }
-        if (textEdit.emitEmptyTypingFinished && textEdit.preeditText === "") {
-            inputIdentify.stop()
-            textEdit.typingFinished(textEdit.text)
-        } else {
-            inputIdentify.restart()
-        }
-    }
+    onTextChanged: if(initialized === true) inputIdentify.restart()
 
     property bool initialized: false
     Timer {
         id: inputIdentify
         interval: 250
-        onTriggered: {
-            var fullText = textEdit.text + textEdit.preeditText
-            if(fullText !== "" || textEdit.emitEmptyTypingFinished) textEdit.typingFinished(fullText)
-        }
+        onTriggered: { if(textEdit.text !== "") typingFinished(textEdit.text) }
     }
-    onActiveFocusChanged: { typingFinished(textEdit.text + textEdit.preeditText) }
+    onActiveFocusChanged: { typingFinished(textEdit.text) }
     Keys.onReturnPressed: { typingFinished(textEdit.text) }
     Keys.onEnterPressed:  { typingFinished(textEdit.text) }
 

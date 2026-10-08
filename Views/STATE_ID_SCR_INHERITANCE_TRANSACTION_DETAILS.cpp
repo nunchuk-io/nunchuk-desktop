@@ -47,10 +47,9 @@ void EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION_HANDLER(QVariant msg) {
         helper::transaction::importQr(msg);
     } else if (type == "claim-tx-import") {
         auto file = maps["file"].toString();
-        helper::transaction::importFile(file);
+        helper::transaction::importFile(msg);
     } else if (type == "claim-tx-export") {
-        auto file = maps["file"].toString();
-        helper::transaction::exportFile(file);
+        helper::transaction::exportFile(msg);
     } else if (type == "register-wallet") {
         // helper::transaction::registerWallet(msg);
     } else if (type == "force-sync-claim-tx") {

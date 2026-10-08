@@ -29,7 +29,6 @@ class matrixifaces
 {
 public:
     static matrixifaces *instance();
-    void resetMatrixInstance();
     void makeMatrixInstance(const nunchuk::AppSettings &appsettings,
                             const std::string &passphrase,
                             const std::string &account,

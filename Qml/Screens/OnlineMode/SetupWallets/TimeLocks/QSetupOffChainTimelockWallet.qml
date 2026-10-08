@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
+import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
 import Features.Inheritance.OffChain.ViewModels 1.0
 import "../../../../Components/origins"
@@ -114,9 +114,7 @@ QOnScreenContentTypeA {
                     Connections {
                         target: vm
                         onValueTimezoneChanged: {
-                            if (_timezoneInput.selectedTimezone !== vm.valueTimezone) {
-                                _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
-                            }
+                            _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
                         }
                     }
                 }

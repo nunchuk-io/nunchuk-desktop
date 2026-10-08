@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -139,7 +141,7 @@ QScreen {
                         boxHeight: 48
                         textweight: Font.Normal
                         isPassword: true
-                        onTypingFinished: (currentText) => {
+                        onTypingFinished: {
                             confirmpassphrases.isValid = true
                             confirmpassphrases.errorText = ""
                         }
@@ -150,7 +152,7 @@ QScreen {
                         boxWidth: 540
                         boxHeight: 48
                         isPassword: true
-                        onTypingFinished: (currentText) => {
+                        onTypingFinished: {
                             confirmpassphrases.isValid = true
                             confirmpassphrases.errorText = ""
                         }
@@ -313,7 +315,7 @@ QScreen {
                         boxHeight: 48
                         textweight: Font.Normal
                         isPassword: true
-                        onTypingFinished: (currentText) => {
+                        onTypingFinished: {
                             confirmpassphrases.isValid = true
                             confirmpassphrases.errorText = ""
                         }
@@ -324,7 +326,7 @@ QScreen {
                         boxWidth: 540
                         boxHeight: 48
                         isPassword: true
-                        onTypingFinished: (currentText) => {
+                        onTypingFinished: {
                             confirmpassphrases.isValid = true
                             confirmpassphrases.errorText = ""
                         }

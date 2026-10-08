@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick
+import QtQuick 2.4
 import Qt.labs.platform 1.1
 import NUNCHUCKTYPE 1.0
 import "../../../../Components/origins"
@@ -44,8 +44,7 @@ QOnScreenContentTypeB {
                 radius: 24
                 color: "#D0E2FF"
                 QPicture {
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectFit
+                    anchors.centerIn: parent
                     source: "qrc:/Images/Images/your-inheritance-key.svg"
                 }
             }

@@ -67,8 +67,5 @@ class ClaimingFlow : public KeyProceedFlow {
   private:
     CreateTransactionUseCase m_createTransactionUC;
     ClaimStatusUseCase m_claimStatusUC;
-    // Re-entrancy guards: WorkerConcurrent silently drops a 2nd request while the 1st is in flight.
-    bool m_isClaimingStatus = false;
-    bool m_isCreatingTransaction = false;
 };
 } // namespace features::claiming::flows

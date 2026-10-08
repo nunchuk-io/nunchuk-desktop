@@ -53,8 +53,7 @@ public:
     enum UserRoles {
         user_id,
         user_name,
-        user_avatar,
-        user_is_local
+        user_avatar
     };
     Q_INVOKABLE  QVariant get(int row);
     QString change() const;

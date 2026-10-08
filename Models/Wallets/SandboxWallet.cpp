@@ -19,7 +19,6 @@ void SandboxWallet::convert(const nunchuk::Wallet w) {
     QMetaObject::invokeMethod(this, [this]{
         m_isSandboxWallet = AppModel::instance()->groupWalletList()->containsId(walletId());
         GetGroupWalletConfig();
-        startGetNumberOnline();
     }, Qt::DirectConnection);
 }
 
@@ -138,36 +137,16 @@ nunchuk::GroupWalletConfig SandboxWallet::nunchukConfig() const {
 
 int SandboxWallet::numberOnline()
 {
-    // BUGFIX: used to launch QtConcurrent::run([this]...) on every call - this getter is
-    // evaluated for every row on every WalletListModel::get() (e.g. QHomeManagerWallets.qml's
-    // _selectedWalletModelIndex binding), spawning a new background task per read. If a wallet
-    // list reload (WalletListModel::replaceWallet()) destroys this object before that task's
-    // captured raw `this` is used, it crashes incrementing m_sandbox's refcount on freed memory.
-    // Now a pure cached read - see startGetNumberOnline() for the (safe) refresh path.
-    return m_numberOnline;
-}
-
-void SandboxWallet::startGetNumberOnline()
-{
-    if (!groupSandbox()) {
-        return;
-    }
-    // Snapshot on the GUI thread; the worker captures only this, never `this`.
-    const QString groupIdSnap = groupSandbox()->groupId();
-    QPointer<SandboxWallet> safeThis(this);
-
-    runInThread(
-        this,
-        [groupIdSnap]() -> int {
-            return bridge::GetGroupOnline(groupIdSnap);
-        },
-        [safeThis](int number) {
-            if (!safeThis) {
-                return;
-            }
-            safeThis->setNumberOnline(number);
+    QtConcurrent::run([this]() {
+        if(groupSandbox()){
+            int number = bridge::GetGroupOnline(groupSandbox()->groupId());
+            QThreadForwarder::instance()->forwardInQueuedConnection([number, this](){
+                DBG_INFO << number;
+                this->setNumberOnline(number);
+            });
         }
-        );
+    });
+    return m_numberOnline;
 }
 
 void SandboxWallet::setNumberOnline(int number)

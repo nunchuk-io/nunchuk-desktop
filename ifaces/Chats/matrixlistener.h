@@ -28,11 +28,6 @@ std::string SendFunction(const string &roomid,
                          const std::string& eventContent,
                          bool ignore_error);
 
-namespace matrixlistener {
-void prepareMainThreadDispatch();
-bool canSendErrorEvent();
-}
-
 bool consume_sync_event_listener(int percent);
 
 Q_DECLARE_METATYPE(const char*);

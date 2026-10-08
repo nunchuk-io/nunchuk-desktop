@@ -25,8 +25,7 @@
 #include <QSharedPointer>
 #include <QtCore/qdir.h>
 #include <QtCore/qstandardpaths.h>
-#include <QLoggingCategory>
-#include <QtGlobal>
+#include <QtMsgHandler>
 #include <QMessageLogContext>
 #include <QFile>
 #include <QTextStream>
@@ -88,7 +87,7 @@ public:
     inline QOutlog &operator<<(const char* t) { mStream << QString::fromUtf8(t) << ' '; return *this; }
     inline QOutlog &operator<<(const QString & t) { mStream << t << ' '; return *this; }
     inline QOutlog &operator<<(const std::string & t) { mStream << QString::fromStdString(t) << ' '; return *this; }
-    inline QOutlog &operator<<(const QStringView & t) { return operator<<(t.toString()); }
+    inline QOutlog &operator<<(const QStringRef & t) { return operator<<(t.toString()); }
     inline QOutlog &operator<<(const QQmlError & t) { return operator<<(t.toString()); }
     inline QOutlog &operator<<(const QList<QQmlError> &list){
         mStream << '(';
@@ -110,6 +109,13 @@ public:
         }
         mStream << ')' << ' ';
         return *this;
+    }
+
+    template <typename T>
+    inline QOutlog &operator<<(const QVector<T> &vec)
+    {
+        mStream << "QVector";
+        return operator<<(vec.toList());
     }
 
     template <class aKey, class aT>

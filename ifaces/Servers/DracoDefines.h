@@ -265,7 +265,6 @@ enum CMD_IDX {
     VERIFY_CONFIRMATION_CODE,
     COUNTRY_CODE_LIST,
     ONBOARDING_NO_ADVISOR,
-    HOME_REMINDER_V2,
     CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL,
     CHANGING_EMAIL,
 
@@ -281,7 +280,6 @@ enum CMD_IDX {
     ASSISTED_WALLET_RESET_KEY_REPLACEMENT,
     ASSISTED_WALLET_DOWNLOAD_BACKUP_KEY_REPLACEMENT,
     ASSISTED_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT,
-    ASSISTED_WALLET_SET_CLAIM_OPTIONS,
 
     // Saved addresses
     ASSISTED_WALLET_GET_SAVED_ADDRESSES,
@@ -309,7 +307,6 @@ enum CMD_IDX {
     DRAFT_WALLET_UPLOAD_BACKUP,
     DRAFT_WALLET_DOWNLOAD_BACKUP,
     DRAFT_WALLET_VERIFY,
-    DRAFT_WALLET_SET_CLAIM_OPTIONS,
 
     CONFIG_WALLET_SETUP,
     DRAFT_WALLET_TIMELOCK,
@@ -375,7 +372,6 @@ enum CMD_IDX {
     GROUP_DRAFT_WALLETS_DELETE_REQUEST_ADD_KEY,
     GROUP_DRAFT_WALLETS_DOWNLOAD_BACKUP,
     GROUP_DRAFT_WALLETS_UPLOAD_BACKUP,
-    GROUP_DRAFT_WALLETS_SET_CLAIM_OPTIONS,
 
     // Group wallet health check
     GROUP_WALLETS_GET_KEY_HEALTH_REMINDER,
@@ -443,7 +439,6 @@ enum CMD_IDX {
     GROUP_WALLET_RESET_KEY_REPLACEMENT,
     GROUP_WALLET_DOWNLOAD_BACKUP_KEY_REPLACEMENT,
     GROUP_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT,
-    GROUP_WALLET_SET_CLAIM_OPTIONS,
 
     GROUP_WALLET_COINCONTROL_GET,
     GROUP_WALLET_COINCONTROL_UPDATE,
@@ -700,7 +695,6 @@ const QMap<int, QString> commands{
 
     {Premium::CMD_IDX::COUNTRY_CODE_LIST, QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/countries")},
     {Premium::CMD_IDX::ONBOARDING_NO_ADVISOR, QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/no-advisor")},
-    {Premium::CMD_IDX::HOME_REMINDER_V2, QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("reminders/home_v2")},
     {Premium::CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL,
      QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/calculate-required-signatures")},
     {Premium::CHANGING_EMAIL, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/change")},
@@ -730,8 +724,6 @@ const QMap<int, QString> commands{
      QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/download-backup")},
     {Premium::CMD_IDX::ASSISTED_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT,
      QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/upload-backup")},
-    {Premium::CMD_IDX::ASSISTED_WALLET_SET_CLAIM_OPTIONS,
-     QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/claim-options")},
 
     // Draft Wallet
     {Premium::CMD_IDX::DRAFT_WALLET_MARK_ALERT_AS_READ,
@@ -749,7 +741,6 @@ const QMap<int, QString> commands{
     {Premium::CMD_IDX::DRAFT_WALLET_DOWNLOAD_BACKUP, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/{xfp}/download-backup")},
     {Premium::CMD_IDX::DRAFT_WALLET_UPLOAD_BACKUP, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/upload-backup")},
     {Premium::CMD_IDX::DRAFT_WALLET_VERIFY, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/{xfp}/verify")},
-    {Premium::CMD_IDX::DRAFT_WALLET_SET_CLAIM_OPTIONS, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/{xfp}/claim-options")},
 
     // DRAGON_GROUP_WALLETS
     {Group::CMD_IDX::GROUP_WALLET_LIST_WALLETS, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("wallets")},
@@ -792,7 +783,6 @@ const QMap<int, QString> commands{
     {Group::CMD_IDX::GROUP_DRAFT_WALLETS_DOWNLOAD_BACKUP,
      QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/{xfp}/download-backup")},
     {Group::CMD_IDX::GROUP_DRAFT_WALLETS_UPLOAD_BACKUP, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/upload-backup")},
-    {Group::CMD_IDX::GROUP_DRAFT_WALLETS_SET_CLAIM_OPTIONS, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/{xfp}/claim-options")},
 
     // Group wallet health check
     {Group::CMD_IDX::GROUP_WALLETS_GET_KEY_HEALTH_REMINDER,
@@ -907,8 +897,6 @@ const QMap<int, QString> commands{
      QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/download-backup")},
     {Group::CMD_IDX::GROUP_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT,
      QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/upload-backup")},
-    {Group::CMD_IDX::GROUP_WALLET_SET_CLAIM_OPTIONS,
-     QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/claim-options")},
 
     // Saved addresses
     {Premium::CMD_IDX::ASSISTED_WALLET_GET_SAVED_ADDRESSES, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address")},

@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-pragma ComponentBehavior: Bound
-
-import QtQuick
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick 2.4
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -37,63 +37,68 @@ QPopupInfoVertical {
     signal gotItClicked()
     property var action
 
+    // When set (non-empty), the popup shows two buttons instead of the
+    // single one: button 1 uses btnLabel (server's "btnCTA", just closes)
+    // and button 2 uses primaryCTALabel (server's "primaryCTA", opens
+    // downloadUrl externally). Used by the check-for-update popup so the
+    // user can go straight to the download/learn-more page instead of only
+    // being able to dismiss the notice. Left empty ("") for every other
+    // existing usage of this popup, which keeps their current
+    // single-button behavior unchanged.
     property string downloadUrl: ""
-    property string primaryCTALabel: STR.STR_QML_2254
+    // Label for the second button in the two-button case (server's
+    // "primaryCTA"). Falls back to "Learn more" if the backend doesn't send
+    // one, same fallback pattern as btnLabel/"Got it" above.
+    property string primaryCTALabel: STR.STR_QML_2226
 
-    buttons: downloadUrl !== "" ? twoButtons : singleButton
+    buttons: downloadUrl !== "" ? _twoButtons : _singleButton
 
     Component {
-        id: singleButton
-
+        id: _singleButton
         QTextButton {
             anchors.horizontalCenter: parent.horizontalCenter
             width: 252
             height: 48
-            label.text: _infoPopup.btnLabel
+            label.text: btnLabel
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
                 _infoPopup.close()
-                _infoPopup.gotItClicked()
-                if (_infoPopup.action) {
-                    _infoPopup.action()
-                }
+                gotItClicked()
+                if(action)
+                    action()
             }
         }
     }
 
     Component {
-        id: twoButtons
-
+        id: _twoButtons
         Column {
             spacing: 12
-
             QTextButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 252
                 height: 48
-                label.text: _infoPopup.btnLabel
+                label.text: btnLabel
                 label.font.pixelSize: 16
                 type: eTypeB
                 onButtonClicked: {
                     _infoPopup.close()
-                    _infoPopup.gotItClicked()
-                    if (_infoPopup.action) {
-                        _infoPopup.action()
-                    }
+                    gotItClicked()
+                    if(action)
+                        action()
                 }
             }
-
             QTextButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 252
                 height: 48
-                label.text: _infoPopup.primaryCTALabel
+                label.text: primaryCTALabel
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {
                     _infoPopup.close()
-                    Qt.openUrlExternally(_infoPopup.downloadUrl)
+                    Qt.openUrlExternally(downloadUrl)
                 }
             }
         }
