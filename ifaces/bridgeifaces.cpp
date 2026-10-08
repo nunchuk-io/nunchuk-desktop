@@ -3525,6 +3525,46 @@ QJsonArray bridge::makeExistingSigners(const nunchuk::AddressType& address_type,
     return arrays;
 }
 
+// Bundled fallback for taproot-capable signers. The backend-provided
+// taproot/supported-signers list takes precedence, but when it has no
+// matching entry for a signer -- e.g. a backend rollout gap, or the fetch
+// failed and the cached list is empty -- the app would otherwise silently
+// disable hardware that is known to support taproot. The fallback only
+// *enables* signers; a signer matched by the backend list is never
+// overridden here. Entries must be scoped by wallet type: signers are not
+// uniformly capable across taproot wallet types (e.g. Ledger cannot sign
+// standard MULTI_SIG taproot wallets, which derive participant keys before
+// MuSig aggregation, but does support single-sig and miniscript taproot).
+static bool IsBundledTaprootSupported(const QSingleSignerPtr& signer, const nunchuk::WalletType& walletType) {
+    if (!signer) {
+        return false;
+    }
+    const auto type = signer->originSingleSigner().get_type();
+    const auto tag = signer->signerTag();
+    switch (walletType) {
+    case nunchuk::WalletType::SINGLE_SIG:
+        // Ledger devices running Bitcoin app >= 2.2.1 support taproot.
+        return type == nunchuk::SignerType::HARDWARE && tag == nunchuk::SignerTag::LEDGER;
+    case nunchuk::WalletType::MINISCRIPT:
+        // Airgap signing works for taproot miniscript through the generic
+        // QR/SD PSBT flows (Specter DIY is documented; other airgap devices
+        // sign the same way).
+        if (type == nunchuk::SignerType::AIRGAP) {
+            return true;
+        }
+        // Ledger (Bitcoin app >= 2.2.1) and Coldcard (EDGE firmware >= 6.3.3)
+        // support taproot miniscript wallet policies, per Nunchuk's own
+        // hardware support notes. Ledger's musig() support covers the
+        // aggregation-before-derivation form miniscript wallets use.
+        return type == nunchuk::SignerType::HARDWARE &&
+               (tag == nunchuk::SignerTag::LEDGER || tag == nunchuk::SignerTag::COLDCARD);
+    default:
+        // Standard MULTI_SIG taproot wallets derive participant keys before
+        // MuSig aggregation, which current hardware does not support.
+        return false;
+    }
+}
+
 bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::AddressType& addressType, const nunchuk::WalletType &walletType) {
     if (!signer) {
         return false;
@@ -3561,16 +3601,20 @@ bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::Ad
         bool address_type_match = address_type_str.isEmpty() || (address_type_str == "") || qUtils::AddressTypeFromStr(address_type_str) == addressType;
         bool signer_type_match = signer_type_str.isEmpty() || (signer_type_str == "") || SignerTypeFromStr(signer_type_str.toStdString()) == signer->originSingleSigner().get_type();
         bool signer_tag_match = signer_tag_str.isEmpty() || (signer_tag_str == "") || SignerTagFromStr(signer_tag_str.toStdString()) == signer->signerTag();
-        // bool wallet_type_match = wallet_type_str.isEmpty() || (wallet_type_str == "") || qUtils::WalletTypeFromStr(wallet_type_str) == walletType;
+        bool wallet_type_match = wallet_type_str.isEmpty() || (wallet_type_str == "") || qUtils::WalletTypeFromStr(wallet_type_str) == walletType;
         // bool wallet_template_match = wallet_template_str.isEmpty();
 
         DBG_INFO << "address_type_match:" << address_type_match
                  << "signer_type_match:" << signer_type_match
-                 << "signer_tag_match:" << signer_tag_match;
+                 << "signer_tag_match:" << signer_tag_match
+                 << "wallet_type_match:" << wallet_type_match;
 
-        return address_type_match && signer_type_match && signer_tag_match;
+        return address_type_match && signer_type_match && signer_tag_match && wallet_type_match;
     });
     bool ret = it != supported_types.end();
+    if (!ret) {
+        ret = IsBundledTaprootSupported(signer, walletType);
+    }
     return ret;
 }
 
