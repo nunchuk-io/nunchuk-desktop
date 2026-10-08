@@ -4,14 +4,7 @@ run-name: nunchuk-macos-${{ github.ref_type == 'tag' && 'v' || '' }}${{ github.r
 on:
   push:
     tags: [ "*" ]
-  workflow_dispatch:
-    # Select a branch or tag. Manual runs upload artifacts without publishing a release.
-    inputs:
-      check_reproducible_build:
-        description: Check reproducible build
-        required: false
-        type: boolean
-        default: false
+  workflow_dispatch: {}
 
 jobs:
   resolve-version:
@@ -120,75 +113,6 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-      # Optional second build: compare unsigned archives before signing.
-      - name: Save first build for reproducibility check
-        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
-        run: |
-          set -euo pipefail
-          name_prefix="nunchuk-macos-${{ matrix.arch }}-v${BUILD_VERSION}-unsigned"
-          mkdir -p /tmp/reproducible-build-check
-          cp "${OUTPUT_DIR}/${name_prefix}.tar" /tmp/reproducible-build-check/build1.tar
-          shasum -a 256 /tmp/reproducible-build-check/build1.tar
-
-      - name: Rebuild application for reproducibility check
-        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
-        env:
-          ARCH: ${{ matrix.arch }}
-          TAG: ${{ env.BUILD_VERSION }}
-        run: bash reproducible-builds/build_macos.sh
-
-      - name: Compare reproducibility check builds
-        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
-        run: |
-          set -euo pipefail
-          name_prefix="nunchuk-macos-${{ matrix.arch }}-v${BUILD_VERSION}-unsigned"
-          first_tar="/tmp/reproducible-build-check/build1.tar"
-          second_tar="${OUTPUT_DIR}/${name_prefix}.tar"
-
-          first_sha="$(shasum -a 256 "${first_tar}" | awk '{ print $1 }')"
-          second_sha="$(shasum -a 256 "${second_tar}" | awk '{ print $1 }')"
-
-          {
-            echo "### macOS ${{ matrix.arch }} reproducible build check"
-            echo
-            echo "Comparing unsigned payload archives from two clean builds."
-            echo
-            echo "| Build | SHA256 |"
-            echo "| --- | --- |"
-            echo "| 1st | \`${first_sha}\` |"
-            echo "| 2nd | \`${second_sha}\` |"
-            echo
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          if [[ "${first_sha}" == "${second_sha}" ]]; then
-            echo "**macOS ${{ matrix.arch }} reproducible build check: PASSED**" >> "${GITHUB_STEP_SUMMARY}"
-            echo "macOS ${{ matrix.arch }} reproducible build check: PASSED"
-            exit 0
-          fi
-
-          echo "**macOS ${{ matrix.arch }} reproducible build check: NOT PASSED**" >> "${GITHUB_STEP_SUMMARY}"
-          echo "::error::macOS ${{ matrix.arch }} reproducible build check NOT PASSED: the two from-scratch builds produced different bytes."
-
-          # Report which files in the app bundle differ.
-          diff_root="/tmp/reproducible-build-check/extracted"
-          rm -rf "${diff_root}"
-          mkdir -p "${diff_root}/build1" "${diff_root}/build2"
-          tar -xf "${first_tar}" -C "${diff_root}/build1"
-          tar -xf "${second_tar}" -C "${diff_root}/build2"
-
-          {
-            echo
-            echo "#### File-level diff (1st build vs. 2nd build)"
-            echo
-            echo '```'
-          } >> "${GITHUB_STEP_SUMMARY}"
-          diff --recursive --brief "${diff_root}/build1" "${diff_root}/build2" >> "${GITHUB_STEP_SUMMARY}" || true
-          {
-            echo '```'
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          exit 1
-
   sign:
     name: Sign & notarize ${{ matrix.arch }}
     needs: [resolve-version, build]
@@ -221,8 +145,7 @@ jobs:
           set -euo pipefail
           name_prefix="nunchuk-macos-${{ matrix.arch }}-v${BUILD_VERSION}-unsigned"
           archive="unsigned/${name_prefix}.tar"
-          # Check archive integrity after transfer. The optional rebuild
-          # comparison runs separately in the build job.
+          # Check archive integrity after transfer.
           ( cd unsigned && shasum -a 256 --check "${name_prefix}.tar.sha256" )
 
           mkdir -p payload

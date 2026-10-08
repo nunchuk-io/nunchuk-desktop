@@ -97,7 +97,6 @@ RUN printf '%s\n' \
         ca-certificates \
         cmake \
         curl \
-        dbus-x11 \
         desktop-file-utils \
         dpkg-dev \
         file \
@@ -167,9 +166,6 @@ RUN printf '%s\n' \
         squashfuse \
         unzip \
         wget \
-        xauth \
-        xdotool \
-        xvfb \
         zip \
     && apt-get install -y --no-install-recommends "gcc-14=${GCC14_VERSION}" "g++-14=${GCC14_VERSION}" \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \

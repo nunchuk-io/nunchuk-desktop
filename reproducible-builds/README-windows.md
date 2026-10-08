@@ -11,7 +11,7 @@ manifest and build metadata.
 ## GitHub Actions
 
 Run **Build windows release** on a branch or tag to download artifacts without
-publishing. Enable **Check reproducible build** for an optional second build.
+publishing.
 Pushing a numeric tag `X.Y.Z` publishes a prerelease; its version must match
 `CMakeLists.txt` and `app/main.cpp`.
 

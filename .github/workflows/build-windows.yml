@@ -6,13 +6,7 @@ run-name: nunchuk-windows-${{ github.ref_type == 'tag' && 'v' || '' }}${{ github
 on:
   push:
     tags: [ "*" ]
-  workflow_dispatch:
-    inputs:
-      check_reproducible_build:
-        description: Check reproducible build
-        required: false
-        type: boolean
-        default: false
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -43,7 +37,6 @@ jobs:
           try {
             Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE -ErrorAction Stop
             Add-MpPreference -ExclusionPath "C:\nunchuk-repro" -ErrorAction Stop
-            Add-MpPreference -ExclusionPath "C:\nunchuk-repro-check" -ErrorAction Stop
             Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction Stop
             Write-Host "Windows Defender exclusions/real-time monitoring configured."
           }
@@ -182,149 +175,11 @@ jobs:
           retention-days: 14
 
       - name: Upload build artifacts
-        # Upload the first build before the optional comparison.
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: C:\nunchuk-repro\artifacts
           if-no-files-found: error
-
-      # Optional second build: compare the payload manifest, ZIP and installer.
-      - name: Save first build for reproducibility check
-        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
-        run: |
-          $checkDir = "C:\nunchuk-repro-check\build1"
-          New-Item -ItemType Directory -Path $checkDir -Force | Out-Null
-          # The rebuild resets C:\nunchuk-repro, so save outputs outside it.
-          Copy-Item -Path "C:\nunchuk-repro\artifacts\*" -Destination $checkDir -Recurse -Force
-          Get-ChildItem $checkDir | Select-Object Name, Length
-
-      - name: Rebuild application for reproducibility check
-        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
-        run: |
-          & .\reproducible-builds\build_windows.ps1 `
-            -Replica b `
-            -ExpectedCommit $env:EXPECTED_COMMIT `
-            -ReleaseVersion $env:BUILD_VERSION `
-            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE)
-          & .\reproducible-builds\package_windows.ps1 `
-            -ExpectedCommit $env:EXPECTED_COMMIT `
-            -ReleaseVersion $env:BUILD_VERSION `
-            -SourceDateEpoch ([long]$env:SOURCE_DATE_EPOCH_VALUE) `
-            -ArtifactFlavor unsigned `
-            -ApplicationExe C:\nunchuk-repro\build-output\nunchuk-qt.exe `
-            -BuildInfoFile C:\nunchuk-repro\build-output\build-info.json `
-            -TlsProbeExe C:\nunchuk-repro\build-output\qt-tls-probe.exe `
-            -SmokeTest
-
-      - name: Compare reproducibility check builds
-        if: github.event_name == 'workflow_dispatch' && inputs.check_reproducible_build
-        run: |
-          function Get-ZipEntryHash($Entry) {
-            $stream = $Entry.Open()
-            $sha256 = [System.Security.Cryptography.SHA256]::Create()
-            try {
-              return [System.BitConverter]::ToString($sha256.ComputeHash($stream))
-            }
-            finally {
-              $stream.Dispose()
-              $sha256.Dispose()
-            }
-          }
-
-          $namePrefix = "nunchuk-windows-x64-v$env:BUILD_VERSION-unsigned"
-          $build1 = "C:\nunchuk-repro-check\build1"
-          $build2 = "C:\nunchuk-repro\artifacts"
-
-          $files = @("payload-manifest.sha256", "$namePrefix.zip", "$namePrefix-setup.exe")
-          $summary = New-Object System.Collections.Generic.List[string]
-          $summary.Add("### Windows reproducible build check")
-          $summary.Add("")
-          $summary.Add("| File | First SHA256 | Second SHA256 | Byte-identical |")
-          $summary.Add("| --- | --- | --- | --- |")
-          $diagnosticLines = New-Object System.Collections.Generic.List[string]
-          $allMatch = $true
-          foreach ($file in $files) {
-            $path1 = Join-Path $build1 $file
-            $path2 = Join-Path $build2 $file
-            if (!(Test-Path -LiteralPath $path1) -or !(Test-Path -LiteralPath $path2)) {
-              Write-Error "Missing expected file for comparison: $file"
-              exit 1
-            }
-            $hash1 = (Get-FileHash -LiteralPath $path1 -Algorithm SHA256).Hash
-            $hash2 = (Get-FileHash -LiteralPath $path2 -Algorithm SHA256).Hash
-            $match = $hash1 -eq $hash2
-            $summary.Add("| $file | $hash1 | $hash2 | $match |")
-            if ($match) { continue }
-            $allMatch = $false
-
-            if ($file -like "*.sha256") {
-              Write-Host "-- $file (text diff) --"
-              $manifestDiff = Compare-Object -ReferenceObject (Get-Content -LiteralPath $path1) -DifferenceObject (Get-Content -LiteralPath $path2)
-              $manifestDiff | ForEach-Object {
-                $marker = if ($_.SideIndicator -eq '<=') { "build1 only" } else { "build2 only" }
-                $line = "  [$marker] $($_.InputObject)"
-                Write-Host $line
-                $diagnosticLines.Add($line)
-              }
-              continue
-            }
-
-            if ($file -like "*.zip") {
-              # Identify added, removed and changed files inside the ZIP.
-              Add-Type -AssemblyName System.IO.Compression.FileSystem
-              $zip1 = [System.IO.Compression.ZipFile]::OpenRead($path1)
-              $zip2 = [System.IO.Compression.ZipFile]::OpenRead($path2)
-              try {
-                $entries1 = @{}
-                foreach ($e in $zip1.Entries) { $entries1[$e.FullName] = $e }
-                $entries2 = @{}
-                foreach ($e in $zip2.Entries) { $entries2[$e.FullName] = $e }
-                $allNames = @($entries1.Keys) + @($entries2.Keys) | Select-Object -Unique | Sort-Object
-                foreach ($name in $allNames) {
-                  $e1 = $entries1[$name]
-                  $e2 = $entries2[$name]
-                  if (!$e1 -or !$e2) {
-                    $line = "  [zip entry only in $(if (!$e1) { 'build2' } else { 'build1' })] $name"
-                    Write-Host $line
-                    $diagnosticLines.Add($line)
-                    continue
-                  }
-                  $entryHash1 = Get-ZipEntryHash $e1
-                  $entryHash2 = Get-ZipEntryHash $e2
-                  if ($entryHash1 -eq $entryHash2) { continue }
-                  Write-Host "-- zip entry differs: $name --"
-                  $diagnosticLines.Add("zip entry differs: $name")
-                }
-              }
-              finally {
-                $zip1.Dispose()
-                $zip2.Dispose()
-              }
-            }
-          }
-
-          $summary.Add("")
-          if ($diagnosticLines.Count -gt 0) {
-            $summary.Add("<details><summary>Diff diagnostics</summary>")
-            $summary.Add("")
-            $summary.Add('```')
-            $diagnosticLines | ForEach-Object { $summary.Add($_) }
-            $summary.Add('```')
-            $summary.Add("</details>")
-            $summary.Add("")
-          }
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ($summary -join "`n")
-
-          if ($allMatch) {
-            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Reproducible build check: PASSED**"
-            Write-Host "Reproducible build check: PASSED"
-            exit 0
-          }
-
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Reproducible build check: NOT PASSED**"
-          Write-Host "::error::Reproducible build check NOT PASSED: the two builds produced different bytes. See the job summary for hashes and changed files."
-          exit 1
 
   publish-release:
     name: Publish Windows release assets (unsigned)

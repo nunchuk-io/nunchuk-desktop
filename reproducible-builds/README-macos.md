@@ -47,5 +47,4 @@ CI records the unsigned payload hash in the release manifest for diagnostics.
 The signed app includes timestamps and a notarization ticket, so the distributed
 DMG is not a byte-for-byte comparison target.
 
-CI signs and notarizes the app before packaging it in a DMG. Manual runs can
-request a second unsigned build for comparison; this is not a release gate.
+CI signs and notarizes the app before packaging it in a DMG.
