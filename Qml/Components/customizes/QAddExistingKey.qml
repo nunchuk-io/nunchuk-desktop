@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -56,7 +56,7 @@ Item {
             QListView {
                 model: existList
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 anchors.fill: parent
                 delegate: QSingleSignerExistDelegate {
                     signerData {
@@ -72,7 +72,7 @@ Item {
                         single_need_Topup_Xpub: modelData.single_signer_need_Topup_Xpub
                         single_enabled: modelData.single_signer_enabled
                     }
-                    width: 539
+                    width: parent.width - 8  // leave room for QScrollBar (8px) — was 539
                     opacity: modelData.single_signer_enabled ? 1.0 : 0.4
                     enabled: modelData.single_signer_enabled
                     isSelected: fingerPrint === modelData.singleSigner_masterFingerPrint && key_name === modelData.singleSigner_name

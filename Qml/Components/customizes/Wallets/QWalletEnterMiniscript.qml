@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -47,7 +47,7 @@ QOnScreenContentTypeA {
             label: STR.STR_QML_1820
             textColor: colorText
             textInputted: miniscript
-            onTypingFinished: {
+            onTypingFinished: (currentText) => {
                 miniscriptEntered(_customize.textInputted)
             }
             input.placeholderText: "Example: \nandor(\nln:older(12900),\nthresh(2,pk(A), s:pk(B), s:pk(C)),\nthresh(2,pk(A),s:pk(D),s:pk(E))\n)"

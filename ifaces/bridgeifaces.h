@@ -74,6 +74,8 @@ public:
         ADD_TREZOR = (int)nunchuk::SignerTag::TREZOR,
         ADD_LEDGER = (int)nunchuk::SignerTag::LEDGER,
         ADD_BITBOX = (int)nunchuk::SignerTag::BITBOX,
+        ADD_KEEPKEY = (int)nunchuk::SignerTag::KEEPKEY,
+        ADD_KRUX = (int)nunchuk::SignerTag::KRUX,
         ADD_TAPSIGNER,
     };
 
@@ -257,6 +259,12 @@ Q_DECLARE_METATYPE(NunchukType1)
 namespace bridge {
 
 QString hwiPath();
+QString hwiCommand();
+
+// Populate every setting that represents a local filesystem path. Returns
+// false and fills msg when a required path is invalid.
+bool configureFilesystemPaths(nunchuk::AppSettings &settings,
+                              QWarningMessage &msg);
 
 int nunchukCurrentMode();
 
@@ -307,9 +315,17 @@ QDeviceListModelPtr nunchukGetDevices(QWarningMessage& msg);
 
 std::vector<nunchuk::Device> nunchukGetOriginDevices(QWarningMessage& msg);
 
+// Force-terminate any in-flight HWI child process (e.g. a scan stuck waiting on an
+// unresponsive device). Safe to call from another thread/call than the stuck one.
+void cancelHwiScan();
+
 QMasterSignerPtr nunchukCreateMasterSigner(const QString &name,
                                            const QString &xfp,
                                            QWarningMessage &msg);
+
+nunchuk::MasterSigner nunchukCreateOriginMasterSigner(const QString &name,
+                                                       const nunchuk::Device &device,
+                                                       QWarningMessage &msg);
 
 QString nunchukGetHealthCheckPath();
 
@@ -320,6 +336,11 @@ nunchuk::HealthStatus nunchukHealthCheckMasterSigner(const QString &xfp,
                                                      QWarningMessage &msg);
 
 nunchuk::HealthStatus nunchukHealthCheckSingleSigner(const QSingleSignerPtr &signer,
+                                                     QWarningMessage &msg);
+
+nunchuk::HealthStatus nunchukHealthCheckSingleSigner(const nunchuk::SingleSigner &signer,
+                                                     const QString &message,
+                                                     const QString &signature,
                                                      QWarningMessage &msg);
 
 int nunchukGetLastUsedSignerIndex(const QString& xfp,
@@ -428,6 +449,18 @@ nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
                                           const QString& description,
                                           bool allow_used_signer,
                                           const QString& decoy_pin,
+                                          nunchuk::WalletTemplate walletTemplate,
+                                          QWarningMessage &msg);
+
+nunchuk::Wallet nunchukCreateOriginWallet(const QString &name,
+                                          int m,
+                                          int n,
+                                          const std::vector<nunchuk::SingleSigner> &signers,
+                                          nunchuk::AddressType address_type,
+                                          nunchuk::WalletType wallet_type,
+                                          const QString &description,
+                                          bool allow_used_signer,
+                                          const QString &decoy_pin,
                                           nunchuk::WalletTemplate walletTemplate,
                                           QWarningMessage &msg);
 
@@ -612,7 +645,15 @@ void nunchukSendPinToDevice(const QDevicePtr &device,
                             const QString& pin,
                             QWarningMessage& msg);
 
+void nunchukSendPinToDevice(const nunchuk::Device &device,
+                            const QString &pin,
+                            QWarningMessage &msg);
+
 void nunchukSendPassphraseToDevice(const QDevicePtr &device,
+                                   const QString &passphrase,
+                                   QWarningMessage &msg);
+
+void nunchukSendPassphraseToDevice(const nunchuk::Device &device,
                                    const QString &passphrase,
                                    QWarningMessage &msg);
 

@@ -35,6 +35,11 @@ public:
     bool existHardware(const QString& tag);
     void makeHardwareSingerList(const QString& wallet_type, const QString& tag);
 
+    // Mirrors QML's _CLAIM_AN_INHERITANCE (Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml) - keep in
+    // sync. Used in setOptionIndex() to detect entry into the claim feature regardless of which
+    // sidebar/CTA variant triggered it (they all funnel through this one setter).
+    static constexpr int OPTION_CLAIM_AN_INHERITANCE = 5;
+
     int optionIndex() const;
     void setOptionIndex(int index);
 
@@ -53,7 +58,7 @@ signals:
     void optionIndexChanged();
     void walletInfoChanged();
 private:
-    int m_optionIndex;
+    int m_optionIndex = 0;
     QWalletPtr          walletInfo_;
 };
 

@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
-import QtQuick.Layouts 1.3
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
+import QtQuick.Layouts
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -61,10 +61,10 @@ QOnScreenContentTypeB {
                 model: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.healthStatuses : []
                 interactive: masterList.count > 3
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 spacing: 16
                 delegate: QKeyPeriodicReminderDelegate {
-                    width: ListView.view.width
+                    width: ListView.view.width - 8  // leave room for QScrollBar (8px)
                     height: visible ? 122 : 0
                     visible: modelData.keyinfo.type !== "SERVER"
                     onNotifyEdited: {

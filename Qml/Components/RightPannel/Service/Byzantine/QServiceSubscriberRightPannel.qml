@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import "../Common"
 import "../Byzantine" as B
 import "../HoneyBadger-IronHand" as HBIR
@@ -44,13 +44,27 @@ Item {
         }
     }
 
+    // BUGFIX (NUN-10192): same per-wallet dispatch as platform_key_co_signing_policies() above -
+    // a honey_badger/iron_hand wallet has no group-dashboard role, so it must use the HBIR detail
+    // screen (no role gating) instead of Byzantine's (role-gated, disables "..." for these wallets).
+    function view_inheritance_planing() {
+        if (ServiceSetting.walletInfo === null) {
+            return _view_inheritance_planing
+        } else {
+            return (ServiceSetting.walletInfo.isHoneyBadger || ServiceSetting.walletInfo.isIronHand) ? _view_inheritance_planing_HBIR : _view_inheritance_planing
+        }
+    }
+
     Loader {
         anchors.fill: parent
-        sourceComponent: if(ServiceSetting.optionIndex !== _PLATFORM_KEY_CO_SIGNING_POLICIES) {
-                             itemOption.screen_component
+        sourceComponent: if(ServiceSetting.optionIndex === _PLATFORM_KEY_CO_SIGNING_POLICIES) {
+                             platform_key_co_signing_policies()
+                         }
+                         else if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
+                             view_inheritance_planing()
                          }
                          else {
-                             platform_key_co_signing_policies()
+                             itemOption.screen_component
                          }
     }
     Component {
@@ -81,6 +95,11 @@ Item {
     Component {
         id: _platform_key_co_signing_policies_HBIR
         HBIR.QServicePlatformKeyCoSigningPolicies {
+        }
+    }
+    Component {
+        id: _view_inheritance_planing_HBIR
+        HBIR.QServiceViewInheritancePlaning {
         }
     }
 }

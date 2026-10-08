@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import Features.Claiming.ViewModels 1.0
@@ -34,10 +34,10 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2000
+    label.text: QSTR.STR_QML_2000
     readonly property var keys: [
-        {id: "hardware-device",      textWidth: 271,    display_name: STR.STR_QML_2005, is_recommended: true},
-        {id: "seed-phrase-backup",   textWidth: 271,    display_name: STR.STR_QML_2006, is_recommended: false},
+        {id: "hardware-device",      textWidth: 271,    display_name: QSTR.STR_QML_2005, is_recommended: true},
+        {id: "seed-phrase-backup",   textWidth: 271,    display_name: QSTR.STR_QML_2006, is_recommended: false},
     ]
     property string key_option: vm.key_option
     content: Item {
@@ -59,7 +59,7 @@ QOnScreenContentTypeA {
                         width: parent.width
                         QLato {
                             width: parent.width
-                            text: STR.STR_QML_2001
+                            text: QSTR.STR_QML_2001
                             lineHeightMode: Text.FixedHeight
                             lineHeight: 28
                             wrapMode: Text.WordWrap
@@ -70,8 +70,8 @@ QOnScreenContentTypeA {
                             id: _guide
                             width: parent.width
                             readonly property var content_map: [
-                                {height: 40, title:STR.STR_QML_2002 },
-                                {height: 40, title:STR.STR_QML_2003 },
+                                {height: 40, title:QSTR.STR_QML_2002 },
+                                {height: 40, title:QSTR.STR_QML_2003 },
                             ]
                             model: content_map.length
                             Rectangle {
@@ -109,7 +109,7 @@ QOnScreenContentTypeA {
                     }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_2004
+                        text: QSTR.STR_QML_2004
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -161,7 +161,7 @@ QOnScreenContentTypeA {
 
     QPopupHardwareAddKey {
         id: _hardwareAddKey
-        titleText: STR.STR_QML_2050 + "\n\n" + STR.STR_QML_2051
+        titleText: QSTR.STR_QML_2050 + "\n\n" + QSTR.STR_QML_2051
         supportWarning: false
         isMiniscript: true
         onNextClicked: {

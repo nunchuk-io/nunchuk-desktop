@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -53,7 +53,7 @@ QOnScreenContentTypeA {
             anchors.fill: parent
             clip: true
             contentHeight: _col.childrenRect.height
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             Column {
                 id:_col
                 anchors {
@@ -68,7 +68,7 @@ QOnScreenContentTypeA {
                         boxWidth: 576
                         boxHeight: 120
                         label: STR.STR_QML_131
-                        onTypingFinished: {
+                        onTypingFinished: (currentText) => {
                             message_input = _message_to_sign.textInputted
                         }
                         enableLengthLimit:true

@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.4
+import QtQuick
 import NUNCHUCKTYPE 1.0
 
 QtObject {
@@ -34,36 +34,53 @@ QtObject {
         { type: NUNCHUCKTYPE.ADD_LEDGER,     name: "Ledger",            device_type: "ledger",     tag: "LEDGER"      },
         { type: NUNCHUCKTYPE.ADD_TREZOR,     name: "Trezor",            device_type: "trezor",     tag: "TREZOR"      },
         { type: NUNCHUCKTYPE.ADD_TAPSIGNER,  name: "TAPSIGNER",         device_type: "tapsigner",  tag: "INHERITANCE" },
+        { type: NUNCHUCKTYPE.ADD_KEYSTONE,   name: "Keystone",          device_type: "keystone",   tag: "KEYSTONE"    },
+        { type: NUNCHUCKTYPE.ADD_PASSPORT,   name: "Foundation Passport", device_type: "passport", tag: "PASSPORT"    },
+        // KEEPKEY: wired add-key flow, reuses Trezor UI. KRUX: goes through the generic AIRGAP/remote flow.
+        // device_type is assumed (unconfirmed), only affects fallback icon selection.
+        { type: NUNCHUCKTYPE.ADD_KEEPKEY,    name: "KeepKey",           device_type: "keepkey",    tag: "KEEPKEY"     },
+        { type: NUNCHUCKTYPE.ADD_KRUX,       name: "Krux",              device_type: "krux",       tag: "KRUX"        },
     ]
-    function isSupportedInheritance(tag) {
-        if (isMiniscript) {
-            return SignerManagement.isSupportedInheritance(tag)
-        } else {
-            switch (tag) {
-            case "COLDCARD":
-                return !isKeyHolderLimited
-            case "INHERITANCE": // TAPSIGNER
-                return true
-            default:
-                return false
-            }
-        }
+
+    // BUGFIX: supported_signers[] entries can differ by wallet_type for the same tag (NUN-10192).
+    readonly property string walletType: isMiniscript ? "MINISCRIPT" : "MULTI_SIG"
+
+    // claim_options/claim_note available for a key type, from backend config (NUN-10192).
+    function claimOptionsFor(tag) {
+        return SignerManagement.claimOptionsForTag(tag, walletType)
     }
+    function claimNoteFor(tag) {
+        return SignerManagement.claimNoteForTag(tag, walletType)
+    }
+
+    // KEYHOLDER_LIMITED restriction, unrelated to is_inheritance_key: blocks self-adding BitBox/COLDCARD.
+    function isKeyHolderLimitedRestricted(tag) {
+        return isKeyHolderLimited && (tag === "BITBOX" || tag === "COLDCARD")
+    }
+
+    // Inheritance-key support is backend-driven (supported_signers[].is_inheritance_key), all wallet types.
+    function isSupportedInheritance(tag) {
+        if (isKeyHolderLimitedRestricted(tag)) return false
+        return SignerManagement.isSupportedInheritance(tag, walletType)
+    }
+    // BUGFIX: MINISCRIPT (on-chain) hardware support is NOT wallet-type-agnostic (e.g. Trezor/BitBox
+    // can't sign MINISCRIPT yet - confirmed real device test) - must check backend supported_signers[]
+    // for MINISCRIPT. MULTI_SIG (off-chain) keeps the old static list unconditionally (confirmed
+    // backend has no reliable non-inheritance data for MULTI_SIG - avoid any off-chain impact here).
     function isSupportedNotInheritance(tag) {
+        if (isKeyHolderLimitedRestricted(tag)) return false
         if (isMiniscript) {
-            return SignerManagement.isSupportedNotInheritance(tag)
-        } else {
-            switch (tag) {
-            case "BITBOX":
-            case "COLDCARD":
-                return !isKeyHolderLimited
-            case "LEDGER":
-            case "TREZOR":
-            case "JADE":
-                return true
-            default:
-                return false
-            }
+            return SignerManagement.isSupportedNotInheritance(tag, walletType)
+        }
+        switch (tag) {
+        case "BITBOX":
+        case "COLDCARD":
+        case "LEDGER":
+        case "TREZOR":
+        case "JADE":
+            return true
+        default:
+            return false
         }
     }
 
@@ -72,9 +89,11 @@ QtObject {
                           ? function(tag) { return isSupportedInheritance(tag) }
                           : function(tag) { return isSupportedNotInheritance(tag) }
 
-        // Filter keys by support predicate, ignoring invalid entries
+        // Filter keys by support predicate, ignoring invalid entries.
+        // BUGFIX: Krux has no real add-key flow wired on Desktop - hide it unconditionally even if
+        // backend supported_signers[] lists it as supported (it's a mobile-only capability for now).
         var ret = allKeys.filter(function(key) {
-            return key && key.tag && isSupported(key.tag)
+            return key && key.tag && key.tag !== "KRUX" && isSupported(key.tag)
         })
         console.log("Supported Keys: ", ret)
         return ret

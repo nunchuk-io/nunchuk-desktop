@@ -17,10 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.0
-import QtQuick.Controls 2.3
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
@@ -228,8 +227,8 @@ Item {
                                 }
                             }
                         }
-                        ScrollBar.vertical: ScrollBar { id: scrollContact;
-                            active: true;
+                        ScrollBar.vertical: QScrollBar {
+                            id: scrollContact
                             function wheel(up)
                             {
                                 if(up){
@@ -267,18 +266,22 @@ Item {
                     width: parent.width
                     height: 72
                     Row {
+                        width: parent.width - 24
+                        height: 40
                         anchors.centerIn: parent
-                        spacing: 16
+                        spacing: 12
                         QTextField {
                             id: messageField
-                            width: 340
-                            height: 40
+                            width: parent.width - emojiPicker.width - parent.spacing
+                            height: parent.height
                             anchors.verticalCenter: parent.verticalCenter
                             placeholderText: "Type your message..."
+                            inputMethodHints: Qt.ImhNone
                             clip: true
                             color: "#031F2B"
                             font.pixelSize: 16
                             selectByMouse: true
+                            onTextEdited: emojiPicker.replaceCompletedEmoticon()
                             background: Rectangle {
                                 anchors.fill: parent
                                 radius: 8
@@ -286,12 +289,27 @@ Item {
                                 color: "#FFFFFF"
                             }
                             onActiveFocusChanged:{ sandboxWalletInfo.markFiveMessagesAsRead() }
-                            Keys.onReturnPressed:{messageField.sendRequest()}
-                            Keys.onEnterPressed: {messageField.sendRequest()}
-                            function sendRequest(){
-                                sandboxWalletInfo.startSendGroupMessage(messageField.text)
-                                messageField.text = ""
+                            Keys.onReturnPressed: function(event) { messageField.handleSendKey(event) }
+                            Keys.onEnterPressed: function(event) { messageField.handleSendKey(event) }
+                            function handleSendKey(event) {
+                                if (inputMethodComposing) {
+                                    event.accepted = false
+                                    return
+                                }
+                                event.accepted = true
+                                messageField.sendRequest()
                             }
+                            function sendRequest(){
+                                emojiPicker.closePicker()
+                                var outgoingText = emojiPicker.convertEmoticons(messageField.text)
+                                sandboxWalletInfo.startSendGroupMessage(outgoingText)
+                                messageField.clear()
+                            }
+                        }
+                        QEmojiPicker {
+                            id: emojiPicker
+                            targetInput: messageField
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                 }

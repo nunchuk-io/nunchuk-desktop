@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.12
-import QtQuick.Controls 2.5
+import QtQuick
+import Qt5Compat.GraphicalEffects
+import QtQuick.Controls
 import QRCodeItem 1.0
 import "../../origins"
 import "../../customizes/Texts"
@@ -115,7 +115,7 @@ Popup {
                 id: qrcamera
                 anchors.fill: parent
                 anchors.margins: 6
-                onTagFound: {
+                onTagFound: (tag) => {
                     qrscaner.tags.push(tag)
                     qrscaner.tagFound(tag)
                 }

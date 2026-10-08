@@ -160,6 +160,17 @@ QVariantList QNormalSandbox::groupKeys() const
     return m_groupKeys;
 }
 
+int QNormalSandbox::addedCount() const
+{
+    int count = 0;
+    for (const auto& signer : m_sandbox.get_signers()) {
+        if (!signer.get_master_fingerprint().empty() || signer.get_name() == "ADDED") {
+            count++;
+        }
+    }
+    return count;
+}
+
 int QNormalSandbox::userCount() const
 {
     return m_userCount;

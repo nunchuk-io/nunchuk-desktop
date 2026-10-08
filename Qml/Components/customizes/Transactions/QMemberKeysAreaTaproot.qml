@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -71,9 +71,9 @@ Item {
             anchors.margins: 12
             spacing: 12
             model: transactionInfo.singleSignersAssigned
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             delegate: QMemberKeysDelegateTaproot {
-                implicitWidth: signerlist.width
+                implicitWidth: signerlist.width - 8  // leave room for QScrollBar (8px)
                 alreadySigned: model.single_signer_signed_status
                 signername: model.singleSigner_name
                 signerxfp: model.singleSigner_masterFingerPrint
@@ -133,7 +133,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 16
                 model: transactionInfo.singleSignersAssigned
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: QMemberKeysDelegate {
                     width: signerlist.width
                     alreadySigned: model.single_signer_signed_status

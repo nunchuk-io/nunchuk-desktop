@@ -1,7 +1,7 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -12,7 +12,6 @@ import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import Features.Inheritance.OffChain.ViewModels 1.0
-import "../../../Components/customizes/Texts"
 
 QOnScreenContentTypeA {
     id: root
@@ -27,7 +26,7 @@ QOnScreenContentTypeA {
     label.text: qsTr("Stage %1").arg(vm.stage.index)
     onCloseClicked: vm.close()
     
-    property var timeUnits: [STR.STR_QML_2199, STR.STR_QML_2200, STR.STR_QML_2201, STR.STR_QML_2202]  // year, month, week, day
+    property var timeUnits: [QSTR.STR_QML_2199, QSTR.STR_QML_2200, QSTR.STR_QML_2201, QSTR.STR_QML_2202]  // year, month, week, day
     
     content: Item {
         width: 569
@@ -65,7 +64,7 @@ QOnScreenContentTypeA {
                     anchors.right: parent.right
                     width: 36
                     height: 19
-                    text: STR.STR_QML_246
+                    text: QSTR.STR_QML_246
                     onTextClicked: {
                         confirmDeletePopup.open()
                     }
@@ -76,7 +75,7 @@ QOnScreenContentTypeA {
                         left: parent.left
                         bottom: parent.bottom
                     }
-                    text: STR.STR_QML_2158 + ":"
+                    text: QSTR.STR_QML_2158 + ":"
                     font.pixelSize: 14
                     font.weight: Font.Bold
                     color: "#031F2B"
@@ -102,7 +101,7 @@ QOnScreenContentTypeA {
                     QLato {
                         width: parent.width
                         height: paintedHeight
-                        text: STR.STR_QML_2209
+                        text: QSTR.STR_QML_2209
                         font.pixelSize: 16
                         wrapMode: Text.WordWrap
                         lineHeight: 20
@@ -111,7 +110,7 @@ QOnScreenContentTypeA {
                     
                     QLato {
                         id: noteText
-                        text: STR.STR_QML_2210
+                        text: QSTR.STR_QML_2210
                         font.pixelSize: 16
                     }
                 }
@@ -132,12 +131,12 @@ QOnScreenContentTypeA {
                         height: 68
                         QTextInputBoxTypeB {
                             id: amountPerReleaseInput
-                            label: STR.STR_QML_2211
+                            label: QSTR.STR_QML_2211
                             boxWidth: parent.width
                             boxHeight: 48
                             textInputted: vm.amountPerRelease
-                            validator: RegExpValidator {
-                                regExp: /^$|^[0-9]+$/
+                            validator: RegularExpressionValidator {
+                                regularExpression: /^$|^[0-9]+$/
                             }
                             isValid: vm.amountPerRelease > 0 && vm.amountPerRelease <= 100
                             onTextInputtedChanged: {
@@ -163,12 +162,12 @@ QOnScreenContentTypeA {
                         height: 68
                         QTextInputBoxTypeB {
                             id: repeatEveryInput
-                            label: STR.STR_QML_2212
+                            label: QSTR.STR_QML_2212
                             boxWidth: parent.width
                             boxHeight: 48
                             textInputted: vm.repeatEvery
-                            validator: RegExpValidator {
-                                regExp: /^$|^[0-9]+$/
+                            validator: RegularExpressionValidator {
+                                regularExpression: /^$|^[0-9]+$/
                             }
                             onTextInputtedChanged: {
                                 if (textInputted !== "") {
@@ -219,12 +218,12 @@ QOnScreenContentTypeA {
                     height: 68
                     QTextInputBoxTypeB {
                         id: totalAllocationInput
-                        label: STR.STR_QML_2213
+                        label: QSTR.STR_QML_2213
                         boxWidth: parent.width
                         boxHeight: 48
                         textInputted: vm.totalAllocation
-                        validator: RegExpValidator {
-                            regExp: /^$|^[0-9]+$/
+                        validator: RegularExpressionValidator {
+                            regularExpression: /^$|^[0-9]+$/
                         }
                         isValid: vm.totalAllocation <= 100
                         onTextInputtedChanged: {
@@ -251,10 +250,10 @@ QOnScreenContentTypeA {
 
     QConfirmYesNoPopup {
         id: confirmDeletePopup
-        title: STR.STR_QML_2245 + " " + vm.stage.index
-        contentText: STR.STR_QML_2246 + "\n\n" + STR.STR_QML_2247
-        leftBtnLabel: STR.STR_QML_245
-        rightBtnLabel: STR.STR_QML_427
+        title: QSTR.STR_QML_2245 + " " + vm.stage.index
+        contentText: QSTR.STR_QML_2246 + "\n\n" + QSTR.STR_QML_2247
+        leftBtnLabel: QSTR.STR_QML_245
+        rightBtnLabel: QSTR.STR_QML_427
         onConfirmNo: close()
         onConfirmYes: {
             close()
@@ -268,7 +267,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.implicitWidth + 32
             height: 48
-            label.text: STR.STR_QML_097  // "Continue"
+            label.text: QSTR.STR_QML_097  // "Continue"
             label.font.pixelSize: 14
             type: eTypeE
             enabled: vm.amountPerRelease > 0 && vm.amountPerRelease <= 100 && vm.totalAllocation <= 100

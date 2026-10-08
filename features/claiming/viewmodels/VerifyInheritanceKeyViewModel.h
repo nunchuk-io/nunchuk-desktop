@@ -45,5 +45,10 @@ class VerifyInheritanceKeyViewModel : public ActionViewModel {
   private:
     SigningChallengeUseCase m_signingChallengeUC;
     SignMessageUseCase m_signMessageUC;
+    // Guards against re-entrant onSignClicked() calls: m_signMessageUC's underlying WorkerConcurrent
+    // silently drops a 2nd request while the 1st is in flight (run() returns false, callback never
+    // stored), so the 2nd setOverrideCursor() would never get its matching restoreOverrideCursor(),
+    // leaving the wait cursor stuck even after the 1st request completes successfully.
+    bool m_isSigning{false};
 };
 } // namespace features::claiming::viewmodels

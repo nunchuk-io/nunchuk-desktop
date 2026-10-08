@@ -257,11 +257,29 @@ QVariant QSignerManagement::miniscriptSupportedFirmwares(const QString& tag) con
     return QVariant();
 }
 
-bool QSignerManagement::isSupportedInheritance(const QString& tag) const {
+// True if supported_signers[] has at least one entry for walletType. Used to detect a backend
+// rollout gap (wallet_type not configured yet) vs. a real "not supported" result.
+static bool hasEntryForWalletType(const QJsonArray &supported_signers, const QString &walletType) {
+    for (auto js : supported_signers) {
+        if (qUtils::strCompare(js.toObject()["wallet_type"].toString(), walletType)) return true;
+    }
+    return false;
+}
+
+// BUGFIX: supported_signers[] (NUN-10192) has per-entry wallet_type; these 4 functions used to filter
+// by signer_tag only, so a shared tag with different MULTI_SIG/MINISCRIPT entries could match the wrong one.
+// BUGFIX: if the backend hasn't published any entry at all for this wallet_type yet, filtering by it
+// would break the pre-existing add/replace-key feature for that wallet_type entirely. Fall back to the
+// old tag-only matching (pre-NUN-10192) in that case; only filter by wallet_type once backend data exists.
+bool QSignerManagement::isSupportedInheritance(const QString& tag, const QString& walletType) const {
     QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
     QJsonArray supported_signers = config["supported_signers"].toArray();
+    bool filterByWalletType = !walletType.isEmpty() && hasEntryForWalletType(supported_signers, walletType);
     for (auto js : supported_signers) {
         QJsonObject obj = js.toObject();
+        if (filterByWalletType && !qUtils::strCompare(obj["wallet_type"].toString(), walletType)) {
+            continue;
+        }
         bool isInheritance = obj["is_inheritance_key"].toBool();
         if (isInheritance && qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
             return true;
@@ -270,15 +288,55 @@ bool QSignerManagement::isSupportedInheritance(const QString& tag) const {
     return false;
 }
 
-bool QSignerManagement::isSupportedNotInheritance(const QString& tag) const {
+bool QSignerManagement::isSupportedNotInheritance(const QString& tag, const QString& walletType) const {
     QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
     QJsonArray supported_signers = config["supported_signers"].toArray();
+    bool filterByWalletType = !walletType.isEmpty() && hasEntryForWalletType(supported_signers, walletType);
     for (auto js : supported_signers) {
         QJsonObject obj = js.toObject();
+        if (filterByWalletType && !qUtils::strCompare(obj["wallet_type"].toString(), walletType)) {
+            continue;
+        }
         bool isInheritance = obj["is_inheritance_key"].toBool();
         if (!isInheritance && qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
             return true;
         }
     }
     return false;
+}
+
+QVariant QSignerManagement::claimOptionsForTag(const QString& tag, const QString& walletType) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray supported_signers = config["supported_signers"].toArray();
+    for (auto js : supported_signers) {
+        QJsonObject obj = js.toObject();
+        if (!walletType.isEmpty() && !qUtils::strCompare(obj["wallet_type"].toString(), walletType)) {
+            continue;
+        }
+        if (qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return QVariant::fromValue(obj["claim_options"].toArray().toVariantList());
+        }
+    }
+    return QVariant::fromValue(QVariantList());
+}
+
+// BUGFIX: setupConfigJs() only fetches once per app session (cached even if stale/legacy);
+// call this before reading claim options so a server-side rollout doesn't need an app restart.
+void QSignerManagement::refreshSetupConfig() {
+    QWalletServicesTag::instance()->configWalletSetup();
+}
+
+QString QSignerManagement::claimNoteForTag(const QString& tag, const QString& walletType) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray supported_signers = config["supported_signers"].toArray();
+    for (auto js : supported_signers) {
+        QJsonObject obj = js.toObject();
+        if (!walletType.isEmpty() && !qUtils::strCompare(obj["wallet_type"].toString(), walletType)) {
+            continue;
+        }
+        if (qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return obj["claim_note"].toString();
+        }
+    }
+    return QString();
 }

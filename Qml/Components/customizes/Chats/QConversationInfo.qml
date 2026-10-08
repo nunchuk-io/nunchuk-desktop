@@ -17,11 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.1
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -35,6 +34,11 @@ import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: conversationInfo
+    readonly property bool supportRoom: RoomWalletData.currentRoom
+                                                ? RoomWalletData.currentRoom.isAnySupportRoom
+                                                : false
+    signal closeRequested()
+    signal requestRemoveMember(string memberId, string memberName)
     width: 0
     height: parent.height
     color: "#031F2B"
@@ -70,7 +74,7 @@ Rectangle {
             transformOrigin: Item.Center
             source: "qrc:/Images/Images/close_24px_white.png"
         }
-        onClicked:  { conversationInfo.width = 0 }
+        onClicked: conversationInfo.closeRequested()
     }
     QAvatar {
         id: avatarInfo
@@ -120,9 +124,10 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 0
         Item {
-            width: 117
+            width: visible ? 117 : 0
             height: parent.height
-            visible: RoomWalletData.roomWalletCreated ? true : !RoomWalletData.isIgnoredCollabWallet
+            visible: !conversationInfo.supportRoom
+                     && (RoomWalletData.roomWalletCreated ? true : !RoomWalletData.isIgnoredCollabWallet)
             Rectangle {
                 width: 48
                 height: 48
@@ -206,18 +211,23 @@ Rectangle {
                 id: optionMenu
                 background: Rectangle {
                     implicitWidth: 180
-                    implicitHeight: addMembersMenu.visible ? 3*48 : 2*48
+                    implicitHeight: (editNameMenu.visible ? 48 : 0)
+                                    + (addMembersMenu.visible ? 48 : 0)
+                                    + 48
                     radius: 8
                     color: "#FFFFFF"
                 }
 
                 MenuItem {
                     id: editNameMenu
-                    height: 48
+                    height: visible ? 48 : 0
                     text: STR.STR_QML_381
                     icon.source: "qrc:/Images/Images/edit-dark.svg"
                     onTriggered: {triggerEditGroupName()}
-                    enabled: (RoomWalletData.currentRoom && RoomWalletData.currentRoom.userCount > 2)
+                    visible: !conversationInfo.supportRoom
+                    enabled: RoomWalletData.currentRoom
+                             && RoomWalletData.currentRoom.userCount > 2
+                             && RoomWalletData.currentRoom.canRenameRoom
                     background: Rectangle {
                         implicitWidth: 180
                         implicitHeight: 48
@@ -231,8 +241,11 @@ Rectangle {
                     text: STR.STR_QML_503
                     icon.source: "qrc:/Images/Images/person_add-24px.png"
                     onTriggered: {triggerAddMembers()}
-                    visible: RoomWalletData.currentRoom && !RoomWalletData.currentRoom.roomWallet
-                    enabled: true
+                    visible: !conversationInfo.supportRoom
+                             && RoomWalletData.currentRoom
+                             && !RoomWalletData.currentRoom.roomWallet
+                    enabled: RoomWalletData.currentRoom
+                             && RoomWalletData.currentRoom.canInviteMembers
                     background: Rectangle {
                         implicitWidth: 180
                         implicitHeight: 48
@@ -242,7 +255,7 @@ Rectangle {
                 }
                 MenuItem {
                     id: leavRoomMenu
-                    text: STR.STR_QML_504
+                    text: qsTr("Leave room")
                     height: 48
                     icon.source: "qrc:/Images/Images/cancel_red_24dp.png"
                     onTriggered: {triggerLeaveGroup()}
@@ -266,21 +279,22 @@ Rectangle {
         contentHeight: infoColumn.implicitHeight
         interactive: contentHeight > height
         flickableDirection: Flickable.VerticalFlick
-        ScrollBar.vertical: ScrollBar { active: true }
+        ScrollBar.vertical: QScrollBar { }
         Column {
             id: infoColumn
-            width: parent.width
+            width: parent.width - 8
             spacing: 24
             Item {
                 width: 234
                 height: 80
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: RoomWalletData.roomWalletInitialized
+                visible: !conversationInfo.supportRoom && RoomWalletData.roomWalletInitialized
                 Rectangle {
                     anchors.fill: parent
                     radius: 8
                     Loader {
                         anchors.fill: parent
+                        anchors.rightMargin: 8
                         sourceComponent: RoomWalletData.roomWalletCreated ? walletCompleted : RoomWalletData.roomWalletReady ? walletDraft : null
                     }
                     MouseArea {
@@ -293,12 +307,17 @@ Rectangle {
                     }
                 }
             }
-            Rectangle { width: parent.width ; height: 1; color: "#595959" ; visible: pendingTxs.count > 0}
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: "#595959"
+                visible: !conversationInfo.supportRoom && pendingTxs.count > 0
+            }
             Item {
                 width: 234
                 height: 24
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: pendingTxs.count > 0
+                visible: !conversationInfo.supportRoom && pendingTxs.count > 0
                 Row {
                     height: 24
                     spacing: 8
@@ -344,13 +363,15 @@ Rectangle {
                 width: 234
                 readonly property int displayCount: Math.min(3, count)
                 height: visible ? (80*displayCount+(spacing*(displayCount-1))) : 0
-                visible: !collapseTx.isCollapsed && pendingTxs.count > 0
+                visible: !conversationInfo.supportRoom
+                         && !collapseTx.isCollapsed
+                         && pendingTxs.count > 0
                 anchors.horizontalCenter: parent.horizontalCenter
                 model: RoomWalletData.currentRoom ? RoomWalletData.currentRoom.pendingTxs : 0
                 spacing: 16
                 clip: true
                 interactive: count > 3
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: Item {
                     id: iteminit
                     width: 234
@@ -481,13 +502,23 @@ Rectangle {
                 model: RoomWalletData.currentRoom ? RoomWalletData.currentRoom.users : 0
                 spacing: 16
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: QContactDelegate {
+                    property string menuMemberId: ""
+                    property string menuMemberName: ""
                     width: roomMembers.width
                     height: 36
                     contactname: model.name
                     contactAvt: model.avatar
-                    onItemRightClicked:  memberMenu.popup()
+                    onItemRightClicked: {
+                        if (!conversationInfo.supportRoom
+                                && RoomWalletData.currentRoom
+                                && RoomWalletData.currentRoom.canKickMember(model.id)) {
+                            menuMemberId = model.id
+                            menuMemberName = model.name
+                            memberMenu.popup()
+                        }
+                    }
                     onItemDoubleClicked: {
                         ClientController.createRoomDirectChat(model.id, model.name)
                         conversationContentLoader.changeCurrentRoomComponent()
@@ -506,7 +537,10 @@ Rectangle {
                             height: 48
                             text: "Remove"
                             icon.source: "qrc:/Images/Images/cancel_red_24dp.png"
-                            onTriggered: { if(RoomWalletData.currentRoom) RoomWalletData.currentRoom.kickMember(model.id) }
+                            enabled: !conversationInfo.supportRoom
+                                     && RoomWalletData.currentRoom
+                                     && RoomWalletData.currentRoom.canKickMember(menuMemberId)
+                            onTriggered: conversationInfo.requestRemoveMember(menuMemberId, menuMemberName)
                             background: Rectangle {
                                 implicitWidth: 180
                                 implicitHeight: 48

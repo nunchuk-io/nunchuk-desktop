@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -86,67 +86,28 @@ QOnScreenContent {
         }
     }
     property var transactionInfo: AppModel.transactionInfo
+
     Component.onCompleted: {
-        // Set by QCoinSelectionTransaction.qml right before navigating to
-        // coin selection ("Customize"). Also gated on a context key
-        // (wallet+address) so a stray/abandoned flag can't leak fee settings
-        // into an unrelated later transaction. See the long comment on
-        // GlobalData.txManualFeeReturnPending for why QMLHandle.onsRequester()
-        // can't be used for this instead.
-        //
-        // This is a deliberate one-time IMPERATIVE restore, not a declarative
-        // binding: binding manualfeesetting/manualfee directly to GlobalData
-        // would keep them live-bound to it for this component's whole
-        // lifetime, so clearing txManualFeeReturnPending right below would
-        // immediately re-trigger those bindings back to their "fresh"
-        // values, undoing the very restore we just did.
         var currentKey = AppModel.walletInfo.walletId + "|" + transactionInfo.destination
-        var isReturningHere = GlobalData.txManualFeeReturnPending
+        var isReturningFromCoinSelection = GlobalData.txManualFeeReturnPending
                 && GlobalData.txManualFeeContextKey === currentKey
-        // TEMP DEBUG - remove after root-causing the fee-panel reset bug
-        console.log("[FEEDBG] onCompleted - pending=" + GlobalData.txManualFeeReturnPending
-                     + " storedKey=" + GlobalData.txManualFeeContextKey
-                     + " currentKey=" + currentKey
-                     + " isReturningHere=" + isReturningHere
-                     + " switchOn=" + GlobalData.txManualFeeSettingOpen
-                     + " checked=" + GlobalData.txManualFeeChecked
-                     + " rate=" + GlobalData.txManualFeeRateText)
-        if (isReturningHere) {
+
+        if (isReturningFromCoinSelection) {
             manualfeesetting.switchItem.switchOn = GlobalData.txManualFeeSettingOpen
             manualfee.isChecked = GlobalData.txManualFeeChecked
             manualfee.textOutput = GlobalData.txManualFeeRateText
             GlobalData.txManualFeeReturnPending = false
-            console.log("[FEEDBG] onCompleted - restored. switchItem.switchOn now="
-                         + manualfeesetting.switchItem.switchOn
-                         + " manualfee.isChecked now=" + manualfee.isChecked
-                         + " manualfee.textOutput now=" + manualfee.textOutput)
         } else {
-            // Fresh transaction-prep session (not a return from coin
-            // selection) - clear any leftover fee-customization state from a
-            // previous transaction so it doesn't leak into this one.
             GlobalData.resetTxManualFeeState()
         }
     }
+
     Component.onDestruction: {
-        // Leaving this screen for any reason OTHER than "Customize" coin
-        // selection (Back, X close, successful sign/create, cancel, etc.) -
-        // clear the fee-customization state immediately rather than waiting
-        // for the next time this screen happens to open again. This closes
-        // the residual risk of a stray/abandoned state lingering in
-        // GlobalData indefinitely (e.g. if the context-key check in
-        // onCompleted above were to coincidentally match a later, unrelated
-        // transaction to the same wallet+address).
-        //
-        // If the user just clicked "Customize", QCoinSelectionTransaction.qml
-        // already set txManualFeeReturnPending = true right before this
-        // screen got destroyed - in that one case, skip the reset so the
-        // state survives to be restored in onCompleted above.
-        // TEMP DEBUG - remove after root-causing the fee-panel reset bug
-        console.log("[FEEDBG] onDestruction - pending=" + GlobalData.txManualFeeReturnPending)
         if (!GlobalData.txManualFeeReturnPending) {
             GlobalData.resetTxManualFeeState()
         }
     }
+
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
@@ -171,10 +132,10 @@ QOnScreenContent {
                 flickableDirection: Flickable.VerticalFlick
                 interactive: contentHeight > height
                 contentHeight: contentDisp.height
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: contentDisp
-                    width: parent.width
+                    width: parent.width - 8
                     spacing: 12
                     anchors.horizontalCenter: parent.horizontalCenter
                     QSendToAddressBlock {
@@ -227,14 +188,13 @@ QOnScreenContent {
                         height: 36
                         label: STR.STR_QML_225
                         icon: "qrc:/Images/Images/signing-policy-dark.svg"
-                        // Initial value (default false, i.e. collapsed) is
-                        // restored imperatively in Component.onCompleted above
-                        // when returning from coin selection - see the long
-                        // comment there for why this isn't a live binding.
                     }
                     Connections {
                         target: manualfeesetting.switchItem
-                        onSwitchOnChanged: GlobalData.txManualFeeSettingOpen = manualfeesetting.switchItem.switchOn
+
+                        function onSwitchOnChanged() {
+                            GlobalData.txManualFeeSettingOpen = manualfeesetting.switchItem.switchOn
+                        }
                     }
                     Column {
                         visible: manualfeesetting.getValue()
@@ -256,14 +216,17 @@ QOnScreenContent {
                         QManualFeeRate {
                             id: manualfee
                             anchors.horizontalCenter: parent.horizontalCenter
-                            // Initial values (default false/"") restored
-                            // imperatively in Component.onCompleted above when
-                            // returning from coin selection.
                         }
                         Connections {
                             target: manualfee
-                            onIsCheckedChanged: GlobalData.txManualFeeChecked = manualfee.isChecked
-                            onTextOutputChanged: GlobalData.txManualFeeRateText = manualfee.textOutput
+
+                            function onIsCheckedChanged() {
+                                GlobalData.txManualFeeChecked = manualfee.isChecked
+                            }
+
+                            function onTextOutputChanged() {
+                                GlobalData.txManualFeeRateText = manualfee.textOutput
+                            }
                         }
                         QCheckboxTooltip {
                             id: antisnipfee

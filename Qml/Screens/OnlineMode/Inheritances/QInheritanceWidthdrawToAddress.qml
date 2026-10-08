@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License      *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import Features.Claiming.ViewModels 1.0
@@ -36,7 +36,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_786
+    label.text: QSTR.STR_QML_786
     onCloseClicked: vm.close()
 
     content: Item {
@@ -51,7 +51,7 @@ QOnScreenContentTypeB {
                     height: addressInput.height
                     QTextInputBoxTypeB {
                         id: addressInput
-                        label: STR.STR_QML_1129
+                        label: QSTR.STR_QML_1129
                         boxWidth: 479
                         boxHeight: 48
                         isValid: true
@@ -110,7 +110,7 @@ QOnScreenContentTypeB {
                     height: 72
                     QTextInputBoxTypeB {
                         id: amountInput
-                        label: STR.STR_QML_214
+                        label: QSTR.STR_QML_214
                         boxWidth: 221
                         boxHeight: 48
                         isValid: true
@@ -136,7 +136,7 @@ QOnScreenContentTypeB {
 
         QQrImportScanner {
             id: qrscaner
-            onTagFound: {
+            onTagFound: (tag) => {
                 destinationAddress = tag
                 qrscaner.close()
             }
@@ -156,7 +156,7 @@ QOnScreenContentTypeB {
     bottomRight: QTextButton {
         width: 164
         height: 48
-        label.text: STR.STR_QML_257
+        label.text: QSTR.STR_QML_257
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: _newTran.nextClicked()
@@ -167,8 +167,8 @@ QOnScreenContentTypeB {
         vm.createTransactionToAddress(destinationAddress)
     }
 
-    RegExpValidator { id: intValidator; regExp: /^[1-9][0-9]*$/ }
-    RegExpValidator { id: doubleValidator; regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
+    RegularExpressionValidator { id: intValidator; regularExpression: /^[1-9][0-9]*$/ }
+    RegularExpressionValidator { id: doubleValidator; regularExpression: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
 
     WidthdrawToAddressViewModel {
         id: vm

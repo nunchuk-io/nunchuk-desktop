@@ -26,9 +26,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -141,7 +141,7 @@ Item {
                     currentIndex: -1
                     clip: true
                     interactive: devicelist.count > 3
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     delegate: Item {
                         width: 342
                         height: 44
@@ -222,8 +222,12 @@ Item {
             "signerNameInputted"    : signerName,
             "xfpSelected"          : selected_xfp
         };
-        vm.forceCreateMaster(masterSignerObj)
-        stateScreen.setScreenFlow("eSCREEN_LOADING")
+        // BUGFIX: only transition to the loading screen if forceCreateMaster() actually started an
+        // async op - it silently bails (toast only) when the device needs PIN/passphrase, which used
+        // to leave this screen stuck on "Adding [Device]..." forever with no pending operation at all.
+        if (vm.forceCreateMaster(masterSignerObj)) {
+            stateScreen.setScreenFlow("eSCREEN_LOADING")
+        }
     }
     QPopupInfoTwoButtons {
         id: _info

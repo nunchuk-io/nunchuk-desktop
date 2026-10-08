@@ -92,6 +92,11 @@ QNunchukMatrixEvent SignTransaction(const QString &room_id,
                                     const QDevicePtr &device,
                                     QWarningMessage& msg);
 
+nunchuk::NunchukMatrixEvent SignTransaction(const QString &room_id,
+                                            const QString &init_event_id,
+                                            const nunchuk::Device &device,
+                                            QWarningMessage &msg);
+
 QNunchukMatrixEvent SignAirgapTransaction(const QString &init_event_id,
                                           const QString &master_fingerprint,
                                           QWarningMessage &msg);
@@ -122,6 +127,10 @@ nunchuk::RoomTransaction GetOriginPendingTransaction(const QString &room_id,
                                                      const QString& tx_id,
                                                      QWarningMessage& msg);
 
+std::vector<nunchuk::RoomTransaction> GetOriginPendingTransactions(
+        const QString &room_id,
+        QWarningMessage &msg);
+
 QString GetTransactionId(const QString &room_id,
                          const QString& event_id,
                          QWarningMessage& msg);
@@ -139,7 +148,13 @@ QNunchukMatrixEvent GetEvent(const QString& room_id,
                              const QString& event_id,
                              QWarningMessage& msg);
 
+nunchuk::NunchukMatrixEvent GetEventData(const QString &room_id,
+                                         const QString &event_id,
+                                         QWarningMessage &msg);
+
 void ConsumeEvent(const QString& room_id,const QNunchukMatrixEvent& event);
+void ConsumeEvent(const QString &room_id,
+                  const nunchuk::NunchukMatrixEvent &event);
 
 void ConsumeSyncEvent(const QString& room_id,const QNunchukMatrixEvent& event);
 

@@ -17,10 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.1
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import "../origins"
 import "../customizes"
@@ -55,9 +54,9 @@ Rectangle {
     signal updateProfileRequest()
     signal createAccountRequest()
 
-    property int matrixUnread: ClientController.rooms.totalUnread
-    property int contactReceived: ClientController.contactsReceived.count
-    property int groupWalletUnread: AppModel.groupWalletList.unReadMessageCount
+    property int matrixUnread: ClientController.rooms ? ClientController.rooms.totalUnread : 0
+    property int contactReceived: ClientController.contactsReceived ? ClientController.contactsReceived.count : 0
+    property int groupWalletUnread: AppModel.groupWalletList ? AppModel.groupWalletList.unReadMessageCount : 0
     property int totalUnread: matrixUnread + contactReceived + groupWalletUnread
 
     Rectangle {
@@ -132,7 +131,7 @@ Rectangle {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     psContextMenu.x = avatarRect.x + mouseX
-                    psContextMenu.y = avatarRect.y - psContextMenu.height + mouseY
+                    psContextMenu.y = avatarRect.y - psContextMenu.implicitHeight + mouseY
                     psContextMenu.open()
                 }
             }

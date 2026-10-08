@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.5
+import QtQuick
+import QtQuick.Controls
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import "../../../Components/origins"
@@ -54,10 +54,10 @@ Item {
                 anchors.fill: parent
                 model: AppModel.walletsUsingSigner
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 spacing: 16
                 delegate: Item {
-                    width: ListView.width
+                    width: ListView.width - 8  // leave room for QScrollBar (8px)
                     height: 40
                     Row {
                         anchors {

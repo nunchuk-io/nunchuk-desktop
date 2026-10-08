@@ -331,7 +331,7 @@ QVariant QCoinCollectionsModel::data(const QModelIndex &index, int role) const
     case collection_auto_lock_role:
         return m_data[index.row()].is_auto_lock();
     case collection_add_tags_role:
-        return qVariantFromValue(m_data[index.row()].get_add_coins_with_tag());
+        return QVariant::fromValue(m_data[index.row()].get_add_coins_with_tag());
     case collection_count_role:
         return get_count(m_data[index.row()].get_id());
     case collection_checked_role:
@@ -806,7 +806,7 @@ QString UTXO::blocktimeDisplay()
         return "--/--/----"; // There is no time
     }
     else{
-        return QDateTime::fromTime_t(this->blocktime()).toString( "MM/dd/yyyy hh:mm AP");
+        return QDateTime::fromMSecsSinceEpoch(this->blocktime()).toString( "MM/dd/yyyy hh:mm AP");
     }
 }
 
@@ -816,7 +816,7 @@ QString UTXO::blocktimeDisplayTwo()
         return "--/--/----"; // There is no time
     }
     else{
-        QDateTime date_time = QDateTime::fromTime_t(this->blocktime());
+        QDateTime date_time = QDateTime::fromMSecsSinceEpoch(this->blocktime());
         return QString("%1 at %2")
             .arg(date_time.date().toString("MM/dd/yyyy"))
             .arg(date_time.time().toString("hh:mm AP"));
@@ -842,7 +842,7 @@ QString UTXO::scheduleTimeDisplay()
         return "--/--/----"; // There is no time
     }
     else{
-        return QDateTime::fromTime_t(this->scheduleTime()).toString( "MM/dd/yyyy hh:mm AP");
+        return QDateTime::fromMSecsSinceEpoch(this->scheduleTime()).toString( "MM/dd/yyyy hh:mm AP");
     }
 }
 
@@ -1006,7 +1006,7 @@ QVariantList UTXO::timelocklist()
         bool    isLocked = false;
 
         if (timelockbase() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
-            DBG_INFO << val << QDateTime::currentDateTimeUtc().toTime_t();
+            DBG_INFO << val << QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
             QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
             valueNodeStr = dt.toString("MM/dd/yyyy");
             qint64 secondsTo = QDateTime::currentDateTimeUtc().secsTo(dt);
@@ -1145,9 +1145,9 @@ QVariant QUTXOListModel::data(const QModelIndex &index, int role) const{
     case utxo_confirmed_role:
         return m_data[index.row()]->confirmedCount();
     case utxo_tags_role:
-        return qVariantFromValue(m_data[index.row()]->coinTags());
+        return QVariant::fromValue(m_data[index.row()]->coinTags());
     case utxo_collections_role:
-        return qVariantFromValue(m_data[index.row()]->coinCollections());
+        return QVariant::fromValue(m_data[index.row()]->coinCollections());
     case utxo_amount_currency_role:
         return m_data[index.row()]->amountCurrency();
     case utxo_blocktime_role:
@@ -1295,32 +1295,32 @@ void QUTXOListModel::requestSort(int role, int order)
         switch (role) {
         case utxo_address_role:
         {
-            if(Qt::AscendingOrder == order) {qSort(m_data.begin(), m_data.end(), sortbyAddressAscending);}
-            else {qSort(m_data.begin(), m_data.end(), sortbyAddressDescending);}
+            if(Qt::AscendingOrder == order) {std::sort(m_data.begin(), m_data.end(), sortbyAddressAscending);}
+            else {std::sort(m_data.begin(), m_data.end(), sortbyAddressDescending);}
             break;
         }
         case utxo_amount_role:
         {
-            if(Qt::AscendingOrder == order) {qSort(m_data.begin(), m_data.end(), sortbyAmountAscending);}
-            else {qSort(m_data.begin(), m_data.end(), sortbyAmountDescending);}
+            if(Qt::AscendingOrder == order) {std::sort(m_data.begin(), m_data.end(), sortbyAmountAscending);}
+            else {std::sort(m_data.begin(), m_data.end(), sortbyAmountDescending);}
             break;
         }
         case utxo_height_role:
         {
-            if(Qt::AscendingOrder == order) {qSort(m_data.begin(), m_data.end(), sortbyHeightDescending);}
-            else {qSort(m_data.begin(), m_data.end(), sortbyHeightAscending);}
+            if(Qt::AscendingOrder == order) {std::sort(m_data.begin(), m_data.end(), sortbyHeightDescending);}
+            else {std::sort(m_data.begin(), m_data.end(), sortbyHeightAscending);}
             break;
         }
         case utxo_memo_role:
         {
-            if(Qt::AscendingOrder == order) {qSort(m_data.begin(), m_data.end(), sortbyMemoDescending);}
-            else {qSort(m_data.begin(), m_data.end(), sortbyMemoAscending);}
+            if(Qt::AscendingOrder == order) {std::sort(m_data.begin(), m_data.end(), sortbyMemoDescending);}
+            else {std::sort(m_data.begin(), m_data.end(), sortbyMemoAscending);}
             break;
         }
         case utxo_blocktime_role:
         {
-            if(Qt::AscendingOrder == order) {qSort(m_data.begin(), m_data.end(), sortbyBlocktimeDescending);}
-            else {qSort(m_data.begin(), m_data.end(), sortbyBlocktimeAscending);}
+            if(Qt::AscendingOrder == order) {std::sort(m_data.begin(), m_data.end(), sortbyBlocktimeDescending);}
+            else {std::sort(m_data.begin(), m_data.end(), sortbyBlocktimeAscending);}
             break;
         }
         default:

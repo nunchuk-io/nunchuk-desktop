@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
@@ -30,7 +30,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1997.arg(vm.inheritance_key_count)
+    label.text: QSTR.STR_QML_1997.arg(vm.inheritance_key_count)
     onCloseClicked: vm.close()
     content: Item {
         Row {
@@ -49,7 +49,7 @@ QOnScreenContentTypeA {
                     spacing: 24
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1998.arg(vm.inheritance_key_count)
+                        text: QSTR.STR_QML_1998.arg(vm.inheritance_key_count)
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -64,7 +64,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: label.paintedWidth + 16 * 2
         height: 48
-        label.text: STR.STR_QML_2100
+        label.text: QSTR.STR_QML_2100
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: vm.onAddFirstKeyClicked()

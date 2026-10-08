@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -272,10 +272,11 @@ Loader {
         id: savefileDialog
         fileMode: FileDialog.SaveFile
         onAccepted: {
-            walletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
-            GroupWallet.dashboardInfo.markRead()
-            GroupWallet.dashboardInfo.dismissAlert()
-            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            if (walletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)) {
+                GroupWallet.dashboardInfo.markRead()
+                GroupWallet.dashboardInfo.dismissAlert()
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            }
         }
     }
 }

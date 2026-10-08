@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import DataPool 1.0
 import HMIEVENTS 1.0
 import "../../../Components/origins"
@@ -62,20 +62,9 @@ Column {
                 verticalCenter: parent.verticalCenter
             }
             onTextClicked: {
-                // QCreateTransaction.qml gets destroyed and recreated when we
-                // come back from coin selection (see QGlobal.qml notes on
-                // txManualFeeReturnPending for why onsRequester() can't be
-                // used to detect this). Set our own flag right here, before
-                // navigating away, so the recreated screen knows to restore
-                // its fee-customization panel instead of resetting it.
                 GlobalData.txManualFeeReturnPending = true
-                GlobalData.txManualFeeContextKey = AppModel.walletInfo.walletId + "|" + transactionInfo.destination
-                // TEMP DEBUG - remove after root-causing the fee-panel reset bug
-                console.log("[FEEDBG] Customize clicked - pending=" + GlobalData.txManualFeeReturnPending
-                             + " key=" + GlobalData.txManualFeeContextKey
-                             + " switchOn=" + GlobalData.txManualFeeSettingOpen
-                             + " checked=" + GlobalData.txManualFeeChecked
-                             + " rate=" + GlobalData.txManualFeeRateText)
+                GlobalData.txManualFeeContextKey = AppModel.walletInfo.walletId
+                        + "|" + AppModel.transactionInfo.destination
                 var input = {
                     type: "select-coin-for-create-transaction"
                 }
@@ -116,9 +105,9 @@ Column {
                 clip: true
                 model: transactionInfo.inputCoins
                 interactive: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: QSingleCoinDetailDelegate {
-                    width: _listView.width
+                    width: _listView.width - 8  // leave room for QScrollBar (8px)
                     amount: utxo_amount
                     currency: qsTr("%1").arg(RoomWalletData.unitValue)
                     amount_currency: utxo_amount_currency

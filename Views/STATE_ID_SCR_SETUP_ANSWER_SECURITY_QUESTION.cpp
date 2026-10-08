@@ -33,22 +33,15 @@ void SCR_SETUP_ANSWER_SECURITY_QUESTION_Exit(QVariant msg) {
 }
 
 void EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ_HANDLER(QVariant msg) {
-    int type = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo().type;
-    if ((int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE == type) {
-        QString code = msg.toString();
-        if (ServiceSetting::instance()->servicesTagPtr()->verifyConfirmationCode(code)) {
-            DBG_INFO << "success: " << code;
-            ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->setRequireQuestions({});
-            if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->UpdateSecurityQuestions()) {
-                QEventProcessor::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
-                QString msg_name = QString("Security questions updated");
-                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
-            }
-        }
+    auto servicesTag = ServiceSetting::instance()->servicesTagPtr();
+    auto keyRecovery = servicesTag->keyRecoveryPtr();
+    if (keyRecovery->completeSecurityQuestionUpdateAuthorization(msg.toString())) {
+        QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
+        QString msg_name = QString("Security questions updated");
+        AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
     }
 }
 
 void EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK_HANDLER(QVariant msg) {
-
+    ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->clearSecurityQuestionUpdateAuthorization();
 }
-

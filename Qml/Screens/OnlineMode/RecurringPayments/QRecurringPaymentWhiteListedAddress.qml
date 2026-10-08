@@ -17,12 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
-import QtQuick.Controls.Styles 1.4
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -46,7 +44,8 @@ QOnScreenContentTypeA {
     property bool hasAddress: false
     content: Item {
         property alias currentIndex: tabselect.currentIndex
-        TabView {
+        // Qt6: TabView/Tab/TabViewStyle removed — replaced with custom Item + Row tab bar
+        Item {
             id: tabselect
             width: 610 + 12
             height: 480
@@ -54,14 +53,66 @@ QOnScreenContentTypeA {
                 top: parent.top
                 topMargin: 8
             }
-            Tab {
-                title: STR.STR_QML_1131
+            property int currentIndex: 0
+
+            // ── Tab bar ──────────────────────────────────────────────────
+            Row {
+                id: tabBar
+                width: parent.width
+                height: 48
+
+                Repeater {
+                    model: [STR.STR_QML_1131, STR.STR_QML_1132]
+                    delegate: Item {
+                        width: tabselect.width / 2
+                        height: 48
+                        Row {
+                            spacing: 4
+                            anchors.centerIn: parent
+                            QText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData
+                                color: tabselect.currentIndex === index ? "#031F2B" : "#839096"
+                                font.pixelSize: 16
+                                font.weight: Font.DemiBold
+                                font.family: "Lato"
+                            }
+                        }
+                        Rectangle {
+                            color: "#031F2B"
+                            width: tabselect.width / 2
+                            height: 2
+                            anchors.bottom: parent.bottom
+                            visible: tabselect.currentIndex === index
+                        }
+                        Rectangle {
+                            color: "#DEDEDE"
+                            width: tabselect.width / 2
+                            height: 1
+                            anchors.bottom: parent.bottom
+                            visible: tabselect.currentIndex !== index
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: tabselect.currentIndex = index
+                        }
+                    }
+                }
+            }
+
+            // ── Tab 0 ────────────────────────────────────────────────────
+            Item {
+                anchors.top: tabBar.bottom
+                anchors.bottom: parent.bottom
+                width: parent.width
+                visible: tabselect.currentIndex === 0
                 Flickable {
                     height: 200
                     width: tabselect.width
                     contentHeight: _listAddress.height
                     clip: true
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     QUseWhitelistedEnterAddresses {
                         id: _listAddress
                         width: tabselect.width - 12
@@ -72,14 +123,19 @@ QOnScreenContentTypeA {
                     }
                 }
             }
-            Tab {
-                title: STR.STR_QML_1132
+
+            // ── Tab 1 ────────────────────────────────────────────────────
+            Item {
+                anchors.top: tabBar.bottom
+                anchors.bottom: parent.bottom
+                width: parent.width
+                visible: tabselect.currentIndex === 1
                 Flickable {
                     height: 384
                     width: tabselect.width
                     contentHeight: _addressList.height
                     clip: true
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     QUseWhitelistedBatchImport {
                         id: _addressList
                         width: tabselect.width - 12
@@ -89,36 +145,6 @@ QOnScreenContentTypeA {
                         hasAddress = false
                     }
                 }
-            }
-            style: TabViewStyle {
-                frameOverlap: 1
-                tab: Rectangle {
-                    implicitWidth: tabselect.width / 2
-                    implicitHeight: 48
-                    color: "transparent"
-                    Row{
-                        spacing: 4
-                        anchors.centerIn: parent
-                        QText {
-                            id: txt
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: styleData.title
-                            color: styleData.selected ? "#031F2B" : "#839096"
-                            font.pixelSize: 16
-                            font.weight: Font.DemiBold
-                            font.family: "Lato"
-                        }
-                    }
-                    Rectangle {
-                        color: "#031F2B"
-                        implicitWidth: tabselect.width / 2
-                        height: 2
-                        anchors.bottom: parent.bottom
-                        visible: styleData.selected
-                    }
-                }
-
-                frame: Rectangle { color: "transparent" }
             }
         }
     }
@@ -154,7 +180,7 @@ QOnScreenContentTypeA {
     QQrImportScanner {
         id: qrscaner
         property int addressRequestIndex: -1
-        onTagFound: {
+        onTagFound: (tag) => {
             if(qrscaner.addressRequestIndex !== -1){
                 _content.signalSetAddress(qrscaner.addressRequestIndex, tag)
                 qrscaner.addressRequestIndex = -1

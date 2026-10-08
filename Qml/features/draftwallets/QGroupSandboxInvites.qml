@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Draftwallets.Sandbox.ViewModels 1.0
 import "../../Components/origins"
@@ -32,7 +32,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2143
+    label.text: QSTR.STR_QML_2143
     onCloseClicked: vm.close()
     onPrevClicked: vm.back()
     property var emails: vm.invitesList
@@ -46,7 +46,7 @@ QOnScreenContentTypeA {
             QLato {
                 width: 728
                 height: 28
-                text: STR.STR_QML_2144
+                text: QSTR.STR_QML_2144
                 anchors.left: parent.left
                 font.weight: Font.Normal
                 horizontalAlignment: Text.AlignLeft
@@ -81,7 +81,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
             width: label.paintedWidth + 16*2
             height: 48
-            label.text: STR.STR_QML_2145
+            label.text: QSTR.STR_QML_2145
             type: eTypeE
             enabled: _content.contentItem.isEnabled()
             onClicked: { 

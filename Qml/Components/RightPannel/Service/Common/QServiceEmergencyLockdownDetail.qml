@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -38,20 +38,18 @@ import "../../../../../localization/STR_QML.js" as STR
 Item {
     Column {
         anchors.fill: parent
+        anchors.topMargin: 24
+        anchors.leftMargin: 24
+        anchors.bottomMargin: 100
         spacing: 24
-        anchors{
-            left: parent.left
-            leftMargin: 24
-            top: parent.top
-            topMargin: 24
-        }
         Rectangle {
             width: parent.width - 24
             height: parent.height * 0.42
             radius: 24
             color: "#D0E2FF"
             QPicture {
-                anchors.centerIn: parent
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
                 source: "qrc:/Images/Images/emergency-lockdown-illustrations.svg"
             }
         }

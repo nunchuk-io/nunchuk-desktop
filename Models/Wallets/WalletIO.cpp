@@ -9,12 +9,21 @@ WalletIO::WalletIO(const nunchuk::Wallet &w) :
     BaseWallet{w}
 {}
 
-void WalletIO::requestExportWalletViaBSMS(const QString &file)
+bool WalletIO::requestExportWalletViaBSMS(const QString &file)
 {
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
-    bridge::nunchukExportWallet(walletId(), file_path, nunchuk::ExportFormat::BSMS);
-    dynamic_cast<CreatingWallet *>(this)->setNeedBackup(false);
+    const bool exported = bridge::nunchukExportWallet(
+        walletId(), file_path, nunchuk::ExportFormat::BSMS);
+    if (exported) {
+        dynamic_cast<CreatingWallet *>(this)->setNeedBackup(false);
+    } else {
+        AppModel::instance()->showToast(
+            nunchuk::NunchukException::INVALID_PARAMETER,
+            "Unable to write the wallet backup file.",
+            EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return exported;
 }
 
 void WalletIO::requestExportWalletViaQRBCUR2Legacy()
@@ -93,7 +102,9 @@ bool WalletIO::requestExportWalletViaCOLDCARD(const QString &file)
     // 6.Dec.25: Always export descriptor external/internal for Coldcard as per new spec
     nunchuk::ExportFormat format = nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL;
     bool ret = bridge::nunchukExportWallet(walletId(), file_path, format);
-    dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
+    if (ret) {
+        dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
+    }
     return ret;
 }
 

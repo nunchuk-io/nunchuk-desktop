@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
+import QtQuick
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
@@ -32,21 +32,68 @@ QRadioSelect {
     property bool showArrow: false
     signal buttonArrowClicked()
     layoutDirection: Qt.RightToLeft
+    contentOnTop: true
+    // Built directly on QText/QTextField (not QTextInputBox) so the title and
+    // the input text share the exact same 16px left anchor with nothing else
+    // (QTextInputBox's embedded Controls TextField has its own style padding
+    // on top of textLeftMargin, which kept the two misaligned).
     content: Component {
-        QTextInputBox {
-            id: text
-            rightPadding: 78
-            heightMin: 56
-            fontPixelSize: 14
-            border.color: "#C9DEF1"
-            color: radioRoot.selected && radioRoot.enabled? Qt.rgba(255, 255, 255, 0.3) : Qt.rgba(0, 0, 0, 0.1)
-            enabled: radioRoot.selected && radioRoot.enabled
-            onTypingFinished: radioRoot.typingFinished(currentText)
-            placeholder.text: radioRoot.placeholderText
-            textOutput: radioRoot.textOutput
-            onTextOutputChanged: {
-                if (radioRoot.textOutput !== textOutput) {
-                    radioRoot.textOutput = textOutput
+        Item {
+            id: box
+            height: 56
+            property bool isEditing: (fieldInput.text !== "") || fieldInput.activeFocus
+            Rectangle {
+                anchors.fill: parent
+                radius: 4
+                border.color: "#C9DEF1"
+                color: radioRoot.selected && radioRoot.enabled ? Qt.rgba(255, 255, 255, 0.3) : Qt.rgba(0, 0, 0, 0.1)
+            }
+            Rectangle {
+                width: parent.width - 2
+                height: 2
+                color: fieldInput.activeFocus ? "#F6D65D" : "#C9DEF1"
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: box.isEditing
+            }
+            QText {
+                anchors {
+                    left: parent.left
+                    leftMargin: 16
+                    top: parent.top
+                    topMargin: box.isEditing ? 8 : 16
+                }
+                font.family: "Lato"
+                font.weight: box.isEditing ? Font.Bold : Font.Normal
+                color: "#031F2B"
+                font.pixelSize: box.isEditing ? 10 : 16
+                font.capitalization: box.isEditing ? Font.AllUppercase : Font.MixedCase
+                text: radioRoot.placeholderText
+            }
+            QTextField {
+                id: fieldInput
+                anchors {
+                    fill: parent
+                    leftMargin: 16
+                    rightMargin: 78
+                    topMargin: 24
+                    bottomMargin: 0
+                }
+                leftPadding: 0
+                rightPadding: 0
+                background: Rectangle { anchors.fill: parent; color: "transparent" }
+                font.family: "Lato"
+                font.pixelSize: 14
+                color: "#031F2B"
+                wrapMode: Text.WrapAnywhere
+                clip: true
+                text: radioRoot.textOutput
+                enabled: radioRoot.selected && radioRoot.enabled
+                onTypingFinished: radioRoot.typingFinished(currentText)
+                onTextChanged: {
+                    if (radioRoot.textOutput !== text) {
+                        radioRoot.textOutput = text
+                    }
                 }
             }
             QIconButton {
@@ -62,5 +109,5 @@ QRadioSelect {
                 bgColor: "transparent"
             }
         }
-    }   
+    }
 }

@@ -11,6 +11,9 @@ class WithdrawACustomAmountViewModel : public ActionViewModel {
     DEFINE_QT_PROPERTY(QString, balanceCurrency)
     DEFINE_QT_PROPERTY(QString, note)
     DEFINE_QT_PROPERTY(qint64, withdrawAmountSats)
+    // Client-side cap so the amount box can block/flag an over-the-limit entry before hitting the
+    // backend - CUSTOMIZE distribution caps at available_to_withdraw, otherwise the full balance.
+    DEFINE_QT_PROPERTY(qint64, maxWithdrawSats)
   public:
     explicit WithdrawACustomAmountViewModel(QObject *parent = nullptr);
     void forwardAmount();

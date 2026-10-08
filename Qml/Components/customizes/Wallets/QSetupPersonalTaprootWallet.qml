@@ -18,10 +18,10 @@
  *                                                                        *
  **************************************************************************/
 // Qt imports
-import QtQuick 2.4
-import QtQuick.Controls 2.3
+import QtQuick
+import QtQuick.Controls
 import Qt.labs.platform 1.1
-import QtGraphicalEffects 1.12
+import Qt5Compat.GraphicalEffects
 
 // Application-specific imports
 import "../../../../localization/STR_QML.js" as STR
@@ -57,13 +57,13 @@ QOnScreenContentTypeA {
                 flickableDirection: Flickable.VerticalFlick
                 interactive: true
                 contentHeight: contentSigners.childrenRect.height
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: contentSigners
-                    width: 350
+                    width: parent.width - 8  // (350+6) - 8 = 348, leave room for QScrollBar
                     spacing: 12
                     Column {
-                        width: 350
+                        width: parent.width  // parent = content column (348px)
                         QLato {
                             height: 20
                             text: STR.STR_QML_337
@@ -73,7 +73,7 @@ QOnScreenContentTypeA {
                         }
                         QListView {
                             id: supportedSigners
-                            width: 350
+                            width: parent.width  // parent = content column (348px)
                             height: contentHeight
                             clip: true
                             interactive: false
@@ -101,10 +101,10 @@ QOnScreenContentTypeA {
                         }
                     }
                     QLine {
-                        width: 350
+                        width: parent.width  // parent = content column (348px)
                     }
                     Column {
-                        width: 350
+                        width: parent.width  // parent = content column (348px)
                         QLato {
                             height: 20
                             text: STR.STR_QML_1697
@@ -114,7 +114,7 @@ QOnScreenContentTypeA {
                         }
                         QListView {
                             id: notSupportedSigners
-                            width: 350
+                            width: parent.width  // parent = content column (348px)
                             height: contentHeight
                             interactive: false
                             clip: true
@@ -152,17 +152,17 @@ QOnScreenContentTypeA {
                 flickableDirection: Flickable.VerticalFlick
                 interactive: true
                 contentHeight: contentSignersAssign.childrenRect.height
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 function updateVisibleCount() {
                     return newWalletInfo.assignAvailableSigners.signerSelectedCount
                 }
                 Column {
                     id: contentSignersAssign
-                    width: 350
+                    width: parent.width - 8  // (350+6) - 8 = 348, leave room for QScrollBar
                     spacing: 16
                     Column {
                         visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
-                        width: 350
+                        width: parent.width  // parent = content column (348px)
                         QLato {
                             height: 20
                             text: STR.STR_QML_1711
@@ -172,11 +172,11 @@ QOnScreenContentTypeA {
                         }
                         QListView {
                             id: signersAssign
-                            width: 350
+                            width: parent.width  // parent = content column (348px)
                             height: signersAssign.contentHeight
                             clip: true
                             model: newWalletInfo.assignAvailableSigners
-                            ScrollBar.vertical: ScrollBar { active: true }
+                            ScrollBar.vertical: QScrollBar { }
                             delegate: QSignerConfigureDelegate {
                                 signerData {
                                     single_name: singleSigner_name
@@ -208,7 +208,7 @@ QOnScreenContentTypeA {
                         }
                     }
                     QLine {
-                        width: 350
+                        width: parent.width  // parent = content column (348px)
                         visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
                     }
                     QEditNumberKeys {}

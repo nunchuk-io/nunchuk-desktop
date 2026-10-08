@@ -195,7 +195,7 @@ QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no) {
 }
 
 WalletIdList QWalletManagement::wallets() const {
-    return mWallets.uniqueKeys();
+    return mWallets.keys();
 }
 
 GroupIdList QWalletManagement::groupIds() const {

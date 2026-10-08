@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import Features.Claiming.ViewModels 1.0
@@ -34,7 +34,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2012
+    label.text: QSTR.STR_QML_2012
     content: Item {
         Row {
             spacing: 36
@@ -54,11 +54,11 @@ QOnScreenContentTypeA {
                         id: _guide
                         width: parent.width
                         readonly property var content_map: [
-                            {height: 40, content: STR.STR_QML_2013, icon: "qrc:/Images/Images/1.Active.svg" },
-                            {height: 24, content: STR.STR_QML_2014, icon: "qrc:/Images/Images/2.Active.svg" },
-                            {height: 60, content: STR.STR_QML_2015, icon: "qrc:/Images/Images/3.Active.svg" },
-                            {height: 40, content: STR.STR_QML_2016, icon: "qrc:/Images/Images/4.Active.svg" },
-                            {height: 40, content: STR.STR_QML_2017, icon: "qrc:/Images/Images/5.Active.svg" },
+                            {height: 40, content: QSTR.STR_QML_2013, icon: "qrc:/Images/Images/1.Active.svg" },
+                            {height: 24, content: QSTR.STR_QML_2014, icon: "qrc:/Images/Images/2.Active.svg" },
+                            {height: 60, content: QSTR.STR_QML_2015, icon: "qrc:/Images/Images/3.Active.svg" },
+                            {height: 40, content: QSTR.STR_QML_2016, icon: "qrc:/Images/Images/4.Active.svg" },
+                            {height: 40, content: QSTR.STR_QML_2017, icon: "qrc:/Images/Images/5.Active.svg" },
                         ]
                         model: content_map.length
                         Rectangle {
@@ -96,7 +96,7 @@ QOnScreenContentTypeA {
             width: 728
             iSize: 36
             icon: "qrc:/Images/Images/info-60px.svg"
-            txt.text: STR.STR_QML_2018
+            txt.text: QSTR.STR_QML_2018
             anchors.bottom: parent.bottom
         }
     }
@@ -118,7 +118,7 @@ QOnScreenContentTypeA {
 
     QPopupHardwareAddKey {
         id: _hardwareAddKey
-        titleText: STR.STR_QML_2050 + "\n\n" + STR.STR_QML_2051
+        titleText: QSTR.STR_QML_2050 + "\n\n" + QSTR.STR_QML_2051
         supportWarning: false
         isMiniscript: true
         onNextClicked: {

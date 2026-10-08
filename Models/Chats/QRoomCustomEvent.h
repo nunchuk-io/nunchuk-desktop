@@ -73,41 +73,37 @@ const qint64 NUNCHUK_ROOM_RETENTION_TIME (2592000000);  // 30 days = 30*24*60*60
 #define NUNCHUK_MSG_TX_CANCEL       "io.nunchuk.transaction.cancel"
 #define NUNCHUK_MSG_TX_RECEIVE      "io.nunchuk.transaction.receive"
 
+using namespace Quotient;
 class QNunchukWalletEvent : public RoomEvent
 {
 public:
-    DEFINE_EVENT_TYPEID("io.nunchuk.wallet", QNunchukWalletEvent)
-    explicit QNunchukWalletEvent(const QString& matrixType, const QJsonObject& contentJson);
+    static inline constexpr auto TypeId = "io.nunchuk.wallet";
+
+    explicit QNunchukWalletEvent(const QJsonObject& json);
 };
 
 class QNunchukTransactionEvent : public RoomEvent
 {
 public:
-    DEFINE_EVENT_TYPEID("io.nunchuk.transaction", QNunchukTransactionEvent)
-    explicit QNunchukTransactionEvent(const QString& matrixType, const QJsonObject& contentJson);
+    static inline constexpr auto TypeId = "io.nunchuk.transaction";
+
+    explicit QNunchukTransactionEvent(const QJsonObject& json);
 };
 
 class QNunchukSyncEvent : public RoomEvent
 {
 public:
-    DEFINE_EVENT_TYPEID("io.nunchuk.sync", QNunchukSyncEvent)
-    explicit QNunchukSyncEvent(const QString& matrixType, const QJsonObject& contentJson);
+    static inline constexpr auto TypeId = "io.nunchuk.sync";
+
+    explicit QNunchukSyncEvent(const QJsonObject& json);
 };
 
 class QNunchukExceptionEvent : public RoomEvent
 {
 public:
-    DEFINE_EVENT_TYPEID("io.nunchuk.error", QNunchukExceptionEvent)
-    explicit QNunchukExceptionEvent(const QString& matrixType, const QJsonObject& contentJson);
+    static inline constexpr auto TypeId = "io.nunchuk.error";
+
+    explicit QNunchukExceptionEvent(const QJsonObject& json);
 };
-
-// class QNunchukRentionState : public StateEventBase
-// {
-// public:
-//     DEFINE_EVENT_TYPEID("m.room.retention", QNunchukRentionState)
-//     explicit QNunchukRentionState(const QJsonObject& contentJson);
-// };
-
-// DEFINE_SIMPLE_STATE_EVENT(QNunchukRentionState, "m.room.retention", QJsonObject, contentJson)
 
 #endif // QROOMCUSTOMEVENT_H

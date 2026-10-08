@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -59,9 +59,9 @@ QOnScreenContentTypeA {
                 height: 440
                 spacing: 16
                 model: walletInfo.walletSingleSignerAssigned
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 delegate: QReplaceKeyDelegate {
-                    width: signerlist.width
+                    width: signerlist.width - 8  // leave room for QScrollBar (8px)
                     signerData {
                         single_name: model.singleSigner_name
                         single_type: model.single_signer_type
@@ -105,7 +105,7 @@ QOnScreenContentTypeA {
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
                 othersContextMenu.x = 20
-                othersContextMenu.y = 20 - othersContextMenu.height
+                othersContextMenu.y = 20 - othersContextMenu.implicitHeight
                 othersContextMenu.open()
             }
             QContextMenu {

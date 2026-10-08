@@ -16,6 +16,13 @@ void WidthdrawToAddressViewModel::createTransactionToAddress(const QString &with
     auto currentFlow = flowMng->currentFlow();
     auto claimingFlow = qobject_cast<ClaimingFlow *>(currentFlow);
     if (claimingFlow) {
+        // BUGFIX: destinationWalletId is only ever set by WithdrawSelectWalletViewModel and never
+        // cleared - a plain address withdrawal in the same session would otherwise inherit a stale
+        // wallet id from an earlier "withdraw to a wallet" attempt, later making
+        // TransactionDetailsClaimedViewModel wrongly treat this as a wallet-destination claim.
+        // WithdrawSelectWalletViewModel::createTransactionToWallet() re-sets it right after calling
+        // this, so that path still ends up correct.
+        claimingFlow->setdestinationWalletId("");
         claimingFlow->setwithdrawAddress(withdrawAddress);
         claimingFlow->setwithdrawAmountSats(withdrawAmountSats());
         claimingFlow->createTransaction();

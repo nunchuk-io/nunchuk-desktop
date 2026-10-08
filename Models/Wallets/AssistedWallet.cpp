@@ -1,42 +1,38 @@
 #include "AssistedWallet.h"
-#include "Servers/Draco.h"
-#include "Servers/Byzantine.h"
-#include "Premiums/QServerKey.h"
 #include "Premiums/QGroupDashboard.h"
-#include "Premiums/QInheritancePlan.h"
 #include "Premiums/QGroupWalletDummyTx.h"
-#include "Premiums/QUserWalletDummyTx.h"
 #include "Premiums/QGroupWalletHealthCheck.h"
-#include "Premiums/QRecurringPayment.h"
-#include "QThreadForwarder.h"
-#include "Premiums/QGroupDashboard.h"
-#include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
+#include "Premiums/QInheritancePlan.h"
+#include "Premiums/QRecurringPayment.h"
+#include "Premiums/QServerKey.h"
+#include "Premiums/QUserWalletDummyTx.h"
+#include "Premiums/QUserWallets.h"
 #include "Premiums/QWalletServicesTag.h"
-#include "features/transactions/usecases/SyncTransactionFlowUseCase.h"
+#include "QThreadForwarder.h"
+#include "Servers/Byzantine.h"
+#include "Servers/Draco.h"
 #include "features/transactions/usecases/CancelTransactionUseCase.h"
 #include "features/transactions/usecases/CreateTransactionUseCase.h"
-#include "features/transactions/usecases/UpdateTransactionUseCase.h"
-#include "features/transactions/usecases/FetchTransactionListUseCase.h"
-#include "features/transactions/usecases/SignTransactionUseCase.h"
-#include "features/transactions/usecases/RbfTransactionUseCase.h"
-#include "features/transactions/usecases/FetchTransactionUseCase.h"
 #include "features/transactions/usecases/FetchCancelTransactionUseCase.h"
+#include "features/transactions/usecases/FetchTransactionListUseCase.h"
+#include "features/transactions/usecases/FetchTransactionUseCase.h"
+#include "features/transactions/usecases/RbfTransactionUseCase.h"
+#include "features/transactions/usecases/SignTransactionUseCase.h"
+#include "features/transactions/usecases/SyncTransactionFlowUseCase.h"
+#include "features/transactions/usecases/UpdateTransactionUseCase.h"
 #include "features/wallets/usecases/DeleteWalletUseCase.h"
 #include "features/wallets/usecases/UpdateWalletUseCase.h"
 
-AssistedWallet::AssistedWallet(const nunchuk::Wallet &w) :
-    SharedWallet{w}
-{}
+AssistedWallet::AssistedWallet(const nunchuk::Wallet &w) : SharedWallet{w} {}
 
-void AssistedWallet::convert(const nunchuk::Wallet w)
-{
+void AssistedWallet::convert(const nunchuk::Wallet w) {
     SharedWallet::convert(w);
     serverKeyPtr();
     inheritancePlanPtr();
     QGroupDashboardPtr dash = dashboard();
     if (dash && dash->myInfo().isEmpty()) {
-        if(isReplaced()){
+        if (isReplaced()) {
             dash->GetMemberInfo();
             dash->GetAlertsInfo();
         }
@@ -45,43 +41,37 @@ void AssistedWallet::convert(const nunchuk::Wallet w)
     }
 }
 
-bool AssistedWallet::isReplaced() const
-{
+bool AssistedWallet::isReplaced() const {
     return status() == "REPLACED" || SharedWallet::isReplaced();
 }
 
-bool AssistedWallet::isAssistedWallet() const
-{
+bool AssistedWallet::isAssistedWallet() const {
     return (isUserWallet() || isGroupWallet()) && !isReplaced();
 }
 
-QString AssistedWallet::groupId() const
-{
+QString AssistedWallet::groupId() const {
     QString group_id = WalletsMng->groupId(walletId());
-    if(group_id == ""){
+    if (group_id == "") {
         QWalletCached data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-        if(ret){
+        if (ret) {
             group_id = data.groupId;
         }
     }
     return group_id;
 }
 
-QVariant AssistedWallet::dashboardInfo() const
-{
+QVariant AssistedWallet::dashboardInfo() const {
     return QVariant::fromValue(dashboard().data());
 }
 
-QVariant AssistedWallet::serverKeyInfo() const
-{
+QVariant AssistedWallet::serverKeyInfo() const {
     return QVariant::fromValue(serverKeyPtr().data());
 }
 
-void AssistedWallet::GetAsisstedTx(const QString &txid)
-{
+void AssistedWallet::GetAsisstedTx(const QString &txid) {
     DBG_INFO << "txid:" << txid << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
 
@@ -90,17 +80,17 @@ void AssistedWallet::GetAsisstedTx(const QString &txid)
     input.txid = txid;
     input.group_id = groupId();
     input.isClaimed = isClaimed();
-    features::transactions::usecases::FetchTransactionUseCase  fetchTransactionUseCase;
+    features::transactions::usecases::FetchTransactionUseCase fetchTransactionUseCase;
     auto result = fetchTransactionUseCase.execute(input);
     if (result.isSuccess()) {
         auto transaction = result.value().transaction;
         auto tranPtr = transactionHistory()->getTransactionByTxid(txid);
-        if(!transaction.isEmpty() && tranPtr){
+        if (!transaction.isEmpty() && tranPtr) {
             tranPtr->setServerKeyMessage(transaction);
         }
 
-        if(auto txInfo = AppModel::instance()->transactionInfo()){
-            if(qUtils::strCompare(txid, txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())){
+        if (auto txInfo = AppModel::instance()->transactionInfo()) {
+            if (qUtils::strCompare(txid, txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())) {
                 txInfo->setServerKeyMessage(transaction);
             }
         }
@@ -108,46 +98,38 @@ void AssistedWallet::GetAsisstedTx(const QString &txid)
     return;
 }
 
-QVariant AssistedWallet::inheritancePlanInfo() const
-{
+QVariant AssistedWallet::inheritancePlanInfo() const {
     return QVariant::fromValue(inheritancePlanPtr().data());
 }
 
-QServerKeyPtr AssistedWallet::serverKeyPtr() const
-{
+QServerKeyPtr AssistedWallet::serverKeyPtr() const {
     return QServerKey::information<QServerKeyPtr>(walletId());
 }
 
-QInheritancePlanPtr AssistedWallet::inheritancePlanPtr() const
-{
+QInheritancePlanPtr AssistedWallet::inheritancePlanPtr() const {
     return QInheritancePlan::information<QInheritancePlanPtr>(walletId());
 }
 
-QVariant AssistedWallet::recurringPayment() const
-{
+QVariant AssistedWallet::recurringPayment() const {
     return QVariant::fromValue(recurringPaymentPtr().data());
 }
 
-QRecurringPaymentPtr AssistedWallet::recurringPaymentPtr() const
-{
+QRecurringPaymentPtr AssistedWallet::recurringPaymentPtr() const {
     return QRecurringPayment::information<QRecurringPaymentPtr>(walletId());
 }
 
-QGroupWalletHealthCheckPtr AssistedWallet::healthPtr() const
-{
+QGroupWalletHealthCheckPtr AssistedWallet::healthPtr() const {
     return QGroupWalletHealthCheck::information<QGroupWalletHealthCheckPtr>(walletId());
 }
 
-QGroupWalletDummyTxPtr AssistedWallet::groupDummyTxPtr() const
-{
+QGroupWalletDummyTxPtr AssistedWallet::groupDummyTxPtr() const {
     if (auto dummy = dummyTxPtr()) {
         return dummy->get<QGroupWalletDummyTxPtr>();
     }
     return {};
 }
 
-bool AssistedWallet::isLocked() const
-{
+bool AssistedWallet::isLocked() const {
     if (auto dash = dashboard()) {
         QString status = dash->walletJson()["status"].toString();
         return qUtils::strCompare(status, "LOCKED");
@@ -155,13 +137,11 @@ bool AssistedWallet::isLocked() const
     return false;
 }
 
-QWalletServicesTagPtr AssistedWallet::servicesTagPtr() const
-{
+QWalletServicesTagPtr AssistedWallet::servicesTagPtr() const {
     return QWalletServicesTag::instance();
 }
 
-QString AssistedWallet::walletAliasName() const
-{
+QString AssistedWallet::walletAliasName() const {
     if (auto dash = dashboard()) {
         QString alias = dash->walletJson()["alias"].toString();
         QRegularExpression re("\\p{So}");
@@ -171,60 +151,54 @@ QString AssistedWallet::walletAliasName() const
     return "";
 }
 
-QString AssistedWallet::walletNameDisplay()
-{
+QString AssistedWallet::walletNameDisplay() {
     QString ret = "";
-    if(isByzantineWallet()){
+    if (isByzantineWallet()) {
         ret = walletAliasName();
     }
-    if(ret == ""){
+    if (ret == "") {
         ret = SharedWallet::walletNameDisplay();
     }
     return ret;
 }
 
-bool AssistedWallet::isByzantineGuardian()
-{
+bool AssistedWallet::isByzantineGuardian() {
     QWalletCached data;
     bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-    if(ret){
+    if (ret) {
         return data.hideFiatCurrency;
     }
     return false;
 }
 
-bool AssistedWallet::isClaimed() const
-{
+bool AssistedWallet::isClaimed() const {
     QWalletCached data;
     bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-    if(ret){
+    if (ret) {
         return data.isClaimed;
     }
     return false;
 }
 
-QStringList AssistedWallet::slugs() const
-{
+QStringList AssistedWallet::slugs() const {
     return QStringList{slug()};
 }
 
-QString AssistedWallet::slug() const
-{
+QString AssistedWallet::slug() const {
     QString slug = WalletsMng->slugInfo(walletId());
-    if(slug == ""){
+    if (slug == "") {
         QWalletCached data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-        if(ret){
+        if (ret) {
             slug = data.slug;
         }
     }
     return slug;
 }
 
-QString AssistedWallet::myRole() const
-{
+QString AssistedWallet::myRole() const {
     QString role = "";
-    if(dashboard()){
+    if (dashboard()) {
         role = dashboard().data()->myRole();
         if (role == "" && isGroupWallet()) {
             dashboard().data()->GetMemberInfo();
@@ -234,137 +208,123 @@ QString AssistedWallet::myRole() const
     if (role == "") {
         QWalletCached data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-        if(ret){
+        if (ret) {
             role = data.myRole;
         }
     }
     return role;
 }
 
-
-QString AssistedWallet::status() const
-{
+QString AssistedWallet::status() const {
     QString status = "";
-    if(dashboard()){
+    if (dashboard()) {
         status = dashboard().data()->walletStatus();
     }
-    if(status == ""){
+    if (status == "") {
         QWalletCached data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-        if(ret){
+        if (ret) {
             status = data.status;
         }
     }
     return status;
 }
 
-QGroupDashboardPtr AssistedWallet::dashboard() const
-{
+QGroupDashboardPtr AssistedWallet::dashboard() const {
     return QGroupDashboard::information<QGroupDashboardPtr>(walletId());
 }
 
-bool AssistedWallet::enableCreateChat()
-{
+bool AssistedWallet::enableCreateChat() {
     // disable when wallet is free/iron hand/horneybadger
     QString wallet_slug = slug();
-    if(wallet_slug == ""){
+    if (wallet_slug == "") {
         return false;
-    }
-    else {
+    } else {
         bool ret_member = dashboard() ? (dashboard()->members().count() > 1) : false;
         bool enable = !isUserWallet() && ret_member;
         return enable;
     }
 }
 
-bool AssistedWallet::isByzantineWallet()
-{
-    bool ret =  isByzantineStandard() || isFinneyStandard();
-    if(ret) {
+bool AssistedWallet::isByzantineWallet() {
+    bool ret = isByzantineStandard() || isFinneyStandard();
+    if (ret) {
         return true;
     }
     return false;
 }
 
-
-void AssistedWallet::GetAssistedTxs()
-{
+void AssistedWallet::GetAssistedTxs() {
     DBG_INFO << "FIXME user:" << isUserWallet() << " group:" << isGroupWallet() << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
-    features::transactions::usecases::FetchTransactionListInput  input;
+    features::transactions::usecases::FetchTransactionListInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.isClaimed = isClaimed();
-    features::transactions::usecases::FetchTransactionListUseCase  fetchTransactionListUseCase;
+    features::transactions::usecases::FetchTransactionListUseCase fetchTransactionListUseCase;
     fetchTransactionListUseCase.execute(input);
 
     GetAssistedCancelledTxs();
-    if(isGroupWallet()){
+    if (isGroupWallet()) {
         GetGroupTxNotes();
-    }
-    else if(isUserWallet()){
+    } else if (isUserWallet()) {
         GetUserTxNotes();
+    } else {
     }
-    else{}
 }
 
-void AssistedWallet::GetAssistedCancelledTxs()
-{
+void AssistedWallet::GetAssistedCancelledTxs() {
     DBG_INFO << "FIXME user:" << isUserWallet() << " group:" << isGroupWallet() << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
-    features::transactions::usecases::FetchCancelTransactionInput  input;
+    features::transactions::usecases::FetchCancelTransactionInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.isClaimed = isClaimed();
-    features::transactions::usecases::FetchCancelTransactionUseCase  fetchCancelTransactionUseCase;
+    features::transactions::usecases::FetchCancelTransactionUseCase fetchCancelTransactionUseCase;
     fetchCancelTransactionUseCase.execute(input);
 }
 
-
-QTransactionPtr AssistedWallet::SyncAssistedTxs(const nunchuk::Transaction &tx)
-{
+QTransactionPtr AssistedWallet::SyncAssistedTxs(const nunchuk::Transaction &tx) {
     DBG_INFO << "FIXME user:" << walletId() << " group:" << groupId() << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return NULL;
     }
-    features::transactions::usecases::SyncTransactionFlowInput  input;
+    features::transactions::usecases::SyncTransactionFlowInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.tx = tx;
     input.isClaimed = isClaimed();
-    features::transactions::usecases::SyncTransactionFlowUseCase  syncTransactionFlowUseCase;
+    features::transactions::usecases::SyncTransactionFlowUseCase syncTransactionFlowUseCase;
     auto result = syncTransactionFlowUseCase.execute(input);
     if (result.isSuccess()) {
         auto transaction = result.value().transaction;
         auto tranPtr = transactionHistory()->getTransactionByTxid(QString::fromStdString(tx.get_txid()));
-        if(!transaction.isEmpty() && tranPtr){
+        if (!transaction.isEmpty() && tranPtr) {
             tranPtr->setServerKeyMessage(transaction);
         }
 
-        if(auto txInfo = AppModel::instance()->transactionInfo()){
-            if(qUtils::strCompare(QString::fromStdString(tx.get_txid()), txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())){
+        if (auto txInfo = AppModel::instance()->transactionInfo()) {
+            if (qUtils::strCompare(QString::fromStdString(tx.get_txid()), txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())) {
                 txInfo->setServerKeyMessage(transaction);
             }
         }
         QTransactionPtr ret = bridge::convertTransaction(result.value().tx, walletId());
-        if(ret){
+        if (ret) {
             ret->setServerKeyMessage(transaction);
         }
         return ret;
-    }
-    else {
+    } else {
         return NULL;
     }
 }
 
-void AssistedWallet::UpdateAssistedTxs(const QString &txid, const QString &memo)
-{
+void AssistedWallet::UpdateAssistedTxs(const QString &txid, const QString &memo) {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
     features::transactions::usecases::UpdateTransactionInput input;
@@ -377,14 +337,13 @@ void AssistedWallet::UpdateAssistedTxs(const QString &txid, const QString &memo)
     updateTransactionUseCase.execute(input);
 }
 
-void AssistedWallet::CancelAssistedTxs(const QString &txid)
-{
+void AssistedWallet::CancelAssistedTxs(const QString &txid) {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
 
-    features::transactions::usecases::CancelTransactionInput  input;
+    features::transactions::usecases::CancelTransactionInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.txid = txid;
@@ -393,13 +352,12 @@ void AssistedWallet::CancelAssistedTxs(const QString &txid)
     cancelTransactionUseCase.execute(input);
 }
 
-void AssistedWallet::CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo)
-{
+void AssistedWallet::CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo) {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status() << "replace: " << isReplaced();
-    if(isReplaced()/* && !isAssistedWallet()*/){
+    if (isReplaced() /* && !isAssistedWallet()*/) {
         return;
     }
-    features::transactions::usecases::CreateTransactionInput  input;
+    features::transactions::usecases::CreateTransactionInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.psbt = psbt;
@@ -409,16 +367,15 @@ void AssistedWallet::CreateAsisstedTxs(const QString &txid, const QString &psbt,
     createTransactionUseCase.execute(input);
 }
 
-void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo)
-{
+void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo) {
     DBG_INFO << "tx_id:" << tx_id << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
-    features::transactions::usecases::SignTransactionInput  input;
+    features::transactions::usecases::SignTransactionInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
-    input.txid =  tx_id;
+    input.txid = tx_id;
     input.psbt = psbt;
     input.note = memo;
     input.isClaimed = isClaimed();
@@ -426,30 +383,36 @@ void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, 
     auto result = signTransactionUseCase.execute(input);
     if (result.isSuccess()) {
         auto transaction = result.value().transaction;
-        if(auto txPtr = transactionHistory()->getTransactionByTxid(tx_id)){
-            if(!transaction.isEmpty()){
+        DBG_INFO << "[DEBUG C1] assistedWalletSignTx POST response transaction:" << transaction;
+        if (auto txPtr = transactionHistory()->getTransactionByTxid(tx_id)) {
+            if (!transaction.isEmpty()) {
                 txPtr->setServerKeyMessage(transaction);
             }
         }
 
-        if(auto txInfo = AppModel::instance()->transactionInfo()){
-            if(qUtils::strCompare(tx_id, txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())){
+        if (auto txInfo = AppModel::instance()->transactionInfo()) {
+            if (qUtils::strCompare(tx_id, txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())) {
                 txInfo->setServerKeyMessage(transaction);
+                if (isGroupWallet()) {
+                    txInfo->startGroupTransactionStateRefresh();
+                } else {
+                    txInfo->createGroupTransactionState();
+                }
+                emit txInfo->nunchukTransactionChanged();
             }
         }
     }
 }
 
-bool AssistedWallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt)
-{
+bool AssistedWallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt) {
     DBG_INFO << "tx_id:" << tx_id << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return false;
     }
-    features::transactions::usecases::RbfTransactionInput  input;
+    features::transactions::usecases::RbfTransactionInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
-    input.txid =  tx_id;
+    input.txid = tx_id;
     input.psbt = psbt;
     input.isClaimed = isClaimed();
     features::transactions::usecases::RbfTransactionUseCase rbfTransactionUseCase;
@@ -457,16 +420,15 @@ bool AssistedWallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt)
     return false;
 }
 
-void AssistedWallet::UpdateWallet(const QString &name, const QString &description)
-{
+void AssistedWallet::UpdateWallet(const QString &name, const QString &description) {
     DBG_INFO << name << " description:" << description << "wallet status:" << status();
-    if(isReplaced()){
+    if (isReplaced()) {
         return;
     }
     setWalletName(name);
     setWalletDescription(description);
-    
-    features::wallets::usecases::UpdateWalletInput  input;
+
+    features::wallets::usecases::UpdateWalletInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.name = name;
@@ -479,10 +441,9 @@ void AssistedWallet::UpdateWallet(const QString &name, const QString &descriptio
     }
 }
 
-bool AssistedWallet::DeleteAssistedWallet()
-{
+bool AssistedWallet::DeleteAssistedWallet() {
     auto tag = servicesTagPtr();
-    features::wallets::usecases::DeleteWalletInput  input;
+    features::wallets::usecases::DeleteWalletInput input;
     input.wallet_id = walletId();
     input.group_id = groupId();
     input.passwordToken = tag->passwordToken();
@@ -496,18 +457,16 @@ bool AssistedWallet::DeleteAssistedWallet()
     return result.isSuccess();
 }
 
-bool AssistedWallet::DeleteWalletRequiredSignatures()
-{
+bool AssistedWallet::DeleteWalletRequiredSignatures() {
     DBG_INFO << "wallet status:" << status();
     auto tag = servicesTagPtr();
     ReqiredSignaturesInfo info;
     QString errormsg = "";
     QJsonObject output;
-    bool ret {false};
-    if(isGroupWallet()){
+    bool ret{false};
+    if (isGroupWallet()) {
         ret = Byzantine::instance()->DeleteGroupWalletRequiredSignatures(walletId(), groupId(), output, errormsg);
-    }
-    else if(isUserWallet()){
+    } else if (isUserWallet()) {
         ret = Draco::instance()->DeleteWalletRequiredSignatures(walletId(), output, errormsg);
     }
     if (ret) {
@@ -526,23 +485,20 @@ bool AssistedWallet::DeleteWalletRequiredSignatures()
     return ret;
 }
 
-void AssistedWallet::getChatInfo()
-{
-    if(isReplaced()){
+void AssistedWallet::getChatInfo() {
+    if (isReplaced()) {
         return;
     }
-    if(isGroupWallet() && dashboard()){
+    if (isGroupWallet() && dashboard()) {
         dashboard()->getChatInfo();
     }
 }
 
-QVariantList AssistedWallet::aliasMembers() const
-{
+QVariantList AssistedWallet::aliasMembers() const {
     return m_aliasMembers.toVariantList();
 }
 
-QVariantList AssistedWallet::ownerMembers() const
-{
+QVariantList AssistedWallet::ownerMembers() const {
     if (auto dash = dashboard()) {
         QJsonArray origin = dash->groupInfo()["members"].toArray();
         QJsonArray arrs;
@@ -561,10 +517,9 @@ QVariantList AssistedWallet::ownerMembers() const
     return {};
 }
 
-QVariant AssistedWallet::ownerPrimary() const
-{
+QVariant AssistedWallet::ownerPrimary() const {
     if (auto dash = dashboard()) {
-        QString primary_membership_id =  dash->walletJson()["primary_membership_id"].toString();
+        QString primary_membership_id = dash->walletJson()["primary_membership_id"].toString();
         QJsonArray origin = dash->groupInfo()["members"].toArray();
         for (auto member : origin) {
             QJsonObject it = member.toObject();
@@ -578,34 +533,31 @@ QVariant AssistedWallet::ownerPrimary() const
     return {};
 }
 
-bool AssistedWallet::isPro()
-{
+bool AssistedWallet::isPro() {
     if (auto dash = dashboard()) {
         return dash->inheritanceCount() > 0;
     }
     return false;
 }
 
-bool AssistedWallet::hasGroup()
-{
+bool AssistedWallet::hasGroup() {
     return !groupId().isEmpty();
 }
 
-bool AssistedWallet::GetWalletAlias()
-{
+bool AssistedWallet::GetWalletAlias() {
     QJsonObject output;
     QString errormsg;
     bool ret = Byzantine::instance()->GetWalletAlias(groupId(), walletId(), output, errormsg);
     DBG_INFO << output;
     if (ret) {
-        auto findMember = [this](const QString& id) -> QJsonObject {
+        auto findMember = [this](const QString &id) -> QJsonObject {
             if (auto dash = dashboard()) {
                 QJsonArray members = dash->groupInfo()["members"].toArray();
                 QString my_membership_id = dash->myInfo()["membership_id"].toString();
                 for (auto member : members) {
                     QJsonObject it = member.toObject();
                     QString membership_id = it["membership_id"].toString();
-                    if(qUtils::strCompare(id, membership_id) && !qUtils::strCompare(id, my_membership_id)) {
+                    if (qUtils::strCompare(id, membership_id) && !qUtils::strCompare(id, my_membership_id)) {
                         return it["user"].toObject();
                     }
                 }
@@ -629,17 +581,16 @@ bool AssistedWallet::GetWalletAlias()
     return ret;
 }
 
-bool AssistedWallet::updateWalletAlias(const QString &nameWallet)
-{
+bool AssistedWallet::updateWalletAlias(const QString &nameWallet) {
     QJsonObject output;
     QString errormsg;
     bool ret = Byzantine::instance()->UpdateWalletAlias(groupId(), walletId(), nameWallet, output, errormsg);
-    if(ret){
+    if (ret) {
         QGroupDashboardPtr dash = dashboard();
         if (dash) {
             dash->GetWalletInfo();
             QtConcurrent::run([this, dash]() {
-                if(AppModel::instance()->walletList()){
+                if (AppModel::instance()->walletList()) {
                     AppModel::instance()->walletList()->dataUpdated(walletId());
                 }
                 emit walletChanged();
@@ -650,17 +601,16 @@ bool AssistedWallet::updateWalletAlias(const QString &nameWallet)
     return ret;
 }
 
-bool AssistedWallet::deleteWalletAlias()
-{
+bool AssistedWallet::deleteWalletAlias() {
     QJsonObject output;
     QString errormsg;
     bool ret = Byzantine::instance()->DeleteWalletAlias(groupId(), walletId(), output, errormsg);
-    if(ret){
+    if (ret) {
         QGroupDashboardPtr dash = dashboard();
         if (dash) {
             dash->GetWalletInfo();
             QtConcurrent::run([this, dash]() {
-                if(AppModel::instance()->walletList()){
+                if (AppModel::instance()->walletList()) {
                     AppModel::instance()->walletList()->dataUpdated(walletId());
                 }
                 emit walletChanged();
@@ -671,12 +621,11 @@ bool AssistedWallet::deleteWalletAlias()
     return ret;
 }
 
-bool AssistedWallet::updateWalletPrimaryOwner(const QString &membership_id)
-{
+bool AssistedWallet::updateWalletPrimaryOwner(const QString &membership_id) {
     QJsonObject output;
     QString errormsg;
     bool ret = Byzantine::instance()->UpdateWalletPrimaryOwner(groupId(), walletId(), membership_id, output, errormsg);
-    if(ret){
+    if (ret) {
         QGroupDashboardPtr dash = dashboard();
         if (dash) {
             dash->GetWalletInfo();
@@ -686,45 +635,52 @@ bool AssistedWallet::updateWalletPrimaryOwner(const QString &membership_id)
     return ret;
 }
 
-QVariant AssistedWallet::dummyTx() const
-{
+QVariant AssistedWallet::dummyTx() const {
     return QVariant::fromValue(groupDummyTxPtr().data());
 }
 
-QWalletDummyTxPtr AssistedWallet::dummyTxPtr() const
-{
+QWalletDummyTxPtr AssistedWallet::dummyTxPtr() const {
     return QWalletDummyTx::information<QWalletDummyTxPtr>(walletId());
 }
 
-void AssistedWallet::GetUserTxNotes()
-{
-    if(isUserWallet()){
+void AssistedWallet::GetUserTxNotes() {
+    if (isUserWallet()) {
         QString wallet_id = walletId();
         QJsonObject output;
         QString errormsg = "";
         bool ret = Draco::instance()->assistedWalletGetTxNotes(wallet_id, output, errormsg);
-        if(ret && transactionHistory() && output.contains("notes")){
+        if (ret && output.contains("notes")) {
             QJsonArray notes = output["notes"].toArray();
-            for (auto i : notes) {
-                QJsonObject note = i.toObject();
-                transactionHistory()->updateTransactionMemo(note["transaction_id"].toString(), note["note"].toString());
-            }
+            // updateTransactionMemo iterates TransactionListModel (QAbstractListModel) and
+            // emits dataChanged — must run on main thread to avoid data race with QML reads.
+            // Network I/O above is intentionally on the pool thread.
+            QPointer<AssistedWallet> safeThis(this);
+            QMetaObject::invokeMethod(
+                qApp,
+                [safeThis, notes]() {
+                    if (!safeThis || !safeThis->transactionHistory())
+                        return;
+                    for (const QJsonValue &i : notes) {
+                        QJsonObject note = i.toObject();
+                        safeThis->transactionHistory()->updateTransactionMemo(note["transaction_id"].toString(), note["note"].toString());
+                    }
+                },
+                Qt::QueuedConnection);
         }
     }
 }
 
-QString AssistedWallet::GetUserTxNote(const QString &txid)
-{
-    if(isUserWallet()){
+QString AssistedWallet::GetUserTxNote(const QString &txid) {
+    if (isUserWallet()) {
         QString wallet_id = walletId();
         QJsonObject output;
         QString errormsg = "";
         bool ret = Draco::instance()->assistedWalletGetTxNotes(wallet_id, output, errormsg);
-        if(ret && transactionHistory() && output.contains("notes")){
+        if (ret && transactionHistory() && output.contains("notes")) {
             QJsonArray notes = output["notes"].toArray();
             for (auto i : notes) {
                 QJsonObject note = i.toObject();
-                if(qUtils::strCompare(note["transaction_id"].toString(), txid)){
+                if (qUtils::strCompare(note["transaction_id"].toString(), txid)) {
                     return note["note"].toString();
                 }
             }
@@ -733,36 +689,46 @@ QString AssistedWallet::GetUserTxNote(const QString &txid)
     return "";
 }
 
-void AssistedWallet::GetGroupTxNotes()
-{
-    if(isGroupWallet()){
+void AssistedWallet::GetGroupTxNotes() {
+    if (isGroupWallet()) {
         QString wallet_id = walletId();
         QString group_id = groupId();
         QJsonObject output;
         QString errormsg = "";
         bool ret = Byzantine::instance()->GetAllTransactionNotes(group_id, wallet_id, output, errormsg);
-        if(ret && transactionHistory() && output.contains("notes")){
+        if (ret && output.contains("notes")) {
             QJsonArray notes = output["notes"].toArray();
-            for (auto i : notes) {
-                QJsonObject note = i.toObject();
-                transactionHistory()->updateTransactionMemo(note["transaction_id"].toString(), note["note"].toString());
-            }
+            // updateTransactionMemo iterates TransactionListModel (QAbstractListModel) and
+            // emits dataChanged — must run on main thread to avoid data race with QML reads.
+            // Network I/O above is intentionally on the pool thread.
+            QPointer<AssistedWallet> safeThis(this);
+            QMetaObject::invokeMethod(
+                qApp,
+                [safeThis, notes]() {
+                    if (!safeThis || !safeThis->transactionHistory())
+                        return;
+                    for (const QJsonValue &i : notes) {
+                        QJsonObject note = i.toObject();
+                        safeThis->transactionHistory()->updateTransactionMemo(note["transaction_id"].toString(), note["note"].toString());
+                    }
+                },
+                Qt::QueuedConnection);
         }
     }
 }
 
 QString AssistedWallet::GetGroupTxNote(const QString &txid) {
-    if(isGroupWallet()){
+    if (isGroupWallet()) {
         QString wallet_id = walletId();
         QString group_id = groupId();
         QJsonObject output;
         QString errormsg = "";
         bool ret = Byzantine::instance()->GetAllTransactionNotes(group_id, wallet_id, output, errormsg);
-        if(ret && transactionHistory() && output.contains("notes")){
+        if (ret && transactionHistory() && output.contains("notes")) {
             QJsonArray notes = output["notes"].toArray();
             for (auto i : notes) {
                 QJsonObject note = i.toObject();
-                if(qUtils::strCompare(note["transaction_id"].toString(), txid)){
+                if (qUtils::strCompare(note["transaction_id"].toString(), txid)) {
                     return note["note"].toString();
                 }
             }

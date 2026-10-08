@@ -35,7 +35,7 @@
 // Matrix
 #include <uriresolver.h>
 #ifdef USE_KEYCHAIN
-#include <qt5keychain/keychain.h>
+#include <qt6keychain/keychain.h>
 #endif
 
 namespace Quotient {
@@ -59,8 +59,11 @@ class ClientController final : public QObject, public Slugs
     Q_PROPERTY(bool attachmentEnable                READ attachmentEnable                           NOTIFY attachmentEnableChanged)
     Q_PROPERTY(bool readySupport                    READ readySupport                               NOTIFY readySupportChanged)
     Q_PROPERTY(bool isMultiSubscriptions            READ isMultiSubscriptions                       NOTIFY subscriptionsChanged)
+    Q_PROPERTY(bool subscriptionsReady               READ subscriptionsReady                         NOTIFY subscriptionsReadyChanged)
 
 private:
+    friend class QLogginManager;
+
     ClientController();
     ~ClientController();
 
@@ -75,7 +78,7 @@ public:
     bool isNunchukLoggedIn() const;
     void setIsNunchukLoggedIn(bool isNunchukLoggedIn);
     bool isMatrixLoggedIn() const;
-    void requestLogin();
+    void requestLogin(bool forcePasswordLogin = false);
     QLogginManager *loginHandler() const;
     void setLoginHandler(const QLogginManagerPtr &login);
     void syncContacts(QList<DracoUser> data);
@@ -115,13 +118,18 @@ public:
 
     QStringList slugs() const final;
     QJsonArray subscriptions() const;
+    bool subscriptionsReady() const;
+    bool hasValidSubscriptions(const QJsonArray &data) const;
     void setSubscriptions(const QJsonArray &data);
+    bool resolveSubscriptions(const QJsonArray &data, bool allSourcesSucceeded);
 
     bool attachmentEnable() const;
     void setAttachmentEnable(bool AttachmentEnable);
 
     bool readySupport() const;
     void setReadySupport(bool ReadySupport);
+
+    void notifySupportRoomReady();
 
     // Retention
     void updateMessageMaxLifeTime(QString& roomId, qint64 maxLifeTime /*milisec*/);
@@ -140,7 +148,9 @@ signals:
     void guestModeChanged();
     void attachmentEnableChanged();
     void readySupportChanged();
+    void supportRoomNavigated();
     void subscriptionsChanged();
+    void subscriptionsReadyChanged();
     void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
 
@@ -163,6 +173,7 @@ public slots:
     void forgetRoom(const int index);
     void leaveCurrentRoom();
     void leaveRoom(const int index);
+    void leaveRoomById(const QString &roomId);
     void joinRoom(QString roomAliasOrId);
     void createRoomChat(const QStringList invitees_id, const QStringList sinvitees_name, QVariant firstMessage);
     void createRoomDirectChat(const QString invitee_id, const QString invitee_name, QVariant firstMessage);
@@ -178,7 +189,48 @@ public slots:
     bool checkStayLoggedIn();
 
 private:
+    enum class MatrixConnectionState {
+        NoConnection,
+        Starting,
+        E2eePending,
+        Ready,
+        Draining
+    };
+
+    QJsonArray filterValidSubscriptions(const QJsonArray &data, QStringList *slugs, bool logValidity) const;
+    void applySubscriptions(const QJsonArray &data);
+    void startMatrixLoginAttempt(bool forcePasswordLogin,
+                                 bool restoreSupportRoomRequest);
+    void queueMatrixLoginRequest(bool forcePasswordLogin,
+                                 bool restoreSupportRoomRequest);
+    void schedulePendingMatrixLoginDrain();
+    void drainCurrentMatrixConnection();
+    void resumePendingMatrixLogin(quint64 connectionGeneration);
+    void clearPendingMatrixLoginRequest();
+    void setMatrixLoginTransitioning(bool transitioning);
+    bool beginMatrixLoginCriticalSection(Quotient::Connection *expectedConnection,
+                                         QLogginManager *expectedLoginHandler);
+    void endMatrixLoginCriticalSection(bool entered);
+    bool hasPendingMatrixLoginReplacement(
+            Quotient::Connection *expectedConnection,
+            QLogginManager *expectedLoginHandler) const;
+    bool isCurrentMatrixLoginAttempt(
+            Quotient::Connection *expectedConnection,
+            QLogginManager *expectedLoginHandler) const;
+
     OurSharedPointer<Quotient::Connection>   m_connection;
+    MatrixConnectionState   m_matrixConnectionState{MatrixConnectionState::NoConnection};
+    quint64                 m_matrixConnectionGeneration{0};
+    bool                    m_matrixDrainScheduled{false};
+    int                     m_matrixLoginCriticalDepth{0};
+    bool                    m_matrixLoginTransitioning{false};
+    bool                    m_pendingMatrixLogin{false};
+    bool                    m_pendingForcePasswordLogin{false};
+    bool                    m_pendingRestoreSupportRoomRequest{false};
+    QString                 m_pendingMatrixUserId;
+    QString                 m_pendingNunchukAccountId;
+    QString                 m_activeMatrixUserId;
+    QString                 m_activeNunchukAccountId;
     bool                    m_isNunchukLoggedIn;
     QLogginManagerPtr       m_loginHandler;
     QContactModelPtr        m_contacts;
@@ -191,6 +243,7 @@ private:
     bool                    m_isNewDevice;
     QJsonArray              m_subscriptions;
     QStringList             m_slugs;
+    bool                    m_subscriptionsReady{false};
     bool                    m_AttachmentEnable;
     bool                    m_ReadySupport;
     QMap<QString, QByteArray> m_keychainData;

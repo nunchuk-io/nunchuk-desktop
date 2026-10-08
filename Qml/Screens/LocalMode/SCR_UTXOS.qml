@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
@@ -109,7 +109,7 @@ QScreen {
                     isCurrentTab: tabparent.currentTabIndex === 0
                     fontPixelSize: 10
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 0
                         var sortData = { "sortRole"    : tabparent.utxo_address_role,
                                          "sortOrder"   : sortOrder}
@@ -128,7 +128,7 @@ QScreen {
                     isCurrentTab: tabparent.currentTabIndex === 1
                     fontPixelSize: 10
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 1
                         var sortData = { "sortRole"    : tabparent.utxo_memo_role,
                                          "sortOrder"   : sortOrder}
@@ -147,7 +147,7 @@ QScreen {
                     isCurrentTab: tabparent.currentTabIndex === 2
                     fontPixelSize: 10
                     horizontalAlignment: Text.AlignLeft
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 2
                         var sortData = { "sortRole"    : tabparent.utxo_height_role,
                                          "sortOrder"   : sortOrder}
@@ -166,7 +166,7 @@ QScreen {
                     isCurrentTab: tabparent.currentTabIndex === 3
                     fontPixelSize: 10
                     horizontalAlignment: Text.AlignRight
-                    onTabClicked: {
+                    onTabClicked: (sortOrder) => {
                         tabparent.currentTabIndex = 3
                         var sortData = { "sortRole"    : tabparent.utxo_amount_role,
                                          "sortOrder"   : sortOrder}

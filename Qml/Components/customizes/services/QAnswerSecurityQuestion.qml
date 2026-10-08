@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -37,8 +37,12 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_716
+    property var keyRecovery: ServiceSetting.servicesTag.keyRecovery
+    property bool submitting: false
+    closebutton.enabled: !submitting && !keyRecovery.securityQuestionUpdateInProgress
     signal clearText
     Column {
+        enabled: !_content.submitting && !_content.keyRecovery.securityQuestionUpdateInProgress
         anchors{
             left: parent.left
             leftMargin: 36
@@ -82,6 +86,7 @@ QOnScreenContentTypeA {
                         label: STR.STR_QML_718
                         boxWidth: 537
                         boxHeight: 48
+                        emitEmptyTypingFinished: true
                         isValid: true
                         onTextInputtedChanged: {
                             if(!answer.isValid){
@@ -90,6 +95,9 @@ QOnScreenContentTypeA {
                             }
                             answer.showError = false;
                             ServiceSetting.servicesTag.secQuesAnswer(modelData.id, textInputted)
+                        }
+                        onTypingFinished: (currentText) => {
+                            ServiceSetting.servicesTag.secQuesAnswer(modelData.id, currentText)
                         }
                     }
                 }
@@ -111,6 +119,8 @@ QOnScreenContentTypeA {
             }
         }
     }
+
+    nextEnable: !submitting && !keyRecovery.securityQuestionUpdateInProgress
 
     QBusyIndicator {
         id:_indicator

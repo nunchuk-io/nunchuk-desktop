@@ -12,7 +12,7 @@ Result<AddressToVerifyResult> AddressToVerifyUseCase::execute(const AddressToVer
     if (input.isLoginRequired) {
         deviceList_result = bridge::nunchukGetOriginDevices(msg);
     } else {
-        deviceList_result = qUtils::GetDevices(bridge::hwiPath(), msg);
+        deviceList_result = qUtils::GetDevices(bridge::hwiCommand(), msg);
     }
     QStringList xfps;
     for (const auto &device : deviceList_result) {

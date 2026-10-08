@@ -4,6 +4,7 @@
 #include "features/signers/flows/KeyProceedFlow.h"
 #include "features/signers/flows/KeySetupFlow.h"
 #include "generated_qml_keys.hpp"
+#include "bridgeifaces.h"
 
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
@@ -12,9 +13,57 @@ const QMap<QString, QString> map_keys = {
     {"LEDGER", "ledger"}, {"TREZOR", "trezor"}, {"COLDCARD", "coldcard"}, {"BITBOX", "bitbox02"}, {"JADE", "jade"},
 };
 HardwareRefreshDevicesViewModel::HardwareRefreshDevicesViewModel(QObject *parent) : AddKeyBaseViewModel(parent) {
-    settitle(Strings.STR_QML_911());
+    // Safe default before keyType() is known from the flow; onInit() below picks the right one.
+    setheadline(Strings.STR_QML_811());
+    settitle(Strings.STR_QML_824());
     setsignerName(Strings.STR_QML_1618());
     setisLoading(false);
+}
+
+// BUGFIX: this screen is shared by 4 vendors (Ledger/Trezor/Jade/BitBox) but headline/title were
+// always the COLDCARD copy. Same per-keyType() pattern as
+// AddHardwareExistingKeyViewModel::initializeTextGuide(). "headline" is the short screen-chrome
+// title ("Add Ledger"), "title" is the longer in-content instruction ("Connect your Ledger
+// device...") - same split already used by QScreenAddLedger.qml/QColdcardRefreshDevices.qml.
+void HardwareRefreshDevicesViewModel::initializeTextGuide() {
+    switch (static_cast<SignerKeyType>(keyType()))
+    {
+    case SignerKeyType::LedgerHW:
+        setheadline(Strings.STR_QML_811());
+        settitle(Strings.STR_QML_824());
+        break;
+    case SignerKeyType::TrezorHW:
+        setheadline(Strings.STR_QML_814());
+        settitle(Strings.STR_QML_830());
+        break;
+    case SignerKeyType::JadeHW:
+        setheadline(Strings.STR_QML_1535());
+        settitle(Strings.STR_QML_1538());
+        break;
+    case SignerKeyType::BitBoxHW:
+        setheadline(Strings.STR_QML_923());
+        settitle(Strings.STR_QML_929());
+        break;
+    case SignerKeyType::ColdcardHW:
+        setheadline(Strings.STR_QML_904());
+        settitle(Strings.STR_QML_911());
+        break;
+    default:
+        break;
+    }
+}
+
+void HardwareRefreshDevicesViewModel::onInit() {
+    initializeTextGuide();
+    // BUGFIX: QHardwareRefreshDevices.qml's per-row filter was comparing a device's raw HWI type
+    // (device_type, e.g. "bitbox02") against hardwareTag() (e.g. "BITBOX") - those only happen to
+    // match for Ledger/Trezor/Jade (tag == uppercased device_type by coincidence), but NEVER for
+    // BitBox ("BITBOX02" != "BITBOX"), silently hiding every BitBox device a successful scan found.
+    // Expose the actual mapped device-type string (same value ScanDeviceUsecase filters by) so QML
+    // compares like with like. hardwareTag() is already populated by KeySetupFlow::bind() (called
+    // from BaseViewModel::initialize() before onInit()), so it's safe to read here.
+    sethardwareDeviceType(map_keys.value(hardwareTag(), ""));
+    AddKeyBaseViewModel::onInit();
 }
 
 void HardwareRefreshDevicesViewModel::scanDevice() {
@@ -41,7 +90,10 @@ void HardwareRefreshDevicesViewModel::scanDevice() {
                 }
             }
         } else {
-            // Handle error (e.g., log it, show a message, etc.)
+            // BUGFIX: was a no-op stub - a scan failure (e.g. HWI not available/linked in this build)
+            // silently fell through to the empty "No devices available" state with zero indication of
+            // why, indistinguishable from "no device plugged in".
+            emit showToast(result.code(), result.error(), EWARNING::WarningType::ERROR_MSG);
         }
         setisLoading(false);
     });

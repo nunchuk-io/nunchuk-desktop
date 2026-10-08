@@ -29,7 +29,7 @@
     <key>NSHighResolutionCapable</key>
         <true/>
     <key>NSCameraUsageDescription</key>
-        <string>Access to the camera needed to scan QR codes</string>
+        <string>Required for scanning QR codes</string>
     <key>CFBundleDevelopmentRegion</key>
         <string>English</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -42,7 +42,5 @@
         <true/>
     <key>NSBluetoothAlwaysUsageDescription</key>
         <string>App may access Bluetooth for device connectivity</string>
-    <key>NSCameraUsageDescription</key>
-        <string>Required for scanning QR codes</string>
 </dict>
 </plist>

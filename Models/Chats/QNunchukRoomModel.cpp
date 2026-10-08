@@ -22,12 +22,20 @@
 #include "uriresolver.h"
 #include "csapi/joining.h"
 #include "csapi/leaving.h"
+#include "csapi/inviting.h"
+#include "csapi/kicking.h"
+#include "csapi/typing.h"
+#include "csapi/directory.h"
 #include "csapi/room_send.h"
+#include "csapi/room_state.h"
+#include "csapi/tags.h"
 #include "events/roomevent.h"
 #include "events/reactionevent.h"
 #include "events/redactionevent.h"
 #include "events/simplestateevents.h"
 #include "events/roommessageevent.h"
+#include "events/stateevent.h"
+#include "events/roompowerlevelsevent.h"
 #include <functional>
 #include "QOutlog.h"
 #include "ClientController.h"
@@ -44,7 +52,155 @@
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QGroupWalletDummyTx.h"
 #include "QThreadForwarder.h"
+#include "QAppEngine/QEventProcessor/Common/WorkerThread.h"
 #include "Premiums/QSharedWallets.h"
+#include <QCryptographicHash>
+#include <QPointer>
+#include <chrono>
+#include <utility>
+#include <vector>
+
+namespace {
+constexpr auto NUNCHUK_SUPPORT_MARKER_EVENT = "io.nunchuk.support_room";
+
+struct DownloadTransactionResult {
+    bool shouldNotify{false};
+    nunchuk::RoomTransaction roomTransaction;
+    nunchuk::Transaction transaction;
+};
+
+struct PendingTransactionData {
+    nunchuk::RoomTransaction roomTransaction;
+    nunchuk::Transaction transaction;
+};
+
+using PendingTransactionDataList = std::vector<PendingTransactionData>;
+
+struct HistoricalEventSnapshot {
+    QJsonObject fullJson;
+    bool shouldConsume{false};
+    nunchuk::NunchukMatrixEvent consumeEvent;
+    NunchukEventBackendResolution backendResolution;
+};
+
+using HistoricalEventSnapshotList = std::vector<HistoricalEventSnapshot>;
+
+QRoomTransactionModelPtr buildPendingTransactionModel(
+        const QString &roomId,
+        const PendingTransactionDataList &transactions)
+{
+    QRoomTransactionModelPtr result(new QRoomTransactionModel());
+    for (const PendingTransactionData &item : transactions) {
+        const QString walletId = QString::fromStdString(
+                    item.roomTransaction.get_wallet_id());
+        QTransactionPtr transaction = bridge::convertTransaction(
+                    item.transaction, walletId);
+        if (!transaction) {
+            continue;
+        }
+
+        transaction->setRoomId(roomId);
+        transaction->setInitEventId(QString::fromStdString(
+                    item.roomTransaction.get_init_event_id()));
+        QRoomTransactionPtr target(new QRoomTransaction(item.roomTransaction));
+        target->setTransaction(transaction);
+        const int status = target->transaction()
+                ? target->transaction()->status()
+                : (int)ENUNCHUCK::TransactionStatus::NETWORK_REJECTED;
+        if (status == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES
+                || status == (int)ENUNCHUCK::TransactionStatus::READY_TO_BROADCAST
+                || status == (int)ENUNCHUCK::TransactionStatus::PENDING_CONFIRMATION) {
+            result->addTransaction(target);
+        }
+    }
+    return result;
+}
+
+QString currentSupportRoomTag()
+{
+    return (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer()
+            ? NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
+}
+
+QString supportRoomAliasLocalpart(const Connection* connection,
+                                  const QString& tagname)
+{
+    // This key must be stable across devices and token rotations so concurrent
+    // clients of the same account still compete for one server-side alias.
+    // The alias is never trusted as room identity on its own; only the owned,
+    // versioned marker created atomically with the room is authoritative.
+    const QByteArray identity = connection->userId().toUtf8() + '|'
+            + tagname.toUtf8();
+    const QByteArray digest = QCryptographicHash::hash(
+        identity, QCryptographicHash::Sha256).toHex().left(24);
+    return QStringLiteral("nunchuk-support-") + QString::fromLatin1(digest);
+}
+
+QString supportRoomAlias(const Connection* connection, const QString& tagname)
+{
+    return QStringLiteral("#") + supportRoomAliasLocalpart(connection, tagname)
+            + QStringLiteral(":") + connection->domain();
+}
+
+QString supportMarkerTag(const Room* room)
+{
+    if(!room || !room->creation()
+            || room->creation()->senderId() != room->connection()->userId()){
+        return {};
+    }
+    const StateEvent* markerEvent = room->currentState().get(
+        QString::fromLatin1(NUNCHUK_SUPPORT_MARKER_EVENT));
+    if(!markerEvent
+            || markerEvent->senderId() != room->connection()->userId()){
+        return {};
+    }
+    const QJsonObject marker = markerEvent->contentJson();
+    if(marker.value("version").toInt() != 1){
+        return {};
+    }
+    return marker.value("tag").toString();
+}
+
+QString supportTagForRoom(const Room* room)
+{
+    if(!room){
+        return {};
+    }
+    const QString markerTag = supportMarkerTag(room);
+    if(markerTag == NUNCHUK_ROOM_SUPPORT
+            || markerTag == NUNCHUK_ROOM_SUPPORTTESTNET){
+        return markerTag;
+    }
+    const QString canonicalTag =
+            room->property("nunchukSupportCanonicalTag").toString();
+    if(canonicalTag == NUNCHUK_ROOM_SUPPORT
+            || canonicalTag == NUNCHUK_ROOM_SUPPORTTESTNET){
+        return canonicalTag;
+    }
+    const bool hasMainTag = room->tagNames().contains(NUNCHUK_ROOM_SUPPORT);
+    const bool hasTestnetTag =
+            room->tagNames().contains(NUNCHUK_ROOM_SUPPORTTESTNET);
+    if(hasMainTag && hasTestnetTag){
+        return currentSupportRoomTag();
+    }
+    if(hasMainTag){
+        return NUNCHUK_ROOM_SUPPORT;
+    }
+    if(hasTestnetTag){
+        return NUNCHUK_ROOM_SUPPORTTESTNET;
+    }
+    return {};
+}
+
+bool isAmbiguousMutationError(int errorCode)
+{
+    return errorCode == BaseJob::Abandoned
+            || errorCode == BaseJob::NetworkError
+            || errorCode == BaseJob::Timeout
+            || errorCode == BaseJob::IncorrectResponse
+            || errorCode == BaseJob::UnexpectedResponseType;
+}
+}
 
 QNunchukRoom::QNunchukRoom(Room *r):
     m_room(r),
@@ -67,7 +223,12 @@ QNunchukRoom::QNunchukRoom(Room *r):
     if(m_room){
         QQmlEngine::setObjectOwnership(m_room, QQmlEngine::CppOwnership);
     }
-    qmlRegisterType<FileTransferInfo>();
+    m_typingIdleTimer.setSingleShot(true);
+    m_typingIdleTimer.setInterval(4500);
+    connect(&m_typingIdleTimer, &QTimer::timeout, this, [this] {
+        setTyping(false);
+    });
+    qRegisterMetaType<FileTransferInfo>();
     qRegisterMetaType<FileTransferInfo>();
     connect(AppSetting::instance(), &AppSetting::enableColabChanged, this, &QNunchukRoom::isIgnoredCollabWalletChanged);
 }
@@ -111,8 +272,54 @@ bool QNunchukRoom::isNunchukSyncRoom() const
 
 bool QNunchukRoom::isSupportRoom() const
 {
-    QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
-    return m_room ? (m_room->tagNames().contains(tagname)) : false;
+    const QString tagname = currentSupportRoomTag();
+    if(!m_room){
+        return false;
+    }
+    const QString otherTag = qUtils::strCompare(tagname, NUNCHUK_ROOM_SUPPORT)
+            ? NUNCHUK_ROOM_SUPPORTTESTNET : NUNCHUK_ROOM_SUPPORT;
+    const QString markerTag = supportMarkerTag(m_room);
+    const bool isSupportDirectChat = m_room->isDirectChat()
+            && m_room->connection()->directChatMemberIds(m_room).contains("@support:nunchuk.io");
+    if(m_room->property("nunchukSupportSuppressedTag").toString() == tagname){
+        return false;
+    }
+    if(markerTag == tagname){
+        return true;
+    }
+    if(markerTag == otherTag){
+        return false;
+    }
+    if(m_room->tagNames().contains(tagname)){
+        return true;
+    }
+    if(m_room->tagNames().contains(otherTag)){
+        return false;
+    }
+    for(const Quotient::Room* taggedRoom : m_room->connection()->roomsWithTag(tagname)){
+        if(taggedRoom && taggedRoom->joinState() != JoinState::Leave
+                && taggedRoom->property("nunchukSupportSuppressedTag").toString() != tagname){
+            return false;
+        }
+    }
+    return isSupportDirectChat
+            && m_room->property("nunchukSupportCanonicalTag").toString() == tagname;
+}
+
+bool QNunchukRoom::isAnySupportRoom() const
+{
+    if(!m_room){
+        return false;
+    }
+    const QString markerTag = supportMarkerTag(m_room);
+    const QString canonicalTag =
+            m_room->property("nunchukSupportCanonicalTag").toString();
+    return markerTag == NUNCHUK_ROOM_SUPPORT
+            || markerTag == NUNCHUK_ROOM_SUPPORTTESTNET
+            || m_room->tagNames().contains(NUNCHUK_ROOM_SUPPORT)
+            || m_room->tagNames().contains(NUNCHUK_ROOM_SUPPORTTESTNET)
+            || canonicalTag == NUNCHUK_ROOM_SUPPORT
+            || canonicalTag == NUNCHUK_ROOM_SUPPORTTESTNET;
 }
 
 bool QNunchukRoom::isDirectChat() const
@@ -123,7 +330,6 @@ bool QNunchukRoom::isDirectChat() const
 bool QNunchukRoom::isByzantineRoom() const
 {
     bool ret = (m_room ? m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE) : false );
-    DBG_INFO << ret;
     return ret;
 }
 
@@ -139,8 +345,53 @@ QString QNunchukRoom::byzantineRoomGroupId()
 
 QString QNunchukRoom::localUserName() const
 {
-    if(m_room) return m_room->localUser()->displayname(m_room);
+    if(m_room) return m_room->localMember().displayName();
     else return "";
+}
+
+QString QNunchukRoom::localUserId() const
+{
+    return m_room ? m_room->localMember().id() : QString{};
+}
+
+bool QNunchukRoom::canRenameRoom() const
+{
+    return m_room && m_room->joinState() == JoinState::Join
+            && m_room->memberEffectivePowerLevel()
+               >= m_room->powerLevelFor(RoomNameEvent::TypeId, true);
+}
+
+bool QNunchukRoom::canInviteMembers() const
+{
+    if(!m_room || m_room->joinState() != JoinState::Join){
+        return false;
+    }
+    const auto* powerLevels = m_room->currentState().get<RoomPowerLevelsEvent>();
+    return powerLevels
+            && m_room->memberEffectivePowerLevel() >= powerLevels->invite();
+}
+
+bool QNunchukRoom::canKickMembers() const
+{
+    if(!m_room || m_room->joinState() != JoinState::Join){
+        return false;
+    }
+    const auto* powerLevels = m_room->currentState().get<RoomPowerLevelsEvent>();
+    return powerLevels
+            && m_room->memberEffectivePowerLevel() >= powerLevels->kick();
+}
+
+bool QNunchukRoom::canKickMember(const QString& memberId) const
+{
+    if(!canKickMembers() || memberId.isEmpty() || memberId == localUserId()){
+        return false;
+    }
+    return m_room->memberEffectivePowerLevel() > m_room->memberEffectivePowerLevel(memberId);
+}
+
+bool QNunchukRoom::roomNameChangeInProgress() const
+{
+    return m_roomNameChangeInProgress;
 }
 
 QString QNunchukRoom::id() const
@@ -163,7 +414,7 @@ QString QNunchukRoom::status() const
 int QNunchukRoom::userCount() const
 {
     if(m_room){
-        return m_room->users().count();
+        return m_room->joinedMembers().count();
     }
     else{
         return 0;
@@ -174,8 +425,11 @@ QStringList QNunchukRoom::userNames()
 {
     QStringList ret;
     ret.clear();
-    if(m_room){
-        ret = m_room->memberNames();//safeMemberNames();
+    if(!m_room){
+        return ret;
+    }
+    for (const RoomMember& member : m_room->joinedMembers()) {
+        ret << member.displayName();
     }
     ret.count();
     return ret;
@@ -186,16 +440,15 @@ QStringList QNunchukRoom::talkersName()
     QStringList ret;
     ret.clear();
     if(m_room){
-        QString local_id = room()->localUser()->id();
-        for (int i = 0; i < m_room->users().count(); ++i) {
-            if(m_room->users().at(i)){
-                QString user_id = m_room->users().at(i)->id();
-                if(isDirectChat() && qUtils::strCompare(user_id, local_id)){
-                    continue;
-                }
-                else{
-                    ret.append(m_room->users().at(i)->name(m_room));
-                }
+        QString local_id = room()->localMember().id();
+        const auto members = m_room->joinedMembers();
+        for (int i = 0; i < members.count(); ++i) {
+            QString user_id = members.at(i).id();
+            if(isDirectChat() && qUtils::strCompare(user_id, local_id)){
+                continue;
+            }
+            else{
+                ret.append(members.at(i).name());
             }
         }
     }
@@ -207,16 +460,15 @@ QStringList QNunchukRoom::talkersAvatar()
     QStringList ret;
     ret.clear();
     if(m_room){
-        QString local_id = room()->localUser()->id();
-        for (int i = 0; i < m_room->users().count(); ++i) {
-            if(m_room->users().at(i)){
-                QString user_id = m_room->users().at(i)->id();
-                if(isDirectChat() && qUtils::strCompare(user_id, local_id)){
-                    continue;
-                }
-                else{
-                    ret.append(m_room->users().at(i)->avatarMediaId(m_room));
-                }
+        QString local_id = room()->localMember().id();
+        const auto members = m_room->joinedMembers();
+        for (int i = 0; i < members.count(); ++i) {
+            QString user_id = members.at(i).id();
+            if(isDirectChat() && qUtils::strCompare(user_id, local_id)){
+                continue;
+            }
+            else{
+                ret.append(members.at(i).avatarMediaId());
             }
         }
     }
@@ -226,12 +478,14 @@ QStringList QNunchukRoom::talkersAvatar()
 QString QNunchukRoom::roomAvatar()
 {
     if(m_room && userCount() == 2){
-        int targetId = userNames().indexOf(m_room->localUser()->name()) == 0 ? 1 : 0 ;
-        return (targetId != -1) ? m_room->users().at(targetId)->avatarMediaId() : "";
+        const auto members = m_room->joinedMembers();
+        for(const RoomMember& member : members){
+            if(member.id() != m_room->localMember().id()){
+                return member.avatarMediaId();
+            }
+        }
     }
-    else{
-        return "";
-    }
+    return "";
 }
 
 QString QNunchukRoom::roomName()
@@ -244,7 +498,7 @@ QString QNunchukRoom::roomName()
             return "Nunchuk Sync";
         }
         else if(isSupportRoom()){
-            return "Support";
+            return "Support room";
         }
         else if(isNunchukByzantineRoom()){
             return m_room->name() != "" ? m_room->name() : m_room->displayName();
@@ -254,7 +508,7 @@ QString QNunchukRoom::roomName()
         }
         else{
             if(userCount() == 2){
-                int targetId = userNames().indexOf(m_room->localUser()->name()) == 0 ? 1 : 0 ;
+                int targetId = userNames().indexOf(m_room->localMember().name()) == 0 ? 1 : 0 ;
                 return (targetId != -1) ? userNames().at(targetId) : "Unknown";
             }
             else{
@@ -269,10 +523,45 @@ QString QNunchukRoom::roomName()
 
 void QNunchukRoom::setRoomName(const QString &name)
 {
-    if(m_room){
-        m_room->setName(name);
-        emit roomNameChanged();
+    const QString requestedName = name.trimmed();
+    if(!m_room || m_roomNameChangeInProgress || requestedName.isEmpty()
+            || requestedName == m_room->name()){
+        return;
     }
+    if(!canRenameRoom()){
+        const QString error = tr("You do not have permission to rename this room");
+        AppModel::instance()->showToast(BaseJob::Unauthorised, error,
+                                        EWARNING::WarningType::EXCEPTION_MSG);
+        emit roomNameChangeFailed(error);
+        return;
+    }
+    m_roomNameChangeInProgress = true;
+    emit roomNameChangeInProgressChanged();
+    auto* job = m_room->setState<RoomNameEvent>(requestedName);
+    const auto finish = [this] {
+        if(m_roomNameChangeInProgress){
+            m_roomNameChangeInProgress = false;
+            emit roomNameChangeInProgressChanged();
+        }
+    };
+    connect(job, &BaseJob::finished, this, [this, job, finish] {
+        if(job->error() == BaseJob::Abandoned){
+            finish();
+            AppModel::instance()->showToast(job->error(), job->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+            emit roomNameChangeFailed(job->errorString());
+        }
+    });
+    connect(job, &BaseJob::success, this, [this, finish] {
+        finish();
+        emit roomNameChangeSucceeded();
+    });
+    connect(job, &BaseJob::failure, this, [this, job, finish] {
+        finish();
+        AppModel::instance()->showToast(job->error(), job->errorString(),
+                                        EWARNING::WarningType::EXCEPTION_MSG);
+        emit roomNameChangeFailed(job->errorString());
+    });
 }
 
 Room *QNunchukRoom::room() const
@@ -291,40 +580,47 @@ JoinState QNunchukRoom::roomJoinState()
 int QNunchukRoom::unreadCount() const
 {
     if(m_room){
-        return m_room->unreadCount() > 0 ? m_room->unreadCount() : 0;
+        return m_room->notificationCount() > 0 ? m_room->notificationCount() : 0;
     }
     return 0;
 }
 
 QString QNunchukRoom::postEvent(const QString& eventType, const QJsonObject& content)
 {
-    QString txnId = "";
-    RoomEvent* evt = NULL;
-    if(qUtils::strCompare(eventType, NUNCHUK_EVENT_WALLET)){
-        evt = new QNunchukWalletEvent(eventType, content);
+    QString txnId;
+    RoomEvent* evt = nullptr;
+    QJsonObject json{
+        { "type", eventType },
+        { "content", content }
+    };
+
+    if (qUtils::strCompare(eventType, NUNCHUK_EVENT_WALLET)) {
+        evt = new QNunchukWalletEvent(json);
     }
-    else if(qUtils::strCompare(eventType, NUNCHUK_EVENT_TRANSACTION)){
-        evt = new QNunchukTransactionEvent(eventType, content);
+    else if (qUtils::strCompare(eventType, NUNCHUK_EVENT_TRANSACTION)) {
+        evt = new QNunchukTransactionEvent(json);
     }
-    else if(qUtils::strCompare(eventType, NUNCHUK_EVENT_SYNC)){
-        evt = new QNunchukSyncEvent(eventType, content);
+    else if (qUtils::strCompare(eventType, NUNCHUK_EVENT_SYNC)) {
+        evt = new QNunchukSyncEvent(json);
     }
-    else if(qUtils::strCompare(eventType, NUNCHUK_EVENT_EXCEPTION)){
-        evt = new QNunchukExceptionEvent(eventType, content);
+    else if (qUtils::strCompare(eventType, NUNCHUK_EVENT_EXCEPTION)) {
+        evt = new QNunchukExceptionEvent(json);
     }
-    else {}
-    if(m_room && evt){
-        if(isNunchukSyncRoom() && !AppSetting::instance()->enableMultiDeviceSync()){
+
+    if (m_room && evt) {
+        if (isNunchukSyncRoom()
+            && !AppSetting::instance()->enableMultiDeviceSync()) {
+            delete evt;
             return "";
         }
         txnId = m_room->postEvent(evt);
-        if(validatePendingEvent(txnId)){
+        if (validatePendingEvent(txnId))
             return txnId;
-        }
     }
+
+    delete evt;
     return "";
 }
-
 QString QNunchukRoom::postJson(const QString &matrixType, const QJsonObject &content)
 {
     QString txnId = "";
@@ -395,9 +691,9 @@ void QNunchukRoom::sendMessage(const QString &message)
         if(validatePendingEvent(txnId)){
             Conversation cons;
             cons.sendByMe = true;
-            cons.sender   = m_room->localUser()->displayname(room()) != "" ? m_room->localUser()->displayname(room()) : m_room->localUser()->id();
-            cons.receiver =  m_room->localUser()->displayname(room());
-            cons.timestamp = QDateTime::currentDateTime().toTime_t();
+            cons.sender   = m_room->localMember().displayName() != "" ? m_room->localMember().displayName() : m_room->localMember().id();
+            cons.receiver =  m_room->localMember().displayName();
+            cons.timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch();
             cons.message = Quotient::prettyPrint(message);
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT;
             cons.txnId = txnId;
@@ -429,85 +725,169 @@ void QNunchukRoom::sendReaction(const QString &react)
 
 void QNunchukRoom::sendFile(const QString& description, const QString localFile)
 {
-    if(m_room){
-        QString filepath = qUtils::QGetFilePath(localFile);
-        if(filepath == "") return;
-        int file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+    if (!m_room) {
+        return;
+    }
 
-        QMimeDatabase db;
-        QMimeType mime = db.mimeTypeForFile(filepath);
-        QString file_caption = QFileInfo(localFile).fileName();
-        if (mime.name().startsWith("image/")) {
-            file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_IMAGE;
-        } else if (mime.name().startsWith("video/")) {
-            file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_VIDEO;
+    const QString filepath = qUtils::QGetFilePath(localFile);
+    if (filepath.isEmpty()) {
+        return;
+    }
+
+    int file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+
+    QMimeDatabase db;
+    QMimeType mime = db.mimeTypeForFile(filepath);
+    const QString file_caption = QFileInfo(localFile).fileName();
+
+    if (mime.name().startsWith("image/")) {
+        file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_IMAGE;
+    } else if (mime.name().startsWith("video/")) {
+        file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_VIDEO;
+    } else {
+        file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+    }
+
+    auto fileContent = std::make_unique<EventContent::FileContent>(
+        QUrl::fromLocalFile(filepath));
+
+    const QString txnId = m_room->postFile(
+        description.isEmpty() ? QFileInfo(filepath).fileName() : description,
+        std::move(fileContent));
+
+    QObject::connect(m_room, &Room::fileTransferCompleted,
+                     [=](QString id, QUrl fileurl, FileSourceInfo fileinfo) {
+                         if (id == txnId) {
+                             DBG_INFO << "fileTransferCompleted";
+                         }
+                     });
+
+    QObject::connect(m_room, &Room::fileTransferFailed,
+                     [=](QString id, QString error) {
+                         if (id == txnId) {
+                             DBG_INFO << "fileTransferFailed";
+                         }
+                     });
+
+    QObject::connect(m_room, &Room::fileTransferProgress,
+                     [=](QString id, qint64 progress, qint64 total) {
+                         if (id == txnId) {
+                             DBG_INFO << "fileTransferProgress:" << progress << total;
+                         }
+                     });
+
+    if (validatePendingEvent(txnId)) {
+        Conversation cons;
+        cons.sendByMe = true;
+        cons.sender = !m_room->localMember().displayName().isEmpty()
+                          ? m_room->localMember().displayName()
+                          : m_room->localMember().id();
+        cons.receiver = m_room->localMember().displayName();
+        cons.timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        cons.messageType = file_mimeType;
+        cons.file_path = QUrl::fromLocalFile(filepath).toString();
+        cons.txnId = txnId;
+        cons.visible = isValidMessageTime(cons);
+
+        if (file_mimeType == (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER) {
+            if (!description.isEmpty()) {
+                const QString messageInput = QString("%1 \n %2").arg(file_caption, description);
+                cons.message = Quotient::prettyPrint(messageInput);
+            } else {
+                cons.message = Quotient::prettyPrint(file_caption);
+            }
         } else {
-            file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+            cons.message = Quotient::prettyPrint(description);
         }
-        auto txnId = m_room->postFile(description.isEmpty()
-                                                 ? QUrl(filepath).fileName()
-                                                 : description,
-                                             QUrl::fromLocalFile(filepath));
-        QObject::connect(m_room, &Room::fileTransferCompleted,
-                         [=](QString id, QUrl /*localFile*/, QUrl /*mxcUrl*/) {
-            if (id == txnId) {
-                DBG_INFO << "fileTransferCompleted";
-            }
-        });
-        QObject::connect(m_room, &Room::fileTransferFailed, [=](QString id, QString /*error*/) {
-            if (id == txnId) {
-                DBG_INFO << "fileTransferFailed";
-            }
-        });
-        QObject::connect( m_room, &Room::fileTransferProgress, [=](QString id, qint64 progress, qint64 total) {
-            if (id == txnId) {
-                DBG_INFO << "fileTransferProgress:" << progress << total;
-            }
-        });
 
-        if(validatePendingEvent(txnId)){
-            Conversation cons;
-            cons.sendByMe = true;
-            cons.sender   = m_room->localUser()->displayname(room()) != "" ? m_room->localUser()->displayname(room()) : m_room->localUser()->id();
-            cons.receiver =  m_room->localUser()->displayname(room());
-            cons.timestamp = QDateTime::currentDateTime().toTime_t();
-            cons.messageType = file_mimeType;
-            cons.file_path =  QUrl::fromLocalFile(filepath).toString();
-            cons.txnId = txnId;
-            cons.visible = isValidMessageTime(cons);
-            if(file_mimeType == (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER){
-                if(description != ""){
-                    QString messageInput = QString("%1 \n %2").arg(file_caption).arg(description);
-                    cons.message = Quotient::prettyPrint(messageInput);
-                }
-                else{
-                    cons.message = Quotient::prettyPrint(file_caption);
-                }
-            }
-            else{
-                cons.message = Quotient::prettyPrint(description);
-            }
-            conversation()->addMessage(cons);
-            conversation()->requestSortByTimeAscending();
-            setLastMessage(cons);
-            setLasttimestamp(cons);
-        }
+        conversation()->addMessage(cons);
+        conversation()->requestSortByTimeAscending();
+        setLastMessage(cons);
+        setLasttimestamp(cons);
     }
 }
 
 void QNunchukRoom::inviteToRoom(const QString &memberId)
 {
-    if(m_room){
-        m_room->inviteToRoom(memberId);
+    const QString targetId = memberId.trimmed();
+    const QString operationId = QStringLiteral("invite:") + targetId;
+    if(!m_room || targetId.isEmpty() || m_memberOperations.contains(operationId)){
+        return;
     }
+    if(!canInviteMembers()){
+        const QString error = tr("You do not have permission to invite members");
+        AppModel::instance()->showToast(BaseJob::Unauthorised, error,
+                                        EWARNING::WarningType::EXCEPTION_MSG);
+        emit memberInviteFailed(targetId, error);
+        return;
+    }
+    const Membership membership = m_room->member(targetId).membershipState();
+    if(membership == Membership::Join || membership == Membership::Invite){
+        emit memberInviteSucceeded(targetId);
+        return;
+    }
+    m_memberOperations.insert(operationId);
+    auto inviteJob = m_room->connection()->callApi<InviteUserJob>(m_room->id(), targetId);
+    connect(inviteJob, &BaseJob::finished, this,
+            [this, inviteJob, targetId, operationId] {
+        if(inviteJob->error() == BaseJob::Abandoned){
+            m_memberOperations.remove(operationId);
+            AppModel::instance()->showToast(inviteJob->error(), inviteJob->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+            emit memberInviteFailed(targetId, inviteJob->errorString());
+        }
+    });
+    inviteJob.then(this,
+        [this, targetId, operationId](InviteUserJob*) {
+            m_memberOperations.remove(operationId);
+            emit memberInviteSucceeded(targetId);
+        },
+        [this, targetId, operationId](InviteUserJob* job) {
+            m_memberOperations.remove(operationId);
+            AppModel::instance()->showToast(job->error(), job->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+            emit memberInviteFailed(targetId, job->errorString());
+        });
 }
 
 void QNunchukRoom::kickMember(const QString& memberId)
 {
-    if(m_room){
-        QString kickreason = QString("%1 %2").arg(STR_CPP_005).arg(localUserName());
-        m_room->kickMember(memberId, kickreason);
+    const QString targetId = memberId.trimmed();
+    const QString operationId = QStringLiteral("kick:") + targetId;
+    if(!m_room || targetId.isEmpty() || m_memberOperations.contains(operationId)){
+        return;
     }
+    if(!canKickMember(targetId)){
+        const QString error = tr("You do not have permission to remove this member");
+        AppModel::instance()->showToast(BaseJob::Unauthorised, error,
+                                        EWARNING::WarningType::EXCEPTION_MSG);
+        emit memberKickFailed(targetId, error);
+        return;
+    }
+    m_memberOperations.insert(operationId);
+    const QString kickreason = QString("%1 %2").arg(STR_CPP_005, localUserName());
+    auto kickJob = m_room->connection()->callApi<KickJob>(m_room->id(), targetId,
+                                                          kickreason);
+    connect(kickJob, &BaseJob::finished, this,
+            [this, kickJob, targetId, operationId] {
+        if(kickJob->error() == BaseJob::Abandoned){
+            m_memberOperations.remove(operationId);
+            AppModel::instance()->showToast(kickJob->error(), kickJob->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+            emit memberKickFailed(targetId, kickJob->errorString());
+        }
+    });
+    kickJob.then(this,
+        [this, targetId, operationId](KickJob*) {
+            m_memberOperations.remove(operationId);
+            emit memberKickSucceeded(targetId);
+        },
+        [this, targetId, operationId](KickJob* job) {
+            m_memberOperations.remove(operationId);
+            AppModel::instance()->showToast(job->error(), job->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+            emit memberKickFailed(targetId, job->errorString());
+        });
 }
 
 void QNunchukRoom::banMember(const QString &userId)
@@ -615,7 +995,72 @@ bool QNunchukRoom::isDownloaded() const
     return m_downloaded;
 }
 
-bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString &init_event_id, const QJsonObject &json, Conversation &cons)
+NunchukEventBackendResolution QNunchukRoom::resolveNunchukEventBackend(
+        const QString &roomId,
+        const QString &matrixType,
+        const QString &eventId,
+        const QJsonObject &json)
+{
+    NunchukEventBackendResolution result;
+    const QString messageType = json["msgtype"].toString();
+    const QJsonObject body = json["body"].toObject();
+
+    if (qUtils::strCompare(matrixType, NUNCHUK_EVENT_TRANSACTION)
+            && qUtils::strCompare(messageType, NUNCHUK_MSG_TX_RECEIVE)) {
+        result.txReceiveLookupAttempted = true;
+        result.txReceiveHasRoomWallet = matrixbrigde::HasRoomWallet(roomId);
+        if (result.txReceiveHasRoomWallet) {
+            QWarningMessage warning;
+            result.txReceiveTransactionId = matrixbrigde::GetTransactionId(
+                        roomId, eventId, warning);
+            result.txReceiveTransactionIdAccepted =
+                    (int)EWARNING::WarningType::NONE_MSG == warning.type()
+                    && !result.txReceiveTransactionId.isEmpty();
+        }
+    }
+    else if (qUtils::strCompare(matrixType, NUNCHUK_EVENT_WALLET)
+             && qUtils::strCompare(messageType, NUNCHUK_MSG_WALLET_LEAVE)) {
+        result.walletLeaveLookupAttempted = true;
+        const QString joinEventId = body["io.nunchuk.relates_to"].toObject()
+                ["join_event_id"].toString();
+        QWarningMessage warning;
+        const nunchuk::NunchukMatrixEvent joinEvent =
+                matrixbrigde::GetEventData(roomId, joinEventId, warning);
+        if ((int)EWARNING::WarningType::NONE_MSG == warning.type()) {
+            const QJsonObject joinJson = matrixbrigde::stringToJson(
+                        QString::fromStdString(joinEvent.get_content()));
+            result.walletLeaveFingerprint = joinJson["body"].toObject()["key"]
+                    .toString().split('/')[0].remove('[');
+        }
+    }
+    return result;
+}
+
+bool QNunchukRoom::extractNunchukEvent(const QString &matrixType,
+                                       const QString &init_event_id,
+                                       const QJsonObject &json,
+                                       Conversation &cons)
+{
+    return extractNunchukEventImpl(matrixType, init_event_id, json, cons, nullptr);
+}
+
+bool QNunchukRoom::extractNunchukEvent(
+        const QString &matrixType,
+        const QString &init_event_id,
+        const QJsonObject &json,
+        Conversation &cons,
+        const NunchukEventBackendResolution &resolution)
+{
+    return extractNunchukEventImpl(
+                matrixType, init_event_id, json, cons, &resolution);
+}
+
+bool QNunchukRoom::extractNunchukEventImpl(
+        const QString &matrixType,
+        const QString &init_event_id,
+        const QJsonObject &json,
+        Conversation &cons,
+        const NunchukEventBackendResolution *resolution)
 {
     QString msgtype = json["msgtype"].toString();
     DBG_INFO << "FIXME" << msgtype << json;
@@ -645,11 +1090,16 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
             QString xfp = "";
-            QWarningMessage joinmsg;
-            QNunchukMatrixEvent nunJoinEvent = matrixbrigde::GetEvent(id(), join_event_id, joinmsg);
-            if((int)EWARNING::WarningType::NONE_MSG == joinmsg.type()){
-                QJsonObject joinjson = matrixbrigde::stringToJson(nunJoinEvent.get_content());
-                xfp = joinjson["body"].toObject()["key"].toString().split('/')[0].remove('[');
+            if (resolution && resolution->walletLeaveLookupAttempted) {
+                xfp = resolution->walletLeaveFingerprint;
+            }
+            else {
+                QWarningMessage joinmsg;
+                QNunchukMatrixEvent nunJoinEvent = matrixbrigde::GetEvent(id(), join_event_id, joinmsg);
+                if((int)EWARNING::WarningType::NONE_MSG == joinmsg.type()){
+                    QJsonObject joinjson = matrixbrigde::stringToJson(nunJoinEvent.get_content());
+                    xfp = joinjson["body"].toObject()["key"].toString().split('/')[0].remove('[');
+                }
             }
             cons.message = STR_CPP_012.arg(xfp).arg(wallet_name);
             cons.init_event_id = init_event_id;
@@ -727,14 +1177,25 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_json = json;
         }
         else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_RECEIVE)){
-            if(matrixbrigde::HasRoomWallet(id()) == false) return false;
-            QWarningMessage roomTxWarning;
-            QString tx_id = matrixbrigde::GetTransactionId(id(), init_event_id, roomTxWarning);
-            if((int)EWARNING::WarningType::NONE_MSG == roomTxWarning.type() && tx_id != ""){
-                cons.init_event_id = tx_id;
-                cons.message = STR_CPP_020;
-                cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE;
-                cons.init_event_json = json;
+            if (resolution && resolution->txReceiveLookupAttempted) {
+                if (!resolution->txReceiveHasRoomWallet) return false;
+                if (resolution->txReceiveTransactionIdAccepted) {
+                    cons.init_event_id = resolution->txReceiveTransactionId;
+                    cons.message = STR_CPP_020;
+                    cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE;
+                    cons.init_event_json = json;
+                }
+            }
+            else {
+                if(matrixbrigde::HasRoomWallet(id()) == false) return false;
+                QWarningMessage roomTxWarning;
+                QString tx_id = matrixbrigde::GetTransactionId(id(), init_event_id, roomTxWarning);
+                if((int)EWARNING::WarningType::NONE_MSG == roomTxWarning.type() && tx_id != ""){
+                    cons.init_event_id = tx_id;
+                    cons.message = STR_CPP_020;
+                    cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE;
+                    cons.init_event_json = json;
+                }
             }
         }
         else {
@@ -784,6 +1245,12 @@ int QNunchukRoom::roomType()
     }
 }
 
+void QNunchukRoom::notifySupportClassificationChanged()
+{
+    emit roomNameChanged();
+    emit roomTypeChanged();
+}
+
 void QNunchukRoom::synchonizesUserData()
 {
     for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
@@ -797,7 +1264,7 @@ bool QNunchukRoom::isValidMessageTime(const Conversation cons)
         return true;
     }
     else{
-        QDateTime message_time_utc = QDateTime::fromTime_t(cons.timestamp);
+        QDateTime message_time_utc = QDateTime::fromMSecsSinceEpoch(cons.timestamp);
         QDateTime time_now_utc = QDateTime::currentDateTimeUtc(); // FIXME get from server ? worst case is local time incorrect
         // message age
         qint64 message_age = time_now_utc.toMSecsSinceEpoch() - message_time_utc.toMSecsSinceEpoch();
@@ -850,55 +1317,91 @@ void QNunchukRoom::activateRetention(qint64 max_lifetime)
 
 void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &roomid)
 {
-    if(roomWallet() && roomWallet()->get_wallet_id() != ""){
-        if(cons.init_event_id != ""){ // FIXME FOR CHECK DUP RECIEVED TX EVT
-            QtConcurrent::run([this, cons, roomid]() {
-                if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE){
-                    QString wallet_id = roomWallet() ? roomWallet()->get_wallet_id() : "";
-                    QString tx_id = cons.init_event_id;
-                    QWarningMessage txWarning;
-                    nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(wallet_id,
-                                                                                  tx_id,
-                                                                                  txWarning);
-                    nunchuk::RoomTransaction room_tx;
-                    room_tx.set_wallet_id(wallet_id.toStdString());
-                    room_tx.set_tx_id(tx_id.toStdString());
-                    room_tx.set_room_id(id().toStdString());
-                    room_tx.set_tx(tx);
-                    room_tx.set_init_event_id(tx_id.toStdString());
-                    emit signalFinishedDownloadTransaction(room_tx, tx, cons);
-                }
-                else{
+    QMetaObject::invokeMethod(
+        this,
+        [this, cons, roomid]() {
+            downloadTransactionThreadOnMain(cons, roomid);
+        },
+        Qt::AutoConnection);
+}
 
-                    DBG_INFO << "FIXME TRANSACTON: init_event:>" << cons.init_event_id;
+void QNunchukRoom::downloadTransactionThreadOnMain(Conversation cons,
+                                                   const QString &roomid)
+{
+    QRoomWallet *wallet = roomWallet();
+    if (wallet && !wallet->get_wallet_id().isEmpty()) {
+        const QString walletId = wallet->get_wallet_id();
+        if (!cons.init_event_id.isEmpty()) { // FIXME FOR CHECK DUP RECIEVED TX EVT
+            const QString ownerRoomId = id();
+            const QString initEventId = cons.init_event_id;
+            const int messageType = cons.messageType;
+            QPointer<QNunchukRoom> safeThis(this);
+            runInThread(
+                this,
+                [walletId,
+                 roomid,
+                 ownerRoomId,
+                 initEventId,
+                 messageType]() -> DownloadTransactionResult {
+                    DownloadTransactionResult result;
+                    if (messageType == (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE) {
+                        QWarningMessage txWarning;
+                        nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(
+                                    walletId, initEventId, txWarning);
+                        nunchuk::RoomTransaction roomTransaction;
+                        roomTransaction.set_wallet_id(walletId.toStdString());
+                        roomTransaction.set_tx_id(initEventId.toStdString());
+                        roomTransaction.set_room_id(ownerRoomId.toStdString());
+                        roomTransaction.set_tx(tx);
+                        roomTransaction.set_init_event_id(initEventId.toStdString());
+                        result.shouldNotify = true;
+                        result.roomTransaction = std::move(roomTransaction);
+                        result.transaction = std::move(tx);
+                        return result;
+                    }
+
+                    DBG_INFO << "FIXME TRANSACTON: init_event:>" << initEventId;
                     QWarningMessage roomTxWarning;
-                    nunchuk::RoomTransaction room_tx = matrixbrigde::GetOriginRoomTransaction(roomid,
-                                                                                              cons.init_event_id,
-                                                                                              roomTxWarning);
+                    nunchuk::RoomTransaction roomTransaction =
+                            matrixbrigde::GetOriginRoomTransaction(
+                                roomid, initEventId, roomTxWarning);
 #if 0 //FIXME ==> HANDLE CANCEL
-                    if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL){
+                    if(messageType == (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL){
                         QWarningMessage msggetevt;
-                        QNunchukMatrixEvent evt = matrixbrigde::GetEvent(roomid, cons.init_event_id, msggetevt);
+                        QNunchukMatrixEvent evt = matrixbrigde::GetEvent(roomid, initEventId, msggetevt);
                         DBG_INFO << "FIXME"
                                  << evt.get_content();
                     }
 #endif
-                    if((int)EWARNING::WarningType::NONE_MSG == roomTxWarning.type() && room_tx.get_wallet_id() != ""){
-
-                        DBG_INFO << "FIXME TRANSACTON: get_wallet_id:>" << room_tx.get_wallet_id() << "get_tx_id:" << room_tx.get_tx_id();
+                    if ((int)EWARNING::WarningType::NONE_MSG == roomTxWarning.type()
+                            && !roomTransaction.get_wallet_id().empty()) {
+                        DBG_INFO << "FIXME TRANSACTON: get_wallet_id:>"
+                                 << roomTransaction.get_wallet_id()
+                                 << "get_tx_id:" << roomTransaction.get_tx_id();
                         QWarningMessage txWarning;
-                        room_tx.set_room_id(id().toStdString());
-                        nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(QString::fromStdString(room_tx.get_wallet_id()),
-                                                                                      QString::fromStdString(room_tx.get_tx_id()),
-                                                                                      txWarning);
-                        if((int)EWARNING::WarningType::NONE_MSG == txWarning.type() && tx.get_txid() != ""){
-                            emit signalFinishedDownloadTransaction(room_tx, tx, cons);
+                        roomTransaction.set_room_id(ownerRoomId.toStdString());
+                        nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(
+                                    QString::fromStdString(roomTransaction.get_wallet_id()),
+                                    QString::fromStdString(roomTransaction.get_tx_id()),
+                                    txWarning);
+                        if ((int)EWARNING::WarningType::NONE_MSG == txWarning.type()
+                                && !tx.get_txid().empty()) {
+                            result.shouldNotify = true;
+                            result.roomTransaction = std::move(roomTransaction);
+                            result.transaction = std::move(tx);
                         }
                     }
-                }
-            });
+                    return result;
+                },
+                [safeThis, cons](DownloadTransactionResult result) {
+                    if (!safeThis || !result.shouldNotify) {
+                        return;
+                    }
+                    emit safeThis->signalFinishedDownloadTransaction(
+                        result.roomTransaction, result.transaction, cons);
+                });
         }
-        AppModel::instance()->requestSyncWalletDb(roomWallet()->get_wallet_id());
+        AppModel::instance()->requestSyncWalletDb(walletId);
     }
 }
 
@@ -1083,105 +1586,221 @@ void QNunchukRoom::markAllMessagesAsRead(){
     }
 }
 
+void QNunchukRoom::markMessagesAsRead(const QString& eventId)
+{
+    if(m_room && !eventId.isEmpty()){
+        m_room->setLastDisplayedEventId(eventId);
+        m_room->markMessagesAsRead(eventId);
+    }
+}
+
 void QNunchukRoom::markFiveMessagesAsRead()
 {
-    if(m_room && m_conversation)
-    {
-        int max = 10;
-        int index = 0;
-        for(int i = m_conversation->count() - m_room->unreadCount(); i < m_conversation->count(); i++){
-            if(m_room->isValidIndex(i)){
-                index = i;
-                max --;
-                if(max == 0) break;
-            }
-        }
-        if(m_room->isValidIndex(index)){
-            m_room->setLastDisplayedEvent(index);
-            m_room->markMessagesAsRead(m_room->lastDisplayedEventId());
-        }
-        if(m_room->unreadCount() < 10){
-            m_room->markAllMessagesAsRead();
+    if(!m_room || !m_conversation){
+        return;
+    }
+    // Conversation rows are filtered/sorted independently of Quotient's
+    // timeline indices. Always advance the marker by Matrix event id.
+    for(int row = m_conversation->count() - 1; row >= 0; --row){
+        const QString eventId = m_conversation->eventIdAt(row);
+        if(!eventId.isEmpty()){
+            markMessagesAsRead(eventId);
+            return;
         }
     }
+}
 
+void QNunchukRoom::sendTypingState(bool typing)
+{
+    if(!m_room || !m_room->connection() || m_room->joinState() != JoinState::Join){
+        return;
+    }
+    m_room->connection()->callApi<SetTypingJob>(
+        m_room->connection()->userId(), m_room->id(), typing,
+        typing ? std::optional<int>(5000) : std::nullopt);
+    if(typing){
+        m_typingSentAt.restart();
+    }
+}
+
+void QNunchukRoom::setTyping(bool typing)
+{
+    if(!typing){
+        m_typingIdleTimer.stop();
+        if(m_localTyping){
+            m_localTyping = false;
+            sendTypingState(false);
+        }
+        return;
+    }
+    m_typingIdleTimer.start();
+    if(!m_localTyping || !m_typingSentAt.isValid()
+            || m_typingSentAt.elapsed() >= 3000){
+        m_localTyping = true;
+        sendTypingState(true);
+    }
 }
 
 void QNunchukRoom::downloadHistorical()
 {
+    if (!m_room) {
+        return;
+    }
     DBG_INFO << "Room[" << roomName() << "], Tags[" << m_room->tagNames() << "]";
-    if(!m_room) return;
-    else{
-        if(isServerNoticeRoom()){
-            //FIXME - DEBUG
+    if(isServerNoticeRoom()){
+        //FIXME - DEBUG
 //            for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
 //                nunchukNoticeEvent(**e); // FIXME
 //            }
+    }
+    else if(isNunchukSyncRoom()){
+        const bool shouldRegister = CLIENT_INSTANCE->isNunchukLoggedIn()
+                && CLIENT_INSTANCE->isMatrixLoggedIn();
+        const QString roomId = shouldRegister ? id() : QString();
+        const QString accessToken = shouldRegister
+                ? CLIENT_INSTANCE->accessToken() : QString();
+        QtConcurrent::run([shouldRegister, roomId, accessToken]() {
+            if (shouldRegister) {
+                matrixbrigde::RegisterAutoBackup(roomId, accessToken);
+            }
+        });
+    }
+    else{
+        setRoomWallet(matrixbrigde::ReloadRoomWallet(this));
+
+        const QString roomId = id();
+        HistoricalEventSnapshotList snapshots;
+        snapshots.reserve(m_room->messageEvents().size());
+        for (auto eventItem = m_room->messageEvents().begin();
+             eventItem != m_room->messageEvents().end(); ++eventItem) {
+            const RoomEvent *event = eventItem->get();
+            if (!event) {
+                continue;
+            }
+
+            HistoricalEventSnapshot snapshot;
+            snapshot.fullJson = event->fullJson();
+            const QString matrixType = event->matrixType();
+            snapshot.shouldConsume =
+                    qUtils::strCompare(NUNCHUK_EVENT_WALLET, matrixType)
+                    || qUtils::strCompare(NUNCHUK_EVENT_TRANSACTION, matrixType);
+            if (snapshot.shouldConsume) {
+                snapshot.consumeEvent.set_event_id(event->id().toStdString());
+                snapshot.consumeEvent.set_type(matrixType.toStdString());
+                snapshot.consumeEvent.set_content(
+                            QString(QJsonDocument(event->contentJson())
+                                    .toJson(QJsonDocument::Compact)).toStdString());
+                snapshot.consumeEvent.set_room_id(roomId.toStdString());
+                snapshot.consumeEvent.set_sender(event->senderId().toStdString());
+                snapshot.consumeEvent.set_ts(
+                            event->originTimestamp().toMSecsSinceEpoch());
+            }
+            snapshots.push_back(std::move(snapshot));
         }
-        else if(isNunchukSyncRoom()){
-            QtConcurrent::run([this]() {
-                if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){
-                    matrixbrigde::RegisterAutoBackup(id(), CLIENT_INSTANCE->accessToken());
-                }
-            });
-        }
-        else{
-            setRoomWallet(matrixbrigde::ReloadRoomWallet(this));
-            QtConcurrent::run([=,this]() {
-                if(conversation()){
-                    conversation()->clear();
-                    for (auto e = m_room->messageEvents().begin(); e != m_room->messageEvents().end(); ++e){
-                        nunchukConsumeEvent(**e);
+
+        QPointer<QNunchukRoom> safeThis(this);
+        runInThread(
+            this,
+            [roomId, snapshots = std::move(snapshots)]() mutable
+                    -> HistoricalEventSnapshotList {
+                for (const HistoricalEventSnapshot &snapshot : snapshots) {
+                    if (snapshot.shouldConsume) {
+                        matrixbrigde::ConsumeEvent(roomId, snapshot.consumeEvent);
                     }
-                    if(!roomWallet()) {
+                }
+
+                for (auto snapshot = snapshots.rbegin();
+                     snapshot != snapshots.rend(); ++snapshot) {
+                    const QString matrixType =
+                            snapshot->fullJson["type"].toString();
+                    const QString eventId =
+                            snapshot->fullJson["event_id"].toString();
+                    const QJsonObject content =
+                            snapshot->fullJson["content"].toObject();
+                    snapshot->backendResolution =
+                            QNunchukRoom::resolveNunchukEventBackend(
+                                roomId, matrixType, eventId, content);
+                }
+                return snapshots;
+            },
+            [safeThis](HistoricalEventSnapshotList snapshots) {
+                if (!safeThis) {
+                    return;
+                }
+
+                if (safeThis->conversation()) {
+                    safeThis->conversation()->clear();
+                    if (!safeThis->roomWallet()) {
                         Conversation init;
                         init.timestamp = -100;
                         init.messageType = (int)ENUNCHUCK::ROOM_EVT::INITIALIZE;
-                        conversation()->addHistoryMessage(init);
+                        safeThis->conversation()->addHistoryMessage(init);
                     }
-                    for (auto it = m_room->messageEvents().rbegin(); it != m_room->messageEvents().rend(); ++it){
-                        Conversation cons = createConversation(**it);
-                        if(cons.messageType != (int)ENUNCHUCK::ROOM_EVT::INVALID){
-                            conversation()->addHistoryMessage(cons);
+
+                    for (auto snapshot = snapshots.rbegin();
+                         snapshot != snapshots.rend(); ++snapshot) {
+                        RoomEventPtr event = loadEvent<RoomEvent>(snapshot->fullJson);
+                        if (!event) {
+                            continue;
+                        }
+                        Conversation cons = safeThis->createConversation(
+                                    *event, &snapshot->backendResolution);
+                        if (cons.messageType != (int)ENUNCHUCK::ROOM_EVT::INVALID) {
+                            safeThis->conversation()->addHistoryMessage(cons);
                         }
                     }
-                    conversation()->requestSortByTimeAscending(false);
-                    setLastMessage(conversation()->lastMessage());
-                    setLasttimestamp(conversation()->lastTime());
-                    if(roomWallet()){
-                        AppModel::instance()->requestSyncWalletDb(roomWallet()->get_wallet_id());
-                        bool isCreator = conversation()->isWalletCreator(roomWallet()->get_init_event_id());
-                        roomWallet()->setIsCreator(isCreator);
+
+                    safeThis->conversation()->requestSortByTimeAscending(false);
+                    safeThis->setLastMessage(safeThis->conversation()->lastMessage());
+                    safeThis->setLasttimestamp(safeThis->conversation()->lastTime());
+                    // A room key can arrive while the snapshots above are
+                    // being resolved off-thread. Mark hydration complete and
+                    // replay copied decrypted JSON only after the stale
+                    // snapshots have finished rebuilding the model.
+                    safeThis->m_downloaded = true;
+                    const auto pendingDecryptedEvents = std::exchange(
+                                safeThis->m_pendingDecryptedEvents, {});
+                    for(const QJsonObject& eventJson : pendingDecryptedEvents){
+                        safeThis->applyDecryptedEvent(eventJson);
+                    }
+                    if (safeThis->roomWallet()) {
+                        AppModel::instance()->requestSyncWalletDb(
+                                    safeThis->roomWallet()->get_wallet_id());
+                        const bool isCreator = safeThis->conversation()->isWalletCreator(
+                                    safeThis->roomWallet()->get_init_event_id());
+                        safeThis->roomWallet()->setIsCreator(isCreator);
                     }
                 }
-                startGetPendingTxs();
-                m_downloaded = true;
+
+                safeThis->startGetPendingTxsOnMain();
             });
-        }
     }
 }
 
 void QNunchukRoom::connectRoomSignals()
 {
-    if(m_room){
+    if(m_room && !m_roomSignalsConnected){
+        m_roomSignalsConnected = true;
         m_downloaded = false;
-        connect(m_room, &Room::notificationCountChanged, this, &QNunchukRoom::notificationCountChanged);
+        connect(m_room, &Room::unreadStatsChanged, this, &QNunchukRoom::unreadMessagesChanged);
         connect(m_room, &Room::highlightCountChanged, this, &QNunchukRoom::highlightCountChanged);
         connect(m_room, &Room::namesChanged, this, &QNunchukRoom::roomNameChanged);
+        connect(m_room, &Room::tagsChanged, this, &QNunchukRoom::notifySupportClassificationChanged);
         connect(m_room, &Room::pendingEventAboutToMerge, this, &QNunchukRoom::pendingEventAboutToMerge);
         connect(m_room, &Room::pendingEventChanged, this, &QNunchukRoom::pendingEventChanged);
         connect(m_room, &Room::messageSent, this, &QNunchukRoom::messageSent);
         connect(m_room, &Room::aboutToAddNewMessages, this, &QNunchukRoom::aboutToAddNewMessages);
         connect(m_room, &Room::addedMessages, this, &QNunchukRoom::addedMessages);
+        connect(m_room, &Room::replacedEvent, this, &QNunchukRoom::replacedEvent);
         connect(m_room, &Room::addedMessages, this, &QNunchukRoom::allHisLoadedChanged);
         connect(m_room, &Room::aboutToAddHistoricalMessages, this, &QNunchukRoom::aboutToAddHistoricalMessages);
-        connect(m_room, &Room::unreadMessagesChanged, this, &QNunchukRoom::unreadMessagesChanged);
-        connect(m_room, &Room::userAdded, this, &QNunchukRoom::usersChanged);
-        connect(m_room, &Room::userAdded, this, &QNunchukRoom::roomNameChanged);
-        connect(m_room, &Room::userAdded, this, &QNunchukRoom::userCountChanged);
-        connect(m_room, &Room::userRemoved, this, &QNunchukRoom::usersChanged);
-        connect(m_room, &Room::userRemoved, this, &QNunchukRoom::roomNameChanged);
-        connect(m_room, &Room::userRemoved, this, &QNunchukRoom::userCountChanged);
+        connect(m_room, &Room::memberListChanged, this, &QNunchukRoom::usersChanged);
+        connect(m_room, &Room::memberListChanged, this, &QNunchukRoom::roomNameChanged);
+        connect(m_room, &Room::memberListChanged, this, &QNunchukRoom::userCountChanged);
+        connect(m_room, &Room::memberListChanged, this, &QNunchukRoom::permissionsChanged);
+        connect(m_room, &Room::changed, this, [this](Room::Changes) {
+            emit permissionsChanged();
+        });
         connect(m_room, &Room::typingChanged, this, &QNunchukRoom::typingChanged);
         connect(this, &QNunchukRoom::signalFinishedDownloadTransaction, this, &QNunchukRoom::slotFinishedDownloadTransaction);
         connect(this, &QNunchukRoom::signalFinishFinalizeWallet, this, &QNunchukRoom::slotFinishFinalizeWallet);
@@ -1202,7 +1821,7 @@ void QNunchukRoom::connectRoomServiceSignals()
 
 bool QNunchukRoom::checkIsLocalUser(const QString userID)
 {
-    QString localUserId = room()->localUser()->id();
+    QString localUserId = room()->localMember().id();
     localUserId.remove("@");
     localUserId.remove("nunchuk_io_");
     localUserId.remove(":nunchuk.io");
@@ -1295,11 +1914,53 @@ void QNunchukRoom::updateTransactionMemo(const QString &tx_id, const QString &me
 
 void QNunchukRoom::startGetPendingTxs()
 {
-    if(matrixbrigde::HasRoomWallet(id())){
-        QtConcurrent::run([this]() {
-            QRoomTransactionModelPtr ret = matrixbrigde::GetPendingTransactions(id());
-            emit signalFinishedGetPendingTxs(ret);
-        });
+    QMetaObject::invokeMethod(
+        this,
+        [this]() {
+            startGetPendingTxsOnMain();
+        },
+        Qt::AutoConnection);
+}
+
+void QNunchukRoom::startGetPendingTxsOnMain()
+{
+    const QString roomId = id();
+    if (matrixbrigde::HasRoomWallet(roomId)) {
+        QPointer<QNunchukRoom> safeThis(this);
+        runInThread(
+            this,
+            [roomId]() -> PendingTransactionDataList {
+                PendingTransactionDataList data;
+                QWarningMessage message;
+                const std::vector<nunchuk::RoomTransaction> roomTransactions =
+                        matrixbrigde::GetOriginPendingTransactions(roomId, message);
+                if ((int)EWARNING::WarningType::NONE_MSG != message.type()) {
+                    return data;
+                }
+
+                data.reserve(roomTransactions.size());
+                for (const nunchuk::RoomTransaction &roomTransaction : roomTransactions) {
+                    QWarningMessage transactionMessage;
+                    nunchuk::Transaction transaction =
+                            bridge::nunchukGetOriginTransaction(
+                                QString::fromStdString(roomTransaction.get_wallet_id()),
+                                QString::fromStdString(roomTransaction.get_tx_id()),
+                                transactionMessage);
+                    if ((int)EWARNING::WarningType::NONE_MSG
+                            == transactionMessage.type()) {
+                        data.push_back({roomTransaction, std::move(transaction)});
+                    }
+                }
+                return data;
+            },
+            [safeThis, roomId](PendingTransactionDataList data) {
+                if (!safeThis) {
+                    return;
+                }
+                QRoomTransactionModelPtr model =
+                        buildPendingTransactionModel(roomId, data);
+                emit safeThis->signalFinishedGetPendingTxs(model);
+            });
     }
 }
 
@@ -1328,6 +1989,14 @@ QString QNunchukRoom::lastMessage() const
 
 void QNunchukRoom::setLastMessage(const Conversation &cons)
 {
+    if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::INVALID
+            || cons.messageType == (int)ENUNCHUCK::ROOM_EVT::INITIALIZE){
+        if(!m_lastMessage.isEmpty()){
+            m_lastMessage.clear();
+            emit lastMessageChanged();
+        }
+        return;
+    }
     QString lastmsg;
     QString picname = cons.sendByMe ? "You" : cons.sender;
     if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT){
@@ -1347,8 +2016,11 @@ void QNunchukRoom::setLastMessage(const Conversation &cons)
 
 QString QNunchukRoom::lasttimestamp() const
 {
+    if(m_lasttimestamp <= 0){
+        return "";
+    }
     QDateTime today = QDateTime::currentDateTime();
-    QDateTime day = QDateTime::fromTime_t(m_lasttimestamp);
+    QDateTime day = QDateTime::fromMSecsSinceEpoch(m_lasttimestamp);
     if(today.date().year() == day.date().year()){
         qint64 numberDay = day.daysTo(today);
         if(numberDay == 0){
@@ -1378,7 +2050,7 @@ time_t QNunchukRoom::lasttimestamp_timet() const
 void QNunchukRoom::setLasttimestamp(const Conversation &cons)
 {
     time_t lasttimestamp = cons.timestamp;
-    if(QDateTime::fromTime_t(m_lasttimestamp) < QDateTime::fromTime_t(lasttimestamp)){
+    if(lasttimestamp > 0 && m_lasttimestamp < lasttimestamp){
         m_lasttimestamp = lasttimestamp;
         emit lasttimestampChanged();
     }
@@ -1420,18 +2092,12 @@ bool QNunchukRoom::validatePendingEvent(const QString &txnId)
 
 void QNunchukRoom::highlightCountChanged()
 {
-    if (m_room && m_room->displayed() && !m_room->hasUnreadMessages()) {
-        m_room->resetNotificationCount();
-        m_room->resetHighlightCount();
-    }
+    emit unreadCountChanged();
 }
 
 void QNunchukRoom::notificationCountChanged()
 {
-    if(m_room && m_room->displayed() && !m_room->hasUnreadMessages()) {
-        m_room->resetNotificationCount();
-        m_room->resetHighlightCount();
-    }
+    emit unreadCountChanged();
 }
 
 void QNunchukRoom::pendingEventAboutToMerge(RoomEvent *serverEvent, int pendingEventIndex)
@@ -1484,16 +2150,99 @@ void QNunchukRoom::addedMessages(int fromIndex, int toIndex)
             }
         });
     }
+    else if(!m_downloaded){
+        // downloadHistorical() rebuilds from an immutable snapshot on a
+        // worker. Preserve live events that arrive meanwhile so that its
+        // callback cannot erase them (whether already decrypted or not).
+        for(auto eventItem = m_room->messageEvents().rbegin();
+            eventItem != m_room->messageEvents().rend(); ++eventItem){
+            if(fromIndex <= eventItem->index()
+                    && toIndex >= eventItem->index()
+                    && eventItem->get()){
+                m_pendingDecryptedEvents.append(eventItem->get()->fullJson());
+            }
+        }
+    }
     else{
         receiveMessage(fromIndex, toIndex);
     }
+}
+
+void QNunchukRoom::replacedEvent(const RoomEvent* newEvent,
+                                 const RoomEvent* oldEvent)
+{
+    // Room::replacedEvent is also used for edits and redactions. Only rebuild
+    // a conversation when Quotient has replaced an encrypted placeholder with
+    // the event decrypted after its room key arrived.
+    const auto* encryptedOld = eventCast<const EncryptedEvent>(oldEvent);
+    if(!newEvent || !encryptedOld
+            || newEvent->originalEvent() != encryptedOld){
+        return;
+    }
+    if(isServerNoticeRoom()){
+        nunchukNoticeEvent(*newEvent);
+        return;
+    }
+    if(isNunchukSyncRoom()){
+        nunchukConsumeSyncEvent(*newEvent);
+        return;
+    }
+    const QJsonObject eventJson = newEvent->fullJson();
+    if(!m_downloaded){
+        m_pendingDecryptedEvents.append(eventJson);
+        return;
+    }
+    applyDecryptedEvent(eventJson);
+}
+
+bool QNunchukRoom::applyDecryptedEvent(const QJsonObject& eventJson)
+{
+    if(!conversation()){
+        return false;
+    }
+    RoomEventPtr event = loadEvent<RoomEvent>(eventJson);
+    if(!event){
+        return false;
+    }
+
+    nunchukConsumeEvent(*event);
+    if(event->matrixType() == NUNCHUK_EVENT_WALLET){
+        setRoomWallet(matrixbrigde::ReloadRoomWallet(this));
+    }
+
+    const Conversation replacement = createConversation(*event);
+    if(replacement.messageType == (int)ENUNCHUCK::ROOM_EVT::INVALID){
+        const bool removed = conversation()->replaceMessage(
+                    event->id(), replacement);
+        if(removed){
+            conversation()->requestSortByTimeAscending();
+            setLastMessage(conversation()->lastMessage());
+            setLasttimestamp(conversation()->lastTime());
+        }
+        return removed;
+    }
+    if(!conversation()->replaceMessage(event->id(), replacement)){
+        // The event may have arrived after downloadHistorical() took its
+        // snapshot, so there is no encrypted placeholder in the rebuilt model.
+        conversation()->addMessage(replacement);
+    }
+    if(replacement.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_CANCEL){
+        updateCancelWallet(replacement.init_event_id);
+    }
+    if(replacement.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL){
+        updateCancelTransaction(replacement);
+    }
+    conversation()->requestSortByTimeAscending();
+    setLastMessage(conversation()->lastMessage());
+    setLasttimestamp(conversation()->lastTime());
+    return true;
 }
 
 void QNunchukRoom::aboutToAddHistoricalMessages(RoomEventsRange events)
 {
 }
 
-void QNunchukRoom::unreadMessagesChanged(Room *room)
+void QNunchukRoom::unreadMessagesChanged()
 {
     emit unreadCountChanged();
 }
@@ -1502,11 +2251,11 @@ void QNunchukRoom::typingChanged()
 {
     QStringList usersTypingName;
     usersTypingName.clear();
-    if (!m_room || m_room->usersTyping().isEmpty())  {
+    if (!m_room || m_room->otherMembersTyping().isEmpty())  {
         setTypingNames("");
         return;
     }
-    const auto& usersTyping = m_room->usersTyping();
+    const auto& usersTyping = m_room->otherMembersTyping();
     int MaxNamesToShow = 3;
     int SampleSizeForHud = 2;
     usersTypingName.reserve(MaxNamesToShow);
@@ -1514,7 +2263,7 @@ void QNunchukRoom::typingChanged()
             ? usersTyping.cbegin() + SampleSizeForHud
             : usersTyping.cend();
     for (auto it = usersTyping.cbegin(); it != endIt; ++it)
-        usersTypingName << m_room->safeMemberName((*it)->id());
+        usersTypingName << (*it).displayName();
 
     if (usersTyping.size() > MaxNamesToShow) {
         usersTypingName.push_back( tr("%L1 more").arg(usersTyping.size() - SampleSizeForHud));
@@ -1551,36 +2300,45 @@ void QNunchukRoom::eventToConversation(const RoomEvent& evt, Conversation &resul
 
         const auto message = switchOnType( evt,
         [&](const RoomMessageEvent& e){
-            using namespace MessageEventContent;
-            if (e.hasFileContent()) {
+            using namespace Quotient::EventContent;
+            const auto msgType = e.msgtype();
+
+            if (msgType == RoomMessageEvent::MsgType::Image ||
+                msgType == RoomMessageEvent::MsgType::Video ||
+                msgType == RoomMessageEvent::MsgType::File)
+            {
                 auto fileCaption = prettyPrint ? Quotient::prettyPrint(e.plainBody()) : e.plainBody();
+
                 hasFileContent = true;
-                auto filename = e.content()->fileInfo()->originalName.toHtmlEscaped();
-                if(e.msgtype() == RoomMessageEvent::MsgType::Image){
-                    file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_IMAGE;
-                    fileCaption = fileCaption.remove(filename);
+
+                const auto filename = e.plainBody().toHtmlEscaped();
+
+                if (msgType == RoomMessageEvent::MsgType::Image) {
+                    file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_IMAGE;
+                    fileCaption.remove(filename);
                 }
-                else if(e.msgtype() == RoomMessageEvent::MsgType::Video){
-                    file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_VIDEO;
-                    fileCaption = fileCaption.remove(filename);
+                else if (msgType == RoomMessageEvent::MsgType::Video) {
+                    file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_VIDEO;
+                    fileCaption.remove(filename);
                 }
-                else{
-                    file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+                else {
+                    file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
                 }
+
                 return fileCaption;
             }
             else{
                 QString plainBody;
                 // 1. prettyPrint/HTML
                 if (prettyPrint && e.mimeType().name() != "text/plain") {
-                    auto htmlBody = static_cast<const TextContent*>(e.content())->body;
+                    auto htmlBody = static_cast<const EventContent::TextContent*>(e.content().get())->body;;
                     htmlBody.replace(utils::userPillRegExp, "<b>\\1</b>");
                     htmlBody.replace(utils::strikethroughRegExp, "<s>\\1</s>");
                     return htmlBody;
                 }
                 // 2. prettyPrint/text 3. plainText/HTML 4. plainText/text
                 if (e.content() && e.mimeType().name() == "text/plain") {  // 2/4
-                    plainBody = static_cast<const TextContent*>(e.content())->body;
+                    plainBody = static_cast<const EventContent::TextContent*>(e.content().get())->body;;
                 }
                 else {
                     plainBody = e.plainBody();
@@ -1593,7 +2351,7 @@ void QNunchukRoom::eventToConversation(const RoomEvent& evt, Conversation &resul
         },
         [=](const RoomMemberEvent& e) {
             // FIXME: Rewind to the name that was at the time of this event
-            auto subjectName = m_room->user(e.userId())->displayname(room());
+            auto subjectName = m_room->member(e.userId()).displayName();
             QString content = "";
             // The below code assumes senderName output in AuthorRole
             switch (e.membership()) {
@@ -1616,15 +2374,15 @@ void QNunchukRoom::eventToConversation(const RoomEvent& evt, Conversation &resul
                 }
                 QString text{};
                 if (e.isRename()) {
-                    if (e.displayName().isEmpty())
+                    if (e.newDisplayName()->isEmpty())
                         text = STR_CPP_025;
                     else
-                        text = STR_CPP_026.arg(e.displayName().toHtmlEscaped());
+                        text = STR_CPP_026.arg(e.newDisplayName()->toHtmlEscaped());
                 }
                 if (e.isAvatarUpdate()) {
                     if (!text.isEmpty())
                         text += STR_CPP_027;
-                    if (e.avatarUrl().isEmpty())
+                    if (e.newAvatarUrl()->isEmpty())
                         text += STR_CPP_028;
                     else if (!e.prevContent()->avatarUrl)
                         text += STR_CPP_029;
@@ -1650,7 +2408,7 @@ void QNunchukRoom::eventToConversation(const RoomEvent& evt, Conversation &resul
                 content = ret;
                 if(m_room && isSupportRoom()){
                     DBG_INFO << content;
-                    int member_size = m_room->users().size();
+                    int member_size = m_room->members().size();
                     if(member_size < 2){
                         emit roomNeedTobeLeaved(id());
                     }
@@ -1712,7 +2470,7 @@ void QNunchukRoom::eventToConversation(const RoomEvent& evt, Conversation &resul
             QString content = STR_CPP_052.arg(e.serverMessage().toHtmlEscaped());
             return content;
         },
-        [=](const StateEventBase& e) {
+        [=](const StateEvent& e) {
             // A small hack for state events from TWIM bot
             QString content = e.stateKey() == "twim" ? tr("updated the database", "TWIM bot updated the database")
                                                      : e.stateKey().isEmpty() ? tr("updated %1 state", "%1 - Matrix event type").arg(e.matrixType())
@@ -1747,9 +2505,9 @@ void QNunchukRoom::receiveMessage(int fromIndex, int toIndex)
                 const RoomEvent* lastEvent = rit->get();
                 //check null
                 if(!lastEvent){ continue; }
-                User* sender = m_room->user(lastEvent->senderId());
-                QString nameDisplay = sender->displayname(room()) != "" ? sender->displayname(room()) : sender->id();
-                QString avatar = sender->avatarMediaId(room());
+                RoomMember sender = m_room->member(lastEvent->senderId());
+                QString nameDisplay = sender.displayName() != "" ? sender.displayName() : sender.id();
+                QString avatar = sender.avatarMediaId();
                 Conversation oldCons = conversation()->getConversation(lastEvent->senderId());
                 nameOrAvatarChanged = oldCons.sender.localeAwareCompare(nameDisplay) != 0 || oldCons.avatar.localeAwareCompare(avatar) != 0;
                 nunchukConsumeEvent(*lastEvent);
@@ -1788,14 +2546,21 @@ void QNunchukRoom::receiveMessage(int fromIndex, int toIndex)
 
 Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
 {
-    User* sender = m_room->user(evt.senderId());
+    return createConversation(evt, nullptr);
+}
+
+Conversation QNunchukRoom::createConversation(
+        const RoomEvent &evt,
+        const NunchukEventBackendResolution *resolution)
+{
+    RoomMember sender = m_room->member(evt.senderId());
     Conversation cons;
     cons.isStateEvent = evt.isStateEvent();
-    cons.sendByMe   = (sender == m_room->localUser());
-    cons.sender     = sender->displayname(room()) != "" ? sender->displayname(room()) : sender->id();
-    cons.avatar     = sender->avatarMediaId(room());
-    cons.receiver   = m_room->localUser()->id();
-    cons.timestamp  = evt.originTimestamp().toTime_t();
+    cons.sendByMe   = (sender == m_room->localMember());
+    cons.sender     = sender.displayName() != "" ? sender.displayName() : sender.id();
+    cons.avatar     = sender.avatarMediaId();
+    cons.receiver   = m_room->localMember().id();
+    cons.timestamp  = evt.originTimestamp().toMSecsSinceEpoch();
     cons.senderId   = evt.senderId();
     cons.evtId = evt.id();
     cons.txnId = evt.transactionId();
@@ -1814,7 +2579,10 @@ Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
              (qUtils::strCompare(matrixType, NUNCHUK_EVENT_TRANSACTION)) ||
              (qUtils::strCompare(matrixType, NUNCHUK_EVENT_EXCEPTION)))
     {
-        bool ret = extractNunchukEvent(evt, cons);
+        bool ret = resolution
+                ? extractNunchukEvent(
+                      evt.matrixType(), evt.id(), evt.contentJson(), cons, *resolution)
+                : extractNunchukEvent(evt, cons);
         if(!ret){
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::INVALID;
         }
@@ -1835,7 +2603,7 @@ void QNunchukRoom::nunchukConsumeEvent(const RoomEvent &evt)
         e.set_content(QString(QJsonDocument(evt.contentJson()).toJson(QJsonDocument::Compact)));
         e.set_room_id(m_room->id());
         e.set_sender(evt.senderId());
-        e.set_ts(evt.originTimestamp().toTime_t());
+        e.set_ts(evt.originTimestamp().toMSecsSinceEpoch());
         matrixbrigde::ConsumeEvent(m_room->id(), e);
     }
 }
@@ -1851,7 +2619,7 @@ void QNunchukRoom::nunchukConsumeSyncEvent(const RoomEvent &evt)
             e.set_content(QString(QJsonDocument(evt.contentJson()).toJson(QJsonDocument::Compact)));
             e.set_room_id(m_room->id());
             e.set_sender(evt.senderId());
-            e.set_ts(evt.originTimestamp().toTime_t());
+            e.set_ts(evt.originTimestamp().toMSecsSinceEpoch());
             matrixbrigde::ConsumeSyncEvent(m_room->id(),e);
         }
     }
@@ -2164,6 +2932,18 @@ QNunchukRoomListModel::QNunchukRoomListModel(Connection *c):
     m_roomWallets.clear();
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     QObject::connect(&m_watcherSync, &QFutureWatcher<void>::finished, this, &QNunchukRoomListModel::synchonizesUserDataFinished);
+    if(m_connection){
+        // createdRoom only confirms that Quotient has provided a local Room
+        // object. Its state and direct-chat mapping are not authoritative yet;
+        // keep this connection strictly for lifecycle tracing.
+        connect(m_connection, &Connection::createdRoom, this,
+            [](Room* room) {
+                DBG_INFO << "[MATRIX_ROOM_TRACE] Quotient::createdRoom id:"
+                         << (room ? room->id() : QStringLiteral("<null>"))
+                         << "joinState:"
+                         << (room ? static_cast<int>(room->joinState()) : -1);
+            });
+    }
 }
 
 QNunchukRoomListModel::~QNunchukRoomListModel()
@@ -2183,6 +2963,10 @@ int QNunchukRoomListModel::count() const
 
 QVariant QNunchukRoomListModel::data(const QModelIndex &index, int role) const
 {
+    if(!index.isValid() || index.row() < 0 || index.row() >= m_data.count()
+            || !m_data.at(index.row())){
+        return {};
+    }
     switch (role) {
     case room_id:
         return m_data[index.row()].data()->id();
@@ -2208,6 +2992,8 @@ QVariant QNunchukRoomListModel::data(const QModelIndex &index, int role) const
         return m_data[index.row()].data()->isEncrypted();
     case room_type:
         return m_data[index.row()].data()->roomType();
+    case room_is_any_support:
+        return m_data[index.row()].data()->isAnySupportRoom();
     default:
         return QVariant();
     }
@@ -2228,6 +3014,7 @@ QHash<int, QByteArray> QNunchukRoomListModel::roleNames() const
     names[room_users_count]     = "users_count";
     names[room_avatar_url]      = "room_avatar";
     names[room_is_encrypted]    = "is_encrypted";
+    names[room_is_any_support]  = "is_any_support";
     return names;
 }
 
@@ -2275,14 +3062,20 @@ Connection *QNunchukRoomListModel::connection()
 void QNunchukRoomListModel::downloadRooms()
 {
     if(connection()){
-        CLIENT_INSTANCE->setReadySupport(true);
-        connect(&m_time, &QTimer::timeout, connection(), &Connection::capabilitiesLoaded);
-        m_time.setSingleShot(true);
-        m_time.start(10000);
-        connectSingleShot(connection(), &Connection::capabilitiesLoaded, this, [this] {
-            DBG_INFO << "downloadRooms Connection::capabilitiesLoaded";
-            m_time.stop();
-            timeoutHandler(300, [this]() {
+        const quint64 hydrationGeneration = ++m_roomHydrationGeneration;
+        // Do not allow support-room creation before the existing rooms and
+        // direct-chat account data have been hydrated into the model.
+        m_roomsHydrated = false;
+        CLIENT_INSTANCE->setReadySupport(false);
+        // downloadRooms is called from syncDone. Quotient has already queued
+        // every Room::updateData at that point; queue this callback behind
+        // those MetaCalls instead of relying on an arbitrary timer. This makes
+        // base state, names, members and tags visible before model hydration.
+        DBG_INFO << "[SUPPORT] Scheduling room hydration after initial sync";
+        QMetaObject::invokeMethod(this, [this, hydrationGeneration]() {
+                if(hydrationGeneration != m_roomHydrationGeneration){
+                    return;
+                }
                 connect(connection(), &Connection::joinedRoom,  this, &QNunchukRoomListModel::joinedRoom);
                 connect(connection(), &Connection::newRoom,     this, &QNunchukRoomListModel::newRoom);
                 connect(connection(), &Connection::leftRoom,    this, &QNunchukRoomListModel::leftRoom);
@@ -2309,7 +3102,20 @@ void QNunchukRoomListModel::downloadRooms()
                         DBG_INFO << "room ELSE " << room->name();
                     }
                 }
+                QString hydratedLocallyCreatedRoomId;
+                for(const QNunchukRoomPtr& room : std::as_const(m_data)){
+                    if(room && m_locallyCreatedRoomIds.contains(room->id())){
+                        hydratedLocallyCreatedRoomId = room->id();
+                        break;
+                    }
+                }
+                if(!hydratedLocallyCreatedRoomId.isEmpty()){
+                    m_locallyCreatedRoomIds.remove(hydratedLocallyCreatedRoomId);
+                }
                 resort();
+                if(!hydratedLocallyCreatedRoomId.isEmpty()){
+                    setCurrentIndex(getIndex(hydratedLocallyCreatedRoomId));
+                }
                 checkNunchukSyncRoom();
                 if(currentRoom()){
                     if(currentRoom()->conversation()){
@@ -2323,11 +3129,23 @@ void QNunchukRoomListModel::downloadRooms()
                     AppModel::instance()->startMultiDeviceSync(false);
                 }
                 emit finishedDownloadRoom();
-                CLIENT_INSTANCE->setReadySupport(true);
+                m_roomsHydrated = true;
+                if(!m_supportRequestInProgress){
+                    CLIENT_INSTANCE->setReadySupport(true);
+                }
+                if(m_supportRoomRequestPending){
+                    m_supportRoomRequestPending = false;
+                    QTimer::singleShot(0, this, [this, hydrationGeneration] {
+                        if(hydrationGeneration != m_roomHydrationGeneration
+                                || !m_roomsHydrated){
+                            return;
+                        }
+                        createSupportRoom();
+                    });
+                }
                 downloadRoomWallets();
                 synchonizesUserData();
-            });
-        });
+        }, Qt::QueuedConnection);
     }
 }
 
@@ -2349,6 +3167,9 @@ int QNunchukRoomListModel::currentIndex() const
 
 void QNunchukRoomListModel::setCurrentIndex(int index)
 {
+    if(index < -1 || index >= m_data.count()){
+        return;
+    }
     if(index == -1){
         m_currentIndex = index;
         stopCountdown();
@@ -2378,6 +3199,10 @@ void QNunchukRoomListModel::setCurrentRoom(const QNunchukRoomPtr &newRoom)
 {
     if(m_currentRoom != newRoom){
         stopCountdown();
+        if(m_currentRoom){
+            m_currentRoom->setTyping(false);
+            m_currentRoom->setDisplayed(false);
+        }
         m_currentRoom = newRoom;
         if(m_currentRoom){
             m_currentRoom.data()->setDisplayed(true);
@@ -2385,7 +3210,6 @@ void QNunchukRoomListModel::setCurrentRoom(const QNunchukRoomPtr &newRoom)
             if(m_currentRoom->conversation()){
                 if(m_currentRoom->conversation()->unreadLastIndex() + 10 > m_currentRoom->conversation()->count()){
                     m_currentRoom.data()->conversation()->setCurrentIndex(m_currentRoom.data()->conversation()->rowCount() - 1);
-                    m_currentRoom->markAllMessagesAsRead();
                 }
                 else{
                     m_currentRoom.data()->conversation()->setCurrentIndex(m_currentRoom->conversation()->unreadLastIndex());
@@ -2415,9 +3239,111 @@ int QNunchukRoomListModel::totalUnread()
     return ret;
 }
 
+bool QNunchukRoomListModel::roomCreationInProgress() const
+{
+    return m_roomCreationInProgress;
+}
+
+void QNunchukRoomListModel::setRoomCreationInProgress(bool inProgress)
+{
+    if(m_roomCreationInProgress == inProgress){
+        return;
+    }
+    m_roomCreationInProgress = inProgress;
+    emit roomCreationInProgressChanged();
+}
+
+void QNunchukRoomListModel::trackLocallyCreatedRoom(const QString &roomId)
+{
+    if(roomId.isEmpty()){
+        return;
+    }
+    m_locallyCreatedRoomIds.insert(roomId);
+    const int existingIndex = getIndex(roomId);
+    if(existingIndex >= 0){
+        m_locallyCreatedRoomIds.remove(roomId);
+        resort();
+        setCurrentIndex(getIndex(roomId));
+        return;
+    }
+
+    Room* createdRoom = connection() ? connection()->room(roomId) : nullptr;
+    if(createdRoom && createdRoom->joinState() == JoinState::Join){
+        // The Connection::joinedRoom signal can precede model hydration. Feed
+        // the already-known room through the same state-ready path so a local
+        // create cannot remain pending solely because that signal was missed.
+        joinedRoom(createdRoom, nullptr);
+    }
+}
+
+void QNunchukRoomListModel::postInitialMessageWhenStateReady(
+        const QString& roomId, const QVariant& firstMessage,
+        quint64 operationGeneration)
+{
+    const QString message = firstMessage.toString();
+    if(message.isEmpty() || !connection()){
+        return;
+    }
+    QPointer<Connection> attempt = connection();
+    QPointer<Room> targetRoom = attempt->room(roomId);
+    if(!targetRoom){
+        AppModel::instance()->showToast(
+            BaseJob::IncorrectResponse,
+            tr("Room was created but its local state is unavailable; the first message was not sent"),
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return;
+    }
+
+    QObject* context = new QObject(this);
+    const auto sendWhenEncrypted = [this, context, attempt, targetRoom, message,
+                                    operationGeneration] {
+        if(!context || !targetRoom){
+            return;
+        }
+        if(!attempt || attempt != connection()
+                || operationGeneration != m_roomOperationGeneration){
+            context->deleteLater();
+            return;
+        }
+        if(!targetRoom->usesEncryption()){
+            AppModel::instance()->showToast(
+                BaseJob::IncorrectResponse,
+                QObject::tr("Encryption state was not confirmed; the first message was not sent"),
+                EWARNING::WarningType::EXCEPTION_MSG);
+            context->deleteLater();
+            return;
+        }
+        targetRoom->postPlainText(message);
+        context->deleteLater();
+    };
+
+    if(targetRoom->usesEncryption()){
+        sendWhenEncrypted();
+        return;
+    }
+    connect(targetRoom, &Room::baseStateLoaded, context, sendWhenEncrypted,
+            Qt::SingleShotConnection);
+    QTimer::singleShot(30000, context,
+                       [this, context, attempt, operationGeneration] {
+        if(!context){
+            return;
+        }
+        if(!attempt || attempt != connection()
+                || operationGeneration != m_roomOperationGeneration){
+            context->deleteLater();
+            return;
+        }
+        AppModel::instance()->showToast(
+            BaseJob::Timeout,
+            QObject::tr("Timed out waiting for encrypted room state; the first message was not sent"),
+            EWARNING::WarningType::EXCEPTION_MSG);
+        context->deleteLater();
+    });
+}
+
 void QNunchukRoomListModel::requestSort()
 {
-    qSort(m_data.begin(), m_data.end(), sortRoomListByTimeDescending);
+    std::sort(m_data.begin(), m_data.end(), sortRoomListByTimeDescending);
 }
 
 QString QNunchukRoomListModel::getRoomIdByWalletId(const QString &wallet_id)
@@ -2451,6 +3377,11 @@ void QNunchukRoomListModel::updateTransactionMemo(const QString& wallet_id, cons
 void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
 {
     if(!r){return;}
+    DBG_INFO << "[DO_ADD_ROOM] id:" << r.data()->id()
+             << "isServiceNotice:" << r.data()->isServerNoticeRoom()
+             << "isSyncRoom:" << r.data()->isNunchukSyncRoom()
+             << "alreadyInData:" << containsRoomId(r.data()->id())
+             << "tags:" << (r.data()->room() ? r.data()->room()->tagNames() : QStringList{});
     if( r.data()->isServerNoticeRoom() || r.data()->isNunchukSyncRoom()){
         if(!r.data()->id().isEmpty() && !containsServiceRoom(r.data()->id()) ){
             m_servive.append(r);
@@ -2469,12 +3400,13 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
             m_data.append(r);
             endInsertRows();
             connect(r.data(),         &QNunchukRoom::roomNameChanged,       this, [this, r] { refresh(r); });
+            connect(r.data(),         &QNunchukRoom::roomTypeChanged,       this, [this, r] { refresh(r, {room_name, room_type, room_is_any_support}); });
             connect(r.data(),         &QNunchukRoom::lastMessageChanged,    this, [this, r] { refresh(r); });
             connect(r.data(),         &QNunchukRoom::lasttimestampChanged,  this, [this, r] { resort(); });
             connect(r.data(),         &QNunchukRoom::roomNeedTobeLeaved,    this, &QNunchukRoomListModel::roomNeedTobeLeaved);
-            connect(r.data()->room(), &Room::unreadMessagesChanged,         this, [this, r] { refresh(r); });
-            connect(r.data()->room(), &Room::typingChanged,                 this, [this, r] { refresh(r); });
-            connect(r.data()->room(), &Room::unreadMessagesChanged,         this, &QNunchukRoomListModel::totalUnreadChanged);
+            connect(r.data()->room(), &Room::unreadStatsChanged,            this, [this, r] { refresh(r, {room_unreadmsg_count}); });
+            connect(r.data()->room(), &Room::unreadStatsChanged,            this, &QNunchukRoomListModel::totalUnreadChanged);
+            connect(r.data(),         &QNunchukRoom::typingNamesChanged,    this, [this, r] { refresh(r, {room_typing_users}); });
             connect(r.data(),         &QNunchukRoom::pendingTxsChanged,     this, [this, r] { refresh(r); });
             if(r.data()->room()->currentState().contains(NUNCHUK_ROOM_RETENTION)){
                 DBG_INFO << "room name" << r.data()->roomName() << r.data()->room()->currentState().contentJson(NUNCHUK_ROOM_RETENTION);
@@ -2488,99 +3420,361 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
                 }
             }
             r.data()->connectRoomSignals();
+            emit countChanged();
         }
     }
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::removeRoomByIndex(const int index)
 {
-    beginResetModel();
-    m_data.removeAt(index);
-    if(m_data.count() > 0){
-        setCurrentIndex(0);
+    const QNunchukRoomPtr roomPtr = getRoomByIndex(index);
+    if(roomPtr){
+        removeRoomById(roomPtr->id());
     }
-    else{
-        setCurrentIndex(-1);
-    }
-    endResetModel();
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::removeRoomById(const QString &id)
 {
-    beginResetModel();
-    for( QNunchukRoomPtr it: m_data){
-        if(it && (qUtils::strCompare(it.data()->id(), id))){
-            m_data.removeOne(it);
-            break;
-        }
+    const int removedIndex = getIndex(id);
+    if(removedIndex < 0){
+        return;
     }
+    const QString selectedRoomId = currentRoom() ? currentRoom()->id() : QString{};
+    beginResetModel();
+    m_data.removeAt(removedIndex);
     endResetModel();
+    if(selectedRoomId == id || selectedRoomId.isEmpty()){
+        setCurrentIndex(m_data.isEmpty()
+                            ? -1
+                            : qMin(removedIndex, m_data.count() - 1));
+    } else {
+        setCurrentIndex(getIndex(selectedRoomId));
+    }
     emit countChanged();
 }
 
 void QNunchukRoomListModel::removeAll()
 {
+    // A cleared model is no longer hydrated. Invalidate callbacks belonging
+    // to the previous login and do not carry a queued Support click across
+    // account changes.
+    m_roomsHydrated = false;
+    m_supportRoomRequestPending = false;
+    m_supportRequestInProgress = false;
+    m_supportRoomsLeaving.clear();
+    m_roomsLeaving.clear();
+    m_locallyCreatedRoomIds.clear();
+    m_byzantineRoomsCreating.clear();
+    setRoomCreationInProgress(false);
+    ++m_roomOperationGeneration;
+    m_supportCreateRequestId = 0;
+    m_supportReconciliationRequestId = 0;
+    ++m_roomHydrationGeneration;
+    ++m_supportWatchdogId;
+    ++m_supportRequestId;
     beginResetModel();
     while (m_data.count() > 0) {
         m_data.removeAt(0);
     }
-    setCurrentIndex(-1);
     endResetModel();
+    setCurrentIndex(-1);
     emit countChanged();
 }
 
 void QNunchukRoomListModel::forgetRoom(const int index)
 {
-    Room* room = getRoomByIndex(index).data()->room();
-    if(room && connection()){
-        auto joinJob = connection()->forgetRoom(room->id());
-        connect(joinJob, &BaseJob::success, this, [this, index] {
-            // Ensure that the room has been joined and filled with some events so that other tests could use that
-            removeRoomByIndex(index);
-        });
+    const QNunchukRoomPtr roomPtr = getRoomByIndex(index);
+    if(!roomPtr || roomPtr->isAnySupportRoom()){
+        return;
     }
-    emit countChanged();
+    Room* room = roomPtr->room();
+    if(room && connection()){
+        const QString roomId = room->id();
+        if(m_roomsLeaving.contains(roomId)){
+            return;
+        }
+        m_roomsLeaving.insert(roomId);
+        auto forgetJob = connection()->forgetRoom(roomId);
+        connect(forgetJob, &BaseJob::finished, this, [this, forgetJob, roomId] {
+            if(!m_roomsLeaving.contains(roomId)){
+                return;
+            }
+            if(forgetJob->error() == BaseJob::Abandoned){
+                m_roomsLeaving.remove(roomId);
+                AppModel::instance()->showToast(forgetJob->error(), forgetJob->errorString(),
+                                                EWARNING::WarningType::EXCEPTION_MSG);
+            }
+        });
+        connect(forgetJob, &BaseJob::success, this, [this, roomId] {
+                if(!m_roomsLeaving.contains(roomId)){
+                    return;
+                }
+                m_roomsLeaving.remove(roomId);
+                removeRoomById(roomId);
+            });
+        connect(forgetJob, &BaseJob::failure, this, [this, roomId, forgetJob] {
+                if(!m_roomsLeaving.contains(roomId)){
+                    return;
+                }
+                m_roomsLeaving.remove(roomId);
+                AppModel::instance()->showToast(forgetJob->error(), forgetJob->errorString(),
+                                                EWARNING::WarningType::EXCEPTION_MSG);
+            });
+    }
 }
 
 void QNunchukRoomListModel::leaveCurrentRoom()
 {
     if(currentRoom()){
-        bool hasWallet = currentRoom()->roomWallet() ? true : false;
-        bool isByzantineRoom = currentRoom()->isNunchukByzantineRoom();
-        QString byzantineGroupId = currentRoom()->byzantineRoomGroupId();
-        QString currentRoomId = currentRoom()->id();
-
-        auto* job = currentRoom()->room()->leaveRoom();
-        connect(job, &BaseJob::success, this, [this, currentRoomId, hasWallet, isByzantineRoom, byzantineGroupId] {
-            removeRoomByIndex(currentIndex());
-            if(hasWallet){
-                AppModel::instance()->startReloadUserDb();
-            }
-            if(isByzantineRoom){
-                emit byzantineRoomDeleted(currentRoomId, byzantineGroupId);
-            }
-        });
-        emit countChanged();
+        leaveRoomById(currentRoom()->id());
     }
 }
 
 void QNunchukRoomListModel::leaveRoom(const int index)
 {
-    Room* room = getRoomByIndex(index).data()->room();
-    if(room && connection()){
-        auto joinJob = connection()->leaveRoom(room);
-        connect(joinJob, &BaseJob::success, this, [this, index] {
-            // Ensure that the room has been joined and filled with some events so that other tests could use that
-            removeRoomByIndex(index);
-            DBG_INFO << "LEAVE ROOM SUCCEED";
-        });
-        connect(joinJob, &BaseJob::failure, this, [] {
-            DBG_INFO << "Failed to join the room";
-        });
+    const QNunchukRoomPtr roomPtr = getRoomByIndex(index);
+    if(roomPtr){
+        leaveRoomById(roomPtr->id());
     }
-    emit countChanged();
+}
+
+void QNunchukRoomListModel::leaveRoomById(const QString &roomId)
+{
+    const int index = getIndex(roomId);
+    const QNunchukRoomPtr roomPtr = getRoomByIndex(index);
+    if(!roomPtr || !roomPtr->room() || !connection()){
+        return;
+    }
+    if(roomPtr->isAnySupportRoom()){
+        leaveSupportRoom(roomPtr);
+        return;
+    }
+    if(m_roomsLeaving.contains(roomId)){
+        return;
+    }
+    m_roomsLeaving.insert(roomId);
+
+    const bool hasWallet = roomPtr->roomWallet();
+    const bool isByzantineRoom = roomPtr->isNunchukByzantineRoom();
+    const QString byzantineGroupId = roomPtr->byzantineRoomGroupId();
+    auto leaveJob = roomPtr->room()->leaveRoom();
+    connect(leaveJob, &BaseJob::finished, this, [this, leaveJob, roomId] {
+        if(!m_roomsLeaving.contains(roomId)){
+            return;
+        }
+        if(leaveJob->error() == BaseJob::Abandoned){
+            m_roomsLeaving.remove(roomId);
+            AppModel::instance()->showToast(leaveJob->error(), leaveJob->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    });
+    leaveJob.then(this,
+        [this, roomId, hasWallet, isByzantineRoom, byzantineGroupId](LeaveRoomJob*) {
+            if(!m_roomsLeaving.contains(roomId)){
+                return;
+            }
+            m_roomsLeaving.remove(roomId);
+            removeRoomById(roomId);
+            if(hasWallet){
+                AppModel::instance()->startReloadUserDb();
+            }
+            if(isByzantineRoom){
+                emit byzantineRoomDeleted(roomId, byzantineGroupId);
+            }
+            DBG_INFO << "LEAVE ROOM SUCCEED" << roomId;
+        },
+        [this, roomId](LeaveRoomJob* job) {
+            if(!m_roomsLeaving.contains(roomId)){
+                return;
+            }
+            m_roomsLeaving.remove(roomId);
+            DBG_INFO << "Failed to leave the room" << job->errorString();
+            AppModel::instance()->showToast(job->error(), job->errorString(),
+                                            EWARNING::WarningType::EXCEPTION_MSG);
+        });
+}
+
+void QNunchukRoomListModel::resumePendingSupportRoomRequest()
+{
+    if(!m_supportRoomRequestPending || !m_roomsHydrated
+            || m_supportRequestInProgress || !m_supportRoomsLeaving.isEmpty()){
+        return;
+    }
+    m_supportRoomRequestPending = false;
+    const quint64 hydrationGeneration = m_roomHydrationGeneration;
+    QTimer::singleShot(0, this, [this, hydrationGeneration] {
+        if(hydrationGeneration == m_roomHydrationGeneration && m_roomsHydrated){
+            createSupportRoom();
+        }
+    });
+}
+
+void QNunchukRoomListModel::leaveSupportRoom(const QNunchukRoomPtr &roomPtr)
+{
+    Room* room = roomPtr ? roomPtr->room() : nullptr;
+    Connection* activeConnection = connection();
+    if(!room || !activeConnection){
+        return;
+    }
+    const QString roomId = room->id();
+    if(m_supportRoomsLeaving.contains(roomId)){
+        return;
+    }
+    const QString tagname = supportTagForRoom(room);
+    if(tagname.isEmpty()){
+        AppModel::instance()->showToast(
+            BaseJob::IncorrectResponse,
+            QStringLiteral("Unable to identify this Support room"),
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return;
+    }
+
+    m_supportRoomsLeaving.insert(roomId);
+    const quint64 hydrationGeneration = m_roomHydrationGeneration;
+    QPointer<Connection> attempt = activeConnection;
+    QPointer<Room> safeRoom = room;
+    const QString expectedAlias = supportRoomAlias(activeConnection, tagname);
+
+    const auto isCurrentSession = [this, attempt, hydrationGeneration] {
+        return attempt && attempt == connection()
+                && hydrationGeneration == m_roomHydrationGeneration;
+    };
+    const auto notifyClassification = [this, roomId] {
+        const int roomIndex = getIndex(roomId);
+        const QNunchukRoomPtr wrapper = getRoomByIndex(roomIndex);
+        if(wrapper){
+            wrapper->notifySupportClassificationChanged();
+        }
+    };
+    const auto finishFailure =
+        [this, roomId, tagname, safeRoom, isCurrentSession,
+         notifyClassification](int errorCode, const QString& errorString) {
+            if(!isCurrentSession() || !m_supportRoomsLeaving.contains(roomId)){
+                return;
+            }
+            if(safeRoom){
+                safeRoom->setProperty("nunchukSupportSuppressedTag", QString{});
+                notifyClassification();
+            }
+            m_supportRoomsLeaving.remove(roomId);
+            AppModel::instance()->showToast(
+                errorCode,
+                errorString.isEmpty()
+                    ? QStringLiteral("Unable to leave the Support room")
+                    : errorString,
+                EWARNING::WarningType::EXCEPTION_MSG);
+            resumePendingSupportRoomRequest();
+        };
+    const auto finishSuccess =
+        [this, roomId, tagname, attempt, isCurrentSession] {
+            if(!isCurrentSession() || !m_supportRoomsLeaving.contains(roomId)){
+                return;
+            }
+            attempt->removeFromDirectChats(roomId, QStringLiteral("@support:nunchuk.io"));
+            attempt->callApi<DeleteRoomTagJob>(attempt->userId(), roomId, tagname);
+            m_supportRoomsLeaving.remove(roomId);
+            removeRoomById(roomId);
+            resumePendingSupportRoomRequest();
+        };
+    const auto proceedToLeave =
+        [this, roomId, tagname, expectedAlias, safeRoom, attempt,
+         isCurrentSession, notifyClassification, finishFailure,
+         finishSuccess](bool aliasDeleted) {
+            if(!isCurrentSession() || !m_supportRoomsLeaving.contains(roomId)){
+                return;
+            }
+            if(!safeRoom || safeRoom->joinState() == JoinState::Leave){
+                finishSuccess();
+                return;
+            }
+
+            safeRoom->setProperty("nunchukSupportSuppressedTag", tagname);
+            notifyClassification();
+
+            const auto rollbackLeave =
+                [this, roomId, expectedAlias, attempt, isCurrentSession,
+                 finishFailure, aliasDeleted](int errorCode,
+                                              const QString& errorString) {
+                    if(!isCurrentSession() || !m_supportRoomsLeaving.contains(roomId)){
+                        return;
+                    }
+                    if(!aliasDeleted || isAmbiguousMutationError(errorCode)){
+                        finishFailure(errorCode, errorString);
+                        return;
+                    }
+                    auto restoreAliasJob = attempt->callApi<SetRoomAliasJob>(
+                        expectedAlias, roomId);
+                    connect(restoreAliasJob, &BaseJob::finished, this,
+                        [finishFailure, restoreAliasJob, errorCode, errorString] {
+                            if(restoreAliasJob->error() == BaseJob::Abandoned){
+                                finishFailure(errorCode, errorString);
+                            }
+                        });
+                    restoreAliasJob.then(this,
+                        [finishFailure, errorCode, errorString](SetRoomAliasJob*) {
+                            finishFailure(errorCode, errorString);
+                        },
+                        [finishFailure, errorCode, errorString](SetRoomAliasJob*) {
+                            finishFailure(errorCode, errorString);
+                        });
+                };
+
+            auto leaveJob = safeRoom->leaveRoom();
+            connect(leaveJob, &BaseJob::finished, this,
+                [leaveJob, rollbackLeave] {
+                    if(leaveJob->error() == BaseJob::Abandoned){
+                        rollbackLeave(leaveJob->error(), leaveJob->errorString());
+                    }
+                });
+            leaveJob.then(this,
+                [finishSuccess](LeaveRoomJob*) { finishSuccess(); },
+                [rollbackLeave](LeaveRoomJob* job) {
+                    rollbackLeave(job->error(), job->errorString());
+                });
+        };
+
+    auto aliasJob = activeConnection->callApi<GetRoomIdByAliasJob>(expectedAlias);
+    connect(aliasJob, &BaseJob::finished, this,
+        [aliasJob, finishFailure] {
+            if(aliasJob->error() == BaseJob::Abandoned){
+                finishFailure(aliasJob->error(), aliasJob->errorString());
+            }
+        });
+    aliasJob.then(this,
+        [this, roomId, expectedAlias, attempt, isCurrentSession,
+         finishFailure, proceedToLeave](GetRoomIdByAliasJob* job) {
+            if(!isCurrentSession() || !m_supportRoomsLeaving.contains(roomId)){
+                return;
+            }
+            if(job->roomId() != roomId){
+                proceedToLeave(false);
+                return;
+            }
+            auto deleteAliasJob = attempt->callApi<DeleteRoomAliasJob>(expectedAlias);
+            connect(deleteAliasJob, &BaseJob::finished, this,
+                [deleteAliasJob, finishFailure] {
+                    if(deleteAliasJob->error() == BaseJob::Abandoned){
+                        finishFailure(deleteAliasJob->error(),
+                                      deleteAliasJob->errorString());
+                    }
+                });
+            deleteAliasJob.then(this,
+                [proceedToLeave](DeleteRoomAliasJob*) { proceedToLeave(true); },
+                [proceedToLeave, finishFailure](DeleteRoomAliasJob* deleteJob) {
+                    if(deleteJob->error() == BaseJob::NotFound){
+                        proceedToLeave(false);
+                    } else {
+                        finishFailure(deleteJob->error(), deleteJob->errorString());
+                    }
+                });
+        },
+        [proceedToLeave, finishFailure](GetRoomIdByAliasJob* job) {
+            if(job->error() == BaseJob::NotFound){
+                proceedToLeave(false);
+            } else {
+                finishFailure(job->error(), job->errorString());
+            }
+        });
 }
 
 void QNunchukRoomListModel::joinRoom(QString roomAliasOrId)
@@ -2591,17 +3785,38 @@ void QNunchukRoomListModel::joinRoom(QString roomAliasOrId)
             DBG_INFO << "Failed to join the room";
         });
     }
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const QString& room_name, QVariant firstMessage)
 {
-    if(connection()){
+    QStringList invitees;
+    const QString localUserId = connection() ? connection()->userId() : QString{};
+    for(const QString& rawId : invitees_id){
+        const QString memberId = rawId.trimmed();
+        if(!memberId.isEmpty() && memberId != localUserId
+                && !invitees.contains(memberId)){
+            invitees.append(memberId);
+        }
+    }
+    if(!connection() || invitees.isEmpty()){
+        const QString error = tr("Select at least one member before creating a room");
+        AppModel::instance()->showToast(BaseJob::IncorrectRequest, error,
+                                        EWARNING::WarningType::EXCEPTION_MSG);
+        emit roomCreationFailed(error);
+        return;
+    }
+    if(m_roomCreationInProgress){
+        return;
+    }
+    setRoomCreationInProgress(true);
+    {
+        const quint64 operationGeneration = m_roomOperationGeneration;
+        QPointer<Connection> attempt = connection();
         Connection::RoomVisibility in_visibility = Connection::UnpublishRoom;
         const QString   in_alias = {};
         const QString   in_name = room_name;
         const QString   in_topic = {};
-        QStringList     in_invites = invitees_id;
+        QStringList     in_invites = invitees;
         const QString   in_presetName = {};
         const QString   in_roomVersion = {};
         bool            in_isDirect = false;
@@ -2628,36 +3843,91 @@ void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const 
                                                   in_roomVersion,
                                                   in_isDirect,
                                                   in_initialState);
-        connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
-            if(!firstMessage.isNull() && firstMessage.toString() != ""){
-                connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
+        connect(createJob, &BaseJob::finished, this,
+                [this, createJob, attempt, operationGeneration] {
+            if(!attempt || attempt != connection()
+                    || operationGeneration != m_roomOperationGeneration){
+                return;
+            }
+            if(createJob->error() == BaseJob::Abandoned){
+                setRoomCreationInProgress(false);
+                AppModel::instance()->showToast(createJob->error(), createJob->errorString(),
+                                                EWARNING::WarningType::EXCEPTION_MSG);
+                emit roomCreationFailed(createJob->errorString());
             }
         });
-        connect(createJob, &BaseJob::failure, this, [createJob] {
-            DBG_INFO << "//FIXME Failed to create the room";
-            AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
-        });
+        createJob.then(this,
+            [this, attempt, firstMessage, operationGeneration](CreateRoomJob* job) {
+                if(!attempt || attempt != connection()
+                        || operationGeneration != m_roomOperationGeneration){
+                    return;
+                }
+                setRoomCreationInProgress(false);
+                trackLocallyCreatedRoom(job->roomId());
+                postInitialMessageWhenStateReady(job->roomId(), firstMessage,
+                                                 operationGeneration);
+                emit roomCreationSucceeded(job->roomId());
+            },
+            [this, attempt, operationGeneration](CreateRoomJob* job) {
+                if(!attempt || attempt != connection()
+                        || operationGeneration != m_roomOperationGeneration){
+                    return;
+                }
+                setRoomCreationInProgress(false);
+                AppModel::instance()->showToast(job->error(), job->errorString(),
+                                                EWARNING::WarningType::EXCEPTION_MSG);
+                emit roomCreationFailed(job->errorString());
+            });
     }
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::createRoomDirectChat(const QString invitee_id, const QString &invitee_name, QVariant firstMessage)
 {
     DBG_INFO << invitee_id << invitee_name << invitee_name;
+    const QString targetId = invitee_id.trimmed();
+    if(!connection() || targetId.isEmpty() || targetId == connection()->userId()){
+        const QString error = tr("Select a member before creating a room");
+        AppModel::instance()->showToast(BaseJob::IncorrectRequest, error,
+                                        EWARNING::WarningType::EXCEPTION_MSG);
+        emit roomCreationFailed(error);
+        return;
+    }
+    if(m_roomCreationInProgress){
+        return;
+    }
     if(connection()){
-        int index = -1;
-        QString room_id = "";
-        if(containsRoomName(invitee_name, index, room_id)){
-            if(index >= 0){
-                setCurrentIndex(index);
+        int existingIndex = -1;
+        QString existingRoomId;
+        for(int index = 0; index < m_data.count(); ++index){
+            const QNunchukRoomPtr& candidate = m_data.at(index);
+            Room* room = candidate ? candidate->room() : nullptr;
+            if(room && room->joinState() == JoinState::Join
+                    && room->isDirectChat()
+                    && connection()->directChatMemberIds(room).contains(targetId)){
+                existingIndex = index;
+                existingRoomId = room->id();
+                break;
             }
         }
-        else{
+        if(existingIndex >= 0){
+            setCurrentIndex(existingIndex);
+            const QString message = firstMessage.toString();
+            if(!message.isEmpty()){
+                const QNunchukRoomPtr existingRoom = getRoomByIndex(existingIndex);
+                if(existingRoom){
+                    existingRoom->sendMessage(message);
+                }
+            }
+            emit roomCreationSucceeded(existingRoomId);
+        } else {
+            setRoomCreationInProgress(true);
+            const quint64 operationGeneration = m_roomOperationGeneration;
+            QPointer<Connection> attempt = connection();
             Connection::RoomVisibility in_visibility = Connection::UnpublishRoom;
             const QString   in_alias = {};
             const QString   in_name = invitee_name;
             const QString   in_topic = {};
-            QStringList     in_invites = {invitee_id};
+            QStringList     in_invites = {targetId};
             const QString   in_presetName = {};
             const QString   in_roomVersion = {};
             bool            in_isDirect = true;
@@ -2682,15 +3952,41 @@ void QNunchukRoomListModel::createRoomDirectChat(const QString invitee_id, const
                                                       in_roomVersion,
                                                       in_isDirect,
                                                       in_initialState);
-            connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
-                if(!firstMessage.isNull() && firstMessage.toString() != ""){
-                    connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
+            connect(createJob, &BaseJob::finished, this,
+                    [this, createJob, attempt, operationGeneration] {
+                if(!attempt || attempt != connection()
+                        || operationGeneration != m_roomOperationGeneration){
+                    return;
+                }
+                if(createJob->error() == BaseJob::Abandoned){
+                    setRoomCreationInProgress(false);
+                    AppModel::instance()->showToast(createJob->error(), createJob->errorString(),
+                                                    EWARNING::WarningType::EXCEPTION_MSG);
+                    emit roomCreationFailed(createJob->errorString());
                 }
             });
-            connect(createJob, &BaseJob::failure, this, [createJob] {
-                AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
-            });
-            emit countChanged();
+            createJob.then(this,
+                [this, attempt, firstMessage, operationGeneration](CreateRoomJob* job) {
+                    if(!attempt || attempt != connection()
+                            || operationGeneration != m_roomOperationGeneration){
+                        return;
+                    }
+                    setRoomCreationInProgress(false);
+                    trackLocallyCreatedRoom(job->roomId());
+                    postInitialMessageWhenStateReady(job->roomId(), firstMessage,
+                                                     operationGeneration);
+                    emit roomCreationSucceeded(job->roomId());
+                },
+                [this, attempt, operationGeneration](CreateRoomJob* job) {
+                    if(!attempt || attempt != connection()
+                            || operationGeneration != m_roomOperationGeneration){
+                        return;
+                    }
+                    setRoomCreationInProgress(false);
+                    AppModel::instance()->showToast(job->error(), job->errorString(),
+                                                    EWARNING::WarningType::EXCEPTION_MSG);
+                    emit roomCreationFailed(job->errorString());
+                });
         }
     }
 }
@@ -2698,84 +3994,984 @@ void QNunchukRoomListModel::createRoomDirectChat(const QString invitee_id, const
 void QNunchukRoomListModel::createRoomByzantineChat(const QStringList invitees_id, const QString &room_name, const QString &group_id, QVariant firstMessage)
 {
     DBG_INFO << invitees_id << room_name;
-    if(connection() && invitees_id.size() > 0){
-        int index = -1;
-        QString room_id = "";
-        if(containsRoomName(room_name, index, room_id)){
-            if(index >= 0){
-                setCurrentIndex(index);
-                emit byzantineRoomCreated(room_id, group_id, true);
-            }
-        }
-        else{
-            Connection::RoomVisibility in_visibility = Connection::UnpublishRoom;
-            const QString   in_alias = {};
-            const QString   in_name = room_name;
-            const QString   in_topic = {};
-            QStringList     in_invites = invitees_id;
-            const QString   in_presetName = {};
-            const QString   in_roomVersion = {};
-            bool            in_isDirect = in_invites.count() > 1 ? false : true;
-            CreateRoomJob::StateEvent state_byzantine_Evt;
-            state_byzantine_Evt.type = NUNCHUK_ROOM_BYZANTINE;
-            state_byzantine_Evt.content["group_id"] = group_id;
-
-            CreateRoomJob::StateEvent state_retention_Evt;
-            state_retention_Evt.type = NUNCHUK_ROOM_RETENTION;
-            state_retention_Evt.content["max_lifetime"] = NUNCHUK_ROOM_RETENTION_TIME;
-
-            const QVector<CreateRoomJob::StateEvent> in_initialState = {state_byzantine_Evt, state_retention_Evt};
-
-            auto createJob = connection()->createRoom(in_visibility,
-                                                      in_alias,
-                                                      in_name,
-                                                      in_topic,
-                                                      in_invites,
-                                                      in_presetName,
-                                                      in_roomVersion,
-                                                      in_isDirect,
-                                                      in_initialState);
-            connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage, group_id] {
-                if(!firstMessage.isNull() && firstMessage.toString() != ""){
-                    connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
-                }
-                emit byzantineRoomCreated(createJob->roomId(), group_id, false);
-            });
-            connect(createJob, &BaseJob::failure, this, [createJob] {
-                DBG_INFO << "//FIXME Failed to create the room";
-                AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
-            });
-            emit countChanged();
+    const QString targetGroupId = group_id.trimmed();
+    QStringList invitees;
+    const QString localUserId = connection() ? connection()->userId() : QString{};
+    for(const QString& rawId : invitees_id){
+        const QString memberId = rawId.trimmed();
+        if(!memberId.isEmpty() && memberId != localUserId
+                && !invitees.contains(memberId)){
+            invitees.append(memberId);
         }
     }
+    if(!connection() || invitees.isEmpty() || targetGroupId.isEmpty()){
+        AppModel::instance()->showToast(
+            BaseJob::IncorrectRequest,
+            tr("Unable to create group chat because its members or group id are missing"),
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return;
+    }
+    if(m_byzantineRoomsCreating.contains(targetGroupId)){
+        return;
+    }
+    for(int index = 0; index < m_data.count(); ++index){
+        const QNunchukRoomPtr& candidate = m_data.at(index);
+        if(candidate && qUtils::strCompare(candidate->byzantineRoomGroupId(),
+                                           targetGroupId)){
+            setCurrentIndex(index);
+            emit byzantineRoomCreated(candidate->id(), targetGroupId, true);
+            return;
+        }
+    }
+
+    m_byzantineRoomsCreating.insert(targetGroupId);
+    const quint64 operationGeneration = m_roomOperationGeneration;
+    QPointer<Connection> attempt = connection();
+    const Connection::RoomVisibility inVisibility = Connection::UnpublishRoom;
+    const QString alias = {};
+    const QString topic = {};
+    const QString presetName = {};
+    const QString roomVersion = {};
+    const bool isDirect = invitees.count() == 1;
+    CreateRoomJob::StateEvent byzantineEvent;
+    byzantineEvent.type = NUNCHUK_ROOM_BYZANTINE;
+    byzantineEvent.content["group_id"] = targetGroupId;
+
+    CreateRoomJob::StateEvent retentionEvent;
+    retentionEvent.type = NUNCHUK_ROOM_RETENTION;
+    retentionEvent.content["max_lifetime"] = NUNCHUK_ROOM_RETENTION_TIME;
+
+    CreateRoomJob::StateEvent encryptionEvent;
+    encryptionEvent.type = "m.room.encryption";
+    encryptionEvent.content["algorithm"] = "m.megolm.v1.aes-sha2";
+
+    const QVector<CreateRoomJob::StateEvent> initialState = {
+        encryptionEvent, byzantineEvent, retentionEvent
+    };
+    auto createJob = connection()->createRoom(
+        inVisibility, alias, room_name, topic, invitees, presetName,
+        roomVersion, isDirect, initialState);
+    connect(createJob, &BaseJob::finished, this,
+            [this, createJob, attempt, targetGroupId, operationGeneration] {
+        if(!attempt || attempt != connection()
+                || operationGeneration != m_roomOperationGeneration){
+            return;
+        }
+        if(createJob->error() == BaseJob::Abandoned){
+            m_byzantineRoomsCreating.remove(targetGroupId);
+            AppModel::instance()->showToast(
+                createJob->error(), createJob->errorString(),
+                EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    });
+    createJob.then(this,
+        [this, attempt, firstMessage, targetGroupId,
+         operationGeneration](CreateRoomJob* job) {
+            if(!attempt || attempt != connection()
+                    || operationGeneration != m_roomOperationGeneration){
+                return;
+            }
+            m_byzantineRoomsCreating.remove(targetGroupId);
+            trackLocallyCreatedRoom(job->roomId());
+            postInitialMessageWhenStateReady(job->roomId(), firstMessage,
+                                             operationGeneration);
+            emit byzantineRoomCreated(job->roomId(), targetGroupId, false);
+        },
+        [this, attempt, targetGroupId,
+         operationGeneration](CreateRoomJob* job) {
+            if(!attempt || attempt != connection()
+                    || operationGeneration != m_roomOperationGeneration){
+                return;
+            }
+            m_byzantineRoomsCreating.remove(targetGroupId);
+            AppModel::instance()->showToast(
+                job->error(), job->errorString(),
+                EWARNING::WarningType::EXCEPTION_MSG);
+        });
 }
 
 void QNunchukRoomListModel::createSupportRoom()
 {
-    if((int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() || (int)ENUNCHUCK::Chain::TESTNET == (int)AppSetting::instance()->primaryServer())
+    if(m_supportRequestInProgress){
+        DBG_INFO << "[SUPPORT] Reusing the support-room request already in progress";
+        return;
+    }
+    if(!m_supportRoomsLeaving.isEmpty()){
+        m_supportRoomRequestPending = true;
+        DBG_INFO << "[SUPPORT] Deferring support-room request until the current room is left";
+        return;
+    }
+    if(!m_roomsHydrated){
+        // A click during the initial /sync must not be lost and must not race
+        // room hydration. Run exactly once after downloadRooms completes.
+        m_supportRoomRequestPending = true;
+        DBG_INFO << "[SUPPORT] Deferring support-room request until rooms are hydrated";
+        return;
+    }
+
+    if((int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer()
+            || (int)ENUNCHUCK::Chain::TESTNET == (int)AppSetting::instance()->primaryServer()
+            || (int)ENUNCHUCK::Chain::SIGNET == (int)AppSetting::instance()->primaryServer()
+            || (int)ENUNCHUCK::Chain::REGTEST == (int)AppSetting::instance()->primaryServer())
     {
         if(connection()){
-            QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
-            if(containsSupportRoom(tagname)){
+            const QString tagname = currentSupportRoomTag();
+            const QString otherTag = qUtils::strCompare(tagname, NUNCHUK_ROOM_SUPPORT)
+                    ? NUNCHUK_ROOM_SUPPORTTESTNET : NUNCHUK_ROOM_SUPPORT;
+            const quint64 requestId = beginSupportRequest();
+
+            // Prefer the authoritative tag for the active chain. An untagged
+            // direct chat is only a fallback and must not belong to the other
+            // chain. Scan Connection as well as m_data so a synced room cannot
+            // be missed during a model update.
+            QList<QPair<int, QString>> candidates;
+            const auto considerCandidate = [this, &candidates, tagname,
+                                             otherTag](Quotient::Room* room) {
+                if(!room || room->joinState() == JoinState::Leave){
+                    return;
+                }
+
+                int score = -1;
+                const QString markerTag = supportMarkerTag(room);
+                const bool localTagSuppressed =
+                        room->property("nunchukSupportSuppressedTag").toString() == tagname;
+                const bool isSupportDirectChat = room->isDirectChat()
+                        && connection()->directChatMemberIds(room)
+                               .contains("@support:nunchuk.io");
+                const bool hasCurrentLocalTag = room->tagNames().contains(tagname)
+                        && !localTagSuppressed;
+                if(room->joinState() == JoinState::Invite
+                        && markerTag != tagname
+                        && !hasCurrentLocalTag && !isSupportDirectChat){
+                    // Never auto-join an invite based only on attacker-owned
+                    // custom state or a claimed alias.
+                    return;
+                }
+                if(markerTag == tagname && !localTagSuppressed){
+                    score = 120;
+                } else if(markerTag == otherTag){
+                    return;
+                } else if(hasCurrentLocalTag){
+                    score = 100;
+                } else {
+                    if(isSupportDirectChat && !room->tagNames().contains(otherTag)){
+                        score = 50;
+                    }
+                }
+                if(score < 0){
+                    return;
+                }
+                if(room->joinState() == JoinState::Join){
+                    score += 10;
+                } else if(room->joinState() == JoinState::Invite){
+                    score += 5;
+                }
+                if(qUtils::strCompare(room->name(), "Support room")){
+                    score += 2;
+                }
+
+                const auto existing = std::find_if(candidates.begin(), candidates.end(),
+                    [room](const auto& item) { return item.second == room->id(); });
+                if(existing == candidates.end()){
+                    candidates.append({score, room->id()});
+                } else if(score > existing->first){
+                    existing->first = score;
+                }
+            };
+
+            foreach (QNunchukRoomPtr it, m_data) {
+                if(it){
+                    considerCandidate(it.data()->room());
+                }
+            }
+            for(Quotient::Room* room : connection()->allRooms()){
+                considerCandidate(room);
+            }
+
+            std::stable_sort(candidates.begin(), candidates.end(),
+                [](const auto& lhs, const auto& rhs) { return lhs.first > rhs.first; });
+            QStringList candidateIds;
+            for(const auto& candidate : std::as_const(candidates)){
+                candidateIds.append(candidate.second);
+            }
+
+            // Focus a locally authoritative room immediately. Server tag
+            // verification still continues below to repair legacy/ghost
+            // state, but temporary network trouble must not prevent opening
+            // a Support room that is already present in the model.
+            for(const QString& candidateId : std::as_const(candidateIds)){
+                Quotient::Room* localRoom = connection()->room(
+                    candidateId, JoinState::Join);
+                if(!localRoom){
+                    continue;
+                }
+                const bool isSuppressed =
+                        localRoom->property("nunchukSupportSuppressedTag").toString() == tagname;
+                const bool isLocallyAuthoritative = !isSuppressed
+                        && (supportMarkerTag(localRoom) == tagname
+                            || localRoom->tagNames().contains(tagname)
+                            || localRoom->property("nunchukSupportCanonicalTag").toString() == tagname);
+                const int localIndex = getIndex(candidateId);
+                if(isLocallyAuthoritative && localIndex >= 0){
+                    DBG_INFO << "[SUPPORT] Focusing existing local support room:" << candidateId;
+                    setCurrentIndex(localIndex);
+                    CLIENT_INSTANCE->notifySupportRoomReady();
+                    break;
+                }
+            }
+
+            DBG_INFO << "[SUPPORT] createSupportRoom called, tagname:" << tagname
+                     << "candidate count:" << candidateIds.size();
+            trySupportRoomCandidates(candidateIds, tagname, otherTag, requestId);
+        }
+    }
+}
+
+bool QNunchukRoomListModel::hasPendingSupportRoomRequest() const
+{
+    return m_supportRoomRequestPending || m_supportRequestInProgress;
+}
+
+quint64 QNunchukRoomListModel::beginSupportRequest()
+{
+    const quint64 requestId = ++m_supportRequestId;
+    m_supportRequestInProgress = true;
+    CLIENT_INSTANCE->setReadySupport(false);
+    armSupportRequestWatchdog(requestId);
+    return requestId;
+}
+
+void QNunchukRoomListModel::armSupportRequestWatchdog(quint64 requestId)
+{
+    const quint64 watchdogId = ++m_supportWatchdogId;
+    QTimer::singleShot(30000, this, [this, requestId, watchdogId] {
+        if(watchdogId == m_supportWatchdogId && isSupportRequestActive(requestId)){
+            if(m_supportCreateRequestId == requestId){
+                // Never open a retry while the non-idempotent create-room
+                // POST is still non-terminal.
+                DBG_INFO << "[SUPPORT] Watchdog is waiting for create-room to finish:" << requestId;
                 return;
             }
-            CLIENT_INSTANCE->setReadySupport(false);
-            auto createJob = connection()->createDirectChat("@support:nunchuk.io");
-            createJob->setMaxRetries(0);
-            connect(createJob, &BaseJob::success, this, [this, createJob, tagname] {
-                Quotient::Room *newroom = connection()->room(createJob->roomId());
-                if(newroom){
-                    newroom->addTag(tagname);
-                }
-                CLIENT_INSTANCE->setReadySupport(true);
-            });
-            connect(createJob, &BaseJob::failure, this, [createJob] {
-                AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
-                CLIENT_INSTANCE->setReadySupport(true);
-            });
+            DBG_INFO << "[SUPPORT] Request timed out; allowing retry:" << requestId;
+            finishSupportRequest(requestId);
         }
-        emit countChanged();
+    });
+}
+
+bool QNunchukRoomListModel::isSupportRequestActive(quint64 requestId) const
+{
+    return requestId != 0 && requestId == m_supportRequestId;
+}
+
+bool QNunchukRoomListModel::ensureSupportRequestActive(quint64 requestId,
+                                                       const QString& tagname)
+{
+    if(!isSupportRequestActive(requestId)){
+        return false;
     }
+    if(currentSupportRoomTag() != tagname){
+        DBG_INFO << "[SUPPORT] Active chain changed while handling request:" << requestId;
+        finishSupportRequest(requestId);
+        return false;
+    }
+    return true;
+}
+
+void QNunchukRoomListModel::finishSupportRequest(quint64 requestId)
+{
+    if(!isSupportRequestActive(requestId)){
+        return;
+    }
+    if(m_supportCreateRequestId == requestId){
+        m_supportCreateRequestId = 0;
+    }
+    if(m_supportReconciliationRequestId == requestId){
+        m_supportReconciliationRequestId = 0;
+    }
+    ++m_supportWatchdogId;
+    ++m_supportRequestId;
+    m_supportRequestInProgress = false;
+    CLIENT_INSTANCE->setReadySupport(true);
+}
+
+void QNunchukRoomListModel::trySupportRoomCandidates(QStringList candidateIds,
+                                                     const QString& tagname,
+                                                     const QString& otherTag,
+                                                     quint64 requestId,
+                                                     const QString& repairCandidateId)
+{
+    if(!ensureSupportRequestActive(requestId, tagname)){
+        return;
+    }
+
+    while(!candidateIds.isEmpty()){
+        const QString candidateId = candidateIds.takeFirst();
+        Quotient::Room* candidate = connection()->room(
+            candidateId, JoinState::Invite | JoinState::Join);
+        if(!candidate){
+            continue;
+        }
+
+        if(candidate->joinState() == JoinState::Invite){
+            DBG_INFO << "[SUPPORT] Joining invited support-room candidate:" << candidateId;
+            auto joinJob = connection()->joinRoom(candidateId);
+            joinJob.then(this,
+                [this, candidateIds, tagname, otherTag, requestId,
+                 repairCandidateId](Quotient::JoinRoomJob* job) {
+                    if(!ensureSupportRequestActive(requestId, tagname)){
+                        return;
+                    }
+                    Quotient::Room* joinedCandidate = connection()->room(
+                        job->roomId(), JoinState::Join);
+                    if(!joinedCandidate){
+                        DBG_INFO << "[SUPPORT] Joined candidate is unavailable locally:" << job->roomId();
+                        trySupportRoomCandidates(candidateIds, tagname, otherTag,
+                                                 requestId, repairCandidateId);
+                        return;
+                    }
+                    verifySupportRoomCandidate(joinedCandidate, tagname, otherTag,
+                                               candidateIds, requestId, repairCandidateId);
+                },
+                [this, candidateIds, tagname, otherTag, requestId,
+                 repairCandidateId](Quotient::JoinRoomJob* job) {
+                    if(!ensureSupportRequestActive(requestId, tagname)){
+                        return;
+                    }
+                    DBG_INFO << "[SUPPORT] Failed to join support-room candidate:" << job->errorString();
+                    if(!candidateIds.isEmpty() || !repairCandidateId.isEmpty()){
+                        trySupportRoomCandidates(candidateIds, tagname, otherTag,
+                                                 requestId, repairCandidateId);
+                    } else {
+                        AppModel::instance()->showToast(job->error(), job->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+                        finishSupportRequest(requestId);
+                    }
+                });
+            return;
+        }
+
+        verifySupportRoomCandidate(candidate, tagname, otherTag, candidateIds,
+                                   requestId, repairCandidateId);
+        return;
+    }
+
+    if(!repairCandidateId.isEmpty()){
+        Quotient::Room* repairCandidate = connection()->room(
+            repairCandidateId, JoinState::Join);
+        if(repairCandidate){
+            DBG_INFO << "[SUPPORT] Reusing best verified untagged candidate:" << repairCandidateId;
+            activateSupportRoom(repairCandidate, tagname, requestId, true);
+            return;
+        }
+    }
+
+    DBG_INFO << "[SUPPORT] No valid candidate remains, creating new room";
+    doCreateSupportRoom(tagname, requestId);
+}
+
+void QNunchukRoomListModel::verifySupportRoomCandidate(Quotient::Room *room,
+                                                       const QString& tagname,
+                                                       const QString& otherTag,
+                                                       QStringList remainingCandidateIds,
+                                                       quint64 requestId,
+                                                       const QString& repairCandidateId)
+{
+    if(!ensureSupportRequestActive(requestId, tagname)){
+        return;
+    }
+    if(!room){
+        trySupportRoomCandidates(remainingCandidateIds, tagname, otherTag,
+                                 requestId, repairCandidateId);
+        return;
+    }
+
+    QPointer<Quotient::Room> safeCandidate = room;
+    const bool hasLocalTag = room->tagNames().contains(tagname)
+            && room->property("nunchukSupportSuppressedTag").toString() != tagname;
+
+    // Verify every candidate, including an untagged direct-chat fallback.
+    // This prevents a not-yet-hydrated testnet room from being retagged as
+    // mainnet (or vice versa).
+    DBG_INFO << "[SUPPORT] Verifying tag on server via GetRoomTagsJob for room:" << room->id();
+    auto getTagsJob = connection()->callApi<Quotient::GetRoomTagsJob>(
+        connection()->userId(), room->id());
+    getTagsJob.then(this,
+        [this, safeCandidate, tagname, otherTag, remainingCandidateIds,
+         requestId, repairCandidateId](Quotient::GetRoomTagsJob* job) {
+            if(!ensureSupportRequestActive(requestId, tagname)){
+                return;
+            }
+            if(!safeCandidate){
+                trySupportRoomCandidates(remainingCandidateIds, tagname, otherTag,
+                                         requestId, repairCandidateId);
+                return;
+            }
+            if(job->tags().contains(tagname)){
+                safeCandidate->setProperty("nunchukSupportSuppressedTag", QString{});
+                DBG_INFO << "[SUPPORT] Server confirms tag — navigating to room:" << safeCandidate->id();
+                activateSupportRoom(safeCandidate, tagname, requestId, false);
+            } else if(job->tags().contains(otherTag)){
+                if(safeCandidate->tagNames().contains(tagname)
+                        || supportMarkerTag(safeCandidate) == tagname){
+                    safeCandidate->setProperty("nunchukSupportSuppressedTag", tagname);
+                    for(const QNunchukRoomPtr& roomPtr : std::as_const(m_data)){
+                        if(roomPtr && roomPtr->room() == safeCandidate){
+                            roomPtr->notifySupportClassificationChanged();
+                            break;
+                        }
+                    }
+                }
+                DBG_INFO << "[SUPPORT] Candidate belongs to the other chain; trying the next room:" << safeCandidate->id();
+                trySupportRoomCandidates(remainingCandidateIds, tagname, otherTag,
+                                         requestId, repairCandidateId);
+            } else {
+                if(safeCandidate->tagNames().contains(tagname)
+                        || supportMarkerTag(safeCandidate) == tagname){
+                    // The local tag is a stale optimistic value from an older
+                    // failed PUT. Suppress it immediately without issuing a
+                    // second server mutation; a selected repair clears this.
+                    safeCandidate->setProperty("nunchukSupportSuppressedTag", tagname);
+                    for(const QNunchukRoomPtr& roomPtr : std::as_const(m_data)){
+                        if(roomPtr && roomPtr->room() == safeCandidate){
+                            roomPtr->notifySupportClassificationChanged();
+                            break;
+                        }
+                    }
+                }
+                const QString bestRepairCandidate = repairCandidateId.isEmpty()
+                        ? safeCandidate->id() : repairCandidateId;
+                DBG_INFO << "[SUPPORT] Candidate is untagged; checking for an authoritative room before repair:"
+                         << safeCandidate->id();
+                trySupportRoomCandidates(remainingCandidateIds, tagname, otherTag,
+                                         requestId, bestRepairCandidate);
+            }
+        },
+        [this, safeCandidate, tagname, otherTag, hasLocalTag,
+         remainingCandidateIds, requestId, repairCandidateId](Quotient::GetRoomTagsJob* job) {
+            if(!ensureSupportRequestActive(requestId, tagname)){
+                return;
+            }
+            DBG_INFO << "[SUPPORT] Failed to verify support tags:" << job->errorString();
+            if(safeCandidate && hasLocalTag){
+                // The local current-chain tag is the safest fallback when the
+                // authoritative check is temporarily offline.
+                activateSupportRoom(safeCandidate, tagname, requestId, false);
+            } else if(!remainingCandidateIds.isEmpty() || !repairCandidateId.isEmpty()){
+                trySupportRoomCandidates(remainingCandidateIds, tagname, otherTag,
+                                         requestId, repairCandidateId);
+            } else {
+                AppModel::instance()->showToast(job->error(), job->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+                finishSupportRequest(requestId);
+            }
+        });
+}
+
+void QNunchukRoomListModel::activateSupportRoom(Quotient::Room *room, const QString& tagname,
+                                                quint64 requestId, bool setTagOnServer)
+{
+    if(!ensureSupportRequestActive(requestId, tagname)){
+        return;
+    }
+    if(!room){
+        finishSupportRequest(requestId);
+        return;
+    }
+
+    QPointer<Quotient::Room> safeRoom = room;
+    room->setProperty("nunchukSupportSuppressedTag", QString{});
+    if(!room->connection()->directChatMemberIds(room).contains("@support:nunchuk.io")){
+        // A successful create response can be lost before Quotient updates
+        // m.direct locally. Restore that mapping when reconciliation finds
+        // the room through /sync.
+        room->connection()->addToDirectChats(room, "@support:nunchuk.io");
+    }
+
+    // A legacy account may contain several untagged direct rooms with
+    // support. Mark only the verified/selected room as the temporary
+    // canonical fallback until the server tag arrives in /sync.
+    for(Quotient::Room* knownRoom : room->connection()->allRooms()){
+        if(!knownRoom){
+            continue;
+        }
+        const bool isSupportDirectChat = knownRoom->isDirectChat()
+                && knownRoom->connection()->directChatMemberIds(knownRoom)
+                       .contains("@support:nunchuk.io");
+        if(isSupportDirectChat){
+            knownRoom->setProperty("nunchukSupportCanonicalTag",
+                                   knownRoom == room ? tagname : QString{});
+        }
+    }
+    for(const QNunchukRoomPtr& roomPtr : std::as_const(m_data)){
+        if(!roomPtr || !roomPtr->room()){
+            continue;
+        }
+        Quotient::Room* knownRoom = roomPtr->room();
+        if(knownRoom->isDirectChat()
+                && knownRoom->connection()->directChatMemberIds(knownRoom)
+                       .contains("@support:nunchuk.io")){
+            roomPtr->notifySupportClassificationChanged();
+        }
+    }
+
+    const auto navigateToRoom = [this, safeRoom, tagname, requestId] {
+        if(!ensureSupportRequestActive(requestId, tagname)){
+            return;
+        }
+        if(!safeRoom){
+            finishSupportRequest(requestId);
+            return;
+        }
+
+        int index = getIndex(safeRoom->id());
+        if(index < 0){
+            QNunchukRoomPtr roomPtr = QNunchukRoomPtr(new QNunchukRoom(safeRoom), &QObject::deleteLater);
+            doAddRoom(roomPtr);
+        }
+        resort();
+        index = getIndex(safeRoom->id());
+
+        if(index >= 0){
+            setCurrentIndex(index);
+            finishSupportRequest(requestId);
+            CLIENT_INSTANCE->notifySupportRoomReady();
+        } else {
+            DBG_INFO << "[SUPPORT] Room was not added to the model:" << safeRoom->id();
+            finishSupportRequest(requestId);
+        }
+    };
+
+    const auto ensureSupportMember = [this, safeRoom, tagname, requestId, navigateToRoom] {
+        if(!ensureSupportRequestActive(requestId, tagname)){
+            return;
+        }
+        if(!safeRoom){
+            finishSupportRequest(requestId);
+            return;
+        }
+
+        const auto supportMemberState = safeRoom->memberState("@support:nunchuk.io");
+        if(supportMemberState == Membership::Join || supportMemberState == Membership::Invite){
+            navigateToRoom();
+            return;
+        }
+
+        auto inviteJob = safeRoom->connection()->callApi<Quotient::InviteUserJob>(
+            safeRoom->id(), "@support:nunchuk.io");
+        connect(inviteJob, &BaseJob::success, this,
+            [this, safeRoom, tagname, requestId, navigateToRoom] {
+                if(!ensureSupportRequestActive(requestId, tagname)){
+                    return;
+                }
+                if(!safeRoom){
+                    finishSupportRequest(requestId);
+                    return;
+                }
+                navigateToRoom();
+            });
+        connect(inviteJob, &BaseJob::failure, this,
+            [this, tagname, requestId, inviteJob] {
+                if(!ensureSupportRequestActive(requestId, tagname)){
+                    return;
+                }
+                DBG_INFO << "[SUPPORT] Failed to invite support member:" << inviteJob->errorString();
+                AppModel::instance()->showToast(inviteJob->error(), inviteJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+                finishSupportRequest(requestId);
+            });
+    };
+
+    const auto activateAfterState = [this, safeRoom, tagname, requestId,
+                                     setTagOnServer, ensureSupportMember] {
+        if(!ensureSupportRequestActive(requestId, tagname)){
+            return;
+        }
+        if(!safeRoom){
+            finishSupportRequest(requestId);
+            return;
+        }
+        if(safeRoom->localMember().id().isEmpty()){
+            DBG_INFO << "[SUPPORT] Cannot activate room without local member state:" << safeRoom->id();
+            finishSupportRequest(requestId);
+            return;
+        }
+
+        if(!setTagOnServer){
+            ensureSupportMember();
+            return;
+        }
+
+        auto setTagJob = safeRoom->connection()->callApi<Quotient::SetRoomTagJob>(
+            safeRoom->connection()->userId(), safeRoom->id(), tagname, Quotient::Tag{});
+        connect(setTagJob, &BaseJob::success, this,
+            [this, safeRoom, tagname, requestId, ensureSupportMember] {
+                if(!ensureSupportRequestActive(requestId, tagname)){
+                    return;
+                }
+                if(!safeRoom){
+                    finishSupportRequest(requestId);
+                    return;
+                }
+                ensureSupportMember();
+            });
+        connect(setTagJob, &BaseJob::failure, this,
+            [this, tagname, requestId, setTagJob] {
+                if(!ensureSupportRequestActive(requestId, tagname)){
+                    return;
+                }
+                DBG_INFO << "[SUPPORT] Failed to persist support tag:" << setTagJob->errorString();
+                AppModel::instance()->showToast(setTagJob->error(), setTagJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+                finishSupportRequest(requestId);
+            });
+    };
+
+    if(!room->localMember().id().isEmpty()){
+        activateAfterState();
+        return;
+    }
+
+    DBG_INFO << "[SUPPORT] Waiting for baseStateLoaded before activating room:" << room->id();
+    QObject* context = new QObject(this);
+    connect(room, &Quotient::Room::baseStateLoaded, context,
+        [activateAfterState, context] {
+            activateAfterState();
+            context->deleteLater();
+        }, Qt::SingleShotConnection);
+    connect(room, &QObject::destroyed, context,
+        [this, tagname, requestId, context] {
+            if(ensureSupportRequestActive(requestId, tagname)){
+                finishSupportRequest(requestId);
+            }
+            context->deleteLater();
+        }, Qt::SingleShotConnection);
+    QTimer::singleShot(30000, context, [this, tagname, requestId, context] {
+        if(ensureSupportRequestActive(requestId, tagname)){
+            DBG_INFO << "[SUPPORT] Timed out waiting for room state:" << requestId;
+            finishSupportRequest(requestId);
+        }
+        context->deleteLater();
+    });
+}
+
+void QNunchukRoomListModel::reconcileSupportRoomCreation(
+        const QString& tagname, quint64 requestId, int errorCode,
+        const QString& errorString)
+{
+    if(!ensureSupportRequestActive(requestId, tagname)){
+        return;
+    }
+    if(m_supportReconciliationRequestId == requestId){
+        return;
+    }
+
+    // POST /createRoom has no transaction id. A timeout or broken response
+    // can therefore mean that the server created the room even though the
+    // client saw a failure. Keep retry disabled until successful /sync rounds
+    // have made that server-side result observable.
+    m_supportReconciliationRequestId = requestId;
+    ++m_supportWatchdogId;
+    DBG_INFO << "[SUPPORT] Reconciling an ambiguous create-room result:"
+             << requestId << errorCode << errorString;
+
+    QObject* context = new QObject(this);
+    context->setProperty("successfulSyncs", 0);
+    context->setProperty("finished", false);
+    context->setProperty("aliasLookupFinished", false);
+    context->setProperty("aliasResolved", false);
+    context->setProperty("finalAliasLookupStarted", false);
+    context->setProperty("finalAliasDefinitelyMissing", false);
+    const QString expectedAlias = supportRoomAlias(connection(), tagname);
+
+    const auto inspectSyncedRooms =
+        [this, context, tagname, requestId,
+         errorCode, errorString](bool countSuccessfulSync) -> bool {
+            if(context->property("finished").toBool()){
+                return false;
+            }
+            if(!ensureSupportRequestActive(requestId, tagname)){
+                context->setProperty("finished", true);
+                context->deleteLater();
+                return false;
+            }
+
+            const QString otherTag = qUtils::strCompare(tagname, NUNCHUK_ROOM_SUPPORT)
+                    ? NUNCHUK_ROOM_SUPPORTTESTNET : NUNCHUK_ROOM_SUPPORT;
+            Quotient::Room* reconciledRoom = nullptr;
+            for(Quotient::Room* room : connection()->allRooms()){
+                if(!room || room->joinState() == JoinState::Leave
+                        || room->tagNames().contains(otherTag)){
+                    continue;
+                }
+                const QString markerTag = supportMarkerTag(room);
+                const QString expectedRoomId = context->property("expectedRoomId").toString();
+                const bool matchesUniqueIdentity = markerTag == tagname
+                        && room->property("nunchukSupportSuppressedTag").toString() != tagname
+                        && (expectedRoomId.isEmpty() || room->id() == expectedRoomId);
+                const bool hasVerifiedLocalTag = room->tagNames().contains(tagname)
+                        && room->property("nunchukSupportSuppressedTag").toString() != tagname;
+                if(matchesUniqueIdentity || hasVerifiedLocalTag){
+                    reconciledRoom = room;
+                    break;
+                }
+            }
+
+            if(reconciledRoom){
+                DBG_INFO << "[SUPPORT] Recovered room after ambiguous create:"
+                         << reconciledRoom->id();
+                context->setProperty("finished", true);
+                context->deleteLater();
+                m_supportReconciliationRequestId = 0;
+                activateSupportRoom(reconciledRoom, tagname, requestId, true);
+                return false;
+            }
+
+            if(countSuccessfulSync){
+                context->setProperty(
+                    "successfulSyncs",
+                    context->property("successfulSyncs").toInt() + 1);
+            }
+            if(context->property("successfulSyncs").toInt() < 2
+                    || !context->property("aliasLookupFinished").toBool()
+                    || context->property("aliasResolved").toBool()){
+                return false;
+            }
+
+            // The first alias lookup can race a late server-side commit of the
+            // timed-out POST. Re-resolve once after two settled sync rounds;
+            // only that final lookup is allowed to produce a negative result.
+            if(!context->property("finalAliasLookupStarted").toBool()){
+                context->setProperty("finalAliasLookupStarted", true);
+                context->setProperty("aliasLookupFinished", false);
+                return true;
+            }
+            if(!context->property("finalAliasDefinitelyMissing").toBool()){
+                // A transport/authentication failure cannot prove that the
+                // alias is absent. Keep the request locked until the bounded
+                // reconciliation deadline instead of reporting a false
+                // negative and inviting an unnecessary retry.
+                return false;
+            }
+
+            // The deterministic alias is created atomically with the room and
+            // is unique on the homeserver. A retry uses the same alias, so it
+            // cannot create a second room even if the first POST commits late.
+            DBG_INFO << "[SUPPORT] Reconciliation found no created room after two syncs:"
+                     << requestId;
+            context->setProperty("finished", true);
+            context->deleteLater();
+            AppModel::instance()->showToast(
+                errorCode,
+                errorString.isEmpty()
+                    ? QStringLiteral("Unable to confirm support-room creation")
+                    : errorString,
+                EWARNING::WarningType::EXCEPTION_MSG);
+            finishSupportRequest(requestId);
+            return false;
+        };
+
+    const auto startFinalAliasLookup =
+        [this, context, tagname, requestId, expectedAlias,
+         inspectSyncedRooms] {
+            if(context->property("finished").toBool()
+                    || !ensureSupportRequestActive(requestId, tagname)){
+                return;
+            }
+            DBG_INFO << "[SUPPORT] Rechecking support alias after settled syncs:"
+                     << expectedAlias;
+            auto finalAliasJob =
+                connection()->callApi<Quotient::GetRoomIdByAliasJob>(
+                    expectedAlias);
+            connect(finalAliasJob, &BaseJob::success, context,
+                [context, finalAliasJob, inspectSyncedRooms] {
+                    context->setProperty("aliasLookupFinished", true);
+                    context->setProperty("aliasResolved", true);
+                    context->setProperty("expectedRoomId", finalAliasJob->roomId());
+                    inspectSyncedRooms(false);
+                });
+            connect(finalAliasJob, &BaseJob::failure, context,
+                [context, finalAliasJob, inspectSyncedRooms] {
+                    context->setProperty("aliasLookupFinished", true);
+                    context->setProperty("aliasResolved", false);
+                    context->setProperty(
+                        "finalAliasDefinitelyMissing",
+                        finalAliasJob->error() == BaseJob::NotFound);
+                    inspectSyncedRooms(false);
+                });
+        };
+
+    // loadedRoomState is the semantic notification that Room::updateData has
+    // applied the first state/name/member/marker payload. Use it for positive
+    // detection; it must not count as a sync round because one /sync can load
+    // any number of rooms (or none at all).
+    connect(connection(), &Connection::loadedRoomState, context,
+        [context, inspectSyncedRooms, startFinalAliasLookup](Room* room) {
+            if(!room || context->property("finished").toBool()){
+                return;
+            }
+            DBG_INFO << "[SUPPORT] Reconciliation observed hydrated room:"
+                     << room->id();
+            if(inspectSyncedRooms(false)){
+                startFinalAliasLookup();
+            }
+        });
+    connect(connection(), &Connection::syncDone, context,
+        [context, inspectSyncedRooms, startFinalAliasLookup] {
+            // Quotient queues every Room::updateData before emitting syncDone.
+            // Queue one MetaCall behind those updates so an empty/negative sync
+            // is counted only after loadedRoomState had a chance to recover the
+            // room. This is an ordering barrier, not a timer heuristic.
+            QMetaObject::invokeMethod(context,
+                [context, inspectSyncedRooms, startFinalAliasLookup] {
+                    if(!context->property("finished").toBool()
+                            && inspectSyncedRooms(true)){
+                        startFinalAliasLookup();
+                    }
+                }, Qt::QueuedConnection);
+        });
+    auto resolveAliasJob = connection()->callApi<Quotient::GetRoomIdByAliasJob>(
+        expectedAlias);
+    connect(resolveAliasJob, &BaseJob::success, context,
+        [context, resolveAliasJob, inspectSyncedRooms] {
+            context->setProperty("aliasLookupFinished", true);
+            context->setProperty("aliasResolved", true);
+            context->setProperty("expectedRoomId", resolveAliasJob->roomId());
+            // If the room is already hydrated, recover immediately; otherwise
+            // the loadedRoomState listener above will inspect it after /sync.
+            inspectSyncedRooms(false);
+        });
+    connect(resolveAliasJob, &BaseJob::failure, context,
+        [context, inspectSyncedRooms, startFinalAliasLookup] {
+            context->setProperty("aliasLookupFinished", true);
+            context->setProperty("aliasResolved", false);
+            // This may be the last outstanding condition after two settled
+            // sync rounds; re-evaluate without counting another round.
+            if(inspectSyncedRooms(false)){
+                startFinalAliasLookup();
+            }
+        });
+
+    // Reconciliation must not keep the Support action busy forever if syncing
+    // stops. Two SyncJob long-polls can consume about a minute, so leave a
+    // small margin while still keeping the recovery bounded.
+    QTimer::singleShot(75000, context,
+        [this, context, tagname, requestId, errorCode, errorString,
+         inspectSyncedRooms] {
+            if(context->property("finished").toBool()){
+                return;
+            }
+            inspectSyncedRooms(false);
+            if(context->property("finished").toBool()){
+                return;
+            }
+            if(!ensureSupportRequestActive(requestId, tagname)){
+                context->setProperty("finished", true);
+                context->deleteLater();
+                return;
+            }
+
+            DBG_INFO << "[SUPPORT] Reconciliation timed out:" << requestId;
+            context->setProperty("finished", true);
+            context->deleteLater();
+            AppModel::instance()->showToast(
+                errorCode,
+                context->property("aliasResolved").toBool()
+                    ? QStringLiteral("Support room exists but its state was not received from Matrix")
+                    : (errorString.isEmpty()
+                        ? QStringLiteral("Unable to confirm support-room creation")
+                        : errorString),
+                EWARNING::WarningType::EXCEPTION_MSG);
+            finishSupportRequest(requestId);
+        });
+    if(inspectSyncedRooms(false)){
+        startFinalAliasLookup();
+    }
+}
+
+void QNunchukRoomListModel::doCreateSupportRoom(const QString& tagname, quint64 requestId)
+{
+    if(!ensureSupportRequestActive(requestId, tagname)){
+        return;
+    }
+    DBG_INFO << "[SUPPORT_TRACE] doCreateSupportRoom tagname:" << tagname
+             << "connection:" << (connection() ? connection()->userId() : "NULL");
+    // Support must remain a plaintext Matrix room even though the connection
+    // has E2EE enabled for normal chat rooms. Do not add m.room.encryption here.
+    QVector<CreateRoomJob::StateEvent> initialStateEvents;
+    initialStateEvents.append({
+        QString::fromLatin1(NUNCHUK_SUPPORT_MARKER_EVENT),
+        QJsonObject{{"tag", tagname}, {"version", 1}}
+    });
+
+    // A deterministic, private alias gives create-room server-enforced
+    // uniqueness for this Matrix user and chain. Retrying a POST whose result
+    // was lost can therefore never create another support room.
+    auto createJob = connection()->createRoom(
+        Connection::UnpublishRoom,
+        supportRoomAliasLocalpart(connection(), tagname),
+        QStringLiteral("Support room"), {},
+        {QStringLiteral("@support:nunchuk.io")},
+        QStringLiteral("trusted_private_chat"), {}, true,
+        initialStateEvents);
+    DBG_INFO << "[SUPPORT_TRACE] create support-room job created:"
+             << (createJob ? "OK" : "NULL");
+    if(!createJob){
+        finishSupportRequest(requestId);
+        return;
+    }
+    m_supportCreateRequestId = requestId;
+    armSupportRequestWatchdog(requestId);
+    // The create-room POST must reach a terminal state before the 30-second
+    // request watchdog opens the UI for a retry; otherwise two outstanding
+    // POSTs could create duplicate rooms.
+    createJob->setBackoffStrategy(Quotient::JobBackoffStrategy{
+        {std::chrono::seconds{25}}, {std::chrono::seconds{1}}, 0
+    });
+    connect(createJob, &BaseJob::finished, this,
+        [this, tagname, requestId](BaseJob* job) {
+            if(ensureSupportRequestActive(requestId, tagname)
+                    && m_supportCreateRequestId == requestId){
+                m_supportCreateRequestId = 0;
+                if(job->error() == BaseJob::Abandoned){
+                    DBG_INFO << "[SUPPORT] createDirectChat was abandoned";
+                    reconcileSupportRoomCreation(
+                        tagname, requestId, job->error(), job->errorString());
+                } else {
+                    // The POST is terminal; give the local-room/tag/invite
+                    // continuation its own bounded activation window.
+                    armSupportRequestWatchdog(requestId);
+                }
+            }
+        });
+    createJob.then(this,
+        [this, tagname, requestId](Quotient::CreateRoomJob* job) {
+            if(!ensureSupportRequestActive(requestId, tagname)){
+                return;
+            }
+            DBG_INFO << "[SUPPORT] createDirectChat success, roomId:" << job->roomId();
+            // This continuation is chained after Quotient's internal
+            // provideRoom/addToDirectChats continuations.
+            Quotient::Room *newroom = connection()->room(job->roomId(), JoinState::Join);
+            if(newroom){
+                DBG_INFO << "[SUPPORT] newroom id:" << newroom->id() << "localMemberId:" << newroom->localMember().id();
+                activateSupportRoom(newroom, tagname, requestId, true);
+            } else {
+                DBG_INFO << "[SUPPORT] WARNING: newroom is null after createDirectChat";
+                reconcileSupportRoomCreation(
+                    tagname, requestId, BaseJob::IncorrectResponse,
+                    QStringLiteral("Created support room is not available locally"));
+            }
+        },
+        [this, tagname, requestId](Quotient::CreateRoomJob* job) {
+            if(!ensureSupportRequestActive(requestId, tagname)){
+                return;
+            }
+            DBG_INFO << "[SUPPORT] create support room failed:" << job->errorString();
+            if(isAmbiguousMutationError(job->error())
+                    || job->error() == BaseJob::IncorrectRequest){
+                reconcileSupportRoomCreation(
+                    tagname, requestId, job->error(), job->errorString());
+                return;
+            }
+            AppModel::instance()->showToast(job->error(), job->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+            finishSupportRequest(requestId);
+        });
 }
 
 bool QNunchukRoomListModel::allHisLoaded()
@@ -2803,13 +4999,34 @@ void QNunchukRoomListModel::setRoomWallets(const QList<QRoomWalletPtr> &roomWall
 void QNunchukRoomListModel::renameRoomByzantineChat(const QString room_id, const QString group_id, const QString newname)
 {
     DBG_INFO << "room_id:" << room_id << "group_id:" << group_id << "newname:" << newname;
-    foreach (QNunchukRoomPtr it, m_data) {
-        if(qUtils::strCompare(it.data()->id(), room_id) || qUtils::strCompare(it.data()->byzantineRoomGroupId(), group_id)){
-            if(!qUtils::strCompare(it.data()->roomName(), newname)){
-                it.data()->setRoomName(newname);
+    QNunchukRoomPtr target;
+    if(!room_id.isEmpty()){
+        target = getRoomById(room_id);
+    }
+    if(!target && !group_id.isEmpty()){
+        for(const QNunchukRoomPtr& room : m_data){
+            if(room && qUtils::strCompare(room->byzantineRoomGroupId(), group_id)){
+                target = room;
+                break;
             }
         }
     }
+    const QString requestedName = newname.trimmed();
+    if(!target || requestedName.isEmpty()
+            || target->roomNameChangeInProgress()
+            || qUtils::strCompare(target->roomName(), requestedName)){
+        return;
+    }
+    const QString targetRoomId = target->id();
+    QObject* renameContext = new QObject(this);
+    connect(target.data(), &QNunchukRoom::roomNameChangeSucceeded, renameContext,
+            [this, renameContext, targetRoomId, group_id] {
+        emit byzantineRoomRenamed(targetRoomId, group_id);
+        renameContext->deleteLater();
+    });
+    connect(target.data(), &QNunchukRoom::roomNameChangeFailed, renameContext,
+            [renameContext](const QString&) { renameContext->deleteLater(); });
+    target->setRoomName(requestedName);
 }
 
 void QNunchukRoomListModel::stopCountdown()
@@ -2928,10 +5145,20 @@ void QNunchukRoomListModel::checkNunchukSyncRoom()
         connect(createJob, &BaseJob::success, this, [this, createJob] {
             Quotient::Room *newroom = connection()->room(createJob->roomId());
             if(newroom){
-                newroom->addTag(NUNCHUK_ROOM_SYNC);
+                if(!newroom->localMember().id().isEmpty()){
+                    newroom->addTag(NUNCHUK_ROOM_SYNC);
+                } else {
+                    QObject* ctx = new QObject(this);
+                    connect(newroom, &Quotient::Room::baseStateLoaded, ctx,
+                        [newroom, ctx](){
+                            if(!newroom->localMember().id().isEmpty()){
+                                newroom->addTag(NUNCHUK_ROOM_SYNC);
+                            }
+                            ctx->deleteLater();
+                        });
+                }
             }
         });
-        emit countChanged();
     }
     else{
         for (QNunchukRoomPtr r : m_servive) {
@@ -2955,34 +5182,60 @@ bool QNunchukRoomListModel::hasContact(const QString &id)
 void QNunchukRoomListModel::newRoom(Room *room)
 {
     DBG_INFO << room->name() << (int)room->joinState();
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::invitedRoom(Room *room, Room *prev)
 {
     DBG_INFO << room->name() << (int)room->joinState();
     joinRoom(room->id());
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::joinedRoom(Room *room, Room *prev)
 {
-//    connectSingleShot(room, &Room::tagsChanged, this, [this, room] {
-//        DBG_INFO << "FIXME Room::tags" << room->name() << (int)room->joinState() << room->tagNames();
-//    });
-    connectSingleShot(room, &Room::baseStateLoaded, this, [this, room] {
-        m_time.stop();
-        timeoutHandler(3000, [this, room]() {
-            QNunchukRoomPtr newRoom = QNunchukRoomPtr(new QNunchukRoom(room), &QObject::deleteLater);
-            doAddRoom(newRoom);
-            if( !newRoom.data()->isServerNoticeRoom() && !newRoom.data()->isNunchukSyncRoom()){
-                setCurrentIndex(rowCount()-1);
-                resort();
-                emit countChanged();
+    if(!room){
+        return;
+    }
+    DBG_INFO << "[JOINED_ROOM] id:" << room->id() << "name:" << room->name() << "tags:" << room->tagNames();
+    QPointer<Room> safeRoom = room;
+    const auto scheduleAddRoom = [this, safeRoom] {
+        if(!safeRoom){
+            return;
+        }
+        DBG_INFO << "[JOINED_ROOM] state ready for room:" << safeRoom->id()
+                 << "tags:" << safeRoom->tagNames()
+                 << "localMember:" << safeRoom->localMember().id();
+        const bool locallyCreated = m_locallyCreatedRoomIds.remove(safeRoom->id());
+        if(containsRoomId(safeRoom->id()) || containsServiceRoom(safeRoom->id())){
+            if(locallyCreated && containsRoomId(safeRoom->id())){
+                const int existingIndex = getIndex(safeRoom->id());
+                if(existingIndex >= 0){
+                    setCurrentIndex(existingIndex);
+                }
             }
-        });
-    });
-    emit countChanged();
+            return;
+        }
+
+        QNunchukRoomPtr newRoom = QNunchukRoomPtr(
+            new QNunchukRoom(safeRoom), &QObject::deleteLater);
+        const bool selectNewRoom = locallyCreated
+                && !newRoom->isServerNoticeRoom()
+                && !newRoom->isNunchukSyncRoom()
+                && !newRoom->isSupportRoom();
+        doAddRoom(newRoom);
+        if(selectNewRoom){
+            resort();
+            const int addedIndex = getIndex(safeRoom->id());
+            if(addedIndex >= 0){
+                setCurrentIndex(addedIndex);
+            }
+        }
+    };
+
+    if(!room->localMember().id().isEmpty()){
+        scheduleAddRoom();
+    } else {
+        connect(room, &Room::baseStateLoaded, this, scheduleAddRoom, Qt::SingleShotConnection);
+    }
 }
 
 void QNunchukRoomListModel::leftRoom(Room *room, Room *prev)
@@ -2991,7 +5244,6 @@ void QNunchukRoomListModel::leftRoom(Room *room, Room *prev)
     if(room && connection()){
         removeRoomById(room->id());
     }
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::aboutToDeleteRoom(Room *room)
@@ -3000,13 +5252,11 @@ void QNunchukRoomListModel::aboutToDeleteRoom(Room *room)
     if(room && connection()){
         removeRoomById(room->id());
     }
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::loadedRoomState(Room *room)
 {
     DBG_INFO << "loadedRoomState" << room->name() << (int)room->joinState() << room->tagNames();
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::refresh(QNunchukRoomPtr room, const QVector<int> &roles)
@@ -3017,7 +5267,6 @@ void QNunchukRoomListModel::refresh(QNunchukRoomPtr room, const QVector<int> &ro
     }
     const auto idx = index(it - m_data.begin());
     emit dataChanged(idx, idx, roles);
-    emit countChanged();
 }
 
 void QNunchukRoomListModel::resort()
@@ -3026,7 +5275,7 @@ void QNunchukRoomListModel::resort()
         return;
     }
     beginResetModel();
-    qSort(m_data.begin(), m_data.end(), sortRoomListByTimeDescending);
+    std::sort(m_data.begin(), m_data.end(), sortRoomListByTimeDescending);
     endResetModel();
     setCurrentIndex(m_data.indexOf(currentRoomPtr()));
     emit refreshRoomList();

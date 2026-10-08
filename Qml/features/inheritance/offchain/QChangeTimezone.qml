@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -24,7 +24,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2152
+    label.text: QSTR.STR_QML_2152
     extraHeader: Item {}
     onCloseClicked: vm.close()
     
@@ -41,7 +41,7 @@ QOnScreenContentTypeB {
             // Description text
             QLato {
                 width: parent.width
-                text: STR.STR_QML_2189
+                text: QSTR.STR_QML_2189
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
                 lineHeight: 20
@@ -69,7 +69,7 @@ QOnScreenContentTypeB {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_835
+            label.text: QSTR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
             onButtonClicked: {

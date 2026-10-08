@@ -15,9 +15,8 @@
  *                                                                        *
  * You should have received a copy of the GNU General Public License      *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
- *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Buttons"
@@ -26,14 +25,41 @@ import "./../../../customizes/services"
 import "./../../../customizes/Texts"
 import "../../../../../localization/STR_QML.js" as STR
 
+// NUN-10192: "The Backup Password" info popup (mockup 06D).
+// BUGFIX: was built on QOnScreenContentTypeA, whose rounded-corner chrome relies on a
+// layer.enabled + OpacityMask combo that renders as a plain square box in this build. Rebuilt the
+// shell with a native Rectangle radius (no GraphicalEffects) to match the bordered/rounded card
+// style already used elsewhere in this CR (e.g. QInheritanceDetailsOffChain.qml).
 QPopupEmpty {
     id: _id
-    content: QOnScreenContentTypeA {
+    // NUN-10192: used as step 1/2 in the "both methods" info flow -> "Continue" instead of "Got it".
+    property bool isFinalStep: true
+    signal continueClicked()
+    content: Item {
+        // BUGFIX: fixed to popupWidth/popupHeight (800x700, same as "Share your secrets" and other
+        // dialogs) instead of self-sizing to content -- was rendering a different size than the
+        // rest of the app's popups.
         width: 800
-        height: 489
-        label.text: STR.STR_QML_1615
-        onCloseClicked: _id.close()
-        content: Item {
+        height: 700
+        // BUGFIX: Item doesn't mirror width/height into implicitWidth/Height, which QPopup.qml's
+        // boxmask sizing (contentInfo.implicitWidth/Height) relies on -- without this the outer
+        // drop-shadow/padding rect collapses to 0x0.
+        implicitWidth: width
+        implicitHeight: height
+        Rectangle {
+            id: _frame
+            anchors.fill: parent
+            radius: 24
+            color: "#FFFFFF"
+        }
+        Column {
+            id: _layout
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 36 }
+            spacing: 16
+            QHeadLine {
+                width: parent.width - 48
+                text: STR.STR_QML_1615
+            }
             Column {
                 width: 539
                 spacing: 24
@@ -52,6 +78,9 @@ QPopupEmpty {
                     readonly property var content_map: [
                         {height: 84, headline:STR.STR_QML_1617, content: STR.STR_QML_1619 , icon: "qrc:/Images/Images/1.Active.svg" },
                         {height: 84, headline:STR.STR_QML_1618, content: STR.STR_QML_1620 , icon: "qrc:/Images/Images/2.Active.svg" },
+                        // NUN-10192: Keystone/Other devices entries (mockup 06D).
+                        {height: 84, headline:STR.STR_QML_2312, content: STR.STR_QML_2313 , icon: "qrc:/Images/Images/3.Active.svg" },
+                        {height: 84, headline:STR.STR_QML_2314, content: STR.STR_QML_2315 , icon: "qrc:/Images/Images/4.Active.svg" },
                     ]
                     model: content_map.length
                     Rectangle {
@@ -103,19 +132,30 @@ QPopupEmpty {
                     }
                 }
             }
-        }
-
-        bottomLeft: Item {}
-        bottomRight: Row {
-            spacing: 12
-            QTextButton {
-                width: 73
+            Item {
+                width: 539
                 height: 48
-                label.text: STR.STR_QML_341
-                label.font.pixelSize: 16
-                type: eTypeE
-                onButtonClicked: _id.close()
+                QTextButton {
+                    anchors.right: parent.right
+                    width: isFinalStep ? 73 : 97
+                    height: 48
+                    // NUN-10192: step 1 of "both methods" flow continues instead of closing.
+                    label.text: isFinalStep ? STR.STR_QML_341 : STR.STR_QML_097
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: {
+                        if (isFinalStep) {
+                            _id.close()
+                        } else {
+                            continueClicked()
+                        }
+                    }
+                }
             }
+        }
+        QCloseButton {
+            anchors { right: parent.right; rightMargin: 24; top: parent.top; topMargin: 24 }
+            onClicked: _id.close()
         }
     }
 }

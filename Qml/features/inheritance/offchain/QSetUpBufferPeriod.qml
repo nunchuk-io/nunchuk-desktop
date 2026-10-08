@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -41,7 +41,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_862
+    label.text: QSTR.STR_QML_862
     extraHeader: Item {}
     onCloseClicked: vm.close()
 
@@ -58,7 +58,7 @@ QOnScreenContentTypeA {
                 QLato {
                     width: 728
                     height: 56
-                    text: STR.STR_QML_2222
+                    text: QSTR.STR_QML_2222
                     font.pixelSize: 16
                     lineHeight: 20
                     lineHeightMode: Text.FixedHeight
@@ -69,7 +69,7 @@ QOnScreenContentTypeA {
                 QLato {
                     width: 728
                     height: 20
-                    text: STR.STR_QML_2223
+                    text: QSTR.STR_QML_2223
                     font.pixelSize: 16
                     lineHeight: 20
                     lineHeightMode: Text.FixedHeight
@@ -102,7 +102,7 @@ QOnScreenContentTypeA {
                             fontPixelSize: 16
                             fontWeight: btn.selected ? Font.ExtraBold : Font.DemiBold
                             selected: vm.buffer_period_id === modelData.id
-                            textBadge: modelData.is_recommended ? STR.STR_QML_879 : ""
+                            textBadge: modelData.is_recommended ? QSTR.STR_QML_879 : ""
                             onButtonClicked: {
                                 vm.buffer_period_id = modelData.id
                             }
@@ -121,7 +121,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_245
+            label.text: QSTR.STR_QML_245
             label.font.pixelSize: 14
             type: eTypeF
             onButtonClicked: vm.close()
@@ -130,7 +130,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_265
+            label.text: QSTR.STR_QML_265
             label.font.pixelSize: 14
             type: eTypeE
             onButtonClicked: vm.onContinueClicked()

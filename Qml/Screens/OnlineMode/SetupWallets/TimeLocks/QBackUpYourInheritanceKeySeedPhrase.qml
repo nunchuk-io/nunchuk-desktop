@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -41,9 +41,11 @@ QOnScreenContentTypeA {
     content: Item {
         Row {
             spacing: 36
+            // BUGFIX: 500 sat flush against the bottom Back/Continue button row (no gap);
+            // shrunk by 12px so the blue box ends 12px above the button row.
             Rectangle {
                 width: 346
-                height: 512
+                height: 488
                 radius: 24
                 color: "#D0E2FF"
                 QPictureSmooth {
@@ -55,7 +57,7 @@ QOnScreenContentTypeA {
             }
             Item {
                 width: 346
-                height: 512
+                height: 488
                 Column {
                     width: parent.width
                     spacing: 24

@@ -17,11 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.3
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -45,17 +43,56 @@ QScreen {
         onCloseClicked: {
             QMLHandle.sendEvent(EVT.EVT_PENDING_REQUEST_BACK)
         }
-        TabView {
-            id: tabselect
-            width: 528
-            height: 420
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 100
+        // Qt6: TabView/Tab/TabViewStyle removed — replaced with custom Item + Row tab bar
+            Item {
+                id: tabselect
+                width: 528
+                height: 420
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 100
+                property int currentIndex: 0
 
-            Tab {
-                title: STR.STR_QML_355
+                // ── Tab bar ──────────────────────────────────────────────────
+                Row {
+                    id: tabBar
+                    width: parent.width
+                    height: 60
+
+                    Repeater {
+                        model: [STR.STR_QML_355, STR.STR_QML_356]
+                        delegate: Item {
+                            width: tabselect.width / 2
+                            height: 60
+                            QText {
+                                anchors.centerIn: parent
+                                text: modelData
+                                color: "#031F2B"
+                                font.pixelSize: 24
+                                font.weight: tabselect.currentIndex === index ? Font.ExtraBold : Font.Normal
+                                font.family: "Lato"
+                            }
+                            Rectangle {
+                                color: tabselect.currentIndex === index ? "#031F2B" : "#EAEAEA"
+                                width: tabselect.width / 2
+                                height: tabselect.currentIndex === index ? 2 : 1
+                                anchors.bottom: parent.bottom
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: tabselect.currentIndex = index
+                            }
+                        }
+                    }
+                }
+
+                // ── Tab 0: Received requests ─────────────────────────────────
                 Item {
+                    anchors.top: tabBar.bottom
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    visible: tabselect.currentIndex === 0
                     Rectangle {
                         width: 528
                         height: 352
@@ -74,6 +111,7 @@ QScreen {
                             clip: true
                             spacing: 12
                             delegate: QContactReceivedDelegate {
+                                width: contactReceivedList.width - 8  // leave room for QScrollBar (8px)
                                 contactname: model.name
                                 contactemail: model.email
                                 onItemAcceptClicked: {
@@ -83,14 +121,17 @@ QScreen {
                                     ClientController.ignoreFriendRequest(model.id)
                                 }
                             }
-                            ScrollBar.vertical: ScrollBar { active: true }
+                            ScrollBar.vertical: QScrollBar { }
                         }
                     }
                 }
-            }
-            Tab {
-                title: STR.STR_QML_356
+
+                // ── Tab 1: Sent requests ─────────────────────────────────────
                 Item {
+                    anchors.top: tabBar.bottom
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    visible: tabselect.currentIndex === 1
                     Rectangle {
                         width: 528
                         height: 352
@@ -109,44 +150,17 @@ QScreen {
                             clip: true
                             spacing: 12
                             delegate: QContactSentDelegate {
+                                width: contactSendList.width - 8  // leave room for QScrollBar (8px)
                                 contactname: model.name
                                 contactemail: model.email
                                 onItemIgnoreClicked: {
                                     ClientController.cancelFriendRequest(model.id)
                                 }
                             }
-                            ScrollBar.vertical: ScrollBar { active: true }
+                            ScrollBar.vertical: QScrollBar { }
                         }
                     }
                 }
             }
-
-            style: TabViewStyle {
-                frameOverlap: 1
-                tab: Rectangle {
-                    implicitWidth: tabselect.width/2
-                    implicitHeight: 60
-                    color: "transparent"
-                    QText {
-                        id: text
-                        anchors.centerIn: parent
-                        text: styleData.title
-                        color: "#031F2B"
-                        font.pixelSize: 24
-                        font.weight: styleData.selected ? Font.ExtraBold: Font.Normal
-                        font.family: "Lato"
-                    }
-
-                    Rectangle {
-                        color: styleData.selected ? "#031F2B" : "#EAEAEA"
-                        implicitWidth: tabselect.width/2
-                        height: styleData.selected ? 2 : 1
-                        anchors.bottom: parent.bottom
-                    }
-                }
-
-                frame: Rectangle { color: "transparent" }
-            }
-        }
     }
 }

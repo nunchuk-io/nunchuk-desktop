@@ -22,6 +22,10 @@
 #include "Servers/Draco.h"
 #include "QOutlog.h"
 
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardPaths>
+
 NunchukSettings::NunchukSettings():
     QSettings(QSettings::NativeFormat, QSettings::UserScope, qApp->organizationName(), qApp->applicationName()),
     m_group("")
@@ -614,16 +618,45 @@ void AppSetting::setEnableCertificateFile(bool enableCertificateFile)
 
 QString AppSetting::storagePath()
 {
-    auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (path.isEmpty()) {
-        DBG_INFO << "Cannot determine settings storage location";
+        storagePath_.clear();
+        DBG_ERROR << "Cannot determine application data directory";
+        return storagePath_;
     }
-    else {
-        QDir d{ path };
-        if (d.mkpath(d.absolutePath()) && QDir::setCurrent(d.absolutePath())) {
-            storagePath_ = QDir::currentPath();
-        }
+
+    // Do not change the process-wide current directory here. Apart from being
+    // unnecessary, setCurrent() makes every relative path in every thread
+    // depend on when this getter happens to be called.
+    storagePath_ = QDir::cleanPath(QDir(path).absolutePath());
+
+    QFileInfo storageInfo(storagePath_);
+    if (storageInfo.exists() && !storageInfo.isDir()) {
+        DBG_ERROR << "Application data path exists but is not a directory:"
+                  << storagePath_;
+        return storagePath_;
     }
+
+    if (!storageInfo.exists() && !QDir().mkpath(storagePath_)) {
+        // Return the intended non-empty path so libnunchuk reports the actual
+        // invalid data directory instead of silently falling back to a second,
+        // legacy default location.
+        DBG_ERROR << "Cannot create application data directory:" << storagePath_;
+        return storagePath_;
+    }
+
+    storageInfo.refresh();
+    if (!storageInfo.exists() || !storageInfo.isDir()) {
+        DBG_ERROR << "Application data directory validation failed:"
+                  << storagePath_;
+        return storagePath_;
+    }
+
+    if (!storageInfo.isWritable()) {
+        DBG_ERROR << "Application data directory is not writable:"
+                  << storagePath_;
+    }
+
     return storagePath_;
 }
 

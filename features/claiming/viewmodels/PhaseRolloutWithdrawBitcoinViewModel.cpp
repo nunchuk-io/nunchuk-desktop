@@ -13,7 +13,8 @@ PhaseRolloutWithdrawBitcoinViewModel::PhaseRolloutWithdrawBitcoinViewModel(QObje
 
 void PhaseRolloutWithdrawBitcoinViewModel::next() {
     GUARD_RIGHT_PANEL_NAV()
-    rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritanceyourinheritance);
+    // Returning to the claim's home/result screen - terminal again, same as reaching it the first time.
+    rightPanel->requestTerminal(qml::components::rightpannel::service::common::qserviceclaiminheritanceyourinheritance);
 }
 
 void PhaseRolloutWithdrawBitcoinViewModel::back() {

@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
@@ -34,7 +34,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2121
+    label.text: QSTR.STR_QML_2121
     onCloseClicked: vm.close()
     onPrevClicked: vm.back()
     extraHeader: Item { }
@@ -77,11 +77,11 @@ QOnScreenContentTypeA {
                             if(vm.enableSpendingLimit) {
                                 var policy_string = (vm.currency ?? "") + " " + (vm.balance ?? "") + " / " + (vm.intervalStr ?? "")
                                 if (policy_string.trim() === "/") {
-                                    policy_string = STR.STR_QML_2148
+                                    policy_string = QSTR.STR_QML_2148
                                 }
                                 return policy_string
                             } else {
-                                return STR.STR_QML_2148
+                                return QSTR.STR_QML_2148
                             }
                         }
                         font.pixelSize: 16
@@ -102,7 +102,7 @@ QOnScreenContentTypeA {
                 contentWidth: editContentCol.width
                 contentHeight: editContentCol.height
                 clip: true
-                ScrollBar.vertical: ScrollBar { active: true }
+                ScrollBar.vertical: QScrollBar { }
                 Column {
                     id: editContentCol
                     width: 435
@@ -111,8 +111,8 @@ QOnScreenContentTypeA {
                         id: _spendingLimitToggle
                         width: widthEdit
                         height: 79
-                        label: STR.STR_QML_799
-                        description: STR.STR_QML_2139
+                        label: QSTR.STR_QML_799
+                        description: QSTR.STR_QML_2139
                         checked: vm.enableSpendingLimit
                         onToggled: {
                             vm.enableSpendingLimit = checked
@@ -147,8 +147,8 @@ QOnScreenContentTypeA {
                         id: _coSigningDelayToggle
                         width: widthEdit
                         height: 79
-                        label: STR.STR_QML_795
-                        description: STR.STR_QML_796
+                        label: QSTR.STR_QML_795
+                        description: QSTR.STR_QML_796
                         checked: vm.enableCoSigningDelay
                         onToggled: {
                             vm.enableCoSigningDelay = checked
@@ -162,32 +162,32 @@ QOnScreenContentTypeA {
                         visible: vm.enableCoSigningDelay
                         QTextInputBoxTypeB {
                             id: input_hours
-                            label: STR.STR_QML_797
+                            label: QSTR.STR_QML_797
                             titleFontSize: 12
                             boxWidth: 163
                             boxHeight: 48
                             textInputted: vm.hour.toString()
                             input.placeholderText: ""
                             isValid: textInputted !== ""
-                            validator: RegExpValidator {
-                                regExp: /^(0?\d|1\d|2[0-3])$/
+                            validator: RegularExpressionValidator {
+                                regularExpression: /^(0?\d|1\d|2[0-3])$/
                             }
-                            onTypingFinished: {
+                            onTypingFinished: (currentText) => {
                                 vm.hour = currentText === "" ? 0 : parseInt(currentText)
                             }
                         }
                         QTextInputBoxTypeB {
                             id: input_minutes
-                            label: STR.STR_QML_798
+                            label: QSTR.STR_QML_798
                             titleFontSize: 12
                             boxWidth: 163
                             boxHeight: 48
                             textInputted: vm.minute.toString()
                             input.placeholderText: ""
-                            validator: RegExpValidator {
-                                regExp: /^(0?\d|[1-5]\d)$/
+                            validator: RegularExpressionValidator {
+                                regularExpression: /^(0?\d|[1-5]\d)$/
                             }
-                            onTypingFinished: {
+                            onTypingFinished: (currentText) => {
                                 vm.minute = currentText === "" ? 0 : parseInt(currentText)
                             }
                         }
@@ -197,8 +197,8 @@ QOnScreenContentTypeA {
                         id: _autoBroadcastToggle
                         width: 343
                         height: 87
-                        label: STR.STR_QML_2125
-                        description: STR.STR_QML_2136
+                        label: QSTR.STR_QML_2125
+                        description: QSTR.STR_QML_2136
                         checked: vm.autoBroadcast
                         onToggled: {
                             vm.autoBroadcast = checked

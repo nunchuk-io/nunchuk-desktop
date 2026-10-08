@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -71,7 +71,7 @@ Item {
         }
         else {
             var per = paymentDel.payment_payload.valuePercent
-            return qsTr("%1% of wallet balance (*)").arg(per.toFixed(4))
+            return qsTr("%1% of wallet balance (*)").arg(String(parseFloat(per.toFixed(2))))
         }
     }
 

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -50,12 +50,12 @@ Item {
             isDummy: _send.isDummy
             myRole: _send.myRole
             onAddrToVerify: _send.addrToVerify(addr)
-            onNewMemoNotify: _send.newMemoNotify(newMemo)
+            onNewMemoNotify: (newMemo) => _send.newMemoNotify(newMemo)
         }
         QFeeRate {
             id: _rate
             transactionInfo: _send.transactionInfo
-            onTypingFinished: {
+            onTypingFinished: (currentText) => {
                 _send.typingFinished(currentText)
             }
         }

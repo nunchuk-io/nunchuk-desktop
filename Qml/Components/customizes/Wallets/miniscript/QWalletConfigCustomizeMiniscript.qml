@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.12
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import "../../../../Components/origins"
 import "../../../../Components/customizes/Chats"
@@ -126,7 +126,7 @@ Rectangle {
                     type: eTypeE
                     onButtonClicked: {
                         optionMenu.x = 20
-                        optionMenu.y = 20 - optionMenu.height
+                        optionMenu.y = 20 - optionMenu.implicitHeight
                         optionMenu.open()
                     }
                     QMiniscriptMultiContextMenu {

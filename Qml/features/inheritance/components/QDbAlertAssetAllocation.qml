@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../../Components/customizes/Texts"
 
 Column {
@@ -37,7 +37,7 @@ Column {
     QLato {
         width: parent.width
         height: paintedHeight
-        text: STR.STR_QML_2224
+        text: QSTR.STR_QML_2224
         font.weight: Font.Bold
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
@@ -60,7 +60,7 @@ Column {
             QLato {
                 width: parent.width
                 height: paintedHeight
-                text: STR.STR_QML_2166
+                text: QSTR.STR_QML_2166
                 font.pixelSize: 16
                 font.weight: Font.Bold
             }
@@ -137,14 +137,14 @@ Column {
                 width: parent.width
                 spacing: 2
                 QLato {
-                    text: STR.STR_QML_2153
+                    text: QSTR.STR_QML_2153
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignLeft
                 }
                 QLato {
-                    text: releaseMethod === "INDIVIDUAL" ? STR.STR_QML_2167 : STR.STR_QML_2182
+                    text: releaseMethod === "INDIVIDUAL" ? QSTR.STR_QML_2167 : QSTR.STR_QML_2182
                     color: isReleaseMothodChanged ? "#CF4018" : "#031F2B"
                     font.pixelSize: 16
                     verticalAlignment: Text.AlignVCenter

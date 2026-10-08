@@ -18,10 +18,10 @@
  *                                                                        *
  **************************************************************************/
 // Qt imports
-import QtQuick 2.4
-import QtQuick.Controls 2.3
+import QtQuick
+import QtQuick.Controls
 import Qt.labs.platform 1.1
-import QtGraphicalEffects 1.12
+import Qt5Compat.GraphicalEffects
 
 // Application-specific imports
 import "../../../../localization/STR_QML.js" as STR
@@ -59,8 +59,8 @@ QOnScreenContentTypeA {
                 interactive: true
                 contentHeight: contentSigners.childrenRect.height   
                 Column {
-                    id: contentSigners  
-                    width: 350  
+                    id: contentSigners
+                    width: parent.width - 8  // (350+6) - 8 = 348, leave room for QScrollBar
                     QLato {
                         height: 20
                         text: STR.STR_QML_337
@@ -69,8 +69,8 @@ QOnScreenContentTypeA {
                         horizontalAlignment: Text.AlignLeft
                     }   
                     QListView {
-                        id: supportedSigners    
-                        width: 350
+                        id: supportedSigners
+                        width: parent.width  // parent = contentSigners column (348px)
                         height: contentHeight
                         clip: true
                         interactive: false
@@ -104,9 +104,7 @@ QOnScreenContentTypeA {
                         }   
                     }   
                 }   
-                ScrollBar.vertical: ScrollBar {
-                    active: true
-                }   
+                ScrollBar.vertical: QScrollBar { }
             }   
             Flickable {
                 id: flickerRight    
@@ -120,12 +118,12 @@ QOnScreenContentTypeA {
                 interactive: true
                 contentHeight: contentSignersAssign.childrenRect.height 
                 Column {
-                    id: contentSignersAssign    
-                    width: 350
-                    spacing: 16 
+                    id: contentSignersAssign
+                    width: parent.width - 8  // (350+6) - 8 = 348, leave room for QScrollBar
+                    spacing: 16
                     Column {
                         visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
-                        width: 350  
+                        width: parent.width  // parent = contentSignersAssign column (348px)
                         QLato {
                             height: 20
                             text: STR.STR_QML_1711
@@ -134,14 +132,12 @@ QOnScreenContentTypeA {
                             horizontalAlignment: Text.AlignLeft
                         }   
                         QListView {
-                            id: signersAssign   
-                            width: 350
+                            id: signersAssign
+                            width: parent.width  // parent = inner Column (348px)
                             height: signersAssign.contentHeight
                             clip: true
                             model: newWalletInfo.assignAvailableSigners
-                            ScrollBar.vertical: ScrollBar {
-                                active: true
-                            }   
+                            ScrollBar.vertical: QScrollBar { }
                             delegate: QSignerConfigureDelegate {
                                 signerData {
                                     single_name: singleSigner_name
@@ -182,14 +178,12 @@ QOnScreenContentTypeA {
                         }   
                     }   
                     QLine {
-                        width: 350
+                        width: parent.width  // parent = contentSignersAssign column (348px)
                         visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
                     }   
                     QEditNumberKeys {}
                 }   
-                ScrollBar.vertical: ScrollBar {
-                    active: true
-                }   
+                ScrollBar.vertical: QScrollBar { }
             }   
         }   
     }   

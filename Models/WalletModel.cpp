@@ -319,9 +319,22 @@ void WalletListModel::dataUpdated(const QString &walletId)
 {
     for (int i = 0; i < m_data.count(); i++) {
         if(m_data.at(i).data() && qUtils::strCompare(walletId, m_data.at(i)->walletId())){
-            emit dataChanged(index(i),index(i));
-            // archivedCount is derived from wallet data, so notify QML bindings to re-read it.
-            emit walletCountChanged();
+            // Use beginResetModel/endResetModel instead of dataChanged(index, index).
+            // In Qt6, DelegateModel does not reliably re-evaluate QML role bindings
+            // (e.g. height: model.wallet_isArchived ? 0 : content.height) when only
+            // dataChanged is emitted for an individual item. A full model reset forces
+            // DelegateModel to recreate delegates with up-to-date role data.
+            //
+            // beginResetModel/endResetModel must be called from the thread that owns
+            // this object (main thread). This function may be called from background
+            // threads (e.g. AssistedWallet), so use QueuedConnection to ensure
+            // execution on the main thread.
+            QMetaObject::invokeMethod(this, [this]() {
+                beginResetModel();
+                endResetModel();
+                emit walletCountChanged();
+            }, Qt::QueuedConnection);
+            break; // reset covers all rows; no need to continue the loop
         }
     }
 }
@@ -813,7 +826,7 @@ bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2)
     }
 
     // Other wallets are ordered by creation time in descending order (newest first)
-    return v1->walletCreateDate().toTime_t() > v2->walletCreateDate().toTime_t();
+    return v1->walletCreateDate().toMSecsSinceEpoch() > v2->walletCreateDate().toMSecsSinceEpoch();
 }
 
 bool sortLastTimestamp(const QWalletPtr &v1, const QWalletPtr &v2)

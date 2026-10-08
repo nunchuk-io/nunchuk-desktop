@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -42,7 +42,8 @@ QPopupEmpty {
     property bool isMiniscript: false
     property bool isInheritance: false
     signal nextClicked()
-    property string titleText: STR.STR_QML_942
+    // BUGFIX (design update): inheritance add-key uses its own title; non-inheritance keeps STR_QML_942.
+    property string titleText: isInheritance ? STR.STR_QML_2339 : STR.STR_QML_942
     property string subtitleText: isKeyHolderLimited ? STR.STR_QML_1282 : ""
     property bool   supportWarning: true
     onOpened: {
@@ -65,7 +66,8 @@ QPopupEmpty {
         onCloseClicked: { _popup.close() }
         content: Item {
             Column {
-                anchors.fill: parent
+                id: _header
+                anchors { left: parent.left; right: parent.right; top: parent.top }
                 spacing: 0
                 QLato {
                     id: titleLabel
@@ -93,13 +95,41 @@ QPopupEmpty {
                     verticalAlignment: Text.AlignVCenter
                     visible: subtitleText != ""
                 }
+            }
+            // BUGFIX: the key list used to just stack under the header with no bottom bound, so the
+            // warning box (anchored to parent.bottom) overlapped/hid the last item(s) whenever the list
+            // was long enough. Now a fixed area between the header and the warning box, scrollable
+            // (Flickable) if the list doesn't fit, with an explicit 12px gap above the warning box.
+            Flickable {
+                id: _listArea
+                anchors {
+                    top: _header.bottom
+                    left: parent.left
+                    right: parent.right
+                    bottom: _warningLoader.active ? _warningLoader.top : parent.bottom
+                    bottomMargin: _warningLoader.active ? 12 : 0
+                }
+                clip: true
+                contentWidth: width
+                contentHeight: _list.height
+                // BUGFIX: QScrollBar's actual interactive hit-region is wider than its visual 8px
+                // track and overlapped the row's rightmost pixels, blocking the radio icon's
+                // click/hover there. No ScrollBar shown now - the list still scrolls via drag/wheel.
                 Column {
+                    id: _list
+                    // BUGFIX: rows used to sit exactly flush against _listArea's clip edges (x:0 and
+                    // x:width) on both sides - hover/click confirmed dead right at those flush edges
+                    // even though the point is inside both hitArea's own bounds and _listArea's
+                    // viewport. Inset 6px on each side so there's real (non-flush, non-clipped) margin
+                    // for QRadioSelect's -12 hitArea extension to land in.
+                    x: 6
+                    width: parent.width - 12
                     spacing: 0
                     Repeater {
-                        model: supportedKeys.listSupportedKeys()                    
+                        model: supportedKeys.listSupportedKeys()
                         QRadioButtonTypeA {
                             id: btn
-                            width: 528
+                            width: parent.width
                             height: 48
                             label: modelData.name
                             layoutDirection: Qt.LeftToRight
@@ -120,29 +150,40 @@ QPopupEmpty {
                     }
                 }
             }
-            QWarningBgMulti {
-                width: 528
-                visible: isInheritance && supportWarning && !supportedKeys.isMiniscript
-                height: 108
-                icon: "qrc:/Images/Images/info-60px.svg"
-                txt.text: STR.STR_QML_1603
+            // BUGFIX: single Loader instead of 2 mutually-exclusive Rectangles with independent
+            // visible/height, so _listArea's bottom anchor above has one stable reference regardless of
+            // which variant (isInheritance or not) is showing.
+            Loader {
+                id: _warningLoader
                 anchors.bottom: parent.bottom
+                width: 528
+                active: supportWarning && !supportedKeys.isMiniscript
+                sourceComponent: isInheritance ? _warningMultiComp : _warningSimpleComp
             }
-
-            QWarningBg {
-                width: 528
-                visible: !isInheritance && supportWarning && !supportedKeys.isMiniscript
-                height: 60
-                icon: "qrc:/Images/Images/info-60px.svg"
-                txt.text: STR.STR_QML_943
-                anchors.bottom: parent.bottom
+            Component {
+                id: _warningMultiComp
+                QWarningBgMulti {
+                    width: 528
+                    icon: "qrc:/Images/Images/info-60px.svg"
+                    txt.text: STR.STR_QML_1603
+                }
+            }
+            Component {
+                id: _warningSimpleComp
+                QWarningBg {
+                    width: 528
+                    icon: "qrc:/Images/Images/info-60px.svg"
+                    txt.text: STR.STR_QML_943
+                }
             }
         }
         nextEnable: GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_COLDCARD ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_LEDGER ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_TREZOR ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX ||
-                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE ||
+                    // KEEPKEY: wired flow, same group as the others.
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_KEEPKEY
         onPrevClicked:{ closeClicked() }  
         onNextClicked:{ _popup.nextClicked() }            
     }

@@ -300,10 +300,11 @@ bool QRecurringPayment::importQRWallet(const QStringList qrtags)
 
 bool QRecurringPayment::isValidDate(const QString& start_date, const QString& end_date, bool noEndDate, const QString& frequ)
 {
-    QDateTime cur_date = QDateTime(QDate::currentDate());
-    long int currentDate = cur_date.toTime_t();
-    long int start = qUtils::GetTimeSecond(start_date);
-    long int end = qUtils::GetTimeSecond(end_date);
+    QDateTime cur_date = QDateTime(QDate::currentDate(), QTime(0, 0));
+    // GetTimeSecond returns seconds; compare in consistent units (seconds)
+    qint64 currentDate = cur_date.toSecsSinceEpoch();
+    qint64 start = qUtils::GetTimeSecond(start_date);
+    qint64 end   = qUtils::GetTimeSecond(end_date);
     bool ret {false};
     QString message {};
     if (noEndDate) {
@@ -323,7 +324,7 @@ bool QRecurringPayment::isValidDate(const QString& start_date, const QString& en
 bool QRecurringPayment::isValidDate(const QString &date)
 {
     long int start = qUtils::GetTimeSecond(date);
-    auto _date = QDateTime::fromTime_t(start);
+    auto _date = QDateTime::fromSecsSinceEpoch(start);
     auto day = _date.date().day();
     bool waring = day == 29 || day == 30 || day == 31;
     return waring;
@@ -361,7 +362,7 @@ QStringList QRecurringPayment::walletIdList() const
 void QRecurringPayment::SortStartDateOldestToNewest()
 {
     QVariantList payments = m_payment_list.toVariantList();
-    qSort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
+    std::sort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
         long int a_start_date_millis = static_cast<long int>(a.toMap()["start_date_millis"].toDouble()/1000);
         long int b_start_date_millis = static_cast<long int>(b.toMap()["start_date_millis"].toDouble()/1000);
         return a_start_date_millis < b_start_date_millis;
@@ -372,7 +373,7 @@ void QRecurringPayment::SortStartDateOldestToNewest()
 void QRecurringPayment::SortStartDateNewestToOldest()
 {
     QVariantList payments = m_payment_list.toVariantList();
-    qSort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
+    std::sort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
         long int a_start_date_millis = static_cast<long int>(a.toMap()["start_date_millis"].toDouble()/1000);
         long int b_start_date_millis = static_cast<long int>(b.toMap()["start_date_millis"].toDouble()/1000);
         return a_start_date_millis > b_start_date_millis;
@@ -383,7 +384,7 @@ void QRecurringPayment::SortStartDateNewestToOldest()
 void QRecurringPayment::SortPaymentNameAToZ()
 {
     QVariantList payments = m_payment_list.toVariantList();
-    qSort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
+    std::sort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
         QString aName = a.toMap()["name"].toString();
         QString bName = b.toMap()["name"].toString();
         return QString::compare(aName, bName) < 0;
@@ -394,7 +395,7 @@ void QRecurringPayment::SortPaymentNameAToZ()
 void QRecurringPayment::SortPaymentNameZToA()
 {
     QVariantList payments = m_payment_list.toVariantList();
-    qSort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
+    std::sort(payments.begin(), payments.end(), [](const QVariant& a, const QVariant& b)->bool{
         QString aName = a.toMap()["name"].toString();
         QString bName = b.toMap()["name"].toString();
         return QString::compare(aName, bName) > 0;
@@ -451,7 +452,8 @@ bool QRecurringPayment::ImportWallet(WalletId w_id)
         AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
         return false;
     }
-    if (auto w = walletInfoPtr()) {
+    auto list = AppModel::instance()->walletListPtr();
+    if (auto w = list ? list->getWalletById(w_id) : QWalletPtr()) {
         nunchuk::Wallet wallet = w->nunchukWallet();
         return ConvertWalletToBsmsAndAddress(wallet);
     }
@@ -530,13 +532,13 @@ QJsonObject QRecurringPayment::ConvertToDisplayQml(QJsonObject data)
 {
     long int start_date_millis = static_cast<long int>(data.value("start_date_millis").toDouble()/1000);
     if (start_date_millis > 0) {
-        data["start_date"] = QDateTime::fromTime_t(start_date_millis).date().toString("MM/dd/yyyy");
+        data["start_date"] = QDateTime::fromMSecsSinceEpoch(start_date_millis).date().toString("MM/dd/yyyy");
     } else {
         data["start_date"] = "";
     }
     long int end_date_millis = static_cast<long int>(data.value("end_date_millis").toDouble()/1000);
     if (end_date_millis > 0) {
-        data["end_date"] = QDateTime::fromTime_t(end_date_millis).date().toString("MM/dd/yyyy");
+        data["end_date"] = QDateTime::fromMSecsSinceEpoch(end_date_millis).date().toString("MM/dd/yyyy");
     } else {
         data["end_date"] = "";
     }

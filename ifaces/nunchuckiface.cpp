@@ -21,6 +21,15 @@
 #include "nunchucklistener.h"
 #include "QOutlog.h"
 #include "utils/enumconverter.hpp"
+#include <mutex>
+
+// BUGFIX: libnunchuk's HWIService (contrib/libnunchuk, not modifiable here) keeps a single
+// in-flight child-process handle shared by every device call on the same nunchuk instance. Two
+// overlapping scans (e.g. two "Refresh devices" triggers hitting GetDevices() around the same
+// time) can clobber/race each other's wait() on that handle, surfacing as
+// "[-4099] Wait error: No child processes". Serialize scans at this layer instead so at most one
+// GetDevices() call reaches libnunchuk at a time.
+static std::mutex s_getDevicesMutex;
 
 nunchukiface::nunchukiface(): nunchukMode_(LOCAL_MODE){}
 
@@ -78,6 +87,7 @@ void nunchukiface::makeNunchukInstance(const nunchuk::AppSettings& appsettings,
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION " << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         nunchuk_instance_[LOCAL_MODE] = NULL;
     }
 }
@@ -103,6 +113,7 @@ void nunchukiface::makeNunchukInstanceForAccount(const nunchuk::AppSettings &app
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION " << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         nunchuk_instance_[ONLINE_MODE] = NULL;
     }
 }
@@ -381,6 +392,7 @@ nunchuk::Wallet nunchukiface::ImportWalletDescriptor(const std::string& file_pat
 
 std::vector<nunchuk::Device> nunchukiface::GetDevices(QWarningMessage& msg){
     std::vector<nunchuk::Device> ret;
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetDevices();
@@ -2253,22 +2265,14 @@ nunchuk::Transaction nunchukiface::ImportPassportTransaction(const std::string &
 
 void nunchukiface::killHwiProcessAllInstance()
 {
-    // Best-effort mitigation for a shutdown-time race: if a worker thread is
-    // still blocked inside HWIService::RunCmd() (e.g. device enumerate/sign)
-    // when we reset the Nunchuk instance below, that thread ends up touching
-    // memory owned by the instance we just destroyed -> SIGSEGV (observed in
-    // crash reports on GetDevices()/Enumerate()). We cannot fix the missing
-    // synchronization inside libnunchuk's RunCmd() (out of scope for this
-    // codebase), but terminating any in-flight HWI child process here makes
-    // RunCmd()'s blocking wait() return almost immediately instead of
-    // whatever duration the external hwi command would otherwise take -
-    // shrinking the unsynchronized race window rather than eliminating it.
+    // Same hazard as stopInstance() below: must not destroy/kill while GetDevices() is in flight.
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     for (int i = 0; i < 2; ++i) {
         if (nunchuk_instance_[i]) {
             try {
                 nunchuk_instance_[i]->KillHwiProcess();
             } catch (...) {
-                // Best-effort only; never let cleanup throw.
+                // Shutdown is best-effort and must not throw.
             }
         }
     }
@@ -2276,19 +2280,36 @@ void nunchukiface::killHwiProcessAllInstance()
 
 void nunchukiface::stopOneInstance()
 {
-    if(nunchuk_instance_[nunchukMode()]){
+    stopInstance(nunchukMode());
+}
+
+void nunchukiface::stopInstance(int mode)
+{
+    if (mode < LOCAL_MODE || mode > ONLINE_MODE) {
+        DBG_ERROR << "Invalid Nunchuk instance mode:" << mode;
+        return;
+    }
+    // BUGFIX: take the same lock as GetDevices() before killing/resetting the instance,
+    // otherwise this can destroy the HWIService (and its boost::process child) while a
+    // background GetDevices() call is still waiting on it (e.g. during sign-out), crashing
+    // in boost::process::child::wait().
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
+    if(nunchuk_instance_[mode]){
         try {
-            nunchuk_instance_[nunchukMode()]->KillHwiProcess();
+            nunchuk_instance_[mode]->KillHwiProcess();
         } catch (...) {
+            // Shutdown is best-effort and must not throw.
         }
-        nunchuk_instance_[nunchukMode()].reset();
-        nunchuk_instance_[nunchukMode()] = NULL;
+        nunchuk_instance_[mode].reset();
+        nunchuk_instance_[mode] = NULL;
     }
 }
 
 void nunchukiface::stopAllInstance()
 {
     killHwiProcessAllInstance();
+    // Same lock as stopInstance(): don't reset while GetDevices() may still be running.
+    std::lock_guard<std::mutex> lock(s_getDevicesMutex);
     nunchuk_instance_[LOCAL_MODE].reset();
     nunchuk_instance_[LOCAL_MODE] = NULL;
     nunchuk_instance_[ONLINE_MODE].reset();

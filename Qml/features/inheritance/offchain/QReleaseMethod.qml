@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -22,13 +22,13 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2153
+    label.text: QSTR.STR_QML_2153
     extraHeader: Item {}
     onCloseClicked: vm.close()
     
     property var methodMaps: [
-        { id: "SHARED", labelTop: STR.STR_QML_2182, labelBottom: STR.STR_QML_2183 },
-        { id: "INDIVIDUAL", labelTop: STR.STR_QML_2167, labelBottom: STR.STR_QML_2185 }
+        { id: "SHARED", labelTop: QSTR.STR_QML_2182, labelBottom: QSTR.STR_QML_2183 },
+        { id: "INDIVIDUAL", labelTop: QSTR.STR_QML_2167, labelBottom: QSTR.STR_QML_2185 }
     ]
     
     

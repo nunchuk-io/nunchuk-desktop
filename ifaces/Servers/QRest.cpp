@@ -21,6 +21,9 @@
 #include "QRest.h"
 #include "AppModel.h"
 #include "QOutlog.h"
+#include "ifaces/qUtils.h"
+#include <QFile>
+#include <QFileInfo>
 #include <QHttpPart>
 #include <QHttpMultiPart>
 
@@ -32,6 +35,49 @@
 // not aborted; only stalled connections are. Without this, the QEventLoop
 // in the *Sync functions can block forever on a stalled connection.
 static constexpr int REST_TRANSFER_TIMEOUT_MS = 120 * 1000;
+
+namespace {
+
+bool appendLocalFilePart(QHttpMultiPart *multiPart, const QVariant &input,
+                         QString &errorMessage)
+{
+    const QString localPath = qUtils::QGetFilePath(input.toString());
+    const QFileInfo fileInfo(localPath);
+    if (localPath.isEmpty() || !fileInfo.exists() || !fileInfo.isFile() ||
+        !fileInfo.isReadable()) {
+        errorMessage = QStringLiteral("Invalid or unreadable upload file");
+        return false;
+    }
+
+    auto *file = new QFile(localPath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        errorMessage = QStringLiteral("Cannot open upload file: %1")
+                           .arg(file->errorString());
+        delete file;
+        return false;
+    }
+
+    // A multipart filename is metadata, not a local path. Sending only the
+    // basename avoids leaking the user's directory; replacing header control
+    // characters prevents a POSIX filename from altering Content-Disposition.
+    QString uploadName = fileInfo.fileName();
+    uploadName.replace(QLatin1Char('\\'), QLatin1Char('_'));
+    uploadName.replace(QLatin1Char('"'), QLatin1Char('_'));
+    uploadName.replace(QLatin1Char('\r'), QLatin1Char('_'));
+    uploadName.replace(QLatin1Char('\n'), QLatin1Char('_'));
+
+    QHttpPart filePart;
+    filePart.setHeader(
+        QNetworkRequest::ContentDispositionHeader,
+        QStringLiteral("form-data; name=\"file\"; filename=\"%1\"")
+            .arg(uploadName));
+    filePart.setBodyDevice(file);
+    file->setParent(multiPart);
+    multiPart->append(filePart);
+    return true;
+}
+
+} // namespace
 
 QString    QRest::m_dracoToken      = "";
 QMutex     QRest::m_dracoTokenMutex;
@@ -78,8 +124,8 @@ void QRest::setVerificationToken(const QString &token)
         QMutexLocker locker(&m_verificationMutex);
         m_verificationToken = token;
     }
-    // Log outside the lock: keep the critical section memory-only (no I/O under lock).
-    DBG_INFO << "Verification token set:" << token;
+    // Never write the one-shot credential itself to application logs.
+    DBG_INFO << "Verification token set";
 }
 
 QString QRest::takeVerificationToken()
@@ -266,21 +312,12 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     for (auto key : data.keys()) {
         if (key == "file") {
-            QString filePath = data[key].toString();
-            QFile *file = new QFile(filePath);
-            if (!file->open(QIODevice::ReadOnly)) {
-                DBG_INFO << "Failed to open file:" << filePath;
-                delete file;
-                continue;
+            if (!appendLocalFilePart(multiPart, data[key], reply_msg)) {
+                reply_code = -1;
+                DBG_ERROR << reply_msg;
+                delete multiPart;
+                return {};
             }
-
-            QHttpPart filePart;
-            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
-                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
-            filePart.setBodyDevice(file);
-            file->setParent(multiPart);
-
-            multiPart->append(filePart);
         } else {
             QHttpPart textPart;
             textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
@@ -366,21 +403,12 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     for (auto key : data.keys()) {
         if (key == "file") {
-            QString filePath = data[key].toString();
-            QFile *file = new QFile(filePath);
-            if (!file->open(QIODevice::ReadOnly)) {
-                DBG_INFO << "Failed to open file:" << filePath;
-                delete file;
-                continue;
+            if (!appendLocalFilePart(multiPart, data[key], reply_msg)) {
+                reply_code = -1;
+                DBG_ERROR << reply_msg;
+                delete multiPart;
+                return {};
             }
-
-            QHttpPart filePart;
-            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
-                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
-            filePart.setBodyDevice(file);
-            file->setParent(multiPart);
-
-            multiPart->append(filePart);
         } else {
             QHttpPart textPart;
             textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
@@ -430,29 +458,30 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
     return ret;
 }
 
-QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg, GetRequestOptions options)
 {
     if (QThread::currentThread() == this->thread()) {
-        return doGetSync(cmd, paramsQuery, reply_code, reply_msg);
+        return doGetSync(cmd, paramsQuery, reply_code, reply_msg, options);
     }
     else {
         QJsonObject ret;
         QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
-            ret = doGetSync(cmd, paramsQuery, reply_code, reply_msg);
+            ret = doGetSync(cmd, paramsQuery, reply_code, reply_msg, options);
         }, Qt::BlockingQueuedConnection);
         return ret;
     }
 }
 
-QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg,
+                           GetRequestOptions options)
 {
     if (QThread::currentThread() == this->thread()) {
-        return doGetSync(cmd, paramsHeader, paramsQuery, reply_code, reply_msg);
+        return doGetSync(cmd, paramsHeader, paramsQuery, reply_code, reply_msg, options);
     }
     else {
         QJsonObject ret;
         QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
-            ret = doGetSync(cmd, paramsHeader, paramsQuery, reply_code, reply_msg);
+            ret = doGetSync(cmd, paramsHeader, paramsQuery, reply_code, reply_msg, options);
         }, Qt::BlockingQueuedConnection);
         return ret;
     }
@@ -671,21 +700,12 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QVarian
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     for (auto key : data.keys()) {
         if (key == "file") {
-            QString filePath = data[key].toString();
-            QFile *file = new QFile(filePath);
-            if (!file->open(QIODevice::ReadOnly)) {
-                DBG_INFO << "Failed to open file:" << filePath;
-                delete file;
-                continue;
+            if (!appendLocalFilePart(multiPart, data[key], reply_msg)) {
+                reply_code = -1;
+                DBG_ERROR << reply_msg;
+                delete multiPart;
+                return {};
             }
-
-            QHttpPart filePart;
-            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
-                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
-            filePart.setBodyDevice(file);
-            file->setParent(multiPart);
-
-            multiPart->append(filePart);
         } else {
             QHttpPart textPart;
             textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
@@ -771,21 +791,12 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QString
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     for (auto key : data.keys()) {
         if (key == "file") {
-            QString filePath = data[key].toString();
-            QFile *file = new QFile(filePath);
-            if (!file->open(QIODevice::ReadOnly)) {
-                DBG_INFO << "Failed to open file:" << filePath;
-                delete file;
-                continue;
+            if (!appendLocalFilePart(multiPart, data[key], reply_msg)) {
+                reply_code = -1;
+                DBG_ERROR << reply_msg;
+                delete multiPart;
+                return {};
             }
-
-            QHttpPart filePart;
-            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
-                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
-            filePart.setBodyDevice(file);
-            file->setParent(multiPart);
-
-            multiPart->append(filePart);
         } else {
             QHttpPart textPart;
             textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
@@ -835,7 +846,7 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QString
     return ret;
 }
 
-QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg, GetRequestOptions options)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("GET %1").arg(command));
@@ -851,7 +862,8 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
         url.setQuery(params);
     }
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
+    const QString authToken = options.authenticationPolicy == AuthenticationPolicy::Anonymous ? QString() : dracoToken();
+    QString headerData = QString("Bearer %1").arg(authToken);
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
@@ -859,9 +871,11 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = takeVerificationToken();
-    if (token != "") {
-        requester_.setRawHeader("X-Verification-Token", token.toUtf8());
+    if (options.verificationTokenPolicy == VerificationTokenPolicy::Include) {
+        QString token = takeVerificationToken();
+        if (token != "") {
+            requester_.setRawHeader("X-Verification-Token", token.toUtf8());
+        }
     }
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
@@ -870,7 +884,9 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
     if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        if (options.networkErrorPolicy == NetworkErrorPolicy::ShowToast) {
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
         return QJsonObject();
     }
     QNetworkReplyPtr reply(manager->get(requester_));
@@ -892,7 +908,9 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
             if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
                 reply_msg = STR_CPP_111;
             }
-            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            if (options.networkErrorPolicy == NetworkErrorPolicy::ShowToast) {
+                AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            }
         }
     }
     QByteArray response_data = reply->readAll();
@@ -906,7 +924,8 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
     return ret;
 }
 
-QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg,
+                             GetRequestOptions options)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("GET %1").arg(command));
@@ -922,7 +941,8 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
         url.setQuery(params);
     }
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
+    const QString authToken = options.authenticationPolicy == AuthenticationPolicy::Anonymous ? QString() : dracoToken();
+    QString headerData = QString("Bearer %1").arg(authToken);
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
@@ -930,9 +950,11 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = takeVerificationToken();
-    if (token != "") {
-        requester_.setRawHeader("X-Verification-Token", token.toUtf8());
+    if (options.verificationTokenPolicy == VerificationTokenPolicy::Include) {
+        QString token = takeVerificationToken();
+        if (token != "") {
+            requester_.setRawHeader("X-Verification-Token", token.toUtf8());
+        }
     }
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
@@ -946,7 +968,9 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
     if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        if (options.networkErrorPolicy == NetworkErrorPolicy::ShowToast) {
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
         return QJsonObject();
     }
     QNetworkReplyPtr reply(manager->get(requester_));
@@ -969,7 +993,9 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
             if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
                 reply_msg = STR_CPP_111;
             }
-            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            if (options.networkErrorPolicy == NetworkErrorPolicy::ShowToast) {
+                AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            }
         }
     }
     QByteArray response_data = reply->readAll();

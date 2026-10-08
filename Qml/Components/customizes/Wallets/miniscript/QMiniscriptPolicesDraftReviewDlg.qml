@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -61,8 +61,11 @@ QMiniscriptPolicesDelegate {
     QTextButton {
         width: label.paintedWidth + 16*2
         height: 36
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.right: parent.right
+        anchors {
+            verticalCenter: parent.verticalCenter
+            right: parent.right
+            rightMargin: 12
+        }
         label.text: STR.STR_QML_1348
         label.font.pixelSize: 12
         type: eTypeB

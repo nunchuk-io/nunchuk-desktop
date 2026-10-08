@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -94,7 +94,8 @@ Item {
             radius: 24
             color: "#D0E2FF"
             QPicture {
-                anchors.centerIn: parent
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
                 source: "qrc:/Images/Images/assisted-wallet.svg"
             }
         }
@@ -126,7 +127,7 @@ Item {
                         anchors.fill: parent
                         contentWidth: parent.width; contentHeight: 480
                         clip: true
-                        ScrollBar.vertical: ScrollBar { active: true }
+                        ScrollBar.vertical: QScrollBar { }
                         Flow {
                             width: parent.width
                             spacing: 16

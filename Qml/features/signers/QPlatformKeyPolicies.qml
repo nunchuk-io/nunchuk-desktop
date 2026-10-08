@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
@@ -35,12 +35,12 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2121
+    label.text: QSTR.STR_QML_2121
     onCloseClicked: vm.close()
     extraHeader: Item { }
     property var dataMap: [
-        { id: "global-policy", label: STR.STR_QML_2122, subLabel: STR.STR_QML_2132, iconUrl: "qrc:/Images/Images/global-key.svg" },
-        { id: "per-key-policy", label: STR.STR_QML_2126, subLabel: STR.STR_QML_2133, iconUrl: "qrc:/Images/Images/per-key.svg" }
+        { id: "global-policy", label: QSTR.STR_QML_2122, subLabel: QSTR.STR_QML_2132, iconUrl: "qrc:/Images/Images/global-key.svg" },
+        { id: "per-key-policy", label: QSTR.STR_QML_2126, subLabel: QSTR.STR_QML_2133, iconUrl: "qrc:/Images/Images/per-key.svg" }
     ]
     
     content: Item {
@@ -48,7 +48,7 @@ QOnScreenContentTypeA {
             width: parent.width
             spacing: 32
             QLato {
-                text: STR.STR_QML_2131
+                text: QSTR.STR_QML_2131
                 font.pixelSize: 16
                 font.weight: Font.Normal
                 verticalAlignment: Text.AlignVCenter

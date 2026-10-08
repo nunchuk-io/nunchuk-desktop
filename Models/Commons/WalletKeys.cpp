@@ -14,7 +14,7 @@ bool WalletKeys::GetHistorySignerList()
         for (auto js : histories) {
             QJsonObject history = js.toObject();
             long int created_time_millis = static_cast<long int>(history.value("created_time_millis").toDouble()/1000);
-            QDateTime date_time = QDateTime::fromTime_t(created_time_millis);
+            QDateTime date_time = QDateTime::fromMSecsSinceEpoch(created_time_millis);
             history["created_time_millis"] = QString("%1")
                                                  .arg(date_time.date().toString("MMM dd,yyyy"));
             v_histories.append(history);

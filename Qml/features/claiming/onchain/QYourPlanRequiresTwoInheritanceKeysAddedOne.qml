@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
@@ -31,7 +31,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1997.arg(vm.inheritance_key_count)
+    label.text: QSTR.STR_QML_1997.arg(vm.inheritance_key_count)
     content: Item {
         Row {
             spacing: 36
@@ -49,7 +49,7 @@ QOnScreenContentTypeA {
                     spacing: 24
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_2023 + "\n\n" + STR.STR_QML_2024
+                        text: QSTR.STR_QML_2023 + "\n\n" + QSTR.STR_QML_2024
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -63,7 +63,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: label.paintedWidth + 16 * 2
         height: 48
-        label.text: STR.STR_QML_2025
+        label.text: QSTR.STR_QML_2025
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: vm.next()

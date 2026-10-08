@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -52,7 +52,7 @@ Rectangle {
         width: tree.width
         height: tree.height
         flickableDirection: Flickable.VerticalFlick
-        ScrollBar.vertical: ScrollBar { active: true }
+        ScrollBar.vertical: QScrollBar { }
         contentHeight: miniscriptContainer.childrenRect.height
         contentWidth: tree.width
         clip: true
@@ -60,11 +60,11 @@ Rectangle {
             id: miniscriptContainer
             anchors.fill: parent
             anchors.margins: 12
-            width: tree.width
+            anchors.rightMargin: 20  // 12 (base margin) + 8 (QScrollBar width) — prevents scrollbar overlap
             spacing: 8
             Rectangle {
                 id: _timeLocked
-                width: tree.width
+                width: parent.width
                 height: 60
                 visible: (timelockedUntil !== undefined && timelockedUntil !== null) && timelockedUntil.hasLocked
                 color: "#FFEAF9"
@@ -96,11 +96,11 @@ Rectangle {
             }
             Column {
                 id: columnMiniscript
-                width: tree.width
+                width: parent.width
                 Repeater {
                     model: miniTreeForSigning
                     delegate: QMiniscriptPolicesTransactionSignDelegate {
-                        width: tree.width - 16
+                        width: parent.width
                         miniscript: modelData
                         is_cosigning: transactionInfo.isCosigning
                         serverkeyMessage: transactionInfo.serverKeyMessage
@@ -111,7 +111,7 @@ Rectangle {
                 }
             }
             Item {
-                width: tree.width
+                width: parent.width
                 height: 8
             }
         }

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -193,6 +193,16 @@ QScreen {
 
     QPopupTheBackupPassword {
         id: _BackupPassword
+        // NUN-10192: "both methods" key -> continue to the seed-phrase step (joint copy) instead of closing.
+        onContinueClicked: {
+            _BackupPassword.close()
+            _SeedPhraseBackup.isJointVariant = true
+            _SeedPhraseBackup.open()
+        }
+    }
+
+    QPopupTheSeedPhraseBackup {
+        id: _SeedPhraseBackup
     }
 
     QPopupPrepareInheritanceKey {

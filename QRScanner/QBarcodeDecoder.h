@@ -41,7 +41,8 @@ public:
     bool isDecoding() const;
     QString captured() const;
     QImage videoFrameToImage(const QVideoFrame &videoFrame, const QRect &captureRect) const;
-    QImage smoothTransformation(const QImage &image) const;
+    QImage smoothTransformation(const QImage &image) const;  // legacy — kept for ABI
+    QImage prepareImage(const QImage &image) const;          // downscale + normalize for ZXing
 
 public slots:
     void process(const QImage& capturedImage, ZXing::BarcodeFormats formats);

@@ -5,10 +5,12 @@
 #include "features/claiming/viewmodels/BackupPasswordViewModel.h"
 #include "features/claiming/viewmodels/ProceedOptionsViewModel.h"
 #include "features/claiming/viewmodels/VerifyInheritanceKeyViewModel.h"
+#include "features/wallets/viewmodels/RegisterWalletOnHardwareViewModel.h"
 #include "generated_qml_keys.hpp"
 
 namespace features::claiming::flows {
 using namespace features::claiming::viewmodels;
+using features::wallets::viewmodels::RegisterWalletOnHardwareViewModel;
 
 OffChainClaimingFlow::OffChainClaimingFlow(FlowContext *ctx, QObject *parent) : ClaimingFlow(ctx, parent) {
     setwalletType(nunchuk::WalletType::MULTI_SIG);
@@ -22,10 +24,17 @@ OffChainClaimingFlow::OffChainClaimingFlow(FlowContext *ctx, QObject *parent) : 
 void OffChainClaimingFlow::bind(QObject *vm) {
     auto realVm1 = qobject_cast<VerifyInheritanceKeyViewModel *>(vm);
     if (realVm1) {
-        connect(realVm1, &VerifyInheritanceKeyViewModel::signalBack, this, &OffChainClaimingFlow::rollbackSigner);
+        // Qt::UniqueConnection: defensive backstop in case bind() ever re-runs for the same vm
+        // instance (would otherwise stack duplicate connections and pop >1 signer per back-click).
+        connect(realVm1, &VerifyInheritanceKeyViewModel::signalBack, this, &OffChainClaimingFlow::rollbackSigner, Qt::UniqueConnection);
         realVm1->setmagicWord(magicWord());
         realVm1->setwalletType(walletType());
         realVm1->setaddressType(addressType());
+        // Confirmed with backend: one signing-challenge message is shared across all keys in a session.
+        if (!challengeMessage().isEmpty()) {
+            realVm1->setmessage(challengeMessage());
+            realVm1->setmessageId(challengeMessageId());
+        }
         realVm1->proceedVerification(currentSigner());
     }
 
@@ -37,12 +46,33 @@ void OffChainClaimingFlow::bind(QObject *vm) {
         realVm2->setremainingCount(remainingCount);
     }
 
+    // BUGFIX: D14 "Register wallet on hardware" reads AppModel.walletInfo (the app's currently open
+    // wallet) unless vm.event == WithdrawBitcoin, in which case it uses vm.walletInfo instead
+    // (QRegisterWalletOnHardware.qml:52,423-429). OnChainClaimingFlow already sets nunWallet/event
+    // here; off-chain claiming reached this same D14 screen (InheritanceUnlockedViewModel::
+    // withdrawBitcoinClicked() -> requires_registration) without this wiring, so it would silently
+    // export/register whatever wallet happens to be open in the app instead of the claimed one.
+    auto realVm3 = qobject_cast<RegisterWalletOnHardwareViewModel *>(vm);
+    if (realVm3) {
+        realVm3->setnunWallet(nunWallet());
+        realVm3->setEvent(RegisterWalletOnHardwareViewModel::FlowEvent::WithdrawBitcoin);
+    }
+
     ClaimingFlow::bind(vm);
 }
 
 void OffChainClaimingFlow::proceedResult(const nunchuk::SingleSigner &single) {
+    // BUGFIX: addSingleSigner()'s return value (false = duplicate fingerprint, already added) was
+    // discarded, so re-adding the same device silently did nothing but still navigated to the verify
+    // screen as if it had succeeded - no feedback to the user, and a later "back" from that screen
+    // would pop the wrong (previously, legitimately added) signer off the list instead of just
+    // canceling this no-op attempt. BackupPasswordViewModel::createTokenForBackupPassword() already
+    // checks this same return value; hardware/existing-key adds now do too.
+    if (!addSingleSigner(single)) {
+        emit showToast(-1, Strings.STR_QML_090(), EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
     setcurrentSigner(single);
-    addSingleSigner(single);
     GUARD_SUB_SCREEN_MANAGER()
     subMng->show(qml::features::claiming::offchain::qverifyinheritancekey);
 }
@@ -87,6 +117,16 @@ void OffChainClaimingFlow::proceedAfterRecoverViaXprv(const QString &xfp) {
 }
 
 void OffChainClaimingFlow::proceedAfterAddedViaUSB(const QString &xfp) {
+    // BUGFIX: on wrong xfp, addKey() only shows a toast - it never leaves the "Adding [Device]..."
+    // loading screen (pushed by HardwareRefreshDevicesViewModel::requestCreateSigner()), so the user
+    // was stuck there forever with no visible error. Pop it here, scoped to the USB path only - the
+    // other 3 addKey() callers (select-existing-key, recover-via-seed, recover-via-xprv) call
+    // proceedAfterXxx() directly from their own screen with no loading screen pushed, so back() there
+    // would incorrectly pop the user's current screen instead.
+    if (!isCorrectXFP(xfp)) {
+        GUARD_SUB_SCREEN_MANAGER()
+        subMng->back();
+    }
     addKey(xfp);
 }
 
@@ -94,7 +134,13 @@ bool OffChainClaimingFlow::isCorrectXFP(const QString &xfp) {
     auto keyOriginsArray = keyOrigins();
     for (const auto &origin : keyOriginsArray) {
         QString originXfp = origin.toObject().value("xfp").toString();
-        if (originXfp == xfp) {
+        // BUGFIX: MasterSigner::get_id() (the xfp of a just-added hardware signer) is always
+        // lowercased by libnunchuk (storage.cpp: to_lower_copy(...)), while key_origins[].xfp from
+        // the backend is uppercase - a case-sensitive compare here always failed for freshly-added
+        // hardware keys, silently stopping the flow (toast only, no screen transition) even though
+        // the signer was created successfully. Use the project's existing qUtils::strCompare()
+        // (case-insensitive, trimmed) instead of raw == - same helper used for other string matches.
+        if (qUtils::strCompare(originXfp, xfp)) {
             return true;
         }
     }
@@ -105,7 +151,7 @@ int OffChainClaimingFlow::expectedAccountIndex(const QString &xfp) {
     auto keyOriginsArray = keyOrigins();
     for (const auto &origin : keyOriginsArray) {
         QString originXfp = origin.toObject().value("xfp").toString();
-        if (originXfp == xfp) {
+        if (qUtils::strCompare(originXfp, xfp)) {
             QString derivation_path = origin.toObject().value("derivation_path").toString();
             return qUtils::GetIndexFromPath(derivation_path);
         }

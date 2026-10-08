@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -55,7 +55,7 @@ Item {
             isDummy: _send.isDummy
             myRole: _send.myRole
             onAddrToVerify: _send.addrToVerify(addr)
-            onNewMemoNotify: _send.newMemoNotify(newMemo)
+            onNewMemoNotify: (newMemo) => _send.newMemoNotify(newMemo)
             pendingSignature: _send.pendingSignature
         }
         Loader {
@@ -122,9 +122,9 @@ Item {
         id: miniscriptWalletKeys
         QMemberKeysAreaMiniscript {
             transactionInfo: _send.transactionInfo
-            onKeySignRequest: _send.menuClicked("sign", signer)
+            onKeySignRequest: (signer) => _send.menuClicked("sign", signer)
             onKeyScanRequest: _send.menuClicked("scan", null)
-            onKeyEnterPreImageInput: {
+            onKeyEnterPreImageInput: (hashData, typeNode) => {
                 _send.keyEnterPreImageInput(hashData, typeNode)
             }
             isDummy: _send.isDummy

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import NUNCHUCKTYPE 1.0
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
@@ -32,8 +32,8 @@ Item {
     property string optionSelected: "withdraw-a-custom-amount"
     property var optionList: {
         var ls = []
-        ls.push({ id: "withdraw-a-custom-amount",  label: STR.STR_QML_1736 })
-        ls.push({ id: "withdraw-full-balance-now", label: STR.STR_QML_1737 })
+        ls.push({ id: "withdraw-a-custom-amount",  label: QSTR.STR_QML_1736 })
+        ls.push({ id: "withdraw-full-balance-now", label: QSTR.STR_QML_1737 })
         return ls
     }
     Column {
@@ -57,7 +57,7 @@ Item {
                 spacing: 12
                 QLato {
                     width: parent.width
-                    text: STR.STR_QML_775
+                    text: QSTR.STR_QML_775
                     font.pixelSize: 20
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignHCenter
@@ -86,14 +86,14 @@ Item {
                 spacing: 16
                 QMontserrat {
                     width: 627
-                    text: STR.STR_QML_1735
+                    text: QSTR.STR_QML_1735
                     font.pixelSize: 32
                     font.weight: Font.DemiBold
                     wrapMode: Text.WordWrap
                 }
                 QLato {
                     width: 500
-                    text: STR.STR_QML_1738
+                    text: QSTR.STR_QML_1738
                     font.pixelSize: 16
                     font.weight: Font.Normal
                     lineHeightMode: Text.FixedHeight
@@ -127,7 +127,7 @@ Item {
                 QIconTextButton {
                     width: 98
                     height: 48
-                    label: STR.STR_QML_059
+                    label: QSTR.STR_QML_059
                     icons: ["left-arrow-dark.svg", "left-arrow-dark.svg", "left-arrow-dark.svg","left-arrow-dark.svg"]
                     fontPixelSize: 16
                     iconSize: 24
@@ -139,7 +139,7 @@ Item {
                 QTextButton {
                     width: 100
                     height: 48
-                    label.text: STR.STR_QML_265
+                    label.text: QSTR.STR_QML_265
                     label.font.pixelSize: 16
                     type: eTypeE
                     visible: optionSelected === "withdraw-a-custom-amount"
@@ -151,20 +151,20 @@ Item {
                     width: 220
                     height: 48
                     type: eTHIRT
-                    label: STR.STR_QML_778
+                    label: QSTR.STR_QML_778
                     visible: optionSelected === "withdraw-full-balance-now"
                     optionVisible: imExContextMenu.visible
                     onButtonClicked: {
                         imExContextMenu.x = 20
-                        imExContextMenu.y = 20 - imExContextMenu.height
+                        imExContextMenu.y = 20 - imExContextMenu.implicitHeight
                         imExContextMenu.open()
                     }
                     QContextMenu {
                         id: imExContextMenu
                         menuWidth: 320
                         labels: [
-                            STR.STR_QML_779,
-                            STR.STR_QML_780,
+                            QSTR.STR_QML_779,
+                            QSTR.STR_QML_780,
                         ]
                         icons: [
                             "qrc:/Images/Images/wallet-dark.svg",

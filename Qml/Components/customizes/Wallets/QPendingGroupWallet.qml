@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import DataPool 1.0
 import "../../origins"
 import "../../customizes/Texts"
@@ -84,7 +84,7 @@ QPendingGroupWalletBackground {
                         leftMargin: 8
                         verticalCenter: parent.verticalCenter
                     }
-                    text: STR.STR_QML_1638
+                    text: QSTR.STR_QML_1638
                     font.pixelSize: 12
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -109,7 +109,7 @@ QPendingGroupWalletBackground {
                 width: parent.width
                 height: 44
                 QLato {
-                    text: STR.STR_QML_2146
+                    text: QSTR.STR_QML_2146
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -130,7 +130,7 @@ QPendingGroupWalletBackground {
                         leftMargin: 12
                         verticalCenter: parent.verticalCenter
                     }
-                    text: STR.STR_QML_2147.arg(inviter_email).arg(name_group)
+                    text: QSTR.STR_QML_2147.arg(inviter_email).arg(name_group)
                     font.pixelSize: 12
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 16
@@ -154,7 +154,7 @@ QPendingGroupWalletBackground {
                         QTextButton {
                             width: 56
                             height: 36
-                            label.text: STR.STR_QML_468
+                            label.text: QSTR.STR_QML_468
                             label.font.pixelSize: 12
                             type: eTypeF
                             onButtonClicked: {
@@ -164,7 +164,7 @@ QPendingGroupWalletBackground {
                         QTextButton {
                             width: 46
                             height: 36
-                            label.text: STR.STR_QML_946
+                            label.text: QSTR.STR_QML_946
                             label.font.pixelSize: 12
                             type: eTypeO
                             onButtonClicked: {

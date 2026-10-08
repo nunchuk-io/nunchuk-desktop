@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -23,7 +23,7 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2156
+    label.text: QSTR.STR_QML_2156
     extraHeader: Item {}
     onCloseClicked: vm.close()
     
@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
             // Description text
             QLato {
                 width: parent.width
-                text: STR.STR_QML_2190
+                text: QSTR.STR_QML_2190
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
                 lineHeight: 20
@@ -62,8 +62,8 @@ QOnScreenContentTypeB {
                         labelMaxWidth: 284
                         labelBottomLineHeight: 20
                         selected: vm.selectedFallback === "NONE"
-                        labelTop: STR.STR_QML_2191
-                        labelBottom: STR.STR_QML_2192
+                        labelTop: QSTR.STR_QML_2191
+                        labelBottom: QSTR.STR_QML_2192
                         onButtonClicked: { vm.selectedFallback = "NONE" }
                     }
 
@@ -74,8 +74,8 @@ QOnScreenContentTypeB {
                         labelMaxWidth: 284
                         labelBottomLineHeight: 20
                         selected: vm.selectedFallback === "DATE_BASED"
-                        labelTop: STR.STR_QML_2193
-                        labelBottom: vm.selectedFallback === "DATE_BASED" ? STR.STR_QML_2226 : STR.STR_QML_2194
+                        labelTop: QSTR.STR_QML_2193
+                        labelBottom: vm.selectedFallback === "DATE_BASED" ? QSTR.STR_QML_2226 : QSTR.STR_QML_2194
                         onButtonClicked: { vm.selectedFallback = "DATE_BASED" }
                         Item {
                             width: 271
@@ -89,7 +89,7 @@ QOnScreenContentTypeB {
                             }
                             QTextInputBoxTypeB {
                                 id: _input_date
-                                label: STR.STR_QML_1463
+                                label: QSTR.STR_QML_1463
                                 labelComponent.textFormat: Text.RichText
                                 labelComponent.font.pixelSize: 12
                                 boxWidth: parent.width
@@ -140,8 +140,8 @@ QOnScreenContentTypeB {
                     labelMaxWidth: 284
                     labelBottomLineHeight: 20
                     selected: vm.selectedFallback === "INACTIVITY"
-                    labelTop: STR.STR_QML_2195
-                    labelBottom: vm.selectedFallback === "INACTIVITY" ? STR.STR_QML_2196 : STR.STR_QML_2194
+                    labelTop: QSTR.STR_QML_2195
+                    labelBottom: vm.selectedFallback === "INACTIVITY" ? QSTR.STR_QML_2196 : QSTR.STR_QML_2194
                     onButtonClicked: { vm.selectedFallback = "INACTIVITY" }
                     isRecommend: true
 
@@ -166,12 +166,12 @@ QOnScreenContentTypeB {
                                     height: 68
                                     QTextInputBoxTypeB {
                                         id: repeatEveryInput
-                                        label: STR.STR_QML_2197
+                                        label: QSTR.STR_QML_2197
                                         boxWidth: parent.width
                                         boxHeight: 48
                                         textInputted: vm.repeatEvery
-                                        validator: RegExpValidator {
-                                            regExp: /^$|^[0-9]+$/
+                                        validator: RegularExpressionValidator {
+                                            regularExpression: /^$|^[0-9]+$/
                                         }
                                         onTextInputtedChanged: {
                                             if (textInputted !== "") {
@@ -218,7 +218,7 @@ QOnScreenContentTypeB {
                                 QLato {
                                     font.pixelSize: 16
                                     font.weight: Font.Normal
-                                    text: STR.STR_QML_2198
+                                    text: QSTR.STR_QML_2198
                                     anchors {
                                         bottom: parent.bottom
                                         bottomMargin: 8
@@ -237,7 +237,7 @@ QOnScreenContentTypeB {
         QButtonTextLink {
             width: 97
             height: 48
-            label: STR.STR_QML_059
+            label: QSTR.STR_QML_059
             visible: vm.fallbackOption == FallbackOption.FallbackSecond
             onButtonClicked: {
                 vm.back()
@@ -247,7 +247,7 @@ QOnScreenContentTypeB {
             width: 100
             height: 48
             visible: vm.fallbackOption == FallbackOption.FallbackFirst
-            label.text: STR.STR_QML_245
+            label.text: QSTR.STR_QML_245
             label.font.pixelSize: 14
             type: eTypeF
             onButtonClicked: vm.close()
@@ -258,7 +258,7 @@ QOnScreenContentTypeB {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_835
+            label.text: QSTR.STR_QML_835
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {

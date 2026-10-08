@@ -80,13 +80,9 @@ void ViewInheritancePlanViewModel::timeLockEditClicked() {
     } else {
         flow->passInheritanceInfo(valueDate(), valueTimezone());
     }
-    connect(
-        flow, &SetupOffChainTimelockFlow::callbackTimelockChanged, this,
-        [this](const QString &date, const QString &timezone) {
-            setvalueDate(date);
-            setvalueTimezone(timezone);
-        },
-        Qt::UniqueConnection);
+    connect(flow, &SetupOffChainTimelockFlow::callbackTimelockChanged,
+            this, &ViewInheritancePlanViewModel::onTimelockChanged,
+            Qt::UniqueConnection);
     subMng->show(qml::screens::onlinemode::setupwallets::timelocks::qsetupoffchaintimelockwallet);
 }
 
@@ -115,13 +111,9 @@ void ViewInheritancePlanViewModel::onTimezoneEditClicked() {
         flow->passInheritanceInfo(valueDate(), valueTimezone());
     }
 
-    connect(
-        flow, &SetupOffChainTimelockFlow::callbackTimelockChanged, this,
-        [this](const QString &date, const QString &timezone) {
-            setvalueDate(date);
-            setvalueTimezone(timezone);
-        },
-        Qt::UniqueConnection);
+    connect(flow, &SetupOffChainTimelockFlow::callbackTimelockChanged,
+            this, &ViewInheritancePlanViewModel::onTimelockChanged,
+            Qt::UniqueConnection);
     subMng->show(qml::features::inheritance::offchain::qchangetimezone);
 }
 
@@ -225,6 +217,11 @@ void ViewInheritancePlanViewModel::cancelInheritancePlan() {
         return;
     }
     flow->cancelInheritancePlan();
+}
+
+void ViewInheritancePlanViewModel::onTimelockChanged(const QString &date, const QString &timezone) {
+    setvalueDate(date);
+    setvalueTimezone(timezone);
 }
 
 } // namespace features::inheritance::offchain::viewmodels

@@ -169,7 +169,9 @@ void GroupOnlineListener(const std::string &groupId, int online)
             }
         }
         if (auto w = AppModel::instance()->walletInfo()) {
-            w->numberOnlineChanged();
+            // numberOnline() is now a pure cache read (see SandboxWallet::numberOnline()) -
+            // refetch explicitly instead of just notifying a stale value "changed".
+            w->startGetNumberOnline();
             if (auto sandbox = w->groupSandboxPtr()) {
                 if (qUtils::strCompare(sandbox->groupId(), QString::fromStdString(groupId))) {
                     sandbox->setUserCount(online);

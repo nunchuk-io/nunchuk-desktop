@@ -30,9 +30,9 @@ import EWARNING 1.0
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import Qt.labs.platform 1.1
-import QtGraphicalEffects 1.12
-import QtQuick 2.4
-import QtQuick.Controls 2.3
+import Qt5Compat.GraphicalEffects
+import QtQuick
+import QtQuick.Controls
 
 QScreenAdd {
     anchors.fill: parent

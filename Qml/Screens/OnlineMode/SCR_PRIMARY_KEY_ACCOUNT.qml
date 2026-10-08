@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -174,7 +174,7 @@ QScreen {
                 optionVisible: signInMenu.visible
                 onButtonClicked: {
                     signInMenu.x = signIn.width - signInMenu.width
-                    signInMenu.y = 20 - signInMenu.height
+                    signInMenu.y = 20 - signInMenu.implicitHeight
                     signInMenu.open()
                 }
                 QContextMenu {
@@ -264,10 +264,10 @@ QScreen {
                         }
                         clip: true
                         delegate: Item {
-                            width: primaryKeys.width
+                            width: primaryKeys.width - 8  // leave room for QScrollBar (8px)
                             height: 84
                             Row{
-                                width: primaryKeys.width
+                                width: primaryKeys.width - 8  // match delegate width
                                 height: 84
                                 anchors.left: parent.left
                                 anchors.leftMargin: 0
@@ -343,7 +343,7 @@ QScreen {
                                 }
                             }
                         }
-                        ScrollBar.vertical: ScrollBar { }
+                        ScrollBar.vertical: QScrollBar { }
                     }
                 }
             }

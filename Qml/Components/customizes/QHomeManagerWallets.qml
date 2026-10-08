@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
@@ -41,23 +41,129 @@ Rectangle {
     property bool isPending: pendingList.count > 0 ? true : false
     // Controls whether the archived wallets panel is shown instead of the active list.
     property bool showingArchived: false
-    // True when the currently selected wallet (walletListCurrentIndex) is archived.
+    property string _focusedPendingGroupId: ""
+    property string _focusedPendingWalletId: ""
+    property string _lastWalletFocusTrace: ""
+    // QAbstractItemModel::modelReset can replace/reorder rows without changing
+    // count. Keep an explicit dependency so the selected wallet ID is rescanned.
+    property int _walletModelRevision: 0
+    // Tracks the last-known archivedCount so the Connections handler can detect
+    // when a wallet was unarchived (count decreased) vs archived (count increased).
+    property int _prevArchivedCount: 0
+    readonly property int _FOCUS_NONE: -1
+    readonly property int _FOCUS_PENDING_GROUP_WALLET: 0
+    readonly property int _FOCUS_PENDING_WALLET: 1
+    readonly property int _FOCUS_WALLET: 2
+    readonly property string _selectedWalletId: AppModel.walletInfo ? AppModel.walletInfo.walletId : ""
+    readonly property int _selectedWalletModelIndex: {
+        var _modelResetRevision = _walletModelRevision
+        if (_selectedWalletId === "") {
+            return -1
+        }
+        for (var i = 0; i < AppModel.walletList.count; ++i) {
+            var item = AppModel.walletList.get(i)
+            if (item && item.wallet_id === _selectedWalletId) {
+                return i
+            }
+        }
+        return -1
+    }
+    readonly property bool _hasValidWalletSelection: _selectedWalletModelIndex >= 0
+
+    function pendingWalletIndexById(groupId) {
+        if (!groupId) {
+            return -1
+        }
+        var dashboards = GroupWallet.dashboards
+        for (var i = 0; i < dashboards.length; ++i) {
+            if (dashboards[i] && dashboards[i].groupId === groupId) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    function pendingGroupIndexById(groupId) {
+        var model = SharedWallet.sandboxList
+        return groupId !== "" && model ? model.indexOf(groupId) : -1
+    }
+
+    function hasActivePendingWalletDashboard() {
+        var dashboard = GroupWallet.dashboardInfo
+        return dashboard
+                && dashboard.isShowDashBoard
+                && !dashboard.hasWallet
+                && pendingWalletIndexById(dashboard.groupId) >= 0
+    }
+
+    function traceWalletFocus() {
+        var pendingWalletCount = GroupWallet.dashboards ? GroupWallet.dashboards.length : 0
+        var pendingGroupCount = SharedWallet.sandboxList ? SharedWallet.sandboxList.count : 0
+        var signature = [GlobalData.listFocusing,
+                         _selectedWalletModelIndex,
+                         AppModel.walletList.count,
+                         pendingWalletCount,
+                         pendingGroupCount].join("|")
+        if (_lastWalletFocusTrace === signature) {
+            return
+        }
+        _lastWalletFocusTrace = signature
+        console.info("[WALLET_FOCUS_TRACE:v2]",
+                     "focus:", GlobalData.listFocusing,
+                     "selectedIndex:", _selectedWalletModelIndex,
+                     "wallets:", AppModel.walletList.count,
+                     "pending:", pendingWalletCount,
+                     "pendingGroups:", pendingGroupCount)
+    }
+
+    function syncWalletFocus() {
+        var pendingGroupIndex = pendingGroupIndexById(_focusedPendingGroupId)
+        if (GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET
+                && pendingGroupIndex >= 0) {
+            if (SharedWallet.currentIndex !== pendingGroupIndex) {
+                SharedWallet.currentIndex = pendingGroupIndex
+            }
+            traceWalletFocus()
+            return
+        }
+        if (hasActivePendingWalletDashboard()) {
+            var pendingIndex = pendingWalletIndexById(GroupWallet.dashboardInfo.groupId)
+            _focusedPendingGroupId = ""
+            _focusedPendingWalletId = GroupWallet.dashboardInfo.groupId
+            if (GroupWallet.currentIndex !== pendingIndex) {
+                GroupWallet.currentIndex = pendingIndex
+            }
+            GlobalData.listFocusing = _FOCUS_PENDING_WALLET
+        } else if (_hasValidWalletSelection) {
+            _focusedPendingGroupId = ""
+            _focusedPendingWalletId = ""
+            if (AppModel.walletListCurrentIndex !== _selectedWalletModelIndex) {
+                AppModel.walletListCurrentIndex = _selectedWalletModelIndex
+            }
+            GlobalData.listFocusing = _FOCUS_WALLET
+        } else {
+            _focusedPendingGroupId = ""
+            _focusedPendingWalletId = ""
+            GlobalData.listFocusing = _FOCUS_NONE
+        }
+        traceWalletFocus()
+    }
+
+    // True when the wallet shown in the detail pane is archived.
     // Used to show a yellow left accent on the Archived wallets button in the active view.
     // archivedCount is read to create a QML binding dependency on walletCountChanged,
     // so this property re-evaluates whenever any wallet is archived or unarchived.
     readonly property bool _archivedIsSelected: {
         var _dep = AppModel.walletList.archivedCount  // reactive anchor
-        var idx = AppModel.walletListCurrentIndex
-        if (idx < 0) return false
-        var item = AppModel.walletList.get(idx)
-        return item ? (item.wallet_isArchived === true) : false
+        return GlobalData.listFocusing === _FOCUS_WALLET
+                && _hasValidWalletSelection
+                && AppModel.walletInfo
+                && AppModel.walletInfo.isArchived
     }
     width: parent.width
-    height: (parent.height - 215)/2
+    // height được quản lý bởi ColumnLayout (Layout.fillHeight: true) ở SCR_HOME.qml.
+    // Không khai báo height cứng ở đây để tránh conflict.
     clip: true
-    readonly property int _FOCUS_PENDING_GROUP_WALLET: 0
-    readonly property int _FOCUS_PENDING_WALLET: 1
-    readonly property int _FOCUS_WALLET: 2
     Column {
         width: parent.width
         spacing: 12
@@ -145,7 +251,7 @@ Rectangle {
                     flickableDirection: Flickable.VerticalFlick
                     interactive: true
                     contentHeight: contentDisplay.height
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     Column {
                         id: contentDisplay
                         width: parent.width
@@ -160,19 +266,29 @@ Rectangle {
                             model: SharedWallet.sandboxList
                             interactive: false
                             currentIndex: SharedWallet.currentIndex
+                            onCountChanged: {
+                                if (count === 0
+                                        && GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET) {
+                                    walletsRoot._focusedPendingGroupId = ""
+                                    GlobalData.listFocusing = _FOCUS_NONE
+                                    SharedWallet.currentIndex = -1
+                                }
+                                Qt.callLater(walletsRoot.syncWalletFocus)
+                            }
                             spacing: 4
                             delegate: QPendingGroupWallet {
                                 width: pendingGroupList.width
                                 name_group: model.group_name
                                 inviter_email: model.group_InviterEmail
                                 isInviter: model.group_isInviter
-                                isCurrentIndex: (!walletList.visible) ? (pendingGroupList.visible) && (index === pendingGroupList.currentIndex) :
-                                                                        (pendingGroupList.visible) && (index === pendingGroupList.currentIndex)
-                                                                        && (GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET)
+                                isCurrentIndex: GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET
+                                                && pendingGroupList.visible
+                                                && model.group_id === walletsRoot._focusedPendingGroupId
 
                                 onDeny: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
-                                    GroupWallet.currentIndex = index
+                                    walletsRoot._focusedPendingGroupId = model.group_id
+                                    SharedWallet.currentIndex = index
                                     var obj = {
                                         type: "denySandbox",
                                         group_id: model.group_id
@@ -181,7 +297,8 @@ Rectangle {
                                 }
                                 onAccept: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
-                                    GroupWallet.currentIndex = index
+                                    walletsRoot._focusedPendingGroupId = model.group_id
+                                    SharedWallet.currentIndex = index
                                     var obj = {
                                         type: "acceptSandbox",
                                         group_id: model.group_id
@@ -190,6 +307,7 @@ Rectangle {
                                 }
                                 onButtonClicked: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
+                                    walletsRoot._focusedPendingGroupId = model.group_id
                                     SharedWallet.currentIndex = index
                                     var obj = {
                                         type: "setup-group-wallet",
@@ -209,6 +327,15 @@ Rectangle {
                             model: GroupWallet.dashboards
                             interactive: false
                             currentIndex: GroupWallet.currentIndex
+                            onCountChanged: {
+                                if (count === 0
+                                        && GlobalData.listFocusing === _FOCUS_PENDING_WALLET) {
+                                    GroupWallet.currentIndex = -1
+                                    walletsRoot._focusedPendingWalletId = ""
+                                    GlobalData.listFocusing = _FOCUS_NONE
+                                }
+                                Qt.callLater(walletsRoot.syncWalletFocus)
+                            }
                             spacing: 4
                             delegate: QPendingWallet {
                                 id: pendingdelegate
@@ -216,11 +343,12 @@ Rectangle {
                                 name_person: modelData.userName
                                 email_person: modelData.userEmail
                                 user_accepted: modelData.accepted
-                                isCurrentIndex: (!walletList.visible) ? (pendingList.visible) && (index === pendingList.currentIndex) :
-                                                                        (pendingList.visible) && (index === pendingList.currentIndex)
-                                                                        && (GlobalData.listFocusing === _FOCUS_PENDING_WALLET)
+                                isCurrentIndex: GlobalData.listFocusing === _FOCUS_PENDING_WALLET
+                                                && pendingList.visible
+                                                && modelData.groupId === walletsRoot._focusedPendingWalletId
                                 onDeny: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_WALLET
+                                    walletsRoot._focusedPendingWalletId = modelData.groupId
                                     GroupWallet.currentIndex = index
                                     var obj = {
                                         type: "deny",
@@ -230,6 +358,7 @@ Rectangle {
                                 }
                                 onAccept: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_WALLET
+                                    walletsRoot._focusedPendingWalletId = modelData.groupId
                                     GroupWallet.currentIndex = index
                                     var obj = {
                                         type: "accept",
@@ -239,6 +368,7 @@ Rectangle {
                                 }
                                 onDashboard: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_WALLET
+                                    walletsRoot._focusedPendingWalletId = modelData.groupId
                                     GroupWallet.currentIndex = index
                                     var obj = {
                                         type: "dashboard",
@@ -248,6 +378,7 @@ Rectangle {
                                 }
                                 onButtonClicked: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_WALLET
+                                    walletsRoot._focusedPendingWalletId = modelData.groupId
                                     GroupWallet.currentIndex = index
                                     var obj = {
                                         type: "dashboard",
@@ -270,6 +401,8 @@ Rectangle {
                             id: walletList
                             width: parent.width - 32
                             anchors.horizontalCenter: parent.horizontalCenter
+                            selectionActive: GlobalData.listFocusing === _FOCUS_WALLET
+                            selectedWalletId: walletsRoot._selectedWalletId
                         }
                     }
                 }
@@ -409,7 +542,7 @@ Rectangle {
                     flickableDirection: Flickable.VerticalFlick
                     interactive: true
                     contentHeight: archivedContent.height
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
 
                     Column {
                         id: archivedContent
@@ -433,8 +566,10 @@ Rectangle {
                                     width: parent.width
                                     // Allow the built-in mouse handler so onButtonClicked fires.
                                     mouseActive: true
-                                    // Highlight follows the same walletListCurrentIndex as the active list.
-                                    isCurrentIndex: index === AppModel.walletListCurrentIndex
+                                    // Highlight follows the wallet shown in the detail pane, not a transient row index.
+                                    isCurrentIndex: GlobalData.listFocusing === _FOCUS_WALLET
+                                                    && model.wallet_isArchived
+                                                    && model.wallet_id === walletsRoot._selectedWalletId
                                     walletCurrency: model.wallet_Balance_Currency
                                     walletName: model.wallet_name
                                     walletBalance: model.wallet_Balance
@@ -537,14 +672,53 @@ Rectangle {
         }
     }
     // Reset to active view automatically when no archived wallets remain,
-    // so the user is never stranded in an empty archived panel.
+    // or when a wallet is unarchived while the archived panel is visible,
+    // so the user is never stranded and can see the wallet in the active list.
     Connections {
         target: AppModel.walletList
+        function onModelReset() {
+            walletsRoot._walletModelRevision += 1
+            Qt.callLater(walletsRoot.syncWalletFocus)
+        }
         function onWalletCountChanged() {
-            if (AppModel.walletList.archivedCount === 0) {
+            var curr = AppModel.walletList.archivedCount
+            if (curr === 0 || (walletsRoot.showingArchived && curr < walletsRoot._prevArchivedCount)) {
                 walletsRoot.showingArchived = false
             }
+            walletsRoot._prevArchivedCount = curr
         }
+    }
+    Connections {
+        target: AppModel
+        function onWalletInfoChanged() {
+            Qt.callLater(walletsRoot.syncWalletFocus)
+        }
+    }
+    Connections {
+        target: GroupWallet
+        function onDashboardInfoChanged() {
+            Qt.callLater(walletsRoot.syncWalletFocus)
+        }
+        function onDashboardListChanged() {
+            Qt.callLater(walletsRoot.syncWalletFocus)
+        }
+    }
+    Connections {
+        target: GroupWallet.dashboardInfo
+        function onShowDashBoardChanged() {
+            Qt.callLater(walletsRoot.syncWalletFocus)
+        }
+    }
+    Connections {
+        target: SharedWallet.sandboxList
+        function onModelReset() {
+            Qt.callLater(walletsRoot.syncWalletFocus)
+        }
+    }
+    Component.onCompleted: {
+        _prevArchivedCount = AppModel.walletList.archivedCount
+        walletsRoot.syncWalletFocus()
+        Qt.callLater(walletsRoot.syncWalletFocus)
     }
     WalletListViewModel {
         id: vm

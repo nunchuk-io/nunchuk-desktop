@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -47,7 +47,7 @@ Item {
         interactive: contentHeight > height
         clip: true
         flickableDirection: Flickable.VerticalFlick
-        ScrollBar.vertical: ScrollBar { active: true }
+        ScrollBar.vertical: QScrollBar { }
 
         Column{
             id: _feesetting
@@ -287,7 +287,7 @@ Item {
                             titleFontSize: 12
                             textweight: Font.Bold
                             isValid: true
-                            validator: RegExpValidator { regExp: /[0-9]*/ }
+                            validator: RegularExpressionValidator { regularExpression: /[0-9]*/ }
                             textInputted: AppSetting.thresholdPercentDisplay
                         }
                         QTextInputBoxTypeB {

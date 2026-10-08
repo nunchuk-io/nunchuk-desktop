@@ -34,6 +34,99 @@
 #include "QThreadForwarder.h"
 
 using namespace Command;
+
+namespace {
+
+bool isValidHttpsUrl(const QString &value)
+{
+    const QUrl url(value, QUrl::StrictMode);
+    return url.isValid() && !url.isRelative() && url.scheme().compare("https", Qt::CaseInsensitive) == 0 && !url.host().isEmpty() &&
+           url.userName().isEmpty() && url.password().isEmpty();
+}
+
+bool normalizeHomeReminderAction(const QJsonValue &value, QJsonObject &normalized)
+{
+    normalized = QJsonObject();
+    if (!value.isObject()) {
+        return false;
+    }
+
+    const QJsonObject action = value.toObject();
+    const QString label = action.value("label").toString().trimmed();
+    const QString type = action.value("type").toString().trimmed().toUpper();
+    const QString target = action.value("target").toString().trimmed();
+    if (label.isEmpty() || (type != "OPEN_LINK" && type != "OPEN_PAGE") || !isValidHttpsUrl(target)) {
+        return false;
+    }
+
+    normalized["label"] = label;
+    normalized["type"] = type;
+    normalized["target"] = target;
+    return true;
+}
+
+bool normalizeHomeReminder(const QJsonObject &source, QJsonObject &normalized, QString &errorMessage)
+{
+    normalized = QJsonObject();
+
+    const QString id = source.value("id").toString().trimmed();
+    const QString type = source.value("type").toString().trimmed();
+    if (id.isEmpty() || type.isEmpty()) {
+        errorMessage = "Home reminder is missing an id or type.";
+        return false;
+    }
+
+    const QJsonValue contentValue = source.value("content");
+    if (!contentValue.isObject()) {
+        errorMessage = "Home reminder content is invalid.";
+        return false;
+    }
+
+    const QJsonObject content = contentValue.toObject();
+    const QString title = content.value("title").toString().trimmed();
+    const QString description = content.value("description").toString().trimmed();
+    if (title.isEmpty() && description.isEmpty()) {
+        errorMessage = "Home reminder does not contain display text.";
+        return false;
+    }
+
+    QString imageUrl = content.value("image_url").toString().trimmed();
+    if (!imageUrl.isEmpty() && !isValidHttpsUrl(imageUrl)) {
+        imageUrl.clear();
+    }
+
+    QJsonObject primaryAction;
+    normalizeHomeReminderAction(content.value("action"), primaryAction);
+
+    QJsonArray extraActions;
+    const QJsonValue extraActionsValue = content.value("extra_actions");
+    if (extraActionsValue.isArray()) {
+        const QJsonArray sourceActions = extraActionsValue.toArray();
+        for (const QJsonValue &sourceAction : sourceActions) {
+            QJsonObject extraAction;
+            if (normalizeHomeReminderAction(sourceAction, extraAction)) {
+                extraActions.append(extraAction);
+            }
+        }
+    }
+
+    normalized["id"] = id;
+    normalized["type"] = type;
+    normalized["title"] = title;
+    normalized["description"] = description;
+    normalized["image_id"] = content.value("image_id").toString().trimmed();
+    normalized["image_url"] = imageUrl;
+    normalized["background"] = content.value("background").toString().trimmed();
+    normalized["action"] = primaryAction;
+    normalized["extra_actions"] = extraActions;
+    normalized["payload"] = source.value("payload").isObject()
+                                ? source.value("payload").toObject()
+                                : QJsonObject();
+    return true;
+}
+
+} // namespace
+
 Draco* Draco::m_instance = NULL;
 Draco::Draco() :
     m_uid(""), m_pid(""),
@@ -180,19 +273,23 @@ void Draco::refreshContacts()
 {
     if(CLIENT_INSTANCE->isNunchukLoggedIn()){
         QtConcurrent::run([this]() {
-            QList<DracoUser> contacts = getContacts();
+            // Pending lists sync first (and as soon as each is fetched) so
+            // sent/received requests show up without waiting on the general
+            // contacts list, which is fetched and synced last.
             QList<DracoUser> contactsSent = getContactsSent();
-            QList<DracoUser> contactsReceived = getContactsReceived();
-
-            DBG_INFO << "contacts size: " << contacts.size();
-            QThreadForwarder::instance()->forwardInQueuedConnection([contacts](){
-                CLIENT_INSTANCE->syncContacts(contacts);
-            });
             QThreadForwarder::instance()->forwardInQueuedConnection([contactsSent](){
                 CLIENT_INSTANCE->syncContactsSent(contactsSent);
             });
+
+            QList<DracoUser> contactsReceived = getContactsReceived();
             QThreadForwarder::instance()->forwardInQueuedConnection([contactsReceived](){
                 CLIENT_INSTANCE->syncContactsReceived(contactsReceived);
+            });
+
+            QList<DracoUser> contacts = getContacts();
+            DBG_INFO << "contacts size: " << contacts.size();
+            QThreadForwarder::instance()->forwardInQueuedConnection([contacts](){
+                CLIENT_INSTANCE->syncContacts(contacts);
             });
         });
     }
@@ -306,8 +403,15 @@ void Draco::exchangeRates(const QString &currency)
 void Draco::feeRates()
 {
     QFunctionTime f(__PRETTY_FUNCTION__);
+    int replyCode = -1;
+    const QJsonObject feeRates = fetchFeeRates(AppSetting::instance()->primaryServer(), replyCode);
+    applyFeeRates(feeRates, replyCode);
+}
+
+QJsonObject Draco::fetchFeeRates(int primaryServer, int &replyCode)
+{
     QString cmd;
-    switch (AppSetting::instance()->primaryServer()) {
+    switch (primaryServer) {
     case (int)AppSetting::Chain::TESTNET:
         cmd = "https://api.nunchuk.io/v1.1/fees/testnet/recommended";
         break;
@@ -321,15 +425,18 @@ void Draco::feeRates()
     // Route through QRest::getSync like every other Draco endpoint, instead of
     // building the QNetworkRequest by hand — this is what actually attaches
     // the Authorization/device/app-version headers (see QRest::doGetSync).
-    int     reply_code = -1;
-    QString reply_msg  = "";
-    QJsonObject jsonObj = m_rest->getSync(cmd, QJsonObject(), reply_code, reply_msg);
-    if (reply_code == DRACO_CODE::SUCCESSFULL) {
-        DBG_INFO << jsonObj;
-        AppModel::instance()->setFastestFee(jsonObj["fastestFee"].toInt());
-        AppModel::instance()->setHalfHourFee(jsonObj["halfHourFee"].toInt());
-        AppModel::instance()->setHourFee(jsonObj["hourFee"].toInt());
-        AppModel::instance()->setMinFee(jsonObj["minimumFee"].toInt());
+    QString replyMessage;
+    return m_rest->getSync(cmd, QJsonObject(), replyCode, replyMessage);
+}
+
+void Draco::applyFeeRates(const QJsonObject &feeRates, int replyCode)
+{
+    if (replyCode == DRACO_CODE::SUCCESSFULL) {
+        DBG_INFO << feeRates;
+        AppModel::instance()->setFastestFee(feeRates["fastestFee"].toInt());
+        AppModel::instance()->setHalfHourFee(feeRates["halfHourFee"].toInt());
+        AppModel::instance()->setHourFee(feeRates["hourFee"].toInt());
+        AppModel::instance()->setMinFee(feeRates["minimumFee"].toInt());
         AppModel::instance()->setLasttimeCheckEstimatedFee(QDateTime::currentDateTime());
     }
 }
@@ -856,6 +963,9 @@ QVariant Draco::requestFriends(const QVariant emails)
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject dataObj = jsonObj["data"].toObject();
             QStringList failed_emails = dataObj["failed_emails"].toVariant().toStringList();
+            // Sync sent-list now (on this thread) so the UI shows the new
+            // pending contact immediately, before the caller closes the popup.
+            CLIENT_INSTANCE->syncContactsSent(getContactsSent());
             refreshContacts();
             ret["result"] = true;
             ret["failedEmails"] = failed_emails;
@@ -1258,7 +1368,6 @@ void Draco::checkForUpdate()
     QString reply_msg  = "";
     QJsonObject jsonObj = m_rest->getSync(commands[Common::CMD_IDX::CHECK_FOR_UPDATE], QJsonObject(), reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
-        DBG_INFO << jsonObj;
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
@@ -1277,7 +1386,8 @@ void Draco::checkForUpdate()
             else if(isUpdateAvailable){
                 result = 1;
             }
-            emit startCheckForUpdate(result,title,message,doItLaterCTALbl,downloadUrl,primaryCTALbl);
+            emit startCheckForUpdate(result, title, message, doItLaterCTALbl,
+                                     downloadUrl, primaryCTALbl);
         }
         else {
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
@@ -1584,21 +1694,45 @@ void Draco::setStayLoggedIn(bool value)
 
 bool Draco::getUserSubscriptions()
 {
-    if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::TESTNET)
-    {
-        if (!getUserSubscriptionsTestnet()) {
-            return getUserSubscriptionsMainnet();
-        }
-    } else if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::MAIN) {
-        if (!getUserSubscriptionsMainnet()) {
-            return getUserSubscriptionsTestnet();
+    QJsonArray primarySubscriptions;
+    QJsonArray secondarySubscriptions;
+    bool primarySucceeded = false;
+    bool secondarySucceeded = false;
+
+    const int primaryServer = AppSetting::instance()->primaryServer();
+    if (primaryServer == (int)nunchuk::Chain::TESTNET) {
+        primarySucceeded = getUserSubscriptionsTestnet(primarySubscriptions);
+    } else if (primaryServer == (int)nunchuk::Chain::MAIN) {
+        primarySucceeded = getUserSubscriptionsMainnet(primarySubscriptions);
+    } else {
+        return CLIENT_INSTANCE->resolveSubscriptions({}, false);
+    }
+
+    if (primarySucceeded && CLIENT_INSTANCE->hasValidSubscriptions(primarySubscriptions)) {
+        if (CLIENT_INSTANCE->resolveSubscriptions(primarySubscriptions, false)) {
+            return true;
         }
     }
-    return false;
+
+    if (primaryServer == (int)nunchuk::Chain::TESTNET) {
+        secondarySucceeded = getUserSubscriptionsMainnet(secondarySubscriptions);
+    } else {
+        secondarySucceeded = getUserSubscriptionsTestnet(secondarySubscriptions);
+    }
+
+    QJsonArray aggregatedSubscriptions = primarySucceeded ? primarySubscriptions : QJsonArray();
+    if (secondarySucceeded) {
+        for (const QJsonValue &subscription : secondarySubscriptions) {
+            aggregatedSubscriptions.append(subscription);
+        }
+    }
+
+    return CLIENT_INSTANCE->resolveSubscriptions(aggregatedSubscriptions, primarySucceeded && secondarySucceeded);
 }
 
-bool Draco::getUserSubscriptionsMainnet()
+bool Draco::getUserSubscriptionsMainnet(QJsonArray &subscriptions)
 {
+    subscriptions = {};
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Common::CMD_IDX::USER_SUBCRIPTIONS_STATUS];
@@ -1608,16 +1742,16 @@ bool Draco::getUserSubscriptionsMainnet()
         int response_code = errorObj["code"].toInt();
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject data = jsonObj["data"].toObject();
-            QJsonArray subs = data["subscriptions"].toArray();
-            CLIENT_INSTANCE->setSubscriptions(subs);
-            return CLIENT_INSTANCE->subscriptions().size() > 0;
+            subscriptions = data["subscriptions"].toArray();
+            return true;
         }
     }
     return false;
 }
 
-bool Draco::getUserSubscriptionsTestnet()
+bool Draco::getUserSubscriptionsTestnet(QJsonArray &subscriptions)
 {
+    subscriptions = {};
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Common::CMD_IDX::USER_SUBCRIPTIONS_STATUS_TESTNET];
@@ -1627,9 +1761,8 @@ bool Draco::getUserSubscriptionsTestnet()
         int response_code = errorObj["code"].toInt();
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject data = jsonObj["data"].toObject();
-            QJsonArray subs = data["subscriptions"].toArray();
-            CLIENT_INSTANCE->setSubscriptions(subs);
-            return CLIENT_INSTANCE->subscriptions().size() > 0;
+            subscriptions = data["subscriptions"].toArray();
+            return true;
         }
     }
     return false;
@@ -2199,7 +2332,6 @@ bool Draco::verifyPasswordToken(const QString& password, const int action, QStri
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject dataObj = jsonObj["data"].toObject();
             QJsonObject token = dataObj["token"].toObject();
-            DBG_INFO << dataObj;
             // token["token"] using for lockdown
             string_token = token["token"].toString();
             return true;
@@ -2278,7 +2410,6 @@ bool Draco::SecQuesUpdate(const QJsonObject &request_body,
     }
     QMap<QString, QString> paramsQuery;
     paramsQuery["draft"] = isDraft ? "true" : "false";
-    DBG_INFO << confirmToken << request_body;
     int     reply_code = -1;
     QString reply_msg  = "";
     QJsonObject jsonObj = m_rest->putSync(commands[Premium::CMD_IDX::SEC_QUES_UPDATE], paramsQuery, params, request_body, reply_code, reply_msg);
@@ -2486,39 +2617,6 @@ bool Draco::lockdownBySignDummyTx(const QStringList &signatures,
             QJsonObject resultObj = dataObj["period"].toObject();
             until_time = resultObj["display_name"].toString();
             qInfo() << resultObj;
-            return true;
-        }
-        else{
-            errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
-            return false;
-        }
-    }
-    errormsg = reply_msg;
-    return false;
-}
-
-bool Draco::UserKeysMarkAKeyAsVerified(const QString &xfpOrId,
-                                       const QString &key_checksum,
-                                       const QString &verification_type,
-                                       QJsonObject &output,
-                                       QString &errormsg)
-{
-    QJsonObject body;
-    body["key_checksum"] = key_checksum;
-    body["verification_type"] = verification_type;
-
-    QString cmd = commands[Premium::CMD_IDX::USER_KEYS_MARK_A_KEY_AS_VERIFIED];
-    cmd.replace("{key_id_or_xfp}", xfpOrId);
-    int     reply_code = -1;
-    QString reply_msg  = "";
-    QJsonObject jsonObj = m_rest->postSync(cmd, {}, {}, body, reply_code, reply_msg);
-    if(reply_code == DRACO_CODE::SUCCESSFULL){
-        QJsonObject errorObj = jsonObj["error"].toObject();
-        int response_code = errorObj["code"].toInt();
-        QString response_msg = errorObj["message"].toString();
-        if(response_code == DRACO_CODE::RESPONSE_OK){
-            output = jsonObj["data"].toObject();
             return true;
         }
         else{
@@ -3787,6 +3885,78 @@ bool Draco::GetCountryCodeList(QJsonObject &output, QString &errormsg)
     return false;
 }
 
+bool Draco::GetHomeReminder(bool anonymous, QJsonObject &reminder, QString &errormsg)
+{
+    reminder = QJsonObject();
+    errormsg.clear();
+
+    int reply_code = -1;
+    QString reply_msg;
+    const QString cmd = commands[Premium::CMD_IDX::HOME_REMINDER_V2];
+    QRest::GetRequestOptions requestOptions;
+    requestOptions.networkErrorPolicy = QRest::NetworkErrorPolicy::Silent;
+    requestOptions.authenticationPolicy = anonymous
+                                              ? QRest::AuthenticationPolicy::Anonymous
+                                              : QRest::AuthenticationPolicy::CurrentToken;
+    requestOptions.verificationTokenPolicy = QRest::VerificationTokenPolicy::Exclude;
+    const QJsonObject jsonObj = m_rest->getSync(cmd, QJsonObject(), reply_code, reply_msg, requestOptions);
+    if (reply_code != DRACO_CODE::SUCCESSFULL) {
+        errormsg = reply_msg.isEmpty() ? "Unable to get the home reminder." : reply_msg;
+        DBG_WARN << "GetHomeReminder transport error:" << reply_code << errormsg;
+        return false;
+    }
+
+    const QJsonValue errorValue = jsonObj.value("error");
+    if (!errorValue.isUndefined() && !errorValue.isNull()) {
+        if (!errorValue.isObject()) {
+            errormsg = "Home reminder response contains an invalid error object.";
+            DBG_WARN << errormsg;
+            return false;
+        }
+
+        const QJsonObject errorObject = errorValue.toObject();
+        const QJsonValue responseCodeValue = errorObject.value("code");
+        if (!responseCodeValue.isUndefined() && !responseCodeValue.isDouble()) {
+            errormsg = "Home reminder response contains an invalid error code.";
+            DBG_WARN << errormsg;
+            return false;
+        }
+
+        const int responseCode = responseCodeValue.toInt(DRACO_CODE::RESPONSE_OK);
+        if (responseCode != DRACO_CODE::RESPONSE_OK) {
+            errormsg = errorObject.value("message").toString().trimmed();
+            if (errormsg.isEmpty()) {
+                errormsg = "Unable to get the home reminder.";
+            }
+            DBG_WARN << "GetHomeReminder API error:" << responseCode << errormsg;
+            return false;
+        }
+    }
+
+    const QJsonValue dataValue = jsonObj.value("data");
+    if (!dataValue.isObject()) {
+        errormsg = "Home reminder response does not contain valid data.";
+        DBG_WARN << errormsg;
+        return false;
+    }
+
+    const QJsonValue reminderValue = dataValue.toObject().value("reminder");
+    if (reminderValue.isUndefined() || reminderValue.isNull()) {
+        return true;
+    }
+    if (!reminderValue.isObject()) {
+        errormsg = "Home reminder response contains an invalid reminder.";
+        DBG_WARN << errormsg;
+        return false;
+    }
+
+    if (!normalizeHomeReminder(reminderValue.toObject(), reminder, errormsg)) {
+        DBG_WARN << "GetHomeReminder parser error:" << errormsg;
+        return false;
+    }
+    return true;
+}
+
 bool Draco::RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note, QString &errormsg)
 {
     QJsonObject data;
@@ -3967,7 +4137,7 @@ bool Draco::DeleteKeyHealthReminder(const QString &wallet_id, const QStringList 
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     QMap<QString, QString> paramsQuery;
     for (int i = 0; i < xfps.count(); i++) {
-        paramsQuery.insertMulti("xfps", xfps.at(i));
+        paramsQuery.insert("xfps", xfps.at(i));
     }
     QJsonObject jsonObj = m_rest->deleteSync(cmd, paramsQuery, {}, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
@@ -4214,12 +4384,21 @@ bool Draco::ResetKeyReplacement(const QString &wallet_id, const QString& passwor
     return false;
 }
 
-bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString& type, const QString& passwordToken, QJsonObject& result)
+bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString& verification_method, const QString& type, const QString& key_checksum, const QString& passwordToken, QJsonObject& result)
 {
     if (wallet_id.isEmpty() || xfp.isEmpty()) return false;
 
     QJsonObject data;
+    // BUGFIX: verification_method ("SEED_PHRASE"/"ENCRYPTED_BACKUP") only means something for an
+    // off-chain claim_options key; omit it for on-chain callers (old behavior) instead of always
+    // sending "SEED_PHRASE", which made the backend wrongly validate MINISCRIPT keys as off-chain.
+    if (!verification_method.isEmpty()) {
+        data["verification_method"] = verification_method;
+    }
     data["verification_type"] = type;
+    if (!key_checksum.isEmpty()) {
+        data["key_checksum"] = key_checksum;
+    }
     QMap<QString, QString> params;
     params["Verify-token"] = passwordToken;
     int reply_code = -1;
@@ -4240,6 +4419,37 @@ bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, c
             return false;
         }
     }
+    return false;
+}
+
+bool Draco::SetClaimOptionsKeyReplacement(const QString &wallet_id, const QString &xfp, const QStringList &claim_options, const QString &passwordToken, QJsonObject &output, QString &errormsg)
+{
+    if (wallet_id.isEmpty() || xfp.isEmpty()) return false;
+
+    QJsonObject data;
+    data["claim_options"] = QJsonArray::fromStringList(claim_options);
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_SET_CLAIM_OPTIONS];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = m_rest->putSync(cmd, {}, params, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        } else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    errormsg = reply_msg;
     return false;
 }
 
@@ -4913,10 +5123,17 @@ bool Draco::DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBo
     return false;
 }
 
-bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& type, QString& errormsg)
+bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg)
 {
     QJsonObject data;
+    // BUGFIX: see VerifyKeyReplacement() above - omit for on-chain (empty) callers.
+    if (!verification_method.isEmpty()) {
+        data["verification_method"] = verification_method;
+    }
     data["verification_type"] = type;
+    if (!key_checksum.isEmpty()) {
+        data["key_checksum"] = key_checksum;
+    }
     QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_VERIFY];
     cmd.replace("{xfp}", xfp);
 
@@ -4936,6 +5153,32 @@ bool Draco::DraftWalletSignerVerify(const QString& xfp, const QString& type, QSt
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
+    return false;
+}
+
+bool Draco::DraftWalletSetClaimOptions(const QString& xfp, const QStringList& claim_options, QJsonObject& output, QString& errormsg)
+{
+    QJsonObject data;
+    data["claim_options"] = QJsonArray::fromStringList(claim_options);
+    QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_SET_CLAIM_OPTIONS];
+    cmd.replace("{xfp}", xfp);
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        } else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    errormsg = reply_msg;
     return false;
 }
 

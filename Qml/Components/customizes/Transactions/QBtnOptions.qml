@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.0
+import QtQuick
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
@@ -47,7 +47,7 @@ QButtonLargeTail {
     layoutDirection: Qt.RightToLeft
     onButtonClicked: {
         imExContextMenu.x = 20
-        imExContextMenu.y = 20 - imExContextMenu.height
+        imExContextMenu.y = 20 - imExContextMenu.implicitHeight
         imExContextMenu.open()
     }
     QContextMenu {

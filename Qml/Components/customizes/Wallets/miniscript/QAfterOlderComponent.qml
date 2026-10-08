@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -71,6 +71,7 @@ Item {
                     // height: isTransaction ? 40 : 20
                     text: getTitle()
                     font.weight: Font.Normal
+                    font.pixelSize: miniscript.lockType === ScriptNodeHelper.TimelockBased.TIME_LOCK ? 12 : 16
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     lineHeight: 20

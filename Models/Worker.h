@@ -22,8 +22,12 @@
 #define WORKER_H
 
 #include <QObject>
+#include <QJsonArray>
 #include <QThread>
 #include <QSharedPointer>
+#include <map>
+#include <string>
+#include <vector>
 #include "WalletModel.h"
 #include "DeviceModel.h"
 #include "SingleSignerModel.h"
@@ -31,6 +35,146 @@
 #include "TransactionModel.h"
 #include "QEventProcessor.h"
 #include "core/common/datatypes/NunchukMetaType.hpp"
+
+struct WorkerWarningData {
+    QString what;
+    int type{0};
+    int code{0};
+};
+Q_DECLARE_METATYPE(WorkerWarningData)
+
+struct WorkerScanDevicesData {
+    int stateId{0};
+    bool isTopUpXpub{false};
+    QString masterSignerId;
+    QString masterFingerprint;
+    QString signerName;
+    bool isSignedIn{false};
+    QString hwiPath;
+};
+Q_DECLARE_METATYPE(WorkerScanDevicesData)
+
+struct WorkerScanDevicesResult {
+    int stateId{0};
+    bool isTopUpXpub{false};
+    std::vector<nunchuk::Device> devices;
+    WorkerWarningData warning;
+};
+Q_DECLARE_METATYPE(WorkerScanDevicesResult)
+
+struct WorkerCreateMasterSignerData {
+    QString name;
+    QString xfp;
+    bool isSignedIn{false};
+    QString hwiPath;
+};
+Q_DECLARE_METATYPE(WorkerCreateMasterSignerData)
+
+struct WorkerCreateMasterSignerResult {
+    bool hasSigner{false};
+    nunchuk::MasterSigner signer;
+    QString signerMessage;
+    int deviceIndex{-1};
+    WorkerWarningData warning;
+};
+Q_DECLARE_METATYPE(WorkerCreateMasterSignerResult)
+
+struct WorkerCreateRemoteSignerData {
+    QString name;
+    QString xpub;
+    QString publicKey;
+    QString derivationPath;
+    QString masterFingerprint;
+    nunchuk::SignerType type{};
+    std::vector<nunchuk::SignerTag> tags;
+    bool replace{false};
+    int event{0};
+};
+Q_DECLARE_METATYPE(WorkerCreateRemoteSignerData)
+
+struct WorkerCreateRemoteSignerResult {
+    int event{0};
+    nunchuk::SingleSigner signer;
+    bool replace{false};
+    bool syncReplacement{false};
+    WorkerWarningData warning;
+};
+Q_DECLARE_METATYPE(WorkerCreateRemoteSignerResult)
+
+struct WorkerDisplayAddressResult {
+    bool result{false};
+    WorkerWarningData warning;
+};
+Q_DECLARE_METATYPE(WorkerDisplayAddressResult)
+
+struct WorkerCreateSoftwareSignerData {
+    QString name;
+    QString secret;
+    QString passphrase;
+    bool isPrimaryKey{false};
+    bool replace{false};
+};
+Q_DECLARE_METATYPE(WorkerCreateSoftwareSignerData)
+
+struct WorkerCreateSoftwareSignerResult {
+    nunchuk::MasterSigner signer;
+    WorkerWarningData warning;
+    bool hasReplacementSigner{false};
+    nunchuk::SingleSigner replacementSigner;
+    bool signerExists{false};
+    QString signerExistsFingerprint;
+};
+Q_DECLARE_METATYPE(WorkerCreateSoftwareSignerResult)
+
+struct WorkerCreateWalletData {
+    bool needBackup{false};
+    QString filePath;
+    QString name;
+    int m{0};
+    int n{0};
+    std::vector<nunchuk::SingleSigner> signers;
+    nunchuk::AddressType addressType{};
+    nunchuk::WalletType walletType{};
+    QString description;
+    nunchuk::WalletTemplate walletTemplate{};
+};
+Q_DECLARE_METATYPE(WorkerCreateWalletData)
+
+struct WorkerCreateMiniscriptWalletData {
+    QString name;
+    QString scriptTemplate;
+    std::map<std::string, nunchuk::SingleSigner> signers;
+    nunchuk::AddressType addressType{};
+    QString description;
+    bool allowUsedSigner{false};
+};
+Q_DECLARE_METATYPE(WorkerCreateMiniscriptWalletData)
+
+struct WorkerHealthCheckRemoteSignerData {
+    int stateId{0};
+    QString xfp;
+    int signerType{0};
+    QString message;
+    bool hasSingleSigner{false};
+    nunchuk::SingleSigner singleSigner;
+    QString signerMessage;
+    QString signerSignature;
+};
+Q_DECLARE_METATYPE(WorkerHealthCheckRemoteSignerData)
+
+struct WorkerDeviceInputData {
+    int stateId{0};
+    nunchuk::Device device;
+    QString input;
+    bool shouldSend{false};
+};
+Q_DECLARE_METATYPE(WorkerDeviceInputData)
+
+struct WorkerMultiDeviceSyncData {
+    bool state{false};
+    bool canSync{false};
+};
+Q_DECLARE_METATYPE(WorkerMultiDeviceSyncData)
 
 
 typedef std::function<void(void)> WorkerFunc;
@@ -45,25 +189,23 @@ public:
     static Worker *create(QThread *thread);
 private:
     static Worker *mInstance;
+    WorkerCreateMasterSignerResult createMasterSigner(const WorkerCreateMasterSignerData &data);
+    WorkerScanDevicesResult scanDevices(const WorkerScanDevicesData &data);
 public slots:
-    void slotStartCreateMasterSigner(const QString &name,
-                                     const QString xfp);
+    void slotStartCreateMasterSigner(const WorkerCreateMasterSignerData &data);
 
-    void slotStartCreateRemoteSigner(const QString &name,
-                                     const QString &xpub,
-                                     const QString &public_key,
-                                     const QString &derivation_path,
-                                     const QString &master_fingerprint,
-                                     const nunchuk::SignerType type,
-                                     const std::vector<nunchuk::SignerTag> tags,
-                                     const bool replace,
-                                     const int event);
+    void slotStartCreateRemoteSigner(const WorkerCreateRemoteSignerData &data);
 
-    void slotStartScanDevices(const QVariant &data);
+    void slotStartScanDevices(const WorkerScanDevicesData &data);
 
     void slotStartSigningTransaction(const QString &walletId,
                                      const QString &txid,
-                                     const QString& deviceXfp,
+                                     const nunchuk::Device &device,
+                                     const QString &masterSignerId,
+                                     const QString &roomId,
+                                     const QString &initEventId,
+                                     const nunchuk::Transaction &transactionSnapshot,
+                                     bool checkTaprootRoundOne,
                                      bool isSoftware);
 
     void slotStartHealthCheckMasterSigner(const int state_id,
@@ -72,30 +214,21 @@ public slots:
 
     void slotStartTopXPUBsMasterSigner(const QVariant &data);
 
-    void slotStartHealthCheckRemoteSigner(const int state_id,
-                                          const QString& xfp,
-                                          const int signer_type,
-                                          const QString& message);
+    void slotStartHealthCheckRemoteSigner(const WorkerHealthCheckRemoteSignerData &data);
 
     void slotStartDisplayAddress(const QString &wallet_id,
                                  const QString &address);
 
     void slotStartRescanBlockchain(int start, int stop);
 
-    void slotStartCreateSoftwareSigner(const QString name,
-                                       const QString mnemonic,
-                                       const QString passphrase,
-                                       bool replace);
+    void slotStartCreateSoftwareSigner(const WorkerCreateSoftwareSignerData &data);
 
-    void slotStartCreateSoftwareSignerXprv(const QString name,
-                                           const QString xprv,
-                                           bool replace);
+    void slotStartCreateSoftwareSignerXprv(const WorkerCreateSoftwareSignerData &data);
 
-    void slotStartCreateWallet(bool need_backup, QString file_path);
+    void slotStartCreateWallet(const WorkerCreateWalletData &data);
 
     // for callback
-    void slotStartBalanceChanged(const QString& id,
-                                 const qint64 balance);
+    void slotStartBalanceChanged(const QString &id, qint64 balance);
 
     void slotStartTransactionChanged(const QString &tx_id,
                                      const int status,
@@ -110,21 +243,17 @@ public slots:
 
     void slotStartGetTransactionHistory(const QString wallet_id);
 
-    void slotStartGetEstimatedFee();
+    void slotRequestGetEstimatedFee();
 
-    void slotStartSendPinToDevice(const int state_id,
-                                  const int device_idx,
-                                  const QString &pin);
+    void slotStartSendPinToDevice(const WorkerDeviceInputData &data);
 
-    void slotStartSendPassphraseToDevice(const int state_id,
-                                         const int device_idx,
-                                         const QString &pprase);
+    void slotStartSendPassphraseToDevice(const WorkerDeviceInputData &data);
 
     void slotStartRemoveAllWallets();
 
     void slotStartRemoveAllSigners();
 
-    void slotStartMultiDeviceSync(const bool state);
+    void slotStartMultiDeviceSync(const WorkerMultiDeviceSyncData &data);
 
     void slotStartReloadUserDb();
 
@@ -136,22 +265,23 @@ public slots:
 
     void slotStartSyncWalletDb(const QString &wallet_id);
 
-    void slotCreateMiniscriptWallet();
+    void slotCreateMiniscriptWallet(const WorkerCreateMiniscriptWalletData &data);
 signals:
-    void finishCreateMasterSigner(const QMasterSignerPtr ret,
-                                  QString what,
-                                  int type,
-                                  int code);
+    void finishCreateMasterSigner(const WorkerCreateMasterSignerResult &result);
 
-    void finishCreateRemoteSigner(const int event,
-                                  const nunchuk::SingleSigner ret,
-                                  QString what,
-                                  int type,
-                                  int code);
+    void finishCreateRemoteSigner(const WorkerCreateRemoteSignerResult &result);
 
-    void finishScanDevices(const QVariant &data,
-                           std::vector<nunchuk::Device> ret,
-                           QWarningMessagePtr msg);
+    void finishScanDevices(const WorkerScanDevicesResult &result);
+
+    void beginCreateMasterSigner();
+    void beginCreateSoftwareSigner();
+    void scanDevicesStarted(bool isTopUpXpub);
+    void displayAddressStarted();
+    void updateNewKeySignMessage(const QString &message);
+    void updateAddSignerStep(int step);
+    void completeAddSignerProgress();
+    void createMasterSignerFailed(const WorkerWarningData &warning);
+    void applyUserDraftWallet(bool fetched, const QJsonObject &output);
 
     void finishSigningTransaction(const QString &walletId,
                                   nunchuk::Transaction result,
@@ -159,7 +289,10 @@ signals:
                                   int type,
                                   int code,
                                   QString masterSignerId,
+                                  bool showTaprootRoundOneToast,
                                   bool isSoftware);
+
+    void matrixSigningFinished();
 
     void finishHealthCheckMasterSigner(const int state_id,
                                        const int status,
@@ -177,19 +310,13 @@ signals:
                                        int type,
                                        int code);
 
-    void finishDisplayAddress(bool result);
+    void finishDisplayAddress(const WorkerDisplayAddressResult &result);
 
     void finishRescanBlockchain();
 
-    void finishCreateSoftwareSigner(nunchuk::MasterSigner ret,
-                                    QString what,
-                                    int type,
-                                    int code);
+    void finishCreateSoftwareSigner(const WorkerCreateSoftwareSignerResult &result);
 
-    void finishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret,
-                                        QString what,
-                                        int type,
-                                        int code);
+    void finishCreateSoftwareSignerXprv(const WorkerCreateSoftwareSignerResult &result);
 
     void finishCreateWallet(nunchuk::Wallet ret,
                             QString what,
@@ -244,7 +371,15 @@ signals:
 
     void finishReloadGroupWallets(std::vector<nunchuk::Wallet> wallets);
 
-    void finishSyncWalletDb(const QString &wallet_id);
+    void prepareSyncWalletDb(const QString &wallet_id,
+                             nunchuk::Wallet wallet,
+                             bool walletLoaded);
+
+    void finishSyncWalletDb(const QString &wallet_id,
+                            const QStringList &usedAddresses,
+                            const QStringList &usedChangeAddresses,
+                            const QStringList &unusedAddresses,
+                            const QStringList &unusedChangeAddresses);
 
     void finishCreateMiniscriptWallet(nunchuk::Wallet ret,
         QString what,
@@ -261,19 +396,22 @@ public:
     virtual ~Controller();
     bool scanDevicesSync();
 public slots:
-    void slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
-                                      QString what,
-                                      int type,
-                                      int code);
-    void slotFinishCreateRemoteSigner(const int event,
-                                      const nunchuk::SingleSigner ret,
-                                      QString what,
-                                      int type,
-                                      int code);
+    void slotPrepareCreateMasterSigner(const QString &name, const QString &xfp);
+    void slotFinishCreateMasterSigner(const WorkerCreateMasterSignerResult &result);
 
-    void slotFinishScanDevices(const QVariant &data,
-                                std::vector<nunchuk::Device> ret,
-                                QWarningMessagePtr msg);
+    void slotPrepareCreateRemoteSigner(const QString &name,
+                                       const QString &xpub,
+                                       const QString &public_key,
+                                       const QString &derivation_path,
+                                       const QString &master_fingerprint,
+                                       nunchuk::SignerType type,
+                                       std::vector<nunchuk::SignerTag> tags,
+                                       bool replace,
+                                       int event);
+    void slotFinishCreateRemoteSigner(const WorkerCreateRemoteSignerResult &result);
+
+    void slotPrepareScanDevices(const QVariant &data);
+    void slotFinishScanDevices(const WorkerScanDevicesResult &result);
 
     void slotFinishSigningTransaction(const QString &walletId,
                                       nunchuk::Transaction result,
@@ -281,7 +419,35 @@ public slots:
                                       int type,
                                       int code,
                                       QString masterSignerId,
+                                      bool showTaprootRoundOneToast,
                                       bool isSoftware);
+
+    void slotPrepareSigningTransaction(const QString &walletId,
+                                       const QString &txid,
+                                       const QString &deviceXfp,
+                                       bool isSoftware);
+
+    void slotPrepareHealthCheckRemoteSigner(const int state_id,
+                                            const QString &xfp,
+                                            const int signer_type,
+                                            const QString &message);
+
+    void slotPrepareDisplayAddress(const QString &wallet_id,
+                                   const QString &address);
+
+    void slotPrepareCreateWallet(bool need_backup, QString file_path);
+    void slotPrepareCreateMiniscriptWallet();
+
+    void slotPrepareSendPinToDevice(const int state_id,
+                                    const int device_index,
+                                    const QString &pin);
+
+    void slotPrepareSendPassphraseToDevice(const int state_id,
+                                           const int device_index,
+                                           const QString &passphrase);
+
+    void slotPrepareMultiDeviceSync(const bool state);
+
     void slotFinishHealthCheckMasterSigner(const int state_id,
                                            const int status,
                                            const QString &message,
@@ -298,18 +464,19 @@ public slots:
                                            QString what,
                                            int type,
                                            int code);
-    void slotFinishDisplayAddress(bool result);
+    void slotFinishDisplayAddress(const WorkerDisplayAddressResult &result);
     void slotFinishRescanBlockchain();
 
-    void slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
-                                        QString what,
-                                        int type,
-                                        int code);
+    void slotPrepareCreateSoftwareSigner(const QString &name,
+                                         const QString &mnemonic,
+                                         const QString &passphrase,
+                                         bool replace);
+    void slotFinishCreateSoftwareSigner(const WorkerCreateSoftwareSignerResult &result);
 
-    void slotFinishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret,
-                                        QString what,
-                                        int type,
-                                        int code);
+    void slotPrepareCreateSoftwareSignerXprv(const QString &name,
+                                             const QString &xprv,
+                                             bool replace);
+    void slotFinishCreateSoftwareSignerXprv(const WorkerCreateSoftwareSignerResult &result);
 
     void slotFinishCreateWallet(nunchuk::Wallet ret,
                                 QString what,
@@ -320,8 +487,8 @@ public slots:
                                 int code);
 
     // For callback
-    void slotFinishBalanceChanged(const QString& id,
-                                  const qint64 balance);
+    void slotFinishBalanceChanged(const QString &id,
+                                  qint64 balance);
     void slotFinishTransactionChanged(const QString &tx_id,
                                       const int status,
                                       const QString &wallet_id,
@@ -364,7 +531,15 @@ public slots:
 
     void slotFinishReloadGroupWallets(std::vector<nunchuk::Wallet> wallets);
 
-    void slotFinishSyncWalletDb(const QString &wallet_id);
+    void slotApplySyncWalletSnapshot(const QString &wallet_id,
+                                     nunchuk::Wallet wallet,
+                                     bool walletLoaded);
+
+    void slotFinishSyncWalletDb(const QString &wallet_id,
+                                const QStringList &usedAddresses,
+                                const QStringList &usedChangeAddresses,
+                                const QStringList &unusedAddresses,
+                                const QStringList &unusedChangeAddresses);
 
     void slotFinishCreateMiniscriptWallet(nunchuk::Wallet ret,
                                           QString what,
@@ -373,6 +548,8 @@ public slots:
 signals:
     void startCreateMasterSigner(const QString name,
                                  const QString xfp);
+
+    void startCreateMasterSignerPrepared(const WorkerCreateMasterSignerData &data);
 
     void startCreateRemoteSigner(const QString &name,
                                  const QString &xpub,
@@ -384,12 +561,26 @@ signals:
                                  const bool replace,
                                  const int event);
 
+    void startCreateRemoteSignerPrepared(const WorkerCreateRemoteSignerData &data);
+
     void startScanDevices(const QVariant &data);
+
+    void startScanDevicesPrepared(const WorkerScanDevicesData &data);
 
     void startSigningTransaction(const QString &walletId,
                                  const QString &txid,
                                  const QString& deviceXfp,
                                  bool isSoftware);
+
+    void startSigningTransactionPrepared(const QString &walletId,
+                                         const QString &txid,
+                                         const nunchuk::Device &device,
+                                         const QString &masterSignerId,
+                                         const QString &roomId,
+                                         const QString &initEventId,
+                                         const nunchuk::Transaction &transactionSnapshot,
+                                         bool checkTaprootRoundOne,
+                                         bool isSoftware);
 
     void startHealthCheckMasterSigner(const int state_id,
                                       const QString& xfp,
@@ -402,8 +593,13 @@ signals:
                                       const int signer_type,
                                       const QString& message);
 
+    void startHealthCheckRemoteSignerPrepared(const WorkerHealthCheckRemoteSignerData &data);
+
     void startDisplayAddress(const QString &wallet_id,
                              const QString &address);
+
+    void startDisplayAddressPrepared(const QString &wallet_id,
+                                     const QString &address);
 
     void startRescanBlockchain(int start, int stop);
 
@@ -412,15 +608,22 @@ signals:
                                    const QString passphrase,
                                    bool replace = false);
 
+    void startCreateSoftwareSignerPrepared(const WorkerCreateSoftwareSignerData &data);
+
     void startCreateSoftwareSignerXprv(const QString name,
                                        const QString xprv,
                                        bool replace = false);
 
+    void startCreateSoftwareSignerXprvPrepared(const WorkerCreateSoftwareSignerData &data);
+
     void startCreateWallet(bool need_backup, QString file_path);
+
+    void startCreateWalletPrepared(const WorkerCreateWalletData &data);
 
     // For callback
     void startBalanceChanged(const QString& id,
                              const qint64 balance);
+
 
     void startTransactionChanged(const QString &tx_id,
                                  const int status,
@@ -439,9 +642,14 @@ signals:
 
     void startGetEstimatedFee();
 
+
     void startSendPinToDevice(const int state_id, const int device_index, const QString &pin);
 
+    void startSendPinToDevicePrepared(const WorkerDeviceInputData &data);
+
     void startSendPassphraseToDevice(const int state_id, const int device_index, const QString &pprase);
+
+    void startSendPassphraseToDevicePrepared(const WorkerDeviceInputData &data);
 
     void startRemoveAllWallets();
 
@@ -457,9 +665,13 @@ signals:
 
     void startMultiDeviceSync(const bool state);
 
+    void startMultiDeviceSyncPrepared(const WorkerMultiDeviceSyncData &data);
+
     void startSyncWalletDb(const QString &wallet_id);
 
     void startCreateMiniscriptWallet();
+
+    void startCreateMiniscriptWalletPrepared(const WorkerCreateMiniscriptWalletData &data);
     // Qml
     void finishedScanDevices();
     void finishedSigningTransaction();

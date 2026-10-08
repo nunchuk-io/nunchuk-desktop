@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import "../../../Components/origins"
@@ -138,8 +138,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             enabled: true
             maxLength: 40
-            validator: RegExpValidator {
-                regExp: /^[^\s]*$/  // Allows letters, numbers, and symbols, no spaces
+            validator: RegularExpressionValidator {
+                regularExpression: /^[^\s]*$/  // Allows letters, numbers, and symbols, no spaces
             }
             textInputted: "#"
             onTextInputtedChanged: {

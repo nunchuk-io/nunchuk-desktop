@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -92,13 +92,23 @@ Item {
         Column {
             spacing: 16
             Item {
+                id: headerContainer
                 width: root.width - (sameOffset ? offset : offsetLeft) - (sameOffset ? offset : offsetRight) + 12
                 height: childrenRect.height
+                // Right-most x the title is allowed to reach: 12px clear of the close (X) button when
+                // it's visible, otherwise just the dialog's own content edge.
+                readonly property real maxTitleWidth: (closeButton.visible ? (closeButton.x - 12) : root.width) - (sameOffset ? offset : offsetLeft)
                 Row {
                     spacing: 8
                     QHeadLine {
                         id: screenname
-                        width: Math.min(656, minWidth === -1 ? screenname.paintedWidth : minWidth)
+                        // BUGFIX: paintedWidth created a circular binding with wrapMode: WordWrap
+                        // (width <- paintedWidth <- current wrapped layout), collapsing to ~1 word per
+                        // line (e.g. "Add Blockstream Jade" wrapped 3 lines). implicitWidth is the
+                        // natural unwrapped text width, independent of the assigned width. Capped by
+                        // maxTitleWidth so a long title wraps/shrinks instead of overflowing past the
+                        // dialog edge or overlapping the close button (keeps a 12px gap from it).
+                        width: Math.min(minWidth === -1 ? screenname.implicitWidth : minWidth, headerContainer.maxTitleWidth)
                         anchors.verticalCenter: parent.verticalCenter
                         visible: enableHeader
                         text: "Screen name"

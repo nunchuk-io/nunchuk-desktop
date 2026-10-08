@@ -23,11 +23,22 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
+#include "Premiums/QGroupDashboard.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QGroupWalletHealthCheck.h"
 
 void SCR_REMOTE_SIGNER_INFO_Entry(QVariant msg) {
-
+    // Same rationale as SCR_MASTER_SIGNER_INFO_Entry: refresh reminder data
+    // on every open to avoid stale badge state.
+    if (auto wallet = AppModel::instance()->walletInfoPtr()) {
+        auto dashboard = QGroupDashboard::information<QGroupDashboardPtr>(wallet->walletId());
+        if (!dashboard) {
+            dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+        }
+        if (dashboard) {
+            dashboard->GetHealthCheckInfo();
+        }
+    }
 }
 
 void SCR_REMOTE_SIGNER_INFO_Exit(QVariant msg) {
@@ -35,9 +46,21 @@ void SCR_REMOTE_SIGNER_INFO_Exit(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
-    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-        if (dashboard->healthPtr()->HealthCheckAddReminderClicked(msg)) {
-            return;
+    // Same rationale as EVT_MASTER_SIGNER_INFO_HEALTH_CHECK_HANDLER: use the dashboard
+    // that matches AppModel.walletInfo so the healthStatusesChanged signal fires on the
+    // same QGroupWalletHealthCheck instance that QML's QRemiderAndHistory is bound to.
+    QGroupDashboardPtr dashboard;
+    if (auto walletPtr = AppModel::instance()->walletInfoPtr()) {
+        dashboard = QGroupDashboard::information<QGroupDashboardPtr>(walletPtr->walletId());
+    }
+    if (!dashboard) {
+        dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+    }
+    if (dashboard) {
+        if (auto health = dashboard->healthPtr()) {
+            if (health->HealthCheckAddReminderClicked(msg)) {
+                return;
+            }
         }
     }
     if(AppModel::instance()->singleSignerInfo()) {

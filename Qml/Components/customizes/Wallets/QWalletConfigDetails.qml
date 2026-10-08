@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.12
+import QtQuick
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import "../../../Components/origins"
@@ -90,7 +90,7 @@ Rectangle {
                             return true
                         }
                     }
-                    onTypingFinished: {
+                    onTypingFinished: (currentText) => {
                         if(currentText !== walletInfo.walletName) {
                             var infoObj = {
                                 "name"          : currentText,

@@ -17,25 +17,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import QtQuick.Layouts 1.3
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
+import QtQuick.Layouts
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
 import DataPool 1.0
+import Features.Home.ViewModels 1.0
 import "../../Components/customizes"
 import "../../Components/origins"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Popups"
+import "../../Components/customizes/Wallets"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: homeroot
+
+    function hasBlockingPopup() {
+        return displayAddressBusybox.opened
+                || _info1.opened
+                || _info2.opened
+                || _confirm.opened
+                || syncProgressBox.opened
+                || chatHistorySandbox.opened
+    }
+
     Component {
         id: step1
         QHomeInitialStep1 {
@@ -139,10 +151,9 @@ QScreen {
                     spacing: 8
                     QHomeManagerWallets {
                         id: walletmanagerlst
-                        height: parent.height/2
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        onAskDeny: {
+                        Layout.fillHeight: true  // chia đều phần còn lại với Keys section
+                        onAskDeny: (deny) => {
                             _confirm.data = deny
                             _confirm.contentText = STR.STR_QML_963
                             _confirm.open()
@@ -150,9 +161,8 @@ QScreen {
                     }
                     QHomeManagerSigners {
                         id: mastersignerlist
-                        height: parent.height/2
                         Layout.fillWidth: true
-                        Layout.preferredHeight: (parent.height - 150)/2
+                        Layout.fillHeight: true  // chia đều phần còn lại với Wallets section
                     }
                     QHomeFreeRate {
                         Layout.fillWidth: true
@@ -165,10 +175,40 @@ QScreen {
             width: homeroot.width - pannel_left.width
             height: homeroot.height
             color: "#FFFFFF"
+
+            // Generic home reminder banner (see QHomeReminderBanner.qml).
+            // Lives here -- above the step Loader -- rather than inside
+            // QHomeInitialStep3 only, so it shows regardless of Home state:
+            // the "no key yet" / "no wallet yet" welcome screens (step1,
+            // step2) as well as the normal wallet view (step3). It pushes
+            // the Loader content down; it never overlays anything.
+            QHomeReminderBanner {
+                id: homeReminderBanner
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    margins: 24
+                }
+                visible: HomeReminderViewModel.reminderId.length > 0
+                title: HomeReminderViewModel.title
+                description: HomeReminderViewModel.description
+                onBannerClicked: {
+                    var reminderActions = HomeReminderViewModel.actions
+                    if (reminderActions && reminderActions.length > 0) {
+                        HomeReminderViewModel.triggerAction(reminderActions[0])
+                    }
+                }
+            }
+
             Loader {
-                width: parent.width
-                height: parent.height
-                anchors.centerIn: parent
+                anchors {
+                    top: homeReminderBanner.visible ? homeReminderBanner.bottom : parent.top
+                    topMargin: homeReminderBanner.visible ? 24 : 0
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                }
                 sourceComponent: {
                     var dashboard = GroupWallet.dashboardInfo
                     var isShowDashBoard = dashboard ? dashboard.isShowDashBoard : false
@@ -303,14 +343,29 @@ QScreen {
         ]
     }
 
-     Component.onCompleted: {
-         if (ClientController.isNunchukLoggedIn === false) {
+    // The generic home reminder is now shown as a persistent, non-dismissible
+    // banner inside the Wallet Manager content area (see QHomeInitialStep3.qml
+    // / QHomeReminderBanner.qml) instead of an auto-opening modal popup.
+    // HomeReminderViewModel.fetch() below still re-checks validity with the
+    // server every time Home comes back on top; the banner's own visibility
+    // is entirely driven by HomeReminderViewModel.reminderId.
+
+    onIsOnTopChanged: {
+        if (isOnTop) {
+            HomeReminderViewModel.fetch()
+        }
+    }
+
+    Component.onCompleted: {
+        if (ClientController.isNunchukLoggedIn === false) {
             if (AppSetting.isFirstTimeOnboarding === false) {
                 OnBoarding.screenFlow = "onboarding"
                 QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+                return
             }
-         }
-     }
+        }
+        HomeReminderViewModel.fetch()
+    }
 
     QConfirmYesNoPopup{
         id:_confirm
@@ -326,10 +381,10 @@ QScreen {
     /*=========================================SYNC=========================================*/
     Connections {
         target: AppModel
-        onOpenPromtNunchukSync: {
+        function onOpenPromtNunchukSync() {
             syncProgressBox.open()
         }
-        onClosePromtNunchukSync: {
+        function onClosePromtNunchukSync() {
             syncProgressBox.close()
         }
     }

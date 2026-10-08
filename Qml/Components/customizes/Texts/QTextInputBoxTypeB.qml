@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import "../../origins"
 
 import "../../../../localization/STR_QML.js" as STR
@@ -51,6 +51,7 @@ Column {
     property int    titleFontSize: 16
     property var    disabledColor: "#EAEAEA"
     property alias  labelComponent: txtLabel
+    property alias  emitEmptyTypingFinished: _input.emitEmptyTypingFinished
 
     signal typingFinished(var currentText)
     signal downKeyRequest()
@@ -116,7 +117,7 @@ Column {
             font.pixelSize: 16
             clip: true
             echoMode: isPassword ? (showpass.visiblity ? TextInput.Normal : TextInput.Password) : TextInput.Normal
-            onTypingFinished: {
+            onTypingFinished: (currentText) => {
                 textipboxType.typingFinished(currentText)
             }
             Keys.onDownPressed: { downKeyRequest() }

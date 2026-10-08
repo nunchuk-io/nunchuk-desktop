@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
@@ -33,7 +33,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2088
+    label.text: QSTR.STR_QML_2088
     onCloseClicked: vm.close()
     content: Item {
         anchors.fill: parent
@@ -42,7 +42,7 @@ QOnScreenContentTypeA {
             spacing: 24
             QLato {
                 width: 728
-                text: STR.STR_QML_2090
+                text: QSTR.STR_QML_2090
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
                 lineHeightMode: Text.FixedHeight
@@ -51,14 +51,14 @@ QOnScreenContentTypeA {
             }
             QTextInputBoxTypeB {
                 id: xprvInput
-                label: STR.STR_QML_2091
+                label: QSTR.STR_QML_2091
                 boxWidth: 728
                 boxHeight: 150
                 isValid: true
                 showError: true
                 maxLength: 280
                 input.verticalAlignment: TextInput.AlignTop
-                onTypingFinished:  {
+                onTypingFinished: (currentText) => {
                     vm.xprv = xprvInput.textInputted
                     xprvInput.isValid = true
                     xprvInput.errorText = ""
@@ -75,8 +75,8 @@ QOnScreenContentTypeA {
     }
     QPopupInfoTwoButtons {
         id: _info
-        title: STR.STR_QML_661
-        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        title: QSTR.STR_QML_661
+        labels: [QSTR.STR_QML_433,QSTR.STR_QML_432]
         funcs: [
             function() { vm.requestCreateSigner() },
             function() {}
@@ -84,12 +84,12 @@ QOnScreenContentTypeA {
     }
     function showPopupInfo(isSoftware, fingerPrint){
         if (isSoftware) {
-            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
-            _info.contentTextTwo = STR.STR_QML_1284
+            _info.contentText = QSTR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = QSTR.STR_QML_1284
             _info.open()
         }
         else {
-            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentText = QSTR.STR_QML_1283.arg(fingerPrint.toUpperCase())
             _info.contentTextTwo = ""
             _info.open()
         }

@@ -17,11 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.3
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
@@ -42,6 +40,8 @@ Popup {
     readonly property Item itemInfo: contentInfo.item
     closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
     background: Item{}
+    // TEMP DEBUG: log boxmask geometry to diagnose square-corner bug - remove after root cause found.
+    onOpened: console.log("QPopup DEBUG boxmask:", boxmask.width, boxmask.height, "radius:", boxmask.radius, "implicit:", contentInfo.implicitWidth, contentInfo.implicitHeight)
     Rectangle {
         id: boxmask
         width: contentInfo.implicitWidth + offset*2
@@ -63,14 +63,14 @@ Popup {
             sourceComponent: content
         }
     }
-    DropShadow {
-        anchors.fill: boxmask
-        horizontalOffset: 3
-        verticalOffset: 5
-        spread: 0
-        radius: 8
-        samples: 30
-        color: "#aa000000"
-        source: boxmask
-    }
+    // DropShadow {
+    //     anchors.fill: boxmask
+    //     horizontalOffset: 3
+    //     verticalOffset: 5
+    //     spread: 0
+    //     radius: 8
+    //     samples: 30
+    //     color: "#aa000000"
+    //     source: boxmask
+    // }
 }

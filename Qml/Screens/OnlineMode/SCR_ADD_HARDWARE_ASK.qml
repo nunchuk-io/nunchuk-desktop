@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
@@ -39,6 +39,8 @@ QScreen {
             case NUNCHUCKTYPE.ADD_COLDCARD: return _Coldcard
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
             case NUNCHUCKTYPE.ADD_JADE: return _Jade
+            // KEEPKEY: reuses the Trezor flow.
+            case NUNCHUCKTYPE.ADD_KEEPKEY: return _Trezor
             default: return null
             }
         }

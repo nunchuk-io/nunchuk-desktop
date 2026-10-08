@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import "../../origins"
@@ -50,10 +50,10 @@ QWalletDelegateBackground {
 
     function getWalletTypeDes() {
         if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
-            return STR.STR_QML_1801
+            return QSTR.STR_QML_1801
         } else {
-            return (walletN === 1) ? STR.STR_QML_070 : 
-                            qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(STR.STR_QML_069)
+            return (walletN === 1) ? QSTR.STR_QML_070 :
+                            qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(QSTR.STR_QML_069)
         }
     }
     MouseArea {
@@ -137,11 +137,11 @@ QWalletDelegateBackground {
                         width: 56
                         height: 16
                         font.pixelSize: 10
-                        text: STR.STR_QML_947
+                        text: QSTR.STR_QML_947
                         color: "#FFFFFF"
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
-                        visible: (isDashboard && walletRole !== "OBSERVER") && !isReplaced && !isSandboxWallet
+                        visible: isDashboard && walletRole !== "OBSERVER" && !(walletRole == "KEYHOLDER_LIMITED" && alertCount === 0) && !isReplaced && !isSandboxWallet
                         onTextClicked: {
                             dashboard()
                         }
@@ -165,7 +165,7 @@ QWalletDelegateBackground {
                             font.family: "Lato"
                             font.pixelSize: 10
                             color: "#031F2B"
-                            text: STR.STR_QML_1170
+                            text: QSTR.STR_QML_1170
                             font.weight: Font.Bold
                         }
                     }
@@ -178,10 +178,10 @@ QWalletDelegateBackground {
                                  else if (isAssisted && !isReplaced) return "qrc:/Images/Images/collab-wallet-dark.svg"
                                  else return ""
                                  
-                    label.text: if (isShared) return STR.STR_QML_438
-                                else if (isSandboxWallet && !isReplaced) return STR.STR_QML_1675
-                                else if (isAssisted && !isReplaced) return STR.STR_QML_679
-                                else if (isReplaced) return STR.STR_QML_1345
+                    label.text: if (isShared) return QSTR.STR_QML_438
+                                else if (isSandboxWallet && !isReplaced) return QSTR.STR_QML_1675
+                                else if (isAssisted && !isReplaced) return QSTR.STR_QML_679
+                                else if (isReplaced) return QSTR.STR_QML_1345
                                 else return ""
                     label.font.weight: Font.Bold
                     label.font.pixelSize: 10
@@ -251,7 +251,7 @@ QWalletDelegateBackground {
                     leftMargin: 16
                     verticalCenter: parent.verticalCenter
                 }
-                text: STR.STR_QML_934
+                text: QSTR.STR_QML_934
                 font.pixelSize: 12
                 color: "#FFFFFF"
                 horizontalAlignment: Text.AlignLeft

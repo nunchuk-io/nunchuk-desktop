@@ -57,8 +57,13 @@ public slots:
     void requestCreateSignerFromClaimScreen();
     
     QVariant miniscriptSupportedFirmwares(const QString& tag) const;
-    bool isSupportedInheritance(const QString& tag) const;
-    bool isSupportedNotInheritance(const QString& tag) const;
+    // walletType ("MULTI_SIG"/"MINISCRIPT") filters supported_signers[] entries; empty = unfiltered.
+    bool isSupportedInheritance(const QString& tag, const QString& walletType = QString()) const;
+    bool isSupportedNotInheritance(const QString& tag, const QString& walletType = QString()) const;
+    QVariant claimOptionsForTag(const QString& tag, const QString& walletType = QString()) const;
+    QString claimNoteForTag(const QString& tag, const QString& walletType = QString()) const;
+    // Forces a fresh setup-config fetch; setupConfigJs() otherwise caches for the whole app session.
+    void refreshSetupConfig();
 signals:
     void currentSignerChanged();
 private:

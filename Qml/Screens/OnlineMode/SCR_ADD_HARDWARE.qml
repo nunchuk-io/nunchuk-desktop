@@ -17,23 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import NUNCHUCKTYPE 1.0
 import EWARNING 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../OnlineMode/AddHardwareKeys"
 import "../OnlineMode/SetupWallets"
+import "../OnlineMode/SetupWallets/TimeLocks"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
+    // true when the just-added key is an inheritance key awaiting key-distribution choice (Setup 09D/10D)
+    property bool showDistributionChoice: false
+    // BUGFIX: this screen is loaded directly by the state machine, so "draftWallet" isn't inherited; declare it here.
+    property var draftWallet: GroupWallet.qIsByzantine ? GroupWallet : UserWallet
+
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: {
+            if (showDistributionChoice) return _distributionChoice
             var hardwareType = SignerManagement.currentSigner.hwType
             switch(hardwareType) {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
@@ -41,6 +48,8 @@ QScreen {
             case NUNCHUCKTYPE.ADD_COLDCARD: return _Coldcard
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
             case NUNCHUCKTYPE.ADD_JADE: return _Jade
+            // KEEPKEY: reuses the Trezor screen (assumed same protocol family, no dedicated screen).
+            case NUNCHUCKTYPE.ADD_KEEPKEY: return _Trezor
             default: return null
             }
         }
@@ -66,7 +75,55 @@ QScreen {
         id: _Jade
         QScreenAddJade {}
     }
-    
+    Component {
+        id: _distributionChoice
+        QKeyDistributionChoice {
+            Component.onCompleted: {
+                // currentSigner only has "tags" (array) at this stage; "tag" (singular) is set later, so infer it here.
+                var tags = SignerManagement.currentSigner.tags !== undefined ? SignerManagement.currentSigner.tags : []
+                var tag = ""
+                for (var i = 0; i < tags.length; i++) {
+                    if (tags[i] !== "INHERITANCE") { tag = tags[i]; break }
+                }
+                refresh(tag)
+            }
+            onPrevClicked: showDistributionChoice = false
+            onDistributionChosen: function(claimOptions) {
+                // BUGFIX: used to navigate to backup flow even when the API call failed; now blocks on failure
+                // (backend already shows its own error toast, so no extra toast is added here).
+                if (!draftWallet.requestSetClaimOptions(claimOptions)) {
+                    return
+                }
+                // BUGFIX: requestSetClaimOptions doesn't update dashInfo.keys[].claim_options locally; refresh so
+                // onBackupClicked routes correctly next time.
+                GroupWallet.refresh()
+                showDistributionChoice = false
+                var xfp = SignerManagement.currentSigner.xfp
+                var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                // BUGFIX: always go through the Verify-your-backups checklist (Setup 12c), for 1 or 2
+                // options, not just "Do both" - it shows only the row(s) matching claim_options.
+                if (hasSeed || hasEncrypted) {
+                    _verifyBothBackups.open2(xfp, signerTag, claimOptions)
+                } else {
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                }
+            }
+        }
+    }
+
+    QBackupSeedPhraseFlow {
+        id: _backupSeedPhraseFlow
+    }
+    QEncryptedBackupFlow {
+        id: _encryptedBackupFlow
+    }
+    QVerifyBothBackups {
+        id: _verifyBothBackups
+        onChangeShareMethod: showDistributionChoice = true
+    }
+
     function isFlowClamOrAddKeyClaim() {
         var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner // Add Key From Claim Banner
         var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim // Claim Flow
@@ -74,16 +131,25 @@ QScreen {
     }
     function doneOrTryAgainAddHardwareKey(isSuccess) {
         var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
+        var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
         if (isNormalFlow) {
             if (isSuccess) {
-                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                if (is_inheritance) {
+                    showDistributionChoice = true
+                } else {
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                }
             }
             else {
                 GroupWallet.refresh()
                 GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
             }
         } else {
+            // BUGFIX: MINISCRIPT (on-chain/timelock) branch - never show the off-chain-only
+            // "distribution choice" screen here, even if is_inheritance is true (that tag is shared
+            // with on-chain timelock inheritance keys). Matches QScreenAddColdcard.qml's MINISCRIPT
+            // branch, which never consults is_inheritance at all.
             var xfp = SignerManagement.currentSigner.xfp
             if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)

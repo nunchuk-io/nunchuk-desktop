@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -52,7 +52,7 @@ QOnScreenContentTypeA {
         transactionInfo: AppModel.transactionInfo
         myRole: ServiceSetting.walletInfo.myRole
         isDummy: true
-        onAddrToVerify: {
+        onAddrToVerify: (addr) => {
             displayAddressBusybox.addrToVerify = addr
             var _address = {
                 type: "address-to-verify",
@@ -60,7 +60,7 @@ QOnScreenContentTypeA {
             }
             QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION, _address)
         }
-        onNewMemoNotify: {
+        onNewMemoNotify: (newMemo) => {
             var _memo = {
                 type: "memo-notify",
                 memo: newMemo

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import "../../origins"
 
 Column {
@@ -110,7 +110,7 @@ Column {
             font.pixelSize: 16
             clip: true
             maximumLength: enableLengthLimit ? maxLength : -1
-            onTypingFinished: textipboxType.typingFinished(currentText)
+            onTypingFinished: (currentText) => textipboxType.typingFinished(currentText)
             Keys.onDownPressed: { downKeyRequest() }
             Keys.onUpPressed: { upKeyRequest() }
             Keys.onPressed: function (keyEvent) {

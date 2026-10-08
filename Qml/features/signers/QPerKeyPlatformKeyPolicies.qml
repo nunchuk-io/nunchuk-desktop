@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2121
+    label.text: QSTR.STR_QML_2121
     onCloseClicked: vm.close()
     onPrevClicked: vm.back()
     extraHeader: Item { }
@@ -53,7 +53,7 @@ QOnScreenContentTypeA {
                         width: parent.width
                         height: 36
                         QLato {
-                            text: STR.STR_QML_2126
+                            text: QSTR.STR_QML_2126
                             color: vm.isTypeChanged ? "#CF4018" : "#031F2B"
                             font.pixelSize: 16
                             font.weight: Font.Bold
@@ -65,7 +65,7 @@ QOnScreenContentTypeA {
                             id: _edit
                             width: _edit.paintedWidth
                             height: 20
-                            text: STR.STR_QML_849
+                            text: QSTR.STR_QML_849
                             anchors {
                                 verticalCenter: parent.verticalCenter
                                 right: parent.right
@@ -77,7 +77,7 @@ QOnScreenContentTypeA {
                     }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_2127
+                        text: QSTR.STR_QML_2127
                         color: vm.isTypeChanged ? "#CF4018" : "#031F2B"
                         font.pixelSize: 16
                         font.weight: Font.Normal
@@ -108,12 +108,12 @@ QOnScreenContentTypeA {
                             subLabel: {
                                 var str = (modelData.currency ?? "") + " " + (modelData.balance ?? "") + " / " + (modelData.interval ? formatInterval(modelData.interval): "")
                                 if (str.trim() === "/") {
-                                    str = STR.STR_QML_2148
+                                    str = QSTR.STR_QML_2148
                                 }
                                 if (modelData.enableSpendingLimit ?? false) {
                                     str
                                 } else {
-                                    STR.STR_QML_2148
+                                    QSTR.STR_QML_2148
                                 } 
                             }
                             subLabelChanged: (modelData.currencyChanged ?? false) || (modelData.balanceChanged ?? false) || (modelData.intervalChanged ?? false)
@@ -138,7 +138,7 @@ QOnScreenContentTypeA {
         QButtonTextLink {
             width: 200
             height: 48
-            label: STR.STR_QML_2129
+            label: QSTR.STR_QML_2129
             textColor: ["#CF4018", "#CF4018", "#CF4018"]
             displayIcon:false
             visible: vm.isEntryPointGroup
@@ -149,7 +149,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_193
+            label.text: QSTR.STR_QML_193
             type: eTypeR
             visible: vm.isEntryPointAlert
             onClicked: vm.onDiscardChangesClicked()
@@ -157,7 +157,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_2130
+            label.text: QSTR.STR_QML_2130
             type: eTypeE
             visible: vm.isEntryPointGroup
             onClicked: vm.onContinueToSaveChangesClicked()
@@ -165,7 +165,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_2130
+            label.text: QSTR.STR_QML_2130
             type: eTypeE
             visible: vm.isEntryPointWallet
             onClicked: vm.onApplyClicked()
@@ -173,7 +173,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_2138.arg(vm.pending_signatures).arg((vm.pending_signatures > 1) ? "s" : "")
+            label.text: QSTR.STR_QML_2138.arg(vm.pending_signatures).arg((vm.pending_signatures > 1) ? "s" : "")
             type: eTypeE
             visible: vm.isEntryPointAlert
             onClicked: vm.onContinueSignaturePendingClicked()
@@ -184,9 +184,9 @@ QOnScreenContentTypeA {
         id: _SecurityDelayRequired
         btnWith: 118
         isVertical: false
-        title: STR.STR_QML_661
-        contentText: STR.STR_QML_2141.arg(vm.afterHours)
-        labels: [STR.STR_QML_035, STR.STR_QML_509]
+        title: QSTR.STR_QML_661
+        contentText: QSTR.STR_QML_2141.arg(vm.afterHours)
+        labels: [QSTR.STR_QML_035, QSTR.STR_QML_509]
         funcs: [
             function() {  _SecurityDelayRequired.close() },
             function() { 
@@ -199,9 +199,9 @@ QOnScreenContentTypeA {
         id: _DummyTransactionRequired
         btnWith: 118
         isVertical: false
-        title: STR.STR_QML_661
-        contentText: STR.STR_QML_2140
-        labels: [STR.STR_QML_035, STR.STR_QML_509]
+        title: QSTR.STR_QML_661
+        contentText: QSTR.STR_QML_2140
+        labels: [QSTR.STR_QML_035, QSTR.STR_QML_509]
         funcs: [
             function() {  _DummyTransactionRequired.close() },
             function() { 

@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <functional>
 #include "TypeDefine.h"
 #include "Premiums/QBasePremium.h"
 
@@ -12,6 +13,7 @@ class QGroupWalletHealthCheck : public QBasePremium
     Q_OBJECT
     Q_PROPERTY(QVariantList healthStatuses  READ healthStatuses NOTIFY healthStatusesChanged)
     Q_PROPERTY(QVariant aKeyStatus          READ aKeyStatus     NOTIFY healthStatusesChanged)
+    Q_PROPERTY(QVariantList claimKeys       READ claimKeys      NOTIFY healthStatusesChanged)
     Q_PROPERTY(QList<QVariant> reminderKeys READ reminderKeys   NOTIFY reminderKeysChanged)
     Q_PROPERTY(bool isAllReminder           READ isAllReminder  NOTIFY isAllReminderChanged)
     Q_PROPERTY(QString editReminder         READ editReminder   WRITE setEditReminder NOTIFY editReminderChanged)
@@ -20,6 +22,7 @@ public:
     virtual ~QGroupWalletHealthCheck();
     QString groupId() const;
     QVariantList healthStatuses() const;
+    QVariantList claimKeys() const;
 
     void GetStatuses();
     void HealthCheckForKey(const QString& xfp);
@@ -32,7 +35,11 @@ public:
     QList<QVariant> reminderKeys() const;
     void setReminderKeys(const QList<QVariant> &newReminderKeys);
 
-    void GetKeyHealthReminder();
+    // onComplete (optional) is called on the UI thread immediately after m_reminders
+    // has been updated and healthStatusesChanged has been emitted.  Use this to
+    // sequence work that must see the fresh reminder data (e.g. setFlow so the Loader
+    // creates _keyInfo only after the badge data is ready).
+    void GetKeyHealthReminder(std::function<void()> onComplete = nullptr);
     void AddOrUpdateKeyHealthReminder(const QStringList xfps, const QString frequency, const QString start_date_millis);
     bool DeleteKeyHealthReminder(const QStringList& xfps);
     bool SkipKeyHealthReminder();
@@ -49,6 +56,7 @@ public:
 
     void saveReminderState();
     bool currentReminderState();
+    void refreshKeyInfo();
 private:
     double SixMonthToMillis() const;
     double YearToMillis() const;

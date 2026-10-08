@@ -59,12 +59,22 @@ void EVT_ADD_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
     QString username = maps["username"].toString();
     QString signature = maps["signature"].toString();
     std::vector<nunchuk::PrimaryKey> primaryKeys = AppModel::instance()->primaryKeys();
+    if (primaryKeys.empty()) {
+        return;
+    }
     nunchuk::PrimaryKey pkey;
     for(nunchuk::PrimaryKey key: primaryKeys){
         if(key.get_account() == username.toStdString()){
             pkey = key;
             break;
         }
+    }
+    if (pkey.get_address().empty()) {
+        AppModel::instance()->showToast(
+            nunchuk::NunchukException::INVALID_PARAMETER,
+            "No primary key was found for this account.",
+            EWARNING::WarningType::EXCEPTION_MSG);
+        return;
     }
     Draco::instance()->pkey_signin(QString::fromStdString(pkey.get_address()),username,signature);
 }
@@ -100,4 +110,3 @@ void EVT_CHALLENGE_MESSAGE_REFRESH_REQUEST_HANDLER(QVariant msg) {
         }
     }
 }
-

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -37,10 +37,10 @@ QScreen {
     Loader {
         anchors.centerIn: parent
         sourceComponent: {
-            if (reqiredSignature.type === "SECURITY_QUESTION") {
+            if (reqiredSignature && reqiredSignature.type === "SECURITY_QUESTION") {
                 return security_question
             }
-            else if (reqiredSignature.type === "CONFIRMATION_CODE") {
+            else if (reqiredSignature && reqiredSignature.type === "CONFIRMATION_CODE") {
                 return confirm_code
             }
             return null

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import "../../../Components/origins"
 import "../../../Components/customizes"
@@ -33,8 +33,8 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     onCloseClicked: vm.close()
-    property string guideDescriptionOne: STR.STR_QML_1926
-    property string guideDescriptionTwo: STR.STR_QML_1927
+    property string guideDescriptionOne: QSTR.STR_QML_1926
+    property string guideDescriptionTwo: QSTR.STR_QML_1927
     property string guideExportString: ""
     content: Item {
         Row {
@@ -92,10 +92,10 @@ QOnScreenContentTypeA {
                             id: _guide
                             width: parent.width
                             readonly property var content_map: [
-                                {height: 48,  headline:STR.STR_QML_1928, content: STR.STR_QML_1929 , icon: "qrc:/Images/Images/1.Active.svg" },
-                                {height: 68,  headline:STR.STR_QML_1930, content: STR.STR_QML_1931 , icon: "qrc:/Images/Images/2.Active.svg" },
-                                {height: 88,  headline:STR.STR_QML_1932, content: guideExportString , icon: "qrc:/Images/Images/3.Active.svg" },
-                                {height: 68,  headline:STR.STR_QML_1934, content: STR.STR_QML_1935 , icon: "qrc:/Images/Images/4.Active.svg" },
+                                {height: 48,  headline:QSTR.STR_QML_1928, content: QSTR.STR_QML_1929 , icon: "qrc:/Images/Images/1.Active.svg" },
+                                {height: 68,  headline:QSTR.STR_QML_1930, content: QSTR.STR_QML_1931 , icon: "qrc:/Images/Images/2.Active.svg" },
+                                {height: 88,  headline:QSTR.STR_QML_1932, content: guideExportString , icon: "qrc:/Images/Images/3.Active.svg" },
+                                {height: 68,  headline:QSTR.STR_QML_1934, content: QSTR.STR_QML_1935 , icon: "qrc:/Images/Images/4.Active.svg" },
                             ]
                             model: content_map.length
                             Rectangle {
@@ -151,7 +151,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: 120
         height: 48
-        label.text: STR.STR_QML_1288
+        label.text: QSTR.STR_QML_1288
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/customizes/Texts"
 
 Item {
@@ -52,7 +52,7 @@ Item {
                     left: parent.left
                     verticalCenter: parent.verticalCenter
                 }
-                text: STR.STR_QML_2177 + " " + beneficiaryIndex
+                text: QSTR.STR_QML_2177 + " " + beneficiaryIndex
                 font.pixelSize: 16
                 font.weight: Font.Bold
                 color: "#031F2B"

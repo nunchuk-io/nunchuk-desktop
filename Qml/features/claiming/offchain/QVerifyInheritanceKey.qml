@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
@@ -34,7 +34,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     onCloseClicked: vm.close()
-    label.text: STR.STR_QML_2085
+    label.text: QSTR.STR_QML_2085
     content: Item {
         Row {
             spacing: 36
@@ -44,8 +44,8 @@ QOnScreenContentTypeA {
                 radius: 24
                 color: "#D0E2FF"
                 QPicture {
-                    anchors.centerIn: parent
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
                     source: "qrc:/Images/Images/verify-inheritance-key.svg"
                 }
             }
@@ -60,7 +60,7 @@ QOnScreenContentTypeA {
                         height: _signMessage.height
                         QTextInputBoxTypeB {
                             id: _signMessage
-                            label: STR.STR_QML_2083
+                            label: QSTR.STR_QML_2083
                             labelComponent.textFormat: Text.RichText
                             labelComponent.font.pixelSize: 12
                             boxWidth: parent.width
@@ -94,7 +94,7 @@ QOnScreenContentTypeA {
                                     vm.onSignClicked()
                                 } else {
                                     exportContextMenu.x = 20
-                                    exportContextMenu.y = 20 - exportContextMenu.height
+                                    exportContextMenu.y = 20 - exportContextMenu.implicitHeight
                                     exportContextMenu.open()
                                 }
                             }
@@ -106,7 +106,7 @@ QOnScreenContentTypeA {
                                 property var exportMessage: [
                                     {
                                         visible: true,
-                                        label: STR.STR_QML_114,
+                                        label: QSTR.STR_QML_114,
                                         icon: "",
                                         iconRight: "",
                                         color: "#031F2B",
@@ -120,7 +120,7 @@ QOnScreenContentTypeA {
                                     },
                                     {
                                         visible: true,
-                                        label: STR.STR_QML_2097,
+                                        label: QSTR.STR_QML_2097,
                                         icon: "",
                                         iconRight: "",
                                         color: "#031F2B",
@@ -142,7 +142,7 @@ QOnScreenContentTypeA {
                                 property var importMessage: [
                                     {
                                         visible: true,
-                                        label: STR.STR_QML_302,
+                                        label: QSTR.STR_QML_302,
                                         icon: "",
                                         iconRight: "",
                                         color: "#031F2B",
@@ -155,7 +155,7 @@ QOnScreenContentTypeA {
                                     },
                                     {
                                         visible: true,
-                                        label: STR.STR_QML_677,
+                                        label: QSTR.STR_QML_677,
                                         icon: "",
                                         iconRight: "",
                                         color: "#031F2B",
@@ -170,7 +170,7 @@ QOnScreenContentTypeA {
                                 mapMenu: [
                                     {
                                         visible: true,
-                                        label: STR.STR_QML_2095,
+                                        label: QSTR.STR_QML_2095,
                                         icon: "qrc:/Images/Images/save-backup-dark.svg",
                                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                                         color: "#031F2B",
@@ -182,7 +182,7 @@ QOnScreenContentTypeA {
                                     },
                                     {
                                         visible: true,
-                                        label: STR.STR_QML_2096,
+                                        label: QSTR.STR_QML_2096,
                                         icon: "qrc:/Images/Images/ExportFile.svg",
                                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                                         color: "#031F2B",
@@ -207,7 +207,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: label.paintedWidth + 32
             height: 48
-            label.text: STR.STR_QML_097
+            label.text: QSTR.STR_QML_097
             label.font.pixelSize: 16
             type: eTypeE
             enabled: vm.isVerified

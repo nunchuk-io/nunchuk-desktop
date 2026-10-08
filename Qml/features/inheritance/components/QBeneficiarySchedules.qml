@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../../../Components/customizes/Texts"
 import "../../../Components/origins"
 
@@ -87,7 +87,7 @@ Rectangle {
                     left: parent.left
                     verticalCenter: parent.verticalCenter
                 }
-                text: STR.STR_QML_2154
+                text: QSTR.STR_QML_2154
                 font.pixelSize: 16
                 font.weight: Font.Bold
             }
@@ -100,7 +100,7 @@ Rectangle {
                     rightMargin: 12
                     verticalCenter: parent.verticalCenter
                 }
-                text: STR.STR_QML_849
+                text: QSTR.STR_QML_849
                 color: "#031F2B"
                 onTextClicked: {
                     root.editClicked()
@@ -114,10 +114,10 @@ Rectangle {
             height: 349
             contentHeight: contentDisp.height
             clip: true
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             Column {
                 id: contentDisp
-                width: parent.width
+                width: parent.width - 8  // leave room for QScrollBar (8px)
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 8
                 Repeater {

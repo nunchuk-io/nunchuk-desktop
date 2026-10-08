@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import "../../../Components/customizes/Texts"
 import "../../../Components/origins"
 
@@ -65,7 +65,7 @@ Column {
                 spacing: 2
 
                 QLato {
-                    text: STR.STR_QML_2174
+                    text: QSTR.STR_QML_2174
                     font.pixelSize: 12
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -96,7 +96,7 @@ Column {
                 spacing: 4
                 QLato {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.isExpanded ? STR.STR_QML_2176 : STR.STR_QML_2175
+                    text: root.isExpanded ? QSTR.STR_QML_2176 : QSTR.STR_QML_2175
                     font.pixelSize: 12
                     font.underline: true
                     font.weight: Font.Bold
@@ -138,10 +138,10 @@ Column {
             contentHeight: installmentColumn.implicitHeight + 16
             clip: true
             flickableDirection: Flickable.VerticalFlick
-            ScrollBar.vertical: ScrollBar { active: true }
+            ScrollBar.vertical: QScrollBar { }
             Column {
                 id: installmentColumn
-                width: parent.width
+                width: parent.width - 8  // leave room for QScrollBar (8px)
                 spacing: 8
                 Repeater {
                     model: root.installmentDetails

@@ -20,10 +20,11 @@
 #include "QNunchukImageProvider.h"
 #include "QOutlog.h"
 
-ThumbnailResponse::ThumbnailResponse(Connection *c, QString id, QSize size)
-    : c(c), mediaId(std::move(id)), requestedSize(size)
+ThumbnailResponse::ThumbnailResponse(QSharedPointer<Connection> connection,
+                                     QString id, QSize size)
+    : m_connection(std::move(connection)), mediaId(std::move(id)), requestedSize(size)
 {
-    if (!c)
+    if (!m_connection)
         errorStr = tr("No connection to perform image request");
     else if (mediaId.count('/') != 1)
         errorStr =
@@ -43,14 +44,15 @@ ThumbnailResponse::ThumbnailResponse(Connection *c, QString id, QSize size)
                        << ", " << size;
     errorStr = tr("Image request is pending");
     // Execute a request on the main thread asynchronously
-    moveToThread(c->thread());
+    moveToThread(m_connection->thread());
     QMetaObject::invokeMethod(this, &ThumbnailResponse::startRequest);
 }
 
 void ThumbnailResponse::startRequest()
 {
-    Q_ASSERT(QThread::currentThread() == c->thread());
-    job = c->getThumbnail(mediaId, requestedSize);
+    Q_ASSERT(m_connection);
+    Q_ASSERT(QThread::currentThread() == m_connection->thread());
+    job = m_connection->getThumbnail(mediaId, requestedSize);
     // Connect to any possible outcome including abandonment
     // to make sure the QML thread is not left stuck forever.
     connect(job, &BaseJob::finished, this, &ThumbnailResponse::prepareResult);
@@ -124,7 +126,7 @@ QQuickImageResponse *QNunchukImageProvider::requestImageResponse(const QString &
         tmpid = tmpid.remove("mxc://");
         if(tmpid.isEmpty() || tmpid.count('/') != 1) {
             // Invalid MXC format - return error without requesting
-            auto response = new ThumbnailResponse(nullptr, tmpid, requestedSize);
+            auto response = new ThumbnailResponse({}, tmpid, requestedSize);
             return response;
         }
     }
@@ -135,10 +137,17 @@ QQuickImageResponse *QNunchukImageProvider::requestImageResponse(const QString &
         size.setWidth(ushort(-1));
     if (size.height() == -1)
         size.setHeight(ushort(-1));
-    return new ThumbnailResponse(m_connection.load(), tmpid, size);
+    QSharedPointer<Connection> connection;
+    {
+        QReadLocker locker(&m_connectionLock);
+        connection = m_connection;
+    }
+    return new ThumbnailResponse(std::move(connection), tmpid, size);
 }
 
-void QNunchukImageProvider::setConnection(Connection *c)
+void QNunchukImageProvider::setConnection(
+        const QSharedPointer<Connection>& connection)
 {
-    m_connection.store(c);
+    QWriteLocker locker(&m_connectionLock);
+    m_connection = connection;
 }

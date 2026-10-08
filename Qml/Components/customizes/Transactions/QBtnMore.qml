@@ -18,9 +18,9 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -63,7 +63,7 @@ QButtonLargeTail {
 
     onButtonClicked: {
         othersContextMenu.x = 20
-        othersContextMenu.y = 20 - othersContextMenu.height
+        othersContextMenu.y = 20 - othersContextMenu.implicitHeight
         othersContextMenu.open()
     }
 

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
@@ -38,6 +38,9 @@ Item {
     property string newQuestion: ""
     property var remain_questions: []
     property var ques_index: index
+    property bool showQuestionError: false
+    readonly property bool customQuestionValid: newQuestion.trim().length > 0
+    signal questionDraftEdited(string value)
     Column {
         anchors.fill: parent
         spacing: 16
@@ -75,13 +78,17 @@ Item {
             label: ""
             boxWidth: 537
             boxHeight: 48
-            isValid: newQuestion !== ""
+            emitEmptyTypingFinished: true
+            isValid: !showQuestionError || customQuestionValid
             textInputted: newQuestion
             onTextInputtedChanged: {
                 newQuestion = _question.textInputted
             }
+            onTypingFinished: (currentText) => {
+                questionDraftEdited(currentText)
+            }
             errorText: STR.STR_QML_1063
-            showError: newQuestion === ""
+            showError: showQuestionError && !customQuestionValid
         }
     }
 }

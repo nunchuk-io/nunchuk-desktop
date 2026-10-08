@@ -48,7 +48,7 @@ void EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST_HANDLER(QVariant msg) {
     } else {
         auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
         QJsonObject payload = dashboard->alertJson()["payload"].toObject();
-        DBG_INFO << QString().sprintf("%p", dashboard.data()) << payload;
+        DBG_INFO << QString::asprintf("%p", dashboard.data()) << payload;
         if (type == "Ill-do-this-later") {
             QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
             if (!dummy_transaction_id.isEmpty()) {

@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Features.Signers.ViewModels 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
@@ -31,7 +31,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_904
+    label.text: QSTR.STR_QML_904
     onCloseClicked: vm.close()
     onPrevClicked: vm.back()
     content: QHardwareRefreshDevices {
@@ -41,7 +41,7 @@ QOnScreenContentTypeA {
         QIconTextButton {
             width: 244
             height: 48
-            label: STR.STR_QML_1922
+            label: QSTR.STR_QML_1922
             icons: ["QR-dark.svg", "QR-dark.svg", "QR-dark.svg", "QR-dark.svg"]
             fontPixelSize: 16
             iconSize: 16
@@ -51,7 +51,7 @@ QOnScreenContentTypeA {
         QIconTextButton {
             width: 244
             height: 48
-            label: STR.STR_QML_1050
+            label: QSTR.STR_QML_1050
             icons: ["importFile.svg", "importFile.svg", "importFile.svg", "importFile.svg"]
             fontPixelSize: 16
             iconSize: 16
@@ -61,7 +61,7 @@ QOnScreenContentTypeA {
         QTextButton {
             width: 120
             height: 48
-            label.text: STR.STR_QML_265
+            label.text: QSTR.STR_QML_265
             label.font.pixelSize: 16
             type: eTypeE
             enabled: _refresh.contentItem.isEnable()

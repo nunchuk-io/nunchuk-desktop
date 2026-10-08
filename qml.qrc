@@ -68,6 +68,7 @@
         <file>Qml/Screens/OnlineMode/SCR_HOME_ONLINE.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_LOGIN_ONLINE.qml</file>
         <file>Qml/Components/customizes/Chats/QConversationPage.qml</file>
+        <file>Qml/Components/customizes/Chats/QEmojiPicker.qml</file>
         <file>Qml/Components/customizes/QMenuBar.qml</file>
         <file>Qml/Components/customizes/QMenuBarItem.qml</file>
         <file>Qml/Components/customizes/Chats/QContactReceivedDelegate.qml</file>
@@ -268,6 +269,7 @@
         <file>Qml/Components/customizes/Popups/QPopupToast.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoVertical.qml</file>
         <file>Qml/Components/customizes/Popups/QPopup.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupHomeReminder.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoTwoButtons.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoThreeButtons.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupEnterPreimageInHex.qml</file>
@@ -551,6 +553,7 @@
         <file>Qml/Screens/OnlineMode/Coins/QCreateANewCollectionDescription.qml</file>
         <file>Qml/Components/customizes/Buttons/QCheckBoxTypeA.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPopupTheBackupPassword.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPopupTheSeedPhraseBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupLoading.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupSuccess.qml</file>
@@ -615,6 +618,7 @@
         <file>Qml/Components/customizes/Lists/QRadioList.qml</file>
         <file>Qml/Components/customizes/Wallets/QDraftWalletReviewWallet.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletWarningInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QHomeReminderBanner.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletConfigDetails.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletConfigKeys.qml</file>
         <file>Qml/Components/customizes/Wallets/QTypeWallet.qml</file>
@@ -702,6 +706,11 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QCheckYourJadeFirmware.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QCheckYourLedgerFirmware.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QHowOnChainTimelockWorks.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QKeyDistributionChoice.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QEncryptedBackupFlow.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyBothBackups.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupConfirmRemoveBackup.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseGuide.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseQuestion.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchain.qml</file>
@@ -760,6 +769,7 @@
         <file>Qml/features/signers/QWhichTypeOfKeySelection.qml</file>
         <file>Qml/features/signers/QColdcardRefreshDevices.qml</file>
         <file>Qml/features/signers/QHardwareRefreshDevices.qml</file>
+        <file>Qml/features/signers/QHardwareRefreshDevicesScreen.qml</file>
         <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR.qml</file>
         <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR_1_2.qml</file>
         <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR_2_2.qml</file>
@@ -811,6 +821,7 @@
         <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeAScrollable.qml</file>
         <file>Qml/features/signers/QEditPlatformKeyPolicies.qml</file>
         <file>Qml/features/draftwallets/QGroupSandboxInvites.qml</file>
+        <file>Qml/Components/origins/QScrollBar.qml</file>
         <file>Qml/features/inheritance/components/QInheritanceOverview.qml</file>
         <file>Qml/features/inheritance/components/QAssetAllocation.qml</file>
         <file>Qml/features/inheritance/components/QBeneficiaryAllocation.qml</file>
@@ -964,6 +975,7 @@
         <file>Images/2.Active.svg</file>
         <file>Images/3.Active.svg</file>
         <file>Images/4.Active.svg</file>
+        <file>Images/Inheritance_badge.svg</file>
         <file>Images/5.Active.svg</file>
         <file>Images/compose-white.svg</file>
         <file>Images/Delete.svg</file>
@@ -978,6 +990,11 @@
         <file>Images/logo-vertical-dark.svg</file>
         <file>Images/logo-vertical-light.svg</file>
         <file>Images/importFile.svg</file>
+        <file>Images/Import_encrypted_backup.svg</file>
+        <file>Images/seed_phrase_secrets.svg</file>
+        <file>Images/encrypted_backup_secrets.svg</file>
+        <file>Images/both_backup_secrets.svg</file>
+        <file>Images/security-answer-distribution.svg</file>
         <file>Images/Device_Icons/nfc-key-dark.svg</file>
         <file>Images/Device_Icons/nfc-key-light.svg</file>
         <file>Images/Device_Icons/software-key-light.svg</file>
@@ -1019,6 +1036,7 @@
         <file>Images/close-24px.svg</file>
         <file>Images/calendar-dark.svg</file>
         <file>Images/change-password-dark.svg</file>
+        <file>Images/backup_black_24dp.svg</file>
         <file>Images/star-light.svg</file>
         <file>Images/wallet-brand-icon.svg</file>
         <file>Images/calendar-dark.png</file>

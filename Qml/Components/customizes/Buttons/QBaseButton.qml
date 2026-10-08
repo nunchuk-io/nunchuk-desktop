@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 import DataPool 1.0
 
 Item {
@@ -65,15 +65,15 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         anchors.fill: parent
-        onPressed: _item.pressed(mouse)
-        onClicked: {
+        onPressed: (mouse) => _item.pressed(mouse)
+        onClicked: (mouse) => {
             if (!timer1s.running) {
                 timer1s.restart()
                 _item.buttonClicked(mouse)
                 _item.clicked(mouse)
             }
         }
-        onReleased: _item.released(mouse)
+        onReleased: (mouse) => _item.released(mouse)
         onContainsMouseChanged: _item.containsMouseChanged()
     }
     Timer {

@@ -18,8 +18,8 @@
  *                                                                        *
  **************************************************************************/
 
-import QtQuick 2.12
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
 import DRACO_CODE 1.0
 import DataPool 1.0
 import EWARNING 1.0
@@ -28,7 +28,7 @@ import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
-import QtGraphicalEffects 1.0
+import Qt5Compat.GraphicalEffects
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Buttons"
@@ -37,8 +37,8 @@ import "./../../../customizes/Texts"
 
 Item {
     property var list: [
-        {id: "hardware",         description: STR.STR_QML_2080},
-        {id: "backupPassword",   description: STR.STR_QML_2081},
+        {id: "hardware",         description: QSTR.STR_QML_2080},
+        {id: "backupPassword",   description: QSTR.STR_QML_2081},
     ]
     Column {
         id: _claim
@@ -61,7 +61,8 @@ Item {
             color: "#D0E2FF"
 
             QPicture {
-                anchors.centerIn: parent
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
                 source: "qrc:/Images/Images/claim-inheritance-illustration.svg"
             }
 
@@ -69,7 +70,7 @@ Item {
 
         QMontserrat {
             id: title
-            text: STR.STR_QML_747
+            text: QSTR.STR_QML_747
             font.pixelSize: 32
             font.weight: Font.Medium
         }
@@ -82,7 +83,7 @@ Item {
                 spacing: 16
 
                 QText {
-                    text: STR.STR_QML_2079
+                    text: QSTR.STR_QML_2079
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 16
@@ -125,7 +126,7 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 2 * 16
                     height: 48
-                    label.text: STR.STR_QML_265
+                    label.text: QSTR.STR_QML_265
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {

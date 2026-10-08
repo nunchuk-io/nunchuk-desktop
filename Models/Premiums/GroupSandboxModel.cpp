@@ -33,6 +33,9 @@ int GroupSandboxModel::rowCount(const QModelIndex &parent) const {
 }
 
 QVariant GroupSandboxModel::data(const QModelIndex &index, int role) const {
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_data.size()) {
+        return QVariant();
+    }
     if (auto data = m_data[index.row()]) {
         switch (role) {
         case group_Id_Role:
@@ -127,6 +130,7 @@ void GroupSandboxModel::GetSharedWalletInvitations() {
             if (!safeThis)
                 return;
 
+            const int previousCount = safeThis->m_data.size();
             safeThis->beginResetModel();
             safeThis->m_data.clear();
             safeThis->m_data.reserve(static_cast<int>(sandboxs.size() + safeThis->m_sandboxs.size()));
@@ -143,6 +147,9 @@ void GroupSandboxModel::GetSharedWalletInvitations() {
                 safeThis->m_data.append(newSandbox);
             }
             safeThis->endResetModel();
+            if (safeThis->m_data.size() != previousCount) {
+                emit safeThis->groupSandboxModelChanged();
+            }
         });
 }
 
@@ -163,13 +170,18 @@ void GroupSandboxModel::updateSandox(const nunchuk::GroupSandbox sandbox) {
     }
 }
 
-bool GroupSandboxModel::contains(const QString &sandbox_id) {
-    for (auto it : m_data) {
-        if (it && qUtils::strCompare(it->groupId(), sandbox_id)) {
-            return true;
+bool GroupSandboxModel::contains(const QString &sandbox_id) const {
+    return indexOf(sandbox_id) >= 0;
+}
+
+int GroupSandboxModel::indexOf(const QString &sandbox_id) const {
+    for (int i = 0; i < m_data.size(); ++i) {
+        const auto &item = m_data.at(i);
+        if (item && qUtils::strCompare(item->groupId(), sandbox_id)) {
+            return i;
         }
     }
-    return false;
+    return -1;
 }
 
 void GroupSandboxModel::clearOccupied() {
@@ -181,7 +193,11 @@ void GroupSandboxModel::clearOccupied() {
 }
 
 void GroupSandboxModel::cleardata() {
+    if (m_data.isEmpty()) {
+        return;
+    }
     beginResetModel();
     m_data.clear();
     endResetModel();
+    emit groupSandboxModelChanged();
 }

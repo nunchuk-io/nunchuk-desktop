@@ -62,6 +62,8 @@ class Draco : public QObject {
     Q_INVOKABLE bool signout();
     void exchangeRates(const QString &currency);
     Q_INVOKABLE void feeRates();
+    QJsonObject fetchFeeRates(int primaryServer, int &replyCode);
+    void applyFeeRates(const QJsonObject &feeRates, int replyCode);
     Q_INVOKABLE void verifyNewDevice(const QString &pin);
     Q_INVOKABLE void resendVerifyNewDeviceCode();
     Q_INVOKABLE void inviteFriends(const QStringList &emails);
@@ -124,8 +126,8 @@ class Draco : public QObject {
 
     // USER_SUBSCRIPTION
     bool getUserSubscriptions();
-    bool getUserSubscriptionsMainnet();
-    bool getUserSubscriptionsTestnet();
+    bool getUserSubscriptionsMainnet(QJsonArray &subscriptions);
+    bool getUserSubscriptionsTestnet(QJsonArray &subscriptions);
 
     // ASSISTED_WALLETS
     bool getAssistedWallets(QJsonObject &output, QString &errormsg);
@@ -169,15 +171,12 @@ class Draco : public QObject {
     bool lockdownBySignDummyTx(const QStringList &signatures, const QString &passwordToken, const QString &period_id, const QString &wallet_id,
                                QString &until_time, QString &errormsg);
 
-    bool UserKeysMarkAKeyAsVerified(const QString &xfpOrId, const QString &key_checksum, const QString &verification_type, QJsonObject &output,
-                                    QString &errormsg);
     bool UserKeysRequestRecoveryKey(const QString &xfpOrId, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken,
                                     const QString &confirmToken, const QJsonObject &body, QJsonObject &output, QString &errormsg);
     bool UserKeysRecoveryKey(const QString &xfpOrId, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken,
                              QJsonObject &output, QString &errormsg);
     bool UserKeysMarkRecoverStatus(const QString &xfpOrId, QJsonObject &output, QString &errormsg);
     bool UserKeysCalculateRequiredSignatures(const QString &xfpOrId, QJsonObject &output, QString &errormsg);
-    bool UserKeysUploadBackup();
     bool UserKeysGetListUserKey(const QString &passwordToken, QJsonArray &output, QString &errormsg);
 
     bool UserKeysGetUserKey(const QString &xfpOrId, const QString &passwordToken, QJsonObject &output, QString &errormsg);
@@ -256,6 +255,8 @@ class Draco : public QObject {
 
     bool GetCountryCodeList(QJsonObject &output, QString &errormsg);
     bool RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note, QString &errormsg);
+    // A successful response with no current reminder returns true and leaves reminder empty.
+    bool GetHomeReminder(bool anonymous, QJsonObject &reminder, QString &errormsg);
 
     bool GetElectrumServers(QJsonObject &output, QString &errormsg);
     bool ChangeEmail(const QJsonObject &request_body, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken,
@@ -284,7 +285,8 @@ class Draco : public QObject {
 
     bool ResetKeyReplacement(const QString &wallet_id, const QString &passwordToken, QJsonObject &output, QString &errormsg);
 
-    bool VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &type, const QString &passwordToken, QJsonObject &result);
+    bool VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, const QString &passwordToken, QJsonObject &result);
+    bool SetClaimOptionsKeyReplacement(const QString &wallet_id, const QString &xfp, const QStringList &claim_options, const QString &passwordToken, QJsonObject &output, QString &errormsg);
 
     bool RemoveKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &passwordToken, QJsonObject &result);
 
@@ -320,7 +322,8 @@ class Draco : public QObject {
                                      QString &errormsg);
     bool DraftWalletDownloadBackupFile(const QString &xfp, QJsonObject &output, QString &errormsg);
     bool DraftWalletUploadBackupFile(const QMap<QString, QVariant> &requestBody, QJsonObject &output, QString &errormsg);
-    bool DraftWalletSignerVerify(const QString &xfp, const QString &type, QString &errormsg);
+    bool DraftWalletSignerVerify(const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, QString &errormsg);
+    bool DraftWalletSetClaimOptions(const QString &xfp, const QStringList &claim_options, QJsonObject &output, QString &errormsg);
 
     // Supported signers
     bool GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg);
@@ -412,7 +415,9 @@ class Draco : public QObject {
     void resendVerifyNewDeviceCodeResult(int https_code, int error_code, QString error_msg);
     void loggedInDeviceChanged(int https_code, int error_code, QString error_msg);
     void updateProfileResult(int https_code, int error_code, QString error_msg);
-    void startCheckForUpdate(int result, const QString &title, const QString &message, const QString &doItLaterCTALbl, const QString &downloadUrl, const QString &primaryCTALbl);
+    void startCheckForUpdate(int result, const QString &title, const QString &message,
+                             const QString &doItLaterCTALbl, const QString &downloadUrl,
+                             const QString &primaryCTALbl);
     void signalpkey_signup(int https_code, int error_code, QString error_msg);
     void signalpkey_signin(int https_code, int error_code, QString error_msg);
     void stayLoggedInChanged();

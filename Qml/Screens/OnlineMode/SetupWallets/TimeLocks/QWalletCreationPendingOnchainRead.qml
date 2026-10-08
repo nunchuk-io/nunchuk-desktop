@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
+import QtQuick
+import QtQuick.Controls
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import Features.Draftwallets.OnChain.ViewModels 1.0
@@ -106,10 +106,10 @@ QOnScreenContentTypeB {
                     anchors.fill: parent
                     contentHeight: _contentColumn.height
                     clip: true
-                    ScrollBar.vertical: ScrollBar { active: true }
+                    ScrollBar.vertical: QScrollBar { }
                     Column {
                         id: _contentColumn
-                        width: 346
+                        width: parent.width - 8  // leave room for QScrollBar (8px) — was 346
                         spacing: 4
                         QLato {
                             width: parent.width
@@ -128,8 +128,8 @@ QOnScreenContentTypeB {
                                 id: signers
                                 model: dashInfo.keys
                                 QAddRequestKey {
-                                    width: 346
-                                    onTapsignerClicked: {
+                                    width: parent.width  // = _contentColumn.width - 8 = 338
+                                    onInheritanceKeyClicked: {
                                         dashInfo.startAddKeyAtIndex(index)
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {
@@ -145,7 +145,9 @@ QOnScreenContentTypeB {
                                         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
                                         if (!has) {
                                             _hardwareAddKey.key_index = modelData.key_index
-                                            _hardwareAddKey.isInheritance = false
+                                            // BUGFIX: was hardcoded false; any hardware slot can now be an
+                                            // inheritance key per backend is_inheritance, so read it from modelData.
+                                            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
                                             _hardwareAddKey.open()
                                         } else {
                                             GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
@@ -157,19 +159,39 @@ QOnScreenContentTypeB {
                                         _info.open()
                                     }
                                     onBackupClicked: {
-                                        if(modelData.wallet_type === "MULTI_SIG") {
-                                            _importColdcardBackup.xfp = modelData.xfp
-                                            _importColdcardBackup.open()
-                                            var _input = {
-                                                type: "open-import-encrypted-backup",
-                                                fingerPrint: modelData.xfp,
+                                        dashInfo.startAddKeyAtIndex(index)
+                                        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
+                                        // (MULTI_SIG, NUN-10192) concept only; checking it before wallet_type
+                                        // risked routing an on-chain MINISCRIPT key into the off-chain
+                                        // verify-backups/distribution-choice screens if claim_options were
+                                        // ever non-empty for it. MINISCRIPT must always keep the pre-existing
+                                        // on-chain flow below, untouched by the off-chain feature.
+                                        if (modelData.wallet_type === "MULTI_SIG") {
+                                            // Route by claim_options (NUN-10192) chosen in Key Distribution
+                                            // Choice. BUGFIX: single-option keys (seed-only/encrypted-only)
+                                            // used to skip straight into their own flow; now every configured
+                                            // key (1 or 2 options) always goes through the Verify-your-backups
+                                            // checklist (Setup 12c), which shows only the row(s) matching
+                                            // claim_options and picks startFlow()/startVerifyOnly() itself
+                                            // based on upload state.
+                                            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+                                            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+                                            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+                                            if (hasSeed || hasEncrypted) {
+                                                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
+                                            } else {
+                                                // Setup 20dD (NUN-10192): empty claim_options reopens Key
+                                                // Distribution Choice instead of the old Coldcard-import flow.
+                                                // ROLLOUT WARNING: NUN-10192 is still "To Do" on backend - until
+                                                // deployed, claim_options is empty for all existing inheritance
+                                                // MULTI_SIG keys, so this FE must ship in sync with the backend.
+                                                _changeDistribution.hwType = modelData.hwType
+                                                _changeDistribution.openFor(modelData.xfp, modelData.tag)
                                             }
-                                            dashInfo.requestBackupColdcard(_input)
                                         } else {
                                             GroupWallet.qAddHardware = modelData.hwType
                                             _backupSeedPhraseFlow.startFlow()
                                         }
-                                        dashInfo.startAddKeyAtIndex(index)
                                     }
                                 }
                             }
@@ -216,10 +238,10 @@ QOnScreenContentTypeB {
                             Component {
                                 id: _blockHeightLock
                                 Rectangle {
-                                    width: 346
+                                    width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
                                     height: 72
                                     radius: 8
-                                    color: "#A7F0BA"                                    
+                                    color: "#A7F0BA"
                                     Row {
                                         anchors {
                                             fill: parent
@@ -278,10 +300,10 @@ QOnScreenContentTypeB {
                             Component {
                                 id: _timeLock
                                 Rectangle {
-                                    width: 346
+                                    width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
                                     height: 72
                                     radius: 8
-                                    color: "#A7F0BA"                                    
+                                    color: "#A7F0BA"
                                     Row {
                                         anchors {
                                             fill: parent
@@ -440,6 +462,101 @@ QOnScreenContentTypeB {
 
     QBackupSeedPhraseFlow {
         id: _backupSeedPhraseFlow
+    }
+    QEncryptedBackupFlow {
+        id: _encryptedBackupFlow
+    }
+    QVerifyBothBackups {
+        id: _verifyBothBackups
+        onChangeShareMethod: {
+            // BUGFIX: this handler was missing, making "Change how you share this key" a dead-end from
+            // the dashboard. _verifyBothBackups only keeps xfp/tag, so look up the key by xfp first.
+            var idx = findKeyIndexByXfp(_verifyBothBackups.xfp)
+            if (idx < 0) return
+            _changeDistribution.hwType = dashInfo.keys[idx].hwType
+            _changeDistribution.openFor(_verifyBothBackups.xfp, _verifyBothBackups.signerTag)
+        }
+    }
+
+    // Looks up a key's index in dashInfo.keys by xfp, for contexts that only have xfp/tag, not the Repeater index.
+    function findKeyIndexByXfp(xfp) {
+        var ks = dashInfo.keys
+        for (var i = 0; i < ks.length; i++) {
+            if (ks[i].xfp === xfp) return i
+        }
+        return -1
+    }
+
+    // "Change how you share this key" popup, opened from the dashboard - wraps QKeyDistributionChoice in
+    // a QPopupOverlayScreen like QEncryptedBackupFlow/QVerifyBothBackups already do in this file.
+    QPopupOverlayScreen {
+        id: _changeDistribution
+        property string xfp: ""
+        property string signerTag: ""
+        property int hwType: -1
+        // content points to a named Component (QPopupOverlayScreen convention), not an inline object literal.
+        content: _changeDistributionComp
+        Component {
+            id: _changeDistributionComp
+            QKeyDistributionChoice {
+                onDistributionChosen: function(claimOptions) {
+                    var idx = findKeyIndexByXfp(_changeDistribution.xfp)
+                    if (idx < 0) { _changeDistribution.close(); return }
+                    // NUN-10192: dropping ENCRYPTED_BACKUP from an already-uploaded key needs confirm-in-app
+                    // first (moved here from QVerifyBothBackups.qml's link click).
+                    if (claimOptions.indexOf("ENCRYPTED_BACKUP") === -1 && hasUploadedEncryptedBackup(_changeDistribution.xfp)) {
+                        _confirmRemoveBackup.openWith(claimOptions)
+                        return
+                    }
+                    applyDistributionChoice(idx, claimOptions)
+                }
+            }
+        }
+        function openFor(keyXfp, tag) {
+            xfp = keyXfp
+            signerTag = tag
+            open()
+            // ids inside Component {} aren't reachable from outside; use itemInfo (Loader.item) instead.
+            if (itemInfo) itemInfo.refresh(tag)
+        }
+    }
+
+    // Shared "apply" step for _changeDistribution, called directly or after _confirmRemoveBackup confirms.
+    function applyDistributionChoice(idx, claimOptions) {
+        dashInfo.startAddKeyAtIndex(idx)
+        // BUGFIX (like SCR_ADD_HARDWARE.qml): check the result before closing/navigating on.
+        if (!(GroupWallet.qIsByzantine ? GroupWallet : UserWallet).requestSetClaimOptions(claimOptions)) {
+            return
+        }
+        // BUGFIX: missing refresh, same as SCR_ADD_HARDWARE.qml.
+        GroupWallet.refresh()
+        _changeDistribution.close()
+        // BUGFIX: always go through the Verify-your-backups checklist (Setup 12c), same as onBackupClicked.
+        var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+        var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+        if (hasSeed || hasEncrypted) {
+            _verifyBothBackups.open2(_changeDistribution.xfp, _changeDistribution.signerTag, claimOptions)
+        }
+    }
+
+    // True if this key already has an ENCRYPTED_BACKUP verifications[] entry (i.e. a file was uploaded).
+    function hasUploadedEncryptedBackup(xfp) {
+        var idx = findKeyIndexByXfp(xfp)
+        if (idx < 0) return false
+        var verifs = dashInfo.keys[idx].verifications !== undefined ? dashInfo.keys[idx].verifications : []
+        for (var i = 0; i < verifs.length; i++) {
+            if (verifs[i].verification_method === "ENCRYPTED_BACKUP") return true
+        }
+        return false
+    }
+
+    QPopupConfirmRemoveBackup {
+        id: _confirmRemoveBackup
+        onConfirmed: function(claimOptions) {
+            var idx = findKeyIndexByXfp(_changeDistribution.xfp)
+            if (idx < 0) return
+            applyDistributionChoice(idx, claimOptions)
+        }
     }
 
     LetConfigureYourWalletViewModel {

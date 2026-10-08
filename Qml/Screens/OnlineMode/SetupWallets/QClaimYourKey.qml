@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -61,12 +61,11 @@ QOnScreenContentTypeB {
                 height: 464
                 clip: true
                 model: (GroupWallet.dashboardInfo && GroupWallet.dashboardInfo.health)
-                       ? GroupWallet.dashboardInfo.health.healthStatuses : []
-                ScrollBar.vertical: ScrollBar { active: true }
+                       ? GroupWallet.dashboardInfo.health.claimKeys : []
+                ScrollBar.vertical: QScrollBar { }
                 delegate: QSignerDetailRadioDelegate {
-                    width: ListView.view.width
-                    height: modelData.keyinfo.type !== "SERVER" ? 92 : 0
-                    visible: modelData.keyinfo.type !== "SERVER"
+                    width: ListView.view.width - 8  // leave room for QScrollBar (8px)
+                    height: 92
                     typeStr: modelData.keyinfo.type
                     tag: modelData.keyinfo.tag
                     signerName: modelData.keyinfo.name

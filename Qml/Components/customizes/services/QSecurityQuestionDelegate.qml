@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
@@ -35,18 +35,47 @@ Item {
     id: questionsdlg
     width: 539
     height: col.childrenRect.height
+    property bool answerInitialized: false
+    property string lastSyncedAnswer: ""
+    property bool showCustomQuestionError: false
+    property string customQuestion: ""
+    signal customQuestionCommitted(string value)
+    signal customQuestionDraftEdited(string value)
+
+    function syncAnswer(value) {
+        if (!answerInitialized || value === lastSyncedAnswer) {
+            return
+        }
+        lastSyncedAnswer = value
+        keyRecovery.setupSecQuesAnswer(index, modelData.id, value)
+    }
+
+    Component.onCompleted: {
+        lastSyncedAnswer = answer.textInputted
+        answerInitialized = true
+    }
+
     Column {
         id: col
         spacing: 16
         QSetupCreateSecurityQuestionBox {
             id: _box
             width: 539
-            height: modelData.id === "my_question" ? (72 + 48 + 24 + (_box.newQuestion === "" ? 24 : 0)) : 72
+            height: modelData.id === "my_question"
+                    ? (72 + 48 + 24 + (_box.showQuestionError && !_box.customQuestionValid ? 24 : 0))
+                    : 72
             remain_questions: modelData.remain_questions
-            newQuestion: newMyQuestion
+            newQuestion: questionsdlg.customQuestion
+            showQuestionError: questionsdlg.showCustomQuestionError
             onNewQuestionChanged: {
-                newMyQuestion = _box.newQuestion
-                newQuesIndex = _box.ques_index
+                if (modelData.id === "my_question") {
+                    questionsdlg.customQuestionCommitted(_box.newQuestion)
+                }
+            }
+            onQuestionDraftEdited: (value) => {
+                if (modelData.id === "my_question") {
+                    questionsdlg.customQuestionDraftEdited(value)
+                }
             }
         }
 
@@ -55,18 +84,20 @@ Item {
             label: STR.STR_QML_718
             boxWidth: 537
             boxHeight: 48
+            emitEmptyTypingFinished: true
             isValid: true
             textInputted: modelData.answer
-            input.placeholderText: "••••••••"
+            input.placeholderText: modelData.isChanged ? "" : "••••••••"
             onTextInputtedChanged: {
                 if(!answer.isValid){
                     answer.isValid = true
                     answer.errorText = ""
                 }
                 answer.showError = false;
+                questionsdlg.syncAnswer(textInputted)
             }
-            onTypingFinished: {
-                keyRecovery.setupSecQuesAnswer(index, modelData.id, textInputted)
+            onTypingFinished: (currentText) => {
+                questionsdlg.syncAnswer(currentText)
             }
         }
     }

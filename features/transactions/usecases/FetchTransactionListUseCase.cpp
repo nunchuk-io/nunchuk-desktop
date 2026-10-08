@@ -37,8 +37,8 @@ void FetchTransactionListUseCase::UpdateTransactionList(const QJsonArray &transa
         QString transaction_id = transaction.value("transaction_id").toString();
         if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES") {
             QWarningMessage _msg;
-            QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
-            if (tran && (int)EWARNING::WarningType::NONE_MSG == _msg.type()) {
+            bridge::transaction::ImportPsbt(wallet_id, psbt, _msg);
+            if ((int)EWARNING::WarningType::NONE_MSG == _msg.type()) {
                 bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
                 long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
                 // honey badger feature: schedule broadcast

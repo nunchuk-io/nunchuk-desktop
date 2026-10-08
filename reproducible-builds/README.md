@@ -1,97 +1,99 @@
-# Reproducible Builds Guide
+# Reproducible builds
 
-Easily verify that the binary you installed **really** comes from the open‑source code on GitHub.
+## Linux prerequisites
 
-## Status
+- Git
+- Docker with Buildx
+- A host able to run `linux/amd64` and/or `linux/arm64` containers (natively or emulated)
+- Access to the recursive source submodules
 
-- **Linux x86‑64** — active
-- **Linux ARM64** — standby
-- **Windows** — standby
-- **macOS** — standby
+## Build Linux
 
----
+Numeric tag, no leading `v` (e.g. `2.9.0`). Set `ARCH` to `x86_64` or `aarch64`.
 
-## 0 — Prerequisites
+```bash
+export PROJECT_DIR="$HOME/nunchuk-desktop"
+export VERSION="2.9.0"
+export ARCH="x86_64"   # or: aarch64
 
-| Tool                | Tested version | Purpose                                       |
-| ------------------- | -------------- | --------------------------------------------- |
-| **git**             | any            | Clone the source repository and tags          |
-| **Docker + Buildx** | 24.0+          | Provides a deterministic build environment    |
-| **diff**            | any            | Byte‑for‑byte comparison of two files         |
+# Keep in sync with build-linux.yml's HWI_TAG/HWI_COMMIT job env.
+export HWI_TAG="3.2.0-bitbox-verification"
+export HWI_COMMIT="415310a14d3d1ebb9620783be5dcca437626b587"
 
----
-
-## 1 — Find the version running on your device
-
-1. Open **Nunchuk → Profile → Settings → About**.
-2. Note the version shown (e.g. **2.6.6**). You will use this as the Git tag.
-
----
-
-## 2 — Clone the source at that exact tag
-
-``` bash
-export PROJECT_DIR=$HOME/nunchuk-desktop
-export VERSION=2.6.6 # Replace with the version you want to check
+case "$ARCH" in
+  x86_64)  PLATFORM=linux/amd64; QT_HOST=linux;      QT_ARCH=linux_gcc_64;      QT_DIR_NAME=gcc_64 ;;
+  aarch64) PLATFORM=linux/arm64; QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64;  QT_DIR_NAME=gcc_arm64 ;;
+  *) echo "ARCH must be x86_64 or aarch64" >&2; exit 1 ;;
+esac
 
 git clone https://github.com/nunchuk-io/nunchuk-desktop "$PROJECT_DIR"
 cd "$PROJECT_DIR"
-git checkout $VERSION
+git checkout --detach "$VERSION"
 git submodule update --init --recursive
+
+docker buildx build \
+  --platform "$PLATFORM" \
+  --load \
+  --file reproducible-builds/Dockerfile.linux \
+  --build-arg APPIMAGE_ARCH="$ARCH" \
+  --build-arg QT_HOST="$QT_HOST" \
+  --build-arg QT_ARCH="$QT_ARCH" \
+  --build-arg QT_DIR_NAME="$QT_DIR_NAME" \
+  --tag "nunchuk-builder-linux-$ARCH:qt6" \
+  .
 ```
 
----
-
-## 3 — Reproducible build inside Docker
-
-### Linux
+### Build HWI (required, both architectures built from source)
 
 ```bash
-# Build the builder image
-docker buildx build \
-  --platform linux/amd64 \
-  -t nunchuk-builder \
-  -f reproducible-builds/Dockerfile.linux \
-  --load .
+git clone --branch "$HWI_TAG" --depth 1 \
+  https://github.com/nogibi/HWI.git /tmp/hwi-src
+test "$(git -C /tmp/hwi-src rev-parse HEAD)" = "$HWI_COMMIT"
 
-# Build the app
-docker run --platform linux/amd64 --rm \
-  -e TAG="$VERSION" \
-  -v "$PROJECT_DIR":/project \
-  -w /project \
-  nunchuk-builder \
-  bash ./reproducible-builds/build_linux.sh
+docker buildx build \
+  --platform "$PLATFORM" --load \
+  --file /tmp/hwi-src/contrib/build.Dockerfile \
+  --tag hwi-builder:local \
+  /tmp/hwi-src
+
+mkdir -p "$PROJECT_DIR/hwi-prebuilt"
+docker run --platform "$PLATFORM" --rm \
+  --volume /tmp/hwi-src:/hwi-src \
+  --volume "$PROJECT_DIR/hwi-prebuilt:/out" \
+  --workdir /hwi-src \
+  hwi-builder:local \
+  bash -c 'bash contrib/build_bin.sh --without-gui \
+    && install -m 0755 "$(find dist -type f -name hwi -print -quit)" /out/hwi'
 ```
 
-The final output is `nunchuk-linux-v$VERSION/nunchuk-linux-v$VERSION.zip`.
+### Build app
 
----
+`SOURCE_DATE_EPOCH` is derived from the commit automatically; no need to set it manually.
 
-## 4 — Byte‑for‑byte Verification
+```bash
+docker run --platform "$PLATFORM" --rm \
+  --env TAG="$VERSION" \
+  --env ARCH="$ARCH" \
+  --volume "$PROJECT_DIR:/project" \
+  --workdir /project \
+  "nunchuk-builder-linux-$ARCH:qt6" \
+  bash reproducible-builds/build_linux.sh
+```
 
-Ensure your local build matches the official release exactly by comparing the final output files.
+Output:
 
-1. **Download** the official Linux release from the [GitHub releases page](https://github.com/nunchuk-io/nunchuk-desktop/releases).
+```text
+nunchuk-linux-$ARCH-v<VERSION>/nunchuk-linux-$ARCH-v<VERSION>.zip
+nunchuk-linux-$ARCH-v<VERSION>/nunchuk-linux-$ARCH-v<VERSION>.zip.sha256
+```
 
-2. **Compare** it to your local build:
+Verify checksum:
 
-   ```bash
-   diff /path/to/download/nunchuk-linux-v$VERSION.zip "$PROJECT_DIR/nunchuk-linux-v$VERSION/nunchuk-linux-v$VERSION.zip"
-   ```
+```bash
+cd "$PROJECT_DIR/nunchuk-linux-$ARCH-v$VERSION"
+sha256sum --check "nunchuk-linux-$ARCH-v$VERSION.zip.sha256"
+```
 
----
+## macOS / Windows
 
-### Result
-
-If the `diff` command returns **no output**, your local build is **byte-for-byte identical** to the official release — congratulations!
-
-If you see any differences, something is off — refer to the next section for troubleshooting tips.
-
----
-
-## Troubleshooting
-TBD
-
----
-
-> *Verified builds keep everyone safer.* Thank you for taking the time to reproduce the binaries you run!
+See `reproducible-builds/README-macos.md` and `reproducible-builds/README-windows.md`.
