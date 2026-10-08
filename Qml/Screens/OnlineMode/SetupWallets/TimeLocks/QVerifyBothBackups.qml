@@ -327,9 +327,7 @@ QPopupOverlayScreen {
                                     // BUGFIX: pass the actual key (with a real derivation_path) instead of
                                     // letting startFlow() read the unset global SignerManagement.currentSigner -
                                     // root cause of the seed-phrase re-verify HWI "Run command exit error!".
-                                    // BUGFIX: pass isOffChain=true explicitly - this popup is only ever opened
-                                    // from callers already gated on wallet_type === "MULTI_SIG", so it's always
-                                    // off-chain regardless of whether currentKey() has resolved yet.
+                                    // BUGFIX: pass isOffChain=true explicitly, independent of currentKey().
                                     onButtonClicked: _backupSeedFlow.startFlow(_root.currentKey(), true)
                                 }
                                 QLato {

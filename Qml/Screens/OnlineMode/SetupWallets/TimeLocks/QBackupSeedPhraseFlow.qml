@@ -70,16 +70,11 @@ QPopupOverlayScreen {
     QScreenStateFlow {
         id: stateFlow
     }
-    // BUGFIX: isOffChain is now passed explicitly by the caller instead of inferred from whether `key`
-    // resolved - every caller already knows for certain via wallet_type === "MULTI_SIG" (checked before
-    // ever reaching this shared component), so this removes a race: QVerifyBothBackups.currentKey() can
-    // return null right after Key Distribution Choice if GroupWallet.refresh() hasn't resolved yet, which
-    // used to silently misclassify a still-off-chain request as on-chain instead of just missing data.
+    // BUGFIX: isOffChain now passed explicitly by caller instead of inferred from key, to avoid a race.
     function startFlow(key, offChain) {
         isOffChain = offChain === true
         if (isOffChain && !key) {
-            // Off-chain confirmed by caller, but key data isn't ready yet - retry the fetch and bail
-            // instead of falling through to the on-chain branch below; row stays clickable to retry.
+            // key not ready yet (refresh race) - retry and bail instead of falling to on-chain branch.
             GroupWallet.refresh()
             return
         }
