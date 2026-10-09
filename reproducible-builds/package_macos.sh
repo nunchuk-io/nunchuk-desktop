@@ -24,7 +24,8 @@ done
 # shellcheck source=macos.lock.env
 source "${PROJECT_DIR}/reproducible-builds/macos.lock.env"
 
-if [[ ! -d "${APP_PATH}" || ! -x "${APP_PATH}/Contents/MacOS/Nunchuk" ]]; then
+nunchuk_executable="${APP_PATH}/Contents/MacOS/Nunchuk"
+if [[ ! -d "${APP_PATH}" || ! -x "${nunchuk_executable}" ]]; then
     echo "Invalid application bundle: ${APP_PATH}" >&2
     exit 1
 fi
@@ -39,7 +40,7 @@ export LC_ALL=C
 umask 022
 
 "${QT_ROOT}/bin/macdeployqt" "${APP_PATH}" \
-    -executable="${APP_PATH}/Contents/MacOS/Nunchuk" \
+    -executable="${nunchuk_executable}" \
     -qmldir="${PROJECT_DIR}" \
     -always-overwrite
 
@@ -51,6 +52,38 @@ shader_tools_destination="${APP_PATH}/Contents/Frameworks/QtShaderTools.framewor
 if [[ -d "${shader_tools_source}" && ! -d "${shader_tools_destination}" ]]; then
     cp -R "${shader_tools_source}" "${APP_PATH}/Contents/Frameworks/"
 fi
+
+# macdeployqt can leave only build-machine rpaths in the main executable.
+# Resolve its @rpath dependencies inside the bundle before signing it.
+framework_rpath='@executable_path/../Frameworks'
+current_rpaths="$(otool -l "${nunchuk_executable}" \
+    | awk '/cmd LC_RPATH/{read_path=1; next} read_path && /path /{
+        sub(/^[[:space:]]*path /, ""); sub(/ \(offset [0-9]+\)$/, "");
+        print; read_path=0
+    }' | sort -u)"
+if ! grep -Fqx "${framework_rpath}" <<< "${current_rpaths}"; then
+    install_name_tool -add_rpath "${framework_rpath}" "${nunchuk_executable}"
+fi
+while IFS= read -r rpath; do
+    if [[ "${rpath}" == /* ]]; then
+        install_name_tool -delete_rpath "${rpath}" "${nunchuk_executable}"
+    fi
+done <<< "${current_rpaths}"
+
+dependencies="$(otool -L "${nunchuk_executable}" | awk 'NR > 1 {print $1}')"
+while IFS= read -r dependency; do
+    case "${dependency}" in
+        @rpath/*) library="${APP_PATH}/Contents/Frameworks/${dependency#@rpath/}" ;;
+        @executable_path/*) library="${APP_PATH}/Contents/MacOS/${dependency#@executable_path/}" ;;
+        @loader_path/*) library="${APP_PATH}/Contents/MacOS/${dependency#@loader_path/}" ;;
+        /System/Library/*|/usr/lib/*) continue ;;
+        *) echo "Unbundled application dependency: ${dependency}" >&2; exit 1 ;;
+    esac
+    if [[ ! -f "${library}" ]]; then
+        echo "Missing application dependency: ${library}" >&2
+        exit 1
+    fi
+done <<< "${dependencies}"
 
 install -m 0755 "${HWI_BINARY}" "${APP_PATH}/Contents/MacOS/hwi"
 
