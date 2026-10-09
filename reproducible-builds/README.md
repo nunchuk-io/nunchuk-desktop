@@ -43,10 +43,6 @@ docker run --platform "$PLATFORM" --rm \
   -e TAG="$VERSION" -v "$PWD:/project" nunchuk-builder
 ```
 
-The builder handles dependencies and downloads the checksum-verified
-[HWI 3.2.3 binary](https://github.com/nogibi/HWI/releases/tag/3.2.3) automatically.
-OpenSSL comes from the same frozen Ubuntu snapshot as the system packages.
-
 Output: `nunchuk-linux-v$VERSION-x86_64/nunchuk-linux-v$VERSION-x86_64.AppImage`.
 For ARM64, the directory and AppImage use `aarch64` instead of `x86_64`.
 
@@ -62,6 +58,3 @@ diff "/path/to/download/nunchuk-linux-v$VERSION-x86_64.AppImage" \
 
 For ARM64, replace `x86_64` with `aarch64` in the comparison paths.
 No output means the files are byte-for-byte identical.
-
-Before launching the downloaded AppImage, enable **Allow executing file as
-program** in your file manager's permissions.

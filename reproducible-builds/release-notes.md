@@ -13,8 +13,7 @@ for Windows packages and `-unsigned` last when applicable, before the file exten
 Reproducible-build verification is active for Linux x86-64 and ARM64.
 Windows and macOS remain standby.
 
-All platforms use checksum-verified HWI 3.2.3 release binaries. Release builds run
-once per architecture.
+Release builds run once per architecture.
 
 Reproducible-build guide: [Linux](https://github.com/nunchuk-io/nunchuk-desktop/blob/main/reproducible-builds/README.md).
 Developer build notes: [macOS](https://github.com/nunchuk-io/nunchuk-desktop/blob/main/reproducible-builds/README-macos.md),
