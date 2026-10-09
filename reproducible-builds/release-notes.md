@@ -1,7 +1,7 @@
 Qt 6 release artifacts for Linux x86_64/aarch64, macOS Intel/Apple Silicon and Windows x64.
 
-Download names follow `nunchuk-<os>-v<version>-<arch>`, with `-setup` for Windows
-installers and `-unsigned` last when applicable, before the file extension.
+Download names follow `nunchuk-<os>-v<version>-<arch>`, with `-setup` or `-portable`
+for Windows packages and `-unsigned` last when applicable, before the file extension.
 
 - **Linux:** AppImage, checksum, build-input inventory and exact CI builder image digest.
   For either Linux architecture, rebuild the tag and compare the AppImage with the published artifact.

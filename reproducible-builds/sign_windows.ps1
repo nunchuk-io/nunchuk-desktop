@@ -91,7 +91,7 @@ function Get-PackageMetadata {
         throw "Package payload manifest digest mismatch."
     }
     $namePrefix = "nunchuk-windows-v$ReleaseVersion-x64"
-    $expectedArchive = if ($ExpectedFlavor -eq "unsigned") { "$namePrefix-unsigned.zip" } else { "$namePrefix.zip" }
+    $expectedArchive = if ($ExpectedFlavor -eq "unsigned") { "$namePrefix-portable-unsigned.zip" } else { "$namePrefix-portable.zip" }
     $expectedInstaller = if ($ExpectedFlavor -eq "unsigned") { "$namePrefix-setup-unsigned.exe" } else { "$namePrefix-setup.exe" }
     if ([string]$metadata.archive -cne $expectedArchive -or
         [string]$metadata.installer -cne $expectedInstaller) {
@@ -459,7 +459,7 @@ if ([int]$gate.schemaVersion -ne 1 -or
     throw "Trusted unsigned reproducibility gate metadata does not match the final release inputs."
 }
 $expectedGateArtifacts = [ordered]@{
-    archive = "nunchuk-windows-v$ReleaseVersion-x64-unsigned.zip"
+    archive = "nunchuk-windows-v$ReleaseVersion-x64-portable-unsigned.zip"
     installer = "nunchuk-windows-v$ReleaseVersion-x64-setup-unsigned.exe"
     payloadManifest = "payload-manifest.sha256"
     packageMetadata = "build-metadata.json"

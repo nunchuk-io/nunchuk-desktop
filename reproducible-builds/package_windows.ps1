@@ -592,11 +592,11 @@ if (!(Test-Path -LiteralPath $iscc -PathType Leaf)) {
 
 $namePrefix = "nunchuk-windows-v$ReleaseVersion-x64"
 if ($ArtifactFlavor -eq "unsigned") {
-    $archiveName = "$namePrefix-unsigned.zip"
+    $archiveName = "$namePrefix-portable-unsigned.zip"
     $installerBaseName = "$namePrefix-setup-unsigned"
 }
 else {
-    $archiveName = "$namePrefix.zip"
+    $archiveName = "$namePrefix-portable.zip"
     $installerBaseName = "$namePrefix-setup"
 }
 $numericVersion = ($ReleaseVersion -split "-", 2)[0] + ".0"
