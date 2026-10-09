@@ -1,99 +1,67 @@
 # Reproducible builds
 
-## Linux prerequisites
+Verify that your installed binary matches the source code.
 
-- Git
-- Docker with Buildx
-- A host able to run `linux/amd64` and/or `linux/arm64` containers (natively or emulated)
-- Access to the recursive source submodules
+## Status
 
-## Build Linux
+| Platform | Reproducible builds |
+| --- | --- |
+| Linux x86-64 | Active |
+| Linux ARM64 | Active |
+| Windows | Standby |
+| macOS | Standby |
 
-Numeric tag, no leading `v` (e.g. `2.9.0`). Set `ARCH` to `x86_64` or `aarch64`.
+The instructions below cover both Linux architectures. Windows and macOS
+reproducible-build verification is not yet supported.
+
+## 1. Get the source
+
+You need Git, Docker with Buildx, and `diff`.
+
+Find your app version under **Profile → Settings → About**. Set `VERSION` to that
+numeric tag, without a leading `v`, and follow the guide from that same tag.
 
 ```bash
-export PROJECT_DIR="$HOME/nunchuk-desktop"
-export VERSION="2.9.0"
-export ARCH="x86_64"   # or: aarch64
-
-# Keep in sync with build-linux.yml's HWI_TAG/HWI_COMMIT job env.
-export HWI_TAG="3.2.0-bitbox-verification"
-export HWI_COMMIT="415310a14d3d1ebb9620783be5dcca437626b587"
-
-case "$ARCH" in
-  x86_64)  PLATFORM=linux/amd64; QT_HOST=linux;      QT_ARCH=linux_gcc_64;      QT_DIR_NAME=gcc_64 ;;
-  aarch64) PLATFORM=linux/arm64; QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64;  QT_DIR_NAME=gcc_arm64 ;;
-  *) echo "ARCH must be x86_64 or aarch64" >&2; exit 1 ;;
-esac
-
-git clone https://github.com/nunchuk-io/nunchuk-desktop "$PROJECT_DIR"
-cd "$PROJECT_DIR"
+export VERSION="<release-tag>"   # e.g. 2.9.0
+git clone https://github.com/nunchuk-io/nunchuk-desktop
+cd nunchuk-desktop
 git checkout --detach "$VERSION"
 git submodule update --init --recursive
-
-docker buildx build \
-  --platform "$PLATFORM" \
-  --load \
-  --file reproducible-builds/Dockerfile.linux \
-  --build-arg APPIMAGE_ARCH="$ARCH" \
-  --build-arg QT_HOST="$QT_HOST" \
-  --build-arg QT_ARCH="$QT_ARCH" \
-  --build-arg QT_DIR_NAME="$QT_DIR_NAME" \
-  --tag "nunchuk-builder-linux-$ARCH:qt6" \
-  .
 ```
 
-### Build HWI (required, both architectures built from source)
+## 2. Build with Docker
+
+Choose the architecture of the release you want to verify:
 
 ```bash
-git clone --branch "$HWI_TAG" --depth 1 \
-  https://github.com/nogibi/HWI.git /tmp/hwi-src
-test "$(git -C /tmp/hwi-src rev-parse HEAD)" = "$HWI_COMMIT"
+export PLATFORM=linux/amd64   # x86-64; use linux/arm64 for ARM64
 
-docker buildx build \
-  --platform "$PLATFORM" --load \
-  --file /tmp/hwi-src/contrib/build.Dockerfile \
-  --tag hwi-builder:local \
-  /tmp/hwi-src
+docker buildx build --platform "$PLATFORM" --load \
+  -t nunchuk-builder -f reproducible-builds/Dockerfile.linux .
 
-mkdir -p "$PROJECT_DIR/hwi-prebuilt"
 docker run --platform "$PLATFORM" --rm \
-  --volume /tmp/hwi-src:/hwi-src \
-  --volume "$PROJECT_DIR/hwi-prebuilt:/out" \
-  --workdir /hwi-src \
-  hwi-builder:local \
-  bash -c 'bash contrib/build_bin.sh --without-gui \
-    && install -m 0755 "$(find dist -type f -name hwi -print -quit)" /out/hwi'
+  -e TAG="$VERSION" -v "$PWD:/project" nunchuk-builder
 ```
 
-### Build app
+The builder handles dependencies and downloads the checksum-verified
+[HWI 3.2.1 binary](https://github.com/nogibi/HWI/releases/tag/3.2.1) automatically.
+OpenSSL comes from the same frozen Ubuntu snapshot as the system packages.
 
-`SOURCE_DATE_EPOCH` is derived from the commit automatically; no need to set it manually.
+Output: `nunchuk-linux-v$VERSION-x86_64/nunchuk-linux-v$VERSION-x86_64.AppImage`.
+For ARM64, the directory and AppImage use `aarch64` instead of `x86_64`.
+
+## 3. Compare with the release
+
+Download the matching `.AppImage` from [GitHub Releases](https://github.com/nunchuk-io/nunchuk-desktop/releases),
+then compare it with your build:
 
 ```bash
-docker run --platform "$PLATFORM" --rm \
-  --env TAG="$VERSION" \
-  --env ARCH="$ARCH" \
-  --volume "$PROJECT_DIR:/project" \
-  --workdir /project \
-  "nunchuk-builder-linux-$ARCH:qt6" \
-  bash reproducible-builds/build_linux.sh
+diff "/path/to/download/nunchuk-linux-v$VERSION-x86_64.AppImage" \
+  "nunchuk-linux-v$VERSION-x86_64/nunchuk-linux-v$VERSION-x86_64.AppImage"
 ```
 
-Output:
+For ARM64, replace `x86_64` with `aarch64` in the comparison paths.
+No output means the files are byte-for-byte identical.
 
-```text
-nunchuk-linux-$ARCH-v<VERSION>/nunchuk-linux-$ARCH-v<VERSION>.zip
-nunchuk-linux-$ARCH-v<VERSION>/nunchuk-linux-$ARCH-v<VERSION>.zip.sha256
-```
-
-Verify checksum:
-
-```bash
-cd "$PROJECT_DIR/nunchuk-linux-$ARCH-v$VERSION"
-sha256sum --check "nunchuk-linux-$ARCH-v$VERSION.zip.sha256"
-```
-
-## macOS / Windows
-
-See `reproducible-builds/README-macos.md` and `reproducible-builds/README-windows.md`.
+Before launching the downloaded AppImage, enable **Allow executing file as
+program** in your file manager's permissions.

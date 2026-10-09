@@ -11,10 +11,11 @@ if [[ "${ARCH}" != "x86_64" && "${ARCH}" != "aarch64" ]]; then
     echo "Unsupported ARCH: ${ARCH} (expected x86_64 or aarch64)" >&2
     exit 1
 fi
-# HWI is built from source for both architectures (see the "Build HWI from
-# source" workflow step) because upstream only publishes prebuilt x86_64
-# binaries. The built binary is bind-mounted into the container at this path.
-HWI_PREBUILT_BINARY="${PROJECT_DIR}/hwi-prebuilt/hwi"
+# The builder downloads and verifies the locked HWI release asset.
+HWI_PREBUILT_BINARY="/opt/hwi/hwi"
+# Ubuntu installs OpenSSL in a native architecture-specific library directory.
+OPENSSL_LIB_DIR="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+OPENSSL_VERSION="$(openssl version | awk '{ print $2 }')"
 
 if [[ "${PROJECT_DIR}" != /* || ! -f "${PROJECT_DIR}/CMakeLists.txt" ]]; then
     echo "PROJECT_DIR must be an absolute Nunchuk source directory: ${PROJECT_DIR}" >&2
@@ -26,13 +27,7 @@ if [[ ! "${TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*$ ]]; then
     exit 1
 fi
 
-# Unlike build_linux.sh, this script does not recompute SOURCE_DATE_EPOCH: it
-# only validates the value build_linux.sh already exported (matching main's
-# package_linux.sh, which likewise just validates rather than deriving its own
-# value). Recomputing here as a "${SOURCE_DATE_EPOCH:-...}" fallback would be
-# redundant at best and, since the Docker image itself always has this env var
-# set to a non-empty builder-image constant, would silently mask a caller that
-# forgot to export the real value instead of failing loudly.
+# Require the source commit epoch exported by build_linux.sh.
 if [[ ! "${SOURCE_DATE_EPOCH:-}" =~ ^[0-9]+$ ]]; then
     echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH:-unset}" >&2
     exit 1
@@ -46,12 +41,11 @@ export ZERO_AR_DATE=1
 export APPIMAGE_EXTRACT_AND_RUN=1
 umask 022
 
-PACKAGE_NAME="nunchuk-linux-${ARCH}-v${TAG}"
+PACKAGE_NAME="nunchuk-linux-v${TAG}-${ARCH}"
 PACKAGE_DIR="${PROJECT_DIR}/${PACKAGE_NAME}"
 APP_DIR="${PACKAGE_DIR}/Appdir"
 APPIMAGE_NAME="${PACKAGE_NAME}.AppImage"
 APPIMAGE_PATH="${PACKAGE_DIR}/${APPIMAGE_NAME}"
-ZIP_NAME="${PACKAGE_NAME}.zip"
 NUNCHUK_BINARY="${PROJECT_DIR}/build/nunchuk-qt"
 DESKTOP_FILE="${PACKAGE_DIR}/nunchuk.desktop"
 CUSTOM_APPRUN="${PACKAGE_DIR}/nunchuk.AppRun"
@@ -371,14 +365,14 @@ for required_file in \
         echo "Required Qt 6 runtime input is missing: ${required_file}" >&2
         exit 1
     fi
-    check_ldd "${required_file}" "${QT_INSTALLED_PREFIX}/lib:${OPENSSL_ROOT_DIR}/lib"
+    check_ldd "${required_file}" "${QT_INSTALLED_PREFIX}/lib"
 done
 
 cmake -E remove_directory "${PACKAGE_DIR}"
 mkdir -p "${APP_DIR}/usr/bin"
 
 if [[ ! -x "${HWI_PREBUILT_BINARY}" ]]; then
-    echo "HWI binary was not found (expected to be built from source by the workflow before packaging): ${HWI_PREBUILT_BINARY}" >&2
+    echo "Locked HWI release binary was not found in the builder: ${HWI_PREBUILT_BINARY}" >&2
     exit 1
 fi
 install -m 0755 "${HWI_PREBUILT_BINARY}" "${APP_DIR}/usr/bin/hwi"
@@ -432,7 +426,7 @@ export QML_SOURCES_PATHS="${PROJECT_DIR}"
 export NO_STRIP=1
 export EXTRA_QT_MODULES=svg
 unset EXTRA_QT_PLUGINS EXTRA_PLATFORM_PLUGINS
-export LD_LIBRARY_PATH="${OPENSSL_ROOT_DIR}/lib:${QT_INSTALLED_PREFIX}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+export LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export VERSION="${TAG}"
 export ARCH
 
@@ -477,20 +471,13 @@ if [[ -z "$(find "${APP_DIR}/usr/lib" -maxdepth 1 -name 'libQt6ShaderTools.so*' 
     exit 1
 fi
 
-# Qt's OpenSSL backend is loaded dynamically. Force the pinned OpenSSL 3.5.7
-# runtime and provider modules into the bundle even if the host also supplies a
-# compatible libssl.so.3.
+# Qt loads OpenSSL dynamically, so bundle the runtime from the Ubuntu snapshot.
 mkdir -p "${APP_DIR}/usr/lib/ossl-modules"
-install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libssl.so.3")" "${APP_DIR}/usr/lib/libssl.so.3"
-install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libcrypto.so.3")" "${APP_DIR}/usr/lib/libcrypto.so.3"
-install -m 0755 "${OPENSSL_ROOT_DIR}/lib/ossl-modules/legacy.so" "${APP_DIR}/usr/lib/ossl-modules/legacy.so"
+install -m 0644 "$(readlink -f "${OPENSSL_LIB_DIR}/libssl.so.3")" "${APP_DIR}/usr/lib/libssl.so.3"
+install -m 0644 "$(readlink -f "${OPENSSL_LIB_DIR}/libcrypto.so.3")" "${APP_DIR}/usr/lib/libcrypto.so.3"
+install -m 0755 "${OPENSSL_LIB_DIR}/ossl-modules/legacy.so" "${APP_DIR}/usr/lib/ossl-modules/legacy.so"
 
-# Our custom-built OpenSSL's compiled-in default cert store
-# ("${OPENSSL_ROOT_DIR}/certs") is never populated, so it cannot be relied on
-# at all. AppRun prefers the end user's own host CA store when one exists
-# (see the AppRun heredoc below), but bundle a CA snapshot from the builder
-# image as a fallback for hosts that have none of the well-known bundle
-# paths, so TLS verification always has something to fall back on.
+# AppRun prefers the host CA store; include a snapshot as a fallback.
 mkdir -p "${APP_DIR}/usr/resources"
 if [[ ! -s /etc/ssl/certs/ca-certificates.crt ]]; then
     echo "System CA certificate bundle was not found: /etc/ssl/certs/ca-certificates.crt" >&2
@@ -501,7 +488,7 @@ install -m 0644 /etc/ssl/certs/ca-certificates.crt "${APP_DIR}/usr/resources/ca-
 # The Qt deploy plugin adds QML/plugin ELFs after linuxdeploy's initial scan.
 # Feed every resulting ELF back through linuxdeploy to close their dependency
 # graphs before producing the deterministic squashfs.
-export LD_LIBRARY_PATH="${APP_DIR}/usr/lib:${OPENSSL_ROOT_DIR}/lib:${QT_INSTALLED_PREFIX}/lib"
+export LD_LIBRARY_PATH="${APP_DIR}/usr/lib:${QT_INSTALLED_PREFIX}/lib"
 APPDIR_ELF_ARGS=()
 while IFS= read -r -d '' candidate; do
     if [[ "$(file -b "${candidate}")" == *ELF* ]]; then
@@ -523,9 +510,9 @@ linuxdeploy \
 # Re-assert security- and compatibility-critical contents after the dependency
 # closure pass, which is allowed to update AppDir.
 restrict_qt_plugins "${PLUGIN_ROOT}"
-install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libssl.so.3")" "${APP_DIR}/usr/lib/libssl.so.3"
-install -m 0644 "$(readlink -f "${OPENSSL_ROOT_DIR}/lib/libcrypto.so.3")" "${APP_DIR}/usr/lib/libcrypto.so.3"
-install -m 0755 "${OPENSSL_ROOT_DIR}/lib/ossl-modules/legacy.so" "${APP_DIR}/usr/lib/ossl-modules/legacy.so"
+install -m 0644 "$(readlink -f "${OPENSSL_LIB_DIR}/libssl.so.3")" "${APP_DIR}/usr/lib/libssl.so.3"
+install -m 0644 "$(readlink -f "${OPENSSL_LIB_DIR}/libcrypto.so.3")" "${APP_DIR}/usr/lib/libcrypto.so.3"
+install -m 0755 "${OPENSSL_LIB_DIR}/ossl-modules/legacy.so" "${APP_DIR}/usr/lib/ossl-modules/legacy.so"
 install -m 0644 /etc/ssl/certs/ca-certificates.crt "${APP_DIR}/usr/resources/ca-certificates.crt"
 if [[ ! -e "${APP_DIR}/nunchuk-qt.png" ]]; then
     echo "Root AppImage icon was not deployed: ${APP_DIR}/nunchuk-qt.png" >&2
@@ -582,7 +569,7 @@ TLS_PROBE_OUTPUT="$(
     OPENSSL_MODULES="${APP_DIR}/usr/lib/ossl-modules" \
     "${TLS_PROBE_BINARY}"
 )"
-if [[ "${TLS_PROBE_OUTPUT}" != *"OpenSSL ${OPENSSL_VERSION}"* ]]; then
+if [[ "${TLS_PROBE_OUTPUT}" != "OpenSSL ${OPENSSL_VERSION} "* ]]; then
     echo "Unexpected packaged TLS runtime: ${TLS_PROBE_OUTPUT}" >&2
     exit 1
 fi
@@ -619,23 +606,9 @@ APPDIR_MANIFEST="${PACKAGE_DIR}/appdir-metadata.manifest"
 APPDIR_AFTER_MANIFEST="${PACKAGE_DIR}/appdir-metadata.after-appimage-plugin.manifest"
 write_appdir_manifest "${APP_DIR}" "${APPDIR_MANIFEST}"
 
-# linuxdeploy's own AppImage output plugin replaces the separate
-# appimagetool/type2-runtime combination used previously (both only ever
-# published prebuilt x86_64 binaries; linuxdeploy-plugin-appimage is
-# published for both x86_64 and aarch64 like linuxdeploy itself).
-# LDAI_RUNTIME_FILE pins the exact runtime bytes, matching the previous
-# --runtime-file behavior.
-#
-# Invoke linuxdeploy-plugin-appimage directly (its own README: "Like all
-# linuxdeploy plugins, linuxdeploy-plugin-appimage is a standalone tool and
-# can be used without linuxdeploy"), NOT via `linuxdeploy --output appimage`.
-# Going through `linuxdeploy` re-runs its full bundling pass first ("After
-# completing the bundling process ... linuxdeploy will then call the
-# AppImage plugin", per the same README) -- confirmed in practice: it
-# re-patchelf'd and re-deployed files already placed by the two passes
-# above, mutating file content (not just metadata) and tripping the
-# manifest-diff check below. Calling the plugin binary standalone skips that
-# redundant, mutating pass entirely.
+# Invoke the AppImage plugin directly: running linuxdeploy again would
+# repeat bundling and modify the already-normalized AppDir.
+# LDAI_RUNTIME_FILE selects the checksum-pinned runtime from the builder.
 (
     cd "${PACKAGE_DIR}"
     LDAI_RUNTIME_FILE="${APPIMAGE_RUNTIME_FILE}" \
@@ -701,8 +674,5 @@ touch --no-dereference --date="@${SOURCE_DATE_EPOCH}" "${APPIMAGE_PATH}"
 
 (
     cd "${PACKAGE_DIR}"
-    # The AppImage payload is already compressed. Store mode avoids coupling
-    # release bytes to a particular zlib implementation.
-    zip -X -0 "${ZIP_NAME}" "${APPIMAGE_NAME}"
-    sha256sum "${ZIP_NAME}" > "${ZIP_NAME}.sha256"
+    sha256sum "${APPIMAGE_NAME}" > "${APPIMAGE_NAME}.sha256"
 )

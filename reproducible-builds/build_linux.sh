@@ -48,15 +48,7 @@ trap restore_zlib_zconf EXIT
 # isolated builder process.
 git config --global --add safe.directory '*'
 
-# Override the builder image's fallback (Dockerfile.linux's SOURCE_DATE_EPOCH,
-# only meant for timestamps produced while building the image itself) with the
-# timestamp of the actual source revision being packaged. This must be an
-# unconditional assignment, not a "${SOURCE_DATE_EPOCH:-...}" default: the
-# Docker image always has SOURCE_DATE_EPOCH set to a non-empty value, so a
-# "${VAR:-default}" fallback would never take the git-derived value and every
-# release would silently carry the image's fixed timestamp instead of its own
-# commit's. Matches main's build_linux.sh, which uses this same unconditional
-# form.
+# Always replace the image-build epoch with the source commit timestamp.
 SOURCE_DATE_EPOCH="$(git -c safe.directory="${PROJECT_DIR}" -C "${PROJECT_DIR}" log -1 --format=%ct)"
 if [[ ! "${SOURCE_DATE_EPOCH}" =~ ^[0-9]+$ ]]; then
     echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH}" >&2
@@ -78,10 +70,10 @@ for required_tool in "${CC}" "${CXX}" "${AR}" "${NM}" "${RANLIB}"; do
 done
 
 readonly PREFIX_MAP_FLAGS="-ffile-prefix-map=${PROJECT_DIR}=. -fdebug-prefix-map=${PROJECT_DIR}=. -fmacro-prefix-map=${PROJECT_DIR}=."
-export CPPFLAGS="-I${OPENSSL_ROOT_DIR}/include ${PREFIX_MAP_FLAGS}"
+export CPPFLAGS="${PREFIX_MAP_FLAGS}"
 export CFLAGS="${CPPFLAGS}"
 export CXXFLAGS="${CPPFLAGS}"
-export LDFLAGS="-L${OPENSSL_ROOT_DIR}/lib -static-libgcc -static-libstdc++"
+export LDFLAGS="-static-libgcc -static-libstdc++"
 
 # A clean build directory is required for comparable outputs and prevents a
 # stale Qt5 CMake cache from being reused after the Qt6 migration.
@@ -95,16 +87,9 @@ cmake -S . -B build -G Ninja \
     -DCMAKE_AR="${AR}" \
     -DCMAKE_NM="${NM}" \
     -DCMAKE_RANLIB="${RANLIB}" \
-    -DCMAKE_PREFIX_PATH="${OPENSSL_ROOT_DIR};${QT_INSTALLED_PREFIX};/usr" \
-    -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+    -DCMAKE_PREFIX_PATH="${QT_INSTALLED_PREFIX};/usr" \
     -DQt6_DIR="${QT6_DIR}" \
     -DUR__DISABLE_TESTS=ON
-
-openssl_runtime_version="$(LD_LIBRARY_PATH="${OPENSSL_ROOT_DIR}/lib" "${OPENSSL_ROOT_DIR}/bin/openssl" version | awk '{ print $2 }')"
-if [[ "${openssl_runtime_version}" != "${OPENSSL_VERSION}" ]]; then
-    echo "Unexpected builder OpenSSL version: ${openssl_runtime_version}" >&2
-    exit 1
-fi
 
 assert_cmake_cache_value() {
     local key="$1"
@@ -123,9 +108,25 @@ assert_cmake_cache_value CMAKE_CXX_COMPILER "${CXX}"
 assert_cmake_cache_value CMAKE_AR "${AR}"
 assert_cmake_cache_value CMAKE_NM "${NM}"
 assert_cmake_cache_value CMAKE_RANLIB "${RANLIB}"
-assert_cmake_cache_value OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a"
-assert_cmake_cache_value OPENSSL_SSL_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libssl.a"
+# libnunchuk must use the static libraries from the frozen Ubuntu packages.
+openssl_libdir="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+assert_cmake_cache_value OPENSSL_CRYPTO_LIBRARY "${openssl_libdir}/libcrypto.a"
+assert_cmake_cache_value OPENSSL_SSL_LIBRARY "${openssl_libdir}/libssl.a"
 
 cmake --build build --parallel "$(nproc)"
 
 "${PROJECT_DIR}/reproducible-builds/package_linux.sh"
+
+release_name="nunchuk-linux-v${TAG}-${ARCH}"
+{
+    printf 'source_commit=%s\n' "$(git rev-parse HEAD)"
+    printf 'source_date_epoch=%s\n' "${SOURCE_DATE_EPOCH}"
+    printf 'arch=%s\n' "${ARCH}"
+    cat /opt/builder-inputs.txt
+    printf '\n[submodules]\n'
+    git submodule status --recursive
+    printf '\n[build recipes]\n'
+    sha256sum reproducible-builds/Dockerfile.linux \
+        reproducible-builds/download_hwi.sh reproducible-builds/hwi.lock.env \
+        "reproducible-builds/qt-6.9.3-linux-${ARCH}.sha256"
+} > "${release_name}/${release_name}.build-inputs.txt"
