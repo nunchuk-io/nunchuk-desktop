@@ -164,7 +164,7 @@ public slots:
     void requestAddSigner(const QString group, const QString &key);
     void requestRemoveSigner(const QString group, const QString &key);
     void requestAddNewKey();
-    void requestAddExistKey(const QString &xfp);
+    void requestAddExistKey(const QString &xfp, const QString &name = {});
     void requestChangeWalletTypeToTaproot();
     virtual bool editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path);
     QMap<QString, int> getKeyStrCount(const QJsonArray &scriptPaths, const QJsonArray &keyPaths);

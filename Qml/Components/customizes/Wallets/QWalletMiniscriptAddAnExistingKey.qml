@@ -72,7 +72,7 @@ QOnScreenContentTypeB {
             type: eTypeE
             enabled: _content.contentItem.fingerPrint !== ""
             onButtonClicked: {
-                newWalletInfo.requestAddExistKey(_content.contentItem.fingerPrint)
+                newWalletInfo.requestAddExistKey(_content.contentItem.fingerPrint, _content.contentItem.key_name)
             }
         }
     }
