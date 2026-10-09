@@ -58,6 +58,3 @@ diff "/path/to/download/nunchuk-linux-v$VERSION-x86_64.AppImage" \
 
 For ARM64, replace `x86_64` with `aarch64` in the comparison paths.
 No output means the files are byte-for-byte identical.
-
-Before launching the downloaded AppImage, enable **Allow executing file as
-program** in your file manager's permissions.
