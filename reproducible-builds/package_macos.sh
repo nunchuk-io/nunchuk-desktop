@@ -119,6 +119,21 @@ if [[ -f "${helper_executable}" ]]; then
     fi
 fi
 
+# Each release targets one architecture, while Qt ships universal binaries.
+# Thin regular Mach-O files before hashing and signing; preserve bundle symlinks.
+while IFS= read -r -d '' binary; do
+    binary_type="$(file -b "${binary}")"
+    case "${binary_type}" in
+        *Mach-O*) ;;
+        *) continue ;;
+    esac
+    lipo "${binary}" -verify_arch "${ARCH}"
+    if [[ "$(lipo -archs "${binary}")" != "${ARCH}" ]]; then
+        echo "Keeping ${ARCH}: ${binary#"${APP_PATH}/"}"
+        lipo "${binary}" -thin "${ARCH}" -output "${binary}"
+    fi
+done < <(find "${APP_PATH}" -type f -print0)
+
 source_commit="$(git -C "${PROJECT_DIR}" rev-parse HEAD)"
 {
     printf 'schema=nunchuk-macos-build-inputs-v1\n'

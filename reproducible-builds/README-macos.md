@@ -34,6 +34,9 @@ ARCH="$ARCH" TAG="$VERSION" QT_ROOT="$QT_ROOT" \
 HWI 3.2.1 is downloaded and checksum-verified automatically. No separate HWI
 build is needed. The source commit supplies `SOURCE_DATE_EPOCH`.
 
+Packaging keeps only the selected architecture in bundled executables, frameworks
+and plugins before creating the unsigned payload and signing the app.
+
 ## Build output
 
 The unsigned payload and checksum are written to:
