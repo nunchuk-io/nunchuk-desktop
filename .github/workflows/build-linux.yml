@@ -136,16 +136,11 @@ jobs:
             "${extracted_appdir}" \
             /dev/stdout
 
-      # Artifact names use a sanitized ref; filenames use BUILD_VERSION.
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage
-            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage.sha256
-            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.build-inputs.txt
-            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.builder-image.txt
+          path: nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.zip
           if-no-files-found: error
           compression-level: 0
 
@@ -180,18 +175,10 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          appimages=(release-assets/*.AppImage)
-          if [[ "${#appimages[@]}" -ne 2 ]]; then
-            echo "Expected one AppImage per Linux architecture" >&2
+          assets=(release-assets/*.zip)
+          if [[ "${#assets[@]}" -ne 2 ]]; then
+            echo "Expected one release zip per Linux architecture" >&2
             exit 1
           fi
-          assets=()
-          for appimage in "${appimages[@]}"; do
-            assets+=("${appimage}")
-            for sidecar in "${appimage}.sha256" "${appimage%.AppImage}.build-inputs.txt" "${appimage%.AppImage}.builder-image.txt"; do
-              [[ -s "${sidecar}" ]] || { echo "Missing release metadata: ${sidecar}" >&2; exit 1; }
-              assets+=("${sidecar}")
-            done
-          done
 
           bash .github/scripts/publish-release.sh "${assets[@]}"
