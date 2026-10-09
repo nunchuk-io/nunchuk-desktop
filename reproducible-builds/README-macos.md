@@ -31,7 +31,7 @@ ARCH="$ARCH" TAG="$VERSION" QT_ROOT="$QT_ROOT" \
   bash reproducible-builds/build_macos.sh
 ```
 
-HWI 3.2.3 is downloaded and checksum-verified automatically. No separate HWI
+HWI 3.2.4 is downloaded and checksum-verified automatically. No separate HWI
 build is needed. The source commit supplies `SOURCE_DATE_EPOCH`.
 
 Packaging keeps only the selected architecture in bundled executables, frameworks
