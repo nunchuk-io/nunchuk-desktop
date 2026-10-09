@@ -5,10 +5,9 @@ independent reproducible-build verification is not yet supported.
 
 The Qt6/MSVC pipeline uses `build_windows.ps1`, `package_windows.ps1` and
 `windows-dependencies.lock.json`.
-Releases contain an unsigned Inno Setup installer (`-setup-unsigned.exe`)
-and portable ZIP, with a payload manifest and build metadata. Use the installer
-for normal installation, shortcuts and uninstall support. Use the portable ZIP
-to extract and run `nunchuk-qt.exe` without installing.
+Releases contain an unsigned Inno Setup installer (`-setup-unsigned.exe`) and
+portable ZIP. Use the installer for normal installation, shortcuts and uninstall
+support. Use the portable ZIP to extract and run `nunchuk-qt.exe` without installing.
 
 ## GitHub Actions
 

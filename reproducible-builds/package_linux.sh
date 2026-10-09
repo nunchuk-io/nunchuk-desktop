@@ -675,5 +675,4 @@ touch --no-dereference --date="@${SOURCE_DATE_EPOCH}" "${APPIMAGE_PATH}"
 (
     cd "${PACKAGE_DIR}"
     sha256sum "${APPIMAGE_NAME}" > "${APPIMAGE_NAME}.sha256"
-    zip -X -0 "${PACKAGE_NAME}.zip" "${APPIMAGE_NAME}"
 )

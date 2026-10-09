@@ -3,12 +3,14 @@ Qt 6 release artifacts for Linux x86_64/aarch64, macOS Intel/Apple Silicon and W
 Download names follow `nunchuk-<os>-v<version>-<arch>`, with `-setup` or `-portable`
 for Windows packages and `-unsigned` last when applicable, before the file extension.
 
-- **Linux:** AppImage, checksum, build-input inventory and exact CI builder image digest.
+- **Linux:** AppImage for x86-64 and ARM64.
   For either Linux architecture, rebuild the tag and compare the AppImage with the published artifact.
   Enable executable permission on the downloaded AppImage before launching it.
 - **macOS:** DMG containing a Developer ID signed, notarized and stapled app.
-  The release manifest records the unsigned payload hash for diagnostics.
-- **Windows:** unsigned setup EXE for normal installation and a portable ZIP to run without installing, with payload manifest and build metadata.
+- **Windows:** unsigned setup EXE for normal installation and a portable ZIP to run without installing.
+
+For download verification, use `SHA256SUMS` and its detached GPG signature,
+`SHA256SUMS.asc`.
 
 Reproducible-build verification is active for Linux x86-64 and ARM64.
 Windows and macOS remain standby.

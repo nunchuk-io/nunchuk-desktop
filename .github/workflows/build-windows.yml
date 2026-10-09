@@ -209,5 +209,5 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          assets=(release-assets/*.zip)
+          assets=(release-assets/*.exe release-assets/*.zip)
           bash .github/scripts/publish-release.sh "${assets[@]}"

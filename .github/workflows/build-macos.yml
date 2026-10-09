@@ -182,7 +182,6 @@ jobs:
           path: |
             ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.dmg
             ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.dmg.sha256
-            ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.zip
             ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.release.json
           if-no-files-found: error
           compression-level: 0
@@ -218,5 +217,5 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          assets=(release-assets/*.zip)
+          assets=(release-assets/*.dmg)
           bash .github/scripts/publish-release.sh "${assets[@]}"
