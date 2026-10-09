@@ -136,6 +136,7 @@ RUN printf '%s\n' \
         libxdamage-dev \
         libxi-dev \
         libxkbcommon-x11-0 \
+        libxkbfile1 \
         libxrandr-dev \
         libxss-dev \
         libxt-dev \
@@ -206,9 +207,10 @@ RUN set -eux; \
     test -n "${webengine_core}"; \
     test -f "${qxcb_plugin}"; \
     file -L "${webengine_core}" "${qxcb_plugin}"; \
-    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${graphical_effects}" | grep -q 'not found'; \
-    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${webengine_core}" | grep -q 'not found'; \
-    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${qxcb_plugin}" | grep -q 'not found'; \
+    for qt_library in "${graphical_effects}" "${webengine_core}" "${qxcb_plugin}"; do \
+        dependencies="$(LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${qt_library}")"; \
+        if printf '%s\n' "${dependencies}" | grep 'not found'; then exit 1; fi; \
+    done; \
     minizip_library="$(ldconfig -p | awk '$1 == "libminizip.so.1" { print $NF }' | sort -u)"; \
     test "$(printf '%s\n' "${minizip_library}" | sed '/^$/d' | wc -l)" -eq 1; \
     test -f "${minizip_library}"; \
