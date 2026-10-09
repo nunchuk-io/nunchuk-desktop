@@ -44,7 +44,7 @@ docker run --platform "$PLATFORM" --rm \
 ```
 
 The builder handles dependencies and downloads the checksum-verified
-[HWI 3.2.1 binary](https://github.com/nogibi/HWI/releases/tag/3.2.1) automatically.
+[HWI 3.2.2 binary](https://github.com/nogibi/HWI/releases/tag/3.2.2) automatically.
 OpenSSL comes from the same frozen Ubuntu snapshot as the system packages.
 
 Output: `nunchuk-linux-v$VERSION-x86_64/nunchuk-linux-v$VERSION-x86_64.AppImage`.
