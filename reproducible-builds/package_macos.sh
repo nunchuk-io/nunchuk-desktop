@@ -181,7 +181,7 @@ chmod 0644 "${payload_root}/payload-manifest.json"
 normalized_timestamp="$(date -u -r "${SOURCE_DATE_EPOCH}" '+%Y%m%d%H%M.%S')"
 find "${payload_root}" -exec touch -h -t "${normalized_timestamp}" {} +
 
-archive="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}-unsigned.tar"
+archive="${OUTPUT_DIR}/nunchuk-macos-v${TAG}-${ARCH}-unsigned.tar"
 # Apple's bsdtar writes PAX ctime/atime records and can emit AppleDouble
 # metadata even after xattr cleanup. Build each header explicitly instead so
 # the canonical archive contains only source-controlled values. GNU tar

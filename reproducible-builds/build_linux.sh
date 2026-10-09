@@ -117,7 +117,7 @@ cmake --build build --parallel "$(nproc)"
 
 "${PROJECT_DIR}/reproducible-builds/package_linux.sh"
 
-release_name="nunchuk-linux-${ARCH}-v${TAG}"
+release_name="nunchuk-linux-v${TAG}-${ARCH}"
 {
     printf 'source_commit=%s\n' "$(git rev-parse HEAD)"
     printf 'source_date_epoch=%s\n' "${SOURCE_DATE_EPOCH}"

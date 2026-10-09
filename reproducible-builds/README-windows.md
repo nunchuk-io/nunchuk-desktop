@@ -5,7 +5,7 @@ independent reproducible-build verification is not yet supported.
 
 The Qt6/MSVC pipeline uses `build_windows.ps1`, `package_windows.ps1` and
 `windows-dependencies.lock.json`. HWI 3.2.1 is downloaded and checksum-verified
-automatically. Releases contain an unsigned Inno Setup installer (`-setup.exe`)
+automatically. Releases contain an unsigned Inno Setup installer (`-setup-unsigned.exe`)
 and portable ZIP, with a payload manifest and build metadata. Use the installer
 for normal installation, shortcuts and uninstall support. Use the portable ZIP
 to extract and run `nunchuk-qt.exe` without installing.
@@ -44,6 +44,8 @@ $version = "X.Y.Z"   # must match CMakeLists.txt / main.cpp
 ```
 
 Output is written to `C:\nunchuk-repro\artifacts`.
+For version 2.9.0, the downloads are `nunchuk-windows-v2.9.0-x64-setup-unsigned.exe`
+and `nunchuk-windows-v2.9.0-x64-unsigned.zip`.
 
 Published Windows artifacts are unsigned; Authenticode signing is not configured.
 `sign_windows.ps1` is retained for the planned signing flow, but no current

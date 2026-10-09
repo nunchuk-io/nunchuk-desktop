@@ -57,7 +57,7 @@ jobs:
           artifact_ref="$(printf '%s' "${GITHUB_REF_NAME}" | LC_ALL=C tr -c 'A-Za-z0-9._-' '-')"
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then artifact_ref="v${artifact_ref}"; fi
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then artifact_ref+="-manual"; fi
-          echo "ARTIFACT_NAME=nunchuk-linux-${{ matrix.appimage_arch }}-${artifact_ref}" >> "${GITHUB_ENV}"
+          echo "ARTIFACT_NAME=nunchuk-linux-${artifact_ref}-${{ matrix.appimage_arch }}" >> "${GITHUB_ENV}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -99,7 +99,7 @@ jobs:
 
       - name: Record builder image
         run: |
-          release_root="nunchuk-linux-${{ matrix.appimage_arch }}-v${BUILD_VERSION}"
+          release_root="nunchuk-linux-v${BUILD_VERSION}-${{ matrix.appimage_arch }}"
           # The build container creates the release directory as root.
           printf '%s\n' "${BUILDER_IMAGE}" | sudo tee "${release_root}/${release_root}.builder-image.txt" > /dev/null
 
@@ -110,9 +110,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          release_root="nunchuk-linux-${APPIMAGE_ARCH}-v${BUILD_VERSION}"
+          release_root="nunchuk-linux-v${BUILD_VERSION}-${APPIMAGE_ARCH}"
           app_dir="${release_root}/Appdir"
-          appimage="${release_root}/nunchuk-linux-${APPIMAGE_ARCH}-v${BUILD_VERSION}.AppImage"
+          appimage="${release_root}/${release_root}.AppImage"
 
           if [[ ! -x "${appimage}" ]]; then
             echo "Packaged AppImage was not found or is not executable: ${appimage}"
@@ -142,10 +142,10 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.AppImage
-            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.AppImage.sha256
-            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.build-inputs.txt
-            nunchuk-linux-${{ matrix.appimage_arch }}-v${{ env.BUILD_VERSION }}/*.builder-image.txt
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage.sha256
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.build-inputs.txt
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.builder-image.txt
           if-no-files-found: error
           compression-level: 0
 
@@ -170,7 +170,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: nunchuk-linux-*-v${{ env.BUILD_VERSION }}
+          pattern: nunchuk-linux-v${{ env.BUILD_VERSION }}-*
           path: release-assets
           merge-multiple: true
 

@@ -39,8 +39,8 @@ build is needed. The source commit supplies `SOURCE_DATE_EPOCH`.
 The unsigned payload and checksum are written to:
 
 ```text
-/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-$ARCH-v$VERSION-unsigned.tar
-/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-$ARCH-v$VERSION-unsigned.tar.sha256
+/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-v$VERSION-$ARCH-unsigned.tar
+/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-v$VERSION-$ARCH-unsigned.tar.sha256
 ```
 
 CI records the unsigned payload hash in the release manifest for diagnostics.

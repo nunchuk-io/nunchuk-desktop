@@ -240,7 +240,7 @@ mkdir -p "${dmg_stage}"
 /usr/bin/ditto "${APP_PATH}" "${dmg_stage}/Nunchuk.app"
 ln -s /Applications "${dmg_stage}/Applications"
 
-DMG_PATH="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}.dmg"
+DMG_PATH="${OUTPUT_DIR}/nunchuk-macos-v${TAG}-${ARCH}.dmg"
 rm -f "${DMG_PATH}"
 # hdiutil create intermittently fails with "Resource busy" -- a known,
 # transient macOS disk-arbitration/Spotlight race against the just-written
@@ -300,7 +300,7 @@ mounted=0
 dmg_sha256="$(shasum -a 256 "${DMG_PATH}" | awk '{ print $1 }')"
 printf '%s  %s\n' "${dmg_sha256}" "$(basename "${DMG_PATH}")" > "${DMG_PATH}.sha256"
 
-RELEASE_MANIFEST="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}.release.json"
+RELEASE_MANIFEST="${OUTPUT_DIR}/nunchuk-macos-v${TAG}-${ARCH}.release.json"
 python3 - "${RELEASE_MANIFEST}" \
     "${ARCH}" "${TAG}" "${SOURCE_COMMIT}" "${SOURCE_DATE_EPOCH}" \
     "${UNSIGNED_PAYLOAD_SHA256}" "${dmg_sha256}" \

@@ -22,7 +22,7 @@ jobs:
           $artifactRef = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
           if ($env:GITHUB_REF_TYPE -eq 'tag') { $artifactRef = "v$artifactRef" }
           if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') { $artifactRef += '-manual' }
-          "ARTIFACT_NAME=nunchuk-windows-x64-$artifactRef" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ARTIFACT_NAME=nunchuk-windows-$artifactRef-x64" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       # Allow long submodule paths; avoid CRLF conversion and robocopy symlink errors.
       - name: Configure git for a byte-faithful checkout
@@ -199,7 +199,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: nunchuk-windows-x64-v${{ github.ref_name }}
+          name: nunchuk-windows-v${{ github.ref_name }}-x64
           path: release-assets
 
       - name: Create or update GitHub prerelease

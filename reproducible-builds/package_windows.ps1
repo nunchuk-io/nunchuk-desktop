@@ -590,10 +590,10 @@ if (!(Test-Path -LiteralPath $iscc -PathType Leaf)) {
     throw "ISCC.exe is missing after installing the pinned Inno Setup package."
 }
 
-$namePrefix = "nunchuk-windows-x64-v$ReleaseVersion"
+$namePrefix = "nunchuk-windows-v$ReleaseVersion-x64"
 if ($ArtifactFlavor -eq "unsigned") {
     $archiveName = "$namePrefix-unsigned.zip"
-    $installerBaseName = "$namePrefix-unsigned-setup"
+    $installerBaseName = "$namePrefix-setup-unsigned"
 }
 else {
     $archiveName = "$namePrefix.zip"

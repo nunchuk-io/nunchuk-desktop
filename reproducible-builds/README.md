@@ -47,7 +47,7 @@ The builder handles dependencies and downloads the checksum-verified
 [HWI 3.2.1 binary](https://github.com/nogibi/HWI/releases/tag/3.2.1) automatically.
 OpenSSL comes from the same frozen Ubuntu snapshot as the system packages.
 
-Output: `nunchuk-linux-x86_64-v$VERSION/nunchuk-linux-x86_64-v$VERSION.AppImage`.
+Output: `nunchuk-linux-v$VERSION-x86_64/nunchuk-linux-v$VERSION-x86_64.AppImage`.
 For ARM64, the directory and AppImage use `aarch64` instead of `x86_64`.
 
 ## 3. Compare with the release
@@ -56,8 +56,8 @@ Download the matching `.AppImage` from [GitHub Releases](https://github.com/nunc
 then compare it with your build:
 
 ```bash
-diff "/path/to/download/nunchuk-linux-x86_64-v$VERSION.AppImage" \
-  "nunchuk-linux-x86_64-v$VERSION/nunchuk-linux-x86_64-v$VERSION.AppImage"
+diff "/path/to/download/nunchuk-linux-v$VERSION-x86_64.AppImage" \
+  "nunchuk-linux-v$VERSION-x86_64/nunchuk-linux-v$VERSION-x86_64.AppImage"
 ```
 
 For ARM64, replace `x86_64` with `aarch64` in the comparison paths.

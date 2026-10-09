@@ -106,10 +106,10 @@ jobs:
       - name: Upload unsigned payload archive
         uses: actions/upload-artifact@v4
         with:
-          name: nunchuk-macos-${{ matrix.arch }}-${{ env.ARTIFACT_SUFFIX }}-unsigned
+          name: nunchuk-macos-${{ env.ARTIFACT_SUFFIX }}-${{ matrix.arch }}-unsigned
           path: |
-            ${{ runner.temp }}/macos-output/${{ matrix.arch }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar
-            ${{ runner.temp }}/macos-output/${{ matrix.arch }}/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}-unsigned.tar.sha256
+            ${{ runner.temp }}/macos-output/${{ matrix.arch }}/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}-unsigned.tar
+            ${{ runner.temp }}/macos-output/${{ matrix.arch }}/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}-unsigned.tar.sha256
           if-no-files-found: error
           compression-level: 0
 
@@ -136,14 +136,14 @@ jobs:
       - name: Download unsigned payload
         uses: actions/download-artifact@v4
         with:
-          name: nunchuk-macos-${{ matrix.arch }}-${{ env.ARTIFACT_SUFFIX }}-unsigned
+          name: nunchuk-macos-${{ env.ARTIFACT_SUFFIX }}-${{ matrix.arch }}-unsigned
           path: unsigned
 
       - name: Verify and extract payload
         shell: bash
         run: |
           set -euo pipefail
-          name_prefix="nunchuk-macos-${{ matrix.arch }}-v${BUILD_VERSION}-unsigned"
+          name_prefix="nunchuk-macos-v${BUILD_VERSION}-${{ matrix.arch }}-unsigned"
           archive="unsigned/${name_prefix}.tar"
           # Check archive integrity after transfer.
           ( cd unsigned && shasum -a 256 --check "${name_prefix}.tar.sha256" )
@@ -178,11 +178,11 @@ jobs:
       - name: Upload signed release assets
         uses: actions/upload-artifact@v4
         with:
-          name: nunchuk-macos-${{ matrix.arch }}-${{ env.ARTIFACT_SUFFIX }}
+          name: nunchuk-macos-${{ env.ARTIFACT_SUFFIX }}-${{ matrix.arch }}
           path: |
-            ${{ runner.temp }}/signed-output/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}.dmg
-            ${{ runner.temp }}/signed-output/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}.dmg.sha256
-            ${{ runner.temp }}/signed-output/nunchuk-macos-${{ matrix.arch }}-v${{ env.BUILD_VERSION }}.release.json
+            ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.dmg
+            ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.dmg.sha256
+            ${{ runner.temp }}/signed-output/nunchuk-macos-v${{ env.BUILD_VERSION }}-${{ matrix.arch }}.release.json
           if-no-files-found: error
           compression-level: 0
 
@@ -206,7 +206,8 @@ jobs:
       - name: Download signed assets (x86_64 + arm64)
         uses: actions/download-artifact@v4
         with:
-          pattern: nunchuk-macos-*-v${{ env.BUILD_VERSION }}
+          # Signed artifact names end in x86_64 or arm64, not -unsigned.
+          pattern: nunchuk-macos-v${{ env.BUILD_VERSION }}-*64
           path: release-assets
           merge-multiple: true
 
