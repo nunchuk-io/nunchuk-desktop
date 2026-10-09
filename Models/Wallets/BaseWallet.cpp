@@ -554,18 +554,20 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
             }
             return data;
         },
-        [safeThis](DataStruct ret) {
+        [safeThis, message](DataStruct ret) {
             SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
             if (ret.address.isEmpty() || ret.signature.isEmpty()) {
                 return;
             }
             auto single = QSingleSignerPtr(new QSingleSigner(ret.signer));
             if (single) {
+                single->setMessage(message);
                 single->setAddress(ret.address);
                 single->setSignature(ret.signature);
                 AppModel::instance()->setSingleSignerInfo(single);
                 QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(single->masterFingerPrint());
                 if (master) {
+                    master->setMessage(message);
                     master->setAddress(ret.address);
                     master->setSignature(ret.signature);
                     AppModel::instance()->setMasterSignerInfo(master);
@@ -576,19 +578,22 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
         });
 }
 
-void BaseWallet::exportBitcoinSignedMessage(const QString &xfp, const QString &file_path, int wallet_type) {
+void BaseWallet::exportBitcoinSignedMessage(const QString &xfp, const QString &file_path) {
     QString path = qUtils::QGetFilePath(file_path);
-    QString address_type = qUtils::qAddressTypeToStr((nunchuk::AddressType)wallet_type);
     QSingleSignerPtr single = AppModel::instance()->singleSignerInfoPtr();
     QString signMessage;
-    if (single) {
-        signMessage = qUtils::ExportBitcoinSignedMessage(single->message(), address_type, single->signature());
-    }
-    if (single.isNull()) {
+    if (single && qUtils::strCompare(single->masterFingerPrint(), xfp)
+        && !single->address().isEmpty() && !single->signature().isEmpty()) {
+        signMessage = qUtils::ExportBitcoinSignedMessage(single->message(), single->address(), single->signature());
+    } else {
         QMasterSignerPtr master = AppModel::instance()->masterSignerInfoPtr();
-        if (master) {
-            signMessage = qUtils::ExportBitcoinSignedMessage(master->message(), address_type, master->signature());
+        if (master && qUtils::strCompare(master->fingerPrint(), xfp)
+            && !master->address().isEmpty() && !master->signature().isEmpty()) {
+            signMessage = qUtils::ExportBitcoinSignedMessage(master->message(), master->address(), master->signature());
         }
+    }
+    if (signMessage.isEmpty()) {
+        return;
     }
     QFile file(path);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {

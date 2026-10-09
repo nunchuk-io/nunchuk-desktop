@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationName("nunchuk");
     QCoreApplication::setOrganizationDomain("nunchuk.io");
     QCoreApplication::setApplicationName("NunchukClient");
-    QCoreApplication::setApplicationVersion("2.9.0");
+    QCoreApplication::setApplicationVersion("2.9.1");
 
     double scale_factor = calculateScaleFactor();
     // static char  qt_arg[] = "";
