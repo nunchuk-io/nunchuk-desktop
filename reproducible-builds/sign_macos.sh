@@ -300,10 +300,6 @@ mounted=0
 dmg_sha256="$(shasum -a 256 "${DMG_PATH}" | awk '{ print $1 }')"
 printf '%s  %s\n' "${dmg_sha256}" "$(basename "${DMG_PATH}")" > "${DMG_PATH}.sha256"
 
-ZIP_PATH="${OUTPUT_DIR}/nunchuk-macos-v${TAG}-${ARCH}.zip"
-rm -f "${ZIP_PATH}"
-/usr/bin/ditto -c -k --keepParent "${DMG_PATH}" "${ZIP_PATH}"
-
 RELEASE_MANIFEST="${OUTPUT_DIR}/nunchuk-macos-v${TAG}-${ARCH}.release.json"
 python3 - "${RELEASE_MANIFEST}" \
     "${ARCH}" "${TAG}" "${SOURCE_COMMIT}" "${SOURCE_DATE_EPOCH}" \

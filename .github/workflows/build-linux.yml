@@ -140,7 +140,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.zip
+          path: |
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage.sha256
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.build-inputs.txt
+            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.builder-image.txt
           if-no-files-found: error
           compression-level: 0
 
@@ -175,9 +179,9 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          assets=(release-assets/*.zip)
+          assets=(release-assets/*.AppImage)
           if [[ "${#assets[@]}" -ne 2 ]]; then
-            echo "Expected one release zip per Linux architecture" >&2
+            echo "Expected one AppImage per Linux architecture" >&2
             exit 1
           fi
 
