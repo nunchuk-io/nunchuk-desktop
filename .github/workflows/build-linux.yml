@@ -143,7 +143,6 @@ jobs:
           path: |
             nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage
             nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.AppImage.sha256
-            nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.build-inputs.txt
             nunchuk-linux-v${{ env.BUILD_VERSION }}-${{ matrix.appimage_arch }}/*.builder-image.txt
           if-no-files-found: error
           compression-level: 0

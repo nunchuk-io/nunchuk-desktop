@@ -285,23 +285,6 @@ RUN set -eux; \
 COPY reproducible-builds/download_hwi.sh reproducible-builds/hwi.lock.env /opt/hwi/
 RUN bash /opt/hwi/download_hwi.sh linux "${ARCH}" /opt/hwi/hwi
 
-# Publish the actual installed inputs alongside the release for verifiers.
-# Keep this inventory outside the AppImage so it cannot affect its bytes.
-RUN { \
-        printf 'ubuntu_image=%s\nubuntu_snapshot=%s\n' "${UBUNTU_IMAGE}" "${UBUNTU_SNAPSHOT}"; \
-        printf 'qt=%s\naqt=%s\n' "${QT_VERSION}" "${AQT_VERSION}"; \
-        printf 'openssl=%s\n' "$(dpkg-query -W -f='${Version}' libssl-dev)"; \
-        printf 'qtkeychain=%s\nolm=%s\n' "${QTKEYCHAIN_COMMIT}" "${OLM_COMMIT}"; \
-        printf '\n[apt packages]\n'; \
-        dpkg-query -W -f='${Package}\t${Architecture}\t${Version}\n' | LC_ALL=C sort; \
-        printf '\n[python packages]\n'; \
-        python3 -m pip freeze --all | LC_ALL=C sort; \
-        printf '\n[hwi binary]\n'; \
-        sha256sum /opt/hwi/hwi; \
-        printf '\n[qt archives]\n'; \
-        cat "/opt/qt-checksums/qt-${QT_VERSION}-linux-${ARCH}.sha256"; \
-    } > /opt/builder-inputs.txt
-
 WORKDIR /project
 
 CMD ["bash", "reproducible-builds/build_linux.sh"]
