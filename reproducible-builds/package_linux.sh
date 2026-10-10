@@ -427,7 +427,6 @@ export NO_STRIP=1
 export EXTRA_QT_MODULES=svg
 unset EXTRA_QT_PLUGINS EXTRA_PLATFORM_PLUGINS
 export LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-export VERSION="${TAG}"
 export ARCH
 
 # The aqt-installed Qt SDK ships every backend plugin for a module the app
@@ -608,67 +607,31 @@ write_appdir_manifest "${APP_DIR}" "${APPDIR_MANIFEST}"
 
 # Invoke the AppImage plugin directly: running linuxdeploy again would
 # repeat bundling and modify the already-normalized AppDir.
-# LDAI_RUNTIME_FILE selects the checksum-pinned runtime from the builder.
+# The desktop file already contains the version. Unset all version aliases
+# to prevent appimagetool from rewriting it after timestamp normalization.
 (
     cd "${PACKAGE_DIR}"
-    LDAI_RUNTIME_FILE="${APPIMAGE_RUNTIME_FILE}" \
+    env -u VERSION -u LDAI_VERSION -u LINUXDEPLOY_OUTPUT_VERSION \
+        LDAI_RUNTIME_FILE="${APPIMAGE_RUNTIME_FILE}" \
+        LDAI_OUTPUT="${APPIMAGE_PATH}" \
+        LDAI_NO_APPSTREAM=1 \
         linuxdeploy-plugin-appimage \
         --appdir "${APP_DIR}"
 )
 write_appdir_manifest "${APP_DIR}" "${APPDIR_AFTER_MANIFEST}"
 
-# Always print the raw, unfiltered manifest diff to the build log -- even
-# when it's within the expected/allowed set below -- so a real CI run gives
-# direct evidence of exactly what linuxdeploy-plugin-appimage touched,
-# instead of having to infer it from whether the build passed or failed.
-echo "AppDir metadata diff around the linuxdeploy-plugin-appimage call (before -> after):"
-diff -u "${APPDIR_MANIFEST}" "${APPDIR_AFTER_MANIFEST}" || true
-
-# linuxdeploy-plugin-appimage is known, in practice, to replace the AppDir
-# root's "<name>.desktop" symlink (which linuxdeploy's earlier passes point
-# at usr/share/applications/nunchuk.desktop, per the AppImage convention)
-# with an ordinary regular file of equivalent content, as part of its own
-# desktop-file/AppStream handling. That in turn bumps the root directory
-# entry's own mtime (an unavoidable consequence of replacing one of its
-# children). These are the only two manifest lines allowed to differ here;
-# anything else differing still fails the build.
-appimage_plugin_expected_diff_filter() {
-    grep -Ev $'^(\\.|nunchuk\\.desktop)\t' -- "$1"
-}
-APPDIR_DIFF="${PACKAGE_DIR}/appdir-metadata.diff"
-if ! diff -u \
-        <(appimage_plugin_expected_diff_filter "${APPDIR_MANIFEST}") \
-        <(appimage_plugin_expected_diff_filter "${APPDIR_AFTER_MANIFEST}") \
-        > "${APPDIR_DIFF}"; then
-    echo "Diff after excluding the known root '.' / nunchuk.desktop lines (this is what fails the build):"
-    cat "${APPDIR_DIFF}" >&2
-    echo "linuxdeploy-plugin-appimage modified normalized AppDir metadata beyond the known root nunchuk.desktop symlink-to-file conversion" >&2
+# Packaging must preserve every normalized entry, including the root directory
+# and desktop file. Metadata changes also change the embedded SquashFS bytes.
+if ! diff -u "${APPDIR_MANIFEST}" "${APPDIR_AFTER_MANIFEST}"; then
+    echo "linuxdeploy-plugin-appimage modified normalized AppDir metadata" >&2
     exit 1
 fi
-echo "AppDir metadata diff was limited to the known root '.' / nunchuk.desktop lines; nothing else changed."
-rm -f -- "${APPDIR_DIFF}"
-
-if [[ ! -f "${APP_DIR}/nunchuk.desktop" || -L "${APP_DIR}/nunchuk.desktop" ]]; then
-    echo "Expected linuxdeploy-plugin-appimage to replace the root nunchuk.desktop symlink with a regular file" >&2
-    exit 1
-fi
-echo "Root nunchuk.desktop after linuxdeploy-plugin-appimage ($(stat -c '%s bytes, mode %a' -- "${APP_DIR}/nunchuk.desktop")):"
-cat -- "${APP_DIR}/nunchuk.desktop"
-# Deliberately not verify_desktop_metadata here: that helper also asserts the
-# custom "X-AppImage-Version=${TAG}" key, which is our own addition and not
-# something linuxdeploy-plugin-appimage's regeneration of this specific copy
-# is known to preserve. That exact key is still asserted on the
-# usr/share/applications copy below, which this conversion does not touch;
-# this root copy only needs to still be a well-formed desktop file.
-desktop-file-validate --no-hints "${APP_DIR}/nunchuk.desktop"
 rm -f -- "${APPDIR_AFTER_MANIFEST}"
 
-GENERATED_APPIMAGE="$(find "${PACKAGE_DIR}" -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
-if [[ -z "${GENERATED_APPIMAGE}" ]]; then
+if [[ ! -f "${APPIMAGE_PATH}" ]]; then
     echo "linuxdeploy-plugin-appimage did not produce an AppImage" >&2
     exit 1
 fi
-mv -- "${GENERATED_APPIMAGE}" "${APPIMAGE_PATH}"
 chmod 0755 "${APPIMAGE_PATH}"
 touch --no-dereference --date="@${SOURCE_DATE_EPOCH}" "${APPIMAGE_PATH}"
 
