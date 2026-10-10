@@ -1,19 +1,17 @@
-# Build macOS
+# macOS release-build notes
 
-## Prerequisites
+**Reproducible-build status: standby.** These are developer build instructions;
+independent reproducible-build verification is not yet supported.
 
-- macOS, native architecture (Intel or Apple Silicon) -- no cross-compiling
-- Xcode 16.4
-- Homebrew
-- Git
+Requires a native Intel or Apple Silicon Mac, Xcode 16.4, CMake, Ninja, Git and
+Python 3. Use the instructions at the release tag, with a numeric `VERSION`
+(without `v`).
 
 ## Build
 
-Tag is numeric, no leading `v` (e.g. `2.9.0`). `ARCH` is taken from the host.
-
 ```bash
 export PROJECT_DIR="$HOME/nunchuk-desktop"
-export VERSION="2.9.0"
+export VERSION="<release-tag>"
 export ARCH="$(uname -m)"   # x86_64 or arm64
 
 git clone https://github.com/nunchuk-io/nunchuk-desktop "$PROJECT_DIR"
@@ -22,38 +20,33 @@ git checkout --detach "$VERSION"
 git submodule update --init --recursive
 
 sudo xcode-select --switch /Applications/Xcode_16.4.app
-```
 
-### Install Qt 6.9.3
-
-```bash
-pip install aqtinstall --break-system-packages
+python3 -m pip install aqtinstall==3.3.0 --break-system-packages
 aqt install-qt mac desktop 6.9.3 clang_64 \
   -m qtmultimedia qtnetworkauth qtwebengine qtwebchannel qtpositioning qt5compat qtshadertools \
   -O "$HOME/Qt"
 export QT_ROOT="$HOME/Qt/6.9.3/macos"
-```
 
-### Build app
-
-`SOURCE_DATE_EPOCH` is derived from the commit automatically. `build_macos.sh`
-installs its own pyenv/Python internally to build HWI -- nothing else to install.
-
-```bash
 ARCH="$ARCH" TAG="$VERSION" QT_ROOT="$QT_ROOT" \
   bash reproducible-builds/build_macos.sh
 ```
 
-Output:
+The source commit supplies `SOURCE_DATE_EPOCH`.
+
+Packaging keeps only the selected architecture in bundled executables, frameworks
+and plugins before creating the unsigned payload and signing the app.
+
+## Build output
+
+The unsigned payload and checksum are written to:
 
 ```text
-/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-$ARCH-v$VERSION-unsigned.tar
-/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-$ARCH-v$VERSION-unsigned.tar.sha256
+/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-v$VERSION-$ARCH-unsigned.tar
+/private/tmp/nunchuk-macos-reproducible/$ARCH/output/nunchuk-macos-v$VERSION-$ARCH-unsigned.tar.sha256
 ```
 
-Verify checksum:
+CI records the unsigned payload hash in the release manifest for diagnostics.
+The signed app includes timestamps and a notarization ticket, so the distributed
+DMG is not a byte-for-byte comparison target.
 
-```bash
-cd /private/tmp/nunchuk-macos-reproducible/$ARCH/output
-shasum -a 256 --check "nunchuk-macos-$ARCH-v$VERSION-unsigned.tar.sha256"
-```
+CI signs and notarizes the app before packaging it in a DMG.

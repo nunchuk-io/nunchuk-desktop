@@ -102,9 +102,9 @@
       ]
     },
     "hwi": {
-      "version": "3.2.0-bitbox-verification",
-      "url": "https://github.com/nogibi/HWI/releases/download/3.2.0-bitbox-verification/hwi-3.2.0-windows-x86_64.zip",
-      "sha256": "ffe5e48d1f89048ace8d04c093de1f8894e94162b1ff93a636dc37674ea07daf"
+      "version": "3.2.4",
+      "url": "https://github.com/nogibi/HWI/releases/download/3.2.4/hwi-3.2.4-windows-x86_64.zip",
+      "sha256": "2dcfb6738a9a7907188603d29d781d725c7d0dc1627b4ffe1f70a0e087700b28"
     }
   },
   "actions": {

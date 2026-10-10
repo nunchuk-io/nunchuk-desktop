@@ -32,7 +32,7 @@ void TransactionDetailsClaimedViewModel::verifyAddress(const QString &address) {
             QString msg = QString("Address successfully verified");
             emit showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
         } else {
-            QString msg = QString("Address verification failed");
+            QString msg = result.error().isEmpty() ? QString("Address verification failed") : result.error();
             emit showToast(0, msg, EWARNING::WarningType::ERROR_MSG);
         }
     });

@@ -1,0 +1,16 @@
+# Qt 6.9.3 archives selected by Dockerfile.linux, including Qt WebEngine.
+# SHA-256 values from download.qt.io archive .sha256 metadata (2026-10-09).
+5980aad2d31e60ad06355fa85272dd4c49b1468f2502a4e10c657a3b88fcf7be  icu-linux-Debian11.6-arm64.7z
+924e384799140538d9622b1585d5a2481b26e8db5a9f58abe7cfb7a5c97f5525  qt5compat-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+d2f723034cdd569455b5daf2845e699944174374bd53d632e3d9354c97d731ed  qtbase-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+57c60445ed3bc598251b916e1f58d2a2a85322c2b4de6eea7b89c6e5bb257adb  qtdeclarative-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+07aa17d11bda8e0f60f6906617a17c93a83c4f74e295811b00837888a129637a  qtmultimedia-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+37b9de7c39e94ca99d71eb6e7493a15d0ee61eeb801662ab369c9708e59e71ab  qtnetworkauth-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+8c50e5ea1f4fb3a82f1e95aa15dd261fcf7e0c7a2c59c8cf1d93628379c1e167  qtpositioning-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+eec5660f9378430a5f0ad2c92ed2ad6987b1560984c3cb094b49ff812c992955  qtshadertools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+a908ab02098aae40ef250bce9312587c37eadd9d040d349858f80880f03b2d11  qtsvg-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+a708bfc61c42fc8ef46b3e94607044742ab106431cb7afcac523280ddad1e9d1  qttools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+6c2f4c932e46bcfaed787e5b0abc42387300dc97aefbaf30c55b54a996d10248  qttranslations-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+8d42e45dd65d32733a1989beb0fa8cc918f95ecf1617cb3e2733f1c27083a172  qtwayland-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+03f1a3adc241cd818de00462cec2c303b76c2f634cc33ae38cd65edb45f3ad1e  qtwebchannel-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z
+8cdaeea4497864bbc475a50764930cdbe7319c1ddbcd9861599975d465b092ef  qtwebengine-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z

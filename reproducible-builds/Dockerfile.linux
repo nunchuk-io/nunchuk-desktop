@@ -1,102 +1,46 @@
-# Matches main's Dockerfile.linux: a plain tag, not a pinned digest. Docker
-# resolves this to the correct amd64/arm64 image for whichever --platform is
-# requested at build time. Like main, apt packages installed below are not
-# individually version-pinned either; both are accepted, documented risks
-# (see reproducible-builds/README.md), not something this qt6 port tightens
-# beyond main's own reproducibility baseline.
-FROM ubuntu:24.04
+# Multi-architecture Ubuntu 24.04 index, recorded on 2026-10-09.
+# Update the base digest and snapshot deliberately for future releases.
+ARG UBUNTU_IMAGE=ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+ARG TARGETARCH
+
+# Docker's --platform selects the matching Qt archives and HWI binary.
+FROM ${UBUNTU_IMAGE} AS platform-amd64
+ENV ARCH=x86_64 QT_HOST=linux QT_ARCH=linux_gcc_64 QT_DIR_NAME=gcc_64
+
+FROM ${UBUNTU_IMAGE} AS platform-arm64
+ENV ARCH=aarch64 QT_HOST=linux_arm64 QT_ARCH=linux_gcc_arm64 QT_DIR_NAME=gcc_arm64
+
+FROM platform-${TARGETARCH} AS builder
+ARG UBUNTU_IMAGE
+ARG UBUNTU_SNAPSHOT=20261008T000000Z
 
 ARG QT_VERSION=6.9.3
-# aqtinstall host/arch identifiers vs. the resulting install subdirectory name
-# under QT_INSTALL_DIR/<version>/. The install directory is NOT the same
-# string as the arch identifier: aqtinstall strips the "linux_" prefix from
-# the arch when naming the directory it installs into. Confirmed by runtime
-# evidence, not just docs: an earlier QT_DIR_NAME of "linux_gcc_arm64" (the
-# unstripped arch string) pointed at a directory aqtinstall never created,
-# leaving qmake off PATH and failing the arm64 builder image build with
-# "qmake_path=" (empty) / exit 127 at the Qt-archive sanity-check RUN step.
-#   amd64: QT_HOST=linux       QT_ARCH=linux_gcc_64      QT_DIR_NAME=gcc_64
-#   arm64: QT_HOST=linux_arm64 QT_ARCH=linux_gcc_arm64   QT_DIR_NAME=gcc_arm64
-ARG QT_HOST=linux
-ARG QT_ARCH=linux_gcc_64
-ARG QT_DIR_NAME=gcc_64
-# gcc-14/g++-14 are available directly in Ubuntu noble's own "universe"
-# component (no third-party PPA needed on this base image -- confirmed via
-# packages.ubuntu.com/noble-updates/gcc-14 on 2026-09-07). Pinned to an exact
-# version instead of floating "latest in universe at build time", per the
-# reproducibility goal: the compiler itself directly affects the emitted
-# binary's bytes. Same version string currently resolves for both amd64 and
-# arm64 in noble-updates; re-verify via packages.ubuntu.com if this version is
-# ever superseded/removed from the archive.
+# GCC comes from the same frozen Ubuntu archive as its dependencies, with
+# no live PPA. This version is available for both amd64 and arm64.
 ARG GCC14_VERSION=14.2.0-4ubuntu2~24.04.1
 ARG AQT_VERSION=3.3.0
 ARG QTKEYCHAIN_VERSION=0.15.0
 ARG QTKEYCHAIN_COMMIT=ad7344c45a86a4f66cbafc4b081b5f7b876cb0b7
 ARG OLM_VERSION=3.2.16
 ARG OLM_COMMIT=7e0c8277032e40308987257b711b38af8d77cc69
-# linuxdeploy, linuxdeploy-plugin-qt and linuxdeploy-plugin-appimage below all
-# switched from the ever-drifting "continuous" tag (rewritten by upstream's
-# own CI on every push -- it has already gone stale mid-session once, see the
-# linuxdeploy-plugin-appimage note below) to a numbered release tag. Numbered
-# releases are never overwritten once published; only new numbered tags get
-# added over time. Each *_COMMIT ARG below now holds that numbered tag itself
-# (it doubles as the literal ref used in the download URL further down), and
-# its comment records the commit the GitHub Releases API reports for that tag
-# as of the date checked, for traceability.
-ARG LINUXDEPLOY_COMMIT=1-alpha-20251107-1
-# AppImage-standard architecture tag used in linuxdeploy/linuxdeploy-plugin-qt
-# asset filenames: x86_64 or aarch64.
-ARG APPIMAGE_ARCH=x86_64
-# linuxdeploy commit cc7b86472c3caa3fd729b9dc502fd2aa78394257 at this tag,
-# confirmed via the GitHub Releases API on 2026-09-08. Unlike the checksums
-# below it, this one was NOT computed by curl + shasum on the user's machine:
-# the API response for this release already includes a SHA256 "digest" field
-# per asset (GitHub started exposing this for newer uploads), so it was taken
-# directly from that field.
+# Use numbered releases and archive checksums; never the moving continuous tag.
+ARG LINUXDEPLOY_VERSION=1-alpha-20251107-1
+# linuxdeploy: cc7b86472c3caa3fd729b9dc502fd2aa78394257.
+# Checksums from GitHub release metadata (2026-09-08).
 ARG LINUXDEPLOY_SHA256_X86_64=c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d
-# Same provenance as LINUXDEPLOY_SHA256_X86_64 above (GitHub Releases API
-# "digest" field, checked 2026-09-08).
+# Linux aarch64 archive.
 ARG LINUXDEPLOY_SHA256_AARCH64=620095110d693282b8ebeb244a95b5e911cf8f65f76c88b4b47d16ae6346fcff
-# linuxdeploy-plugin-qt commit ce5291e25979d7d6417551d787f308b88c1b8d76 at
-# this tag, confirmed via the GitHub Releases API on 2026-09-08.
-ARG LINUXDEPLOY_QT_COMMIT=1-alpha-20250213-1
-# Unlike LINUXDEPLOY_SHA256_X86_64 above, this release's assets predate GitHub
-# exposing a SHA256 "digest" field (the API returns digest: null for them), so
-# there is no API shortcut here: computed by the user on their own machine
-# (curl + shasum -a 256) on 2026-09-08, since this environment's outbound
-# requests to github.com return 403. Not independently re-verified from this
-# environment. Safe from the "continuous"-style drift problem, though, since
-# this is a numbered release tag -- unlike "continuous", this exact asset is
-# not expected to be silently replaced later.
+# linuxdeploy-plugin-qt: ce5291e25979d7d6417551d787f308b88c1b8d76.
+ARG LINUXDEPLOY_QT_VERSION=1-alpha-20250213-1
+# Archive checksums recorded on 2026-09-08.
 ARG LINUXDEPLOY_QT_SHA256_X86_64=15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724
-# Same provenance as LINUXDEPLOY_QT_SHA256_X86_64 above, for the aarch64
-# asset.
+# Linux aarch64 archive.
 ARG LINUXDEPLOY_QT_SHA256_AARCH64=bf1c24aff6d749b5cf423afad6f15abd4440f81dec1aab95706b25f6667cdcf1
-# linuxdeploy-plugin-appimage implements linuxdeploy's `--output appimage`
-# (see package_linux.sh), replacing the standalone appimagetool. Unlike
-# appimagetool, upstream publishes this plugin for both x86_64 and aarch64.
-# Commit a96502d15ce19ec1df3d46e6cbe87ddf38589a71 at this tag, confirmed via
-# the GitHub Releases API on 2026-09-08. This asset previously tracked
-# "continuous" and its checksum went stale mid-session once already (a build
-# on 2026-09-07 failed sha256sum --check against the first-captured value and
-# had to be re-captured the same day against upstream's then-current bytes) --
-# the numbered tag below is the fix for that class of failure, not just a
-# one-off re-pin. Like LINUXDEPLOY_QT_SHA256_* above, this release's assets
-# predate GitHub's SHA256 "digest" field (API returns digest: null), so both
-# checksums below were computed by the user on their own machine (curl +
-# shasum -a 256) on 2026-09-08, not independently re-verified from this
-# environment.
-ARG LINUXDEPLOY_PLUGIN_APPIMAGE_COMMIT=1-alpha-20250213-1
+# linuxdeploy-plugin-appimage: a96502d15ce19ec1df3d46e6cbe87ddf38589a71.
+# Archive checksums recorded on 2026-09-08.
+ARG LINUXDEPLOY_PLUGIN_APPIMAGE_VERSION=1-alpha-20250213-1
 ARG LINUXDEPLOY_PLUGIN_APPIMAGE_SHA256_X86_64=992d502a248e14ab185448ddf6f6e7d25558cb84d4623c354c3af350c25fccb3
 ARG LINUXDEPLOY_PLUGIN_APPIMAGE_SHA256_AARCH64=83c292149274965a865dcd44c135cfca8ba28c6b7de3eb628d4b8b5f248af17c
-ARG OPENSSL_VERSION=3.5.7
-ARG OPENSSL_SHA256=a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8
-# appimagetool/type2-runtime are being retired in favor of linuxdeploy's own
-# --output appimage (linuxdeploy-plugin-appimage), which upstream publishes
-# for both x86_64 and aarch64. See the linuxdeploy-plugin-appimage ARGs below;
-# this pair is kept only until that replacement is confirmed and wired in.
-ARG APPIMAGETOOL_VERSION=1.9.1
-ARG APPIMAGETOOL_SHA256=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
 ARG APPIMAGE_RUNTIME_VERSION=20251108
 # Per-arch checksums for the runtime binary declared just before its RUN step
 # below (kept there, next to its usage, rather than duplicated here).
@@ -112,10 +56,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     QT_VERSION=${QT_VERSION} \
     QT_INSTALLED_PREFIX=/opt/Qt/${QT_VERSION}/${QT_DIR_NAME} \
     QT6_DIR=/opt/Qt/${QT_VERSION}/${QT_DIR_NAME}/lib/cmake/Qt6 \
-    OPENSSL_VERSION=${OPENSSL_VERSION} \
-    OPENSSL_ROOT_DIR=/opt/openssl-${OPENSSL_VERSION} \
-    LINUXDEPLOY_COMMIT=${LINUXDEPLOY_COMMIT} \
-    LINUXDEPLOY_QT_COMMIT=${LINUXDEPLOY_QT_COMMIT} \
     APPIMAGE_RUNTIME_FILE=/usr/local/lib/appimage-runtime
 
 ENV PATH=${QT_INSTALLED_PREFIX}/bin:${PATH} \
@@ -126,12 +66,33 @@ ENV PATH=${QT_INSTALLED_PREFIX}/bin:${PATH} \
     RANLIB=/usr/bin/gcc-ranlib-14 \
     APPIMAGE_EXTRACT_AND_RUN=1
 
-RUN apt-get update \
+# The minimal base has no CA roots, and the snapshot service requires HTTPS.
+# BuildKit downloads this pinned package before APT needs certificate trust.
+ADD --checksum=sha256:6bac2a01979e210d9eac1d4d56747ec709ea60654744d66705dc3c36e7629e50 \
+    https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/pool/main/c/ca-certificates/ca-certificates_20260601~24.04.1_all.deb \
+    /tmp/ca-certificates.deb
+RUN dpkg-deb --extract /tmp/ca-certificates.deb /tmp/ca-certificates \
+    && mkdir -p /etc/ssl/certs \
+    && cat /tmp/ca-certificates/usr/share/ca-certificates/mozilla/*.crt > /etc/ssl/certs/ca-certificates.crt \
+    && rm -rf /tmp/ca-certificates /tmp/ca-certificates.deb
+
+# Freeze the complete dependency closure, including libraries bundled into
+# the AppImage. Signature verification stays enabled; only freshness expiry
+# is disabled for this deliberately historical archive. The snapshot serves
+# both amd64 and arm64, replacing the base image's archive/ports sources.
+RUN printf '%s\n' \
+        'Types: deb' \
+        "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
+        'Suites: noble noble-updates noble-security' \
+        'Components: main restricted universe multiverse' \
+        'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+        'Check-Valid-Until: no' \
+        > /etc/apt/sources.list.d/ubuntu.sources \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         cmake \
         curl \
-        dbus-x11 \
         desktop-file-utils \
         dpkg-dev \
         file \
@@ -163,6 +124,7 @@ RUN apt-get update \
         libsecret-1-dev \
         libsnappy1v5 \
         libsqlite3-dev \
+        libssl-dev \
         libudev-dev \
         libusb-1.0-0-dev \
         libwebp7 \
@@ -174,6 +136,7 @@ RUN apt-get update \
         libxdamage-dev \
         libxi-dev \
         libxkbcommon-x11-0 \
+        libxkbfile1 \
         libxrandr-dev \
         libxss-dev \
         libxt-dev \
@@ -194,6 +157,7 @@ RUN apt-get update \
         make \
         mesa-common-dev \
         ninja-build \
+        openssl \
         p7zip-full \
         patchelf \
         python3-pip \
@@ -201,18 +165,16 @@ RUN apt-get update \
         squashfuse \
         unzip \
         wget \
-        xauth \
-        xdotool \
-        xvfb \
-        zip \
     && apt-get install -y --no-install-recommends "gcc-14=${GCC14_VERSION}" "g++-14=${GCC14_VERSION}" \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100 \
     && rm -rf /var/lib/apt/lists/*
 
+COPY reproducible-builds/qt-6.9.3-linux-*.sha256 /opt/qt-checksums/
 RUN python3 -m pip install --break-system-packages --no-cache-dir "aqtinstall==${AQT_VERSION}" \
     && aqt install-qt "${QT_HOST}" desktop "${QT_VERSION}" "${QT_ARCH}" \
         --outputdir "${QT_INSTALL_DIR}" \
+        --keep --archive-dest /tmp/qt-archives \
         --modules \
             qt5compat \
             qtmultimedia \
@@ -220,7 +182,15 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir "aqtinstall==$
             qtpositioning \
             qtshadertools \
             qtwebchannel \
-            qtwebengine
+            qtwebengine \
+    && cd /tmp/qt-archives \
+    && sha256sum --check --strict "/opt/qt-checksums/qt-${QT_VERSION}-linux-${ARCH}.sha256" \
+    && find . -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort > /tmp/qt-actual-archives.txt \
+    && awk '!/^#/ && NF { print $2 }' "/opt/qt-checksums/qt-${QT_VERSION}-linux-${ARCH}.sha256" \
+        | LC_ALL=C sort > /tmp/qt-expected-archives.txt \
+    && diff -u /tmp/qt-expected-archives.txt /tmp/qt-actual-archives.txt \
+    && rm -f /tmp/qt-actual-archives.txt /tmp/qt-expected-archives.txt \
+    && rm -rf /tmp/qt-archives
 
 # Fail while creating the builder image when the Qt archive is internally
 # incomplete or linked against an incompatible host minizip/XCB runtime. These
@@ -237,9 +207,10 @@ RUN set -eux; \
     test -n "${webengine_core}"; \
     test -f "${qxcb_plugin}"; \
     file -L "${webengine_core}" "${qxcb_plugin}"; \
-    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${graphical_effects}" | grep -q 'not found'; \
-    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${webengine_core}" | grep -q 'not found'; \
-    ! LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${qxcb_plugin}" | grep -q 'not found'; \
+    for qt_library in "${graphical_effects}" "${webengine_core}" "${qxcb_plugin}"; do \
+        dependencies="$(LD_LIBRARY_PATH="${QT_INSTALLED_PREFIX}/lib" ldd "${qt_library}")"; \
+        if printf '%s\n' "${dependencies}" | grep 'not found'; then exit 1; fi; \
+    done; \
     minizip_library="$(ldconfig -p | awk '$1 == "libminizip.so.1" { print $NF }' | sort -u)"; \
     test "$(printf '%s\n' "${minizip_library}" | sed '/^$/d' | wc -l)" -eq 1; \
     test -f "${minizip_library}"; \
@@ -276,72 +247,44 @@ RUN git clone --branch "${OLM_VERSION}" --depth 1 https://gitlab.matrix.org/matr
     && rm -rf /tmp/olm /tmp/olm-build
 
 RUN set -eux; \
-    case "${APPIMAGE_ARCH}" in \
+    case "${ARCH}" in \
         x86_64)  linuxdeploy_sha256="${LINUXDEPLOY_SHA256_X86_64}";  linuxdeploy_qt_sha256="${LINUXDEPLOY_QT_SHA256_X86_64}";  linuxdeploy_plugin_appimage_sha256="${LINUXDEPLOY_PLUGIN_APPIMAGE_SHA256_X86_64}" ;; \
         aarch64) linuxdeploy_sha256="${LINUXDEPLOY_SHA256_AARCH64}"; linuxdeploy_qt_sha256="${LINUXDEPLOY_QT_SHA256_AARCH64}"; linuxdeploy_plugin_appimage_sha256="${LINUXDEPLOY_PLUGIN_APPIMAGE_SHA256_AARCH64}" ;; \
-        *) echo "Unsupported APPIMAGE_ARCH: ${APPIMAGE_ARCH}" >&2; exit 1 ;; \
+        *) echo "Unsupported ARCH: ${ARCH}" >&2; exit 1 ;; \
     esac; \
     curl --fail --location --show-error \
         --output /usr/local/bin/linuxdeploy \
-        "https://github.com/linuxdeploy/linuxdeploy/releases/download/${LINUXDEPLOY_COMMIT}/linuxdeploy-${APPIMAGE_ARCH}.AppImage"; \
+        "https://github.com/linuxdeploy/linuxdeploy/releases/download/${LINUXDEPLOY_VERSION}/linuxdeploy-${ARCH}.AppImage"; \
     echo "${linuxdeploy_sha256}  /usr/local/bin/linuxdeploy" | sha256sum --check --strict; \
     curl --fail --location --show-error \
         --output /usr/local/bin/linuxdeploy-plugin-qt \
-        "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/${LINUXDEPLOY_QT_COMMIT}/linuxdeploy-plugin-qt-${APPIMAGE_ARCH}.AppImage"; \
+        "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/${LINUXDEPLOY_QT_VERSION}/linuxdeploy-plugin-qt-${ARCH}.AppImage"; \
     echo "${linuxdeploy_qt_sha256}  /usr/local/bin/linuxdeploy-plugin-qt" | sha256sum --check --strict; \
     curl --fail --location --show-error \
         --output /usr/local/bin/linuxdeploy-plugin-appimage \
-        "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/${LINUXDEPLOY_PLUGIN_APPIMAGE_COMMIT}/linuxdeploy-plugin-appimage-${APPIMAGE_ARCH}.AppImage"; \
+        "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/${LINUXDEPLOY_PLUGIN_APPIMAGE_VERSION}/linuxdeploy-plugin-appimage-${ARCH}.AppImage"; \
     echo "${linuxdeploy_plugin_appimage_sha256}  /usr/local/bin/linuxdeploy-plugin-appimage" | sha256sum --check --strict; \
     chmod 0755 /usr/local/bin/linuxdeploy /usr/local/bin/linuxdeploy-plugin-qt /usr/local/bin/linuxdeploy-plugin-appimage
 
-RUN curl --fail --location --show-error \
-        --output /tmp/openssl.tar.gz \
-        "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
-    && echo "${OPENSSL_SHA256}  /tmp/openssl.tar.gz" | sha256sum --check --strict \
-    && tar -xzf /tmp/openssl.tar.gz -C /tmp \
-    && cd "/tmp/openssl-${OPENSSL_VERSION}" \
-    && ./config \
-        --prefix="${OPENSSL_ROOT_DIR}" \
-        --openssldir="${OPENSSL_ROOT_DIR}" \
-        --libdir=lib \
-        shared \
-    && make -j"$(nproc)" \
-    && make install_sw \
-    && rm -rf /tmp/openssl.tar.gz "/tmp/openssl-${OPENSSL_VERSION}"
-
-# appimagetool itself is no longer invoked by package_linux.sh (it now uses
-# linuxdeploy's own --output appimage plugin), but is still fetched here as
-# the fallback path if linuxdeploy-plugin-appimage turns out not to be usable
-# for one of the architectures. It has historically only published an
-# x86_64 asset, so it is left unparameterized (amd64-only) rather than
-# guessed at for arm64.
-RUN curl --fail --location --show-error \
-        --output /usr/local/bin/appimagetool \
-        "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage" \
-    && echo "${APPIMAGETOOL_SHA256}  /usr/local/bin/appimagetool" | sha256sum --check --strict \
-    && chmod 0755 /usr/local/bin/appimagetool
-
-# The runtime binary consumed by linuxdeploy-plugin-appimage's LDAI_RUNTIME_FILE
-# (see package_linux.sh) must match APPIMAGE_ARCH, or the resulting AppImage
-# will carry the wrong-architecture ELF stub. The aarch64 asset name/checksum
-# was confirmed to exist and computed by the user on their own machine (curl +
-# shasum -a 256) on 2026-09-07, not independently re-verified from this
-# environment.
+# The AppImage runtime must match the target architecture.
+# package_linux.sh passes it to the plugin through LDAI_RUNTIME_FILE.
 ARG APPIMAGE_RUNTIME_SHA256_X86_64=2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d
 ARG APPIMAGE_RUNTIME_SHA256_AARCH64=00cbdfcf917cc6c0ff6d3347d59e0ca1f7f45a6df1a428a0d6d8a78664d87444
 RUN set -eux; \
-    case "${APPIMAGE_ARCH}" in \
+    case "${ARCH}" in \
         x86_64)  runtime_sha256="${APPIMAGE_RUNTIME_SHA256_X86_64}" ;; \
         aarch64) runtime_sha256="${APPIMAGE_RUNTIME_SHA256_AARCH64}" ;; \
-        *) echo "Unsupported APPIMAGE_ARCH: ${APPIMAGE_ARCH}" >&2; exit 1 ;; \
+        *) echo "Unsupported ARCH: ${ARCH}" >&2; exit 1 ;; \
     esac; \
     curl --fail --location --show-error \
         --output "${APPIMAGE_RUNTIME_FILE}" \
-        "https://github.com/AppImage/type2-runtime/releases/download/${APPIMAGE_RUNTIME_VERSION}/runtime-${APPIMAGE_ARCH}"; \
+        "https://github.com/AppImage/type2-runtime/releases/download/${APPIMAGE_RUNTIME_VERSION}/runtime-${ARCH}"; \
     echo "${runtime_sha256}  ${APPIMAGE_RUNTIME_FILE}" | sha256sum --check --strict; \
     chmod 0644 "${APPIMAGE_RUNTIME_FILE}"
 
+COPY reproducible-builds/download_hwi.sh reproducible-builds/hwi.lock.env /opt/hwi/
+RUN bash /opt/hwi/download_hwi.sh linux "${ARCH}" /opt/hwi/hwi
+
 WORKDIR /project
 
-CMD ["bash"]
+CMD ["bash", "reproducible-builds/build_linux.sh"]

@@ -1,58 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Re-derived from the manually-run reference workflow at
-# https://github.com/tongvanlinh/macdeploynunchuk/blob/main/.github/workflows/nunchuk-macos_matrix.yml
-# (proven to build, sign and notarize successfully today), per an explicit
-# instruction not to trust the previous version of this script -- it was an
-# unverified draft, never exercised in CI. Every dependency build step below
-# mirrors a command that reference workflow actually runs (same versions,
-# same flags, same install layout where it matters for correctness -- e.g.
-# OpenSSL's in-tree contrib/openssl/lib install path, required by
-# contrib/libnunchuk/CMakeLists.txt's own `EXISTS .../contrib/openssl/lib`
-# check). Deliberate deviations from that reference, and why, are called out
-# inline as they occur; nothing else here should be assumed to differ.
-#
-# Known deviations from the reference workflow:
-# - The reference's "Set compiler" step exports CC=gcc-14/CXX=g++-14 into
-#   ~/.bashrc, which only two later steps (`source ~/.bashrc`) actually pick
-#   up: building the main app, and building OpenSSL. No step ever installs a
-#   `gcc-14`/`g++-14` toolchain, and every other native dependency (Boost,
-#   libevent, Berkeley DB, Olm) explicitly and consistently uses Xcode's own
-#   clang via `xcrun --find clang`. GNU GCC cannot compile Objective-C++,
-#   which Qt's Cocoa platform plugin relies on, making a real switch to GCC
-#   for the app build implausible. This script therefore does not use GCC
-#   anywhere and always builds with Xcode's clang, confirmed on request.
-# - The reference's "Build nunchuk-qt" step appends `-O0` to a build
-#   otherwise configured as CMAKE_BUILD_TYPE=Release. Confirmed on request:
-#   this script does not carry that over, and lets CMake's normal Release
-#   optimization flags apply, so the produced binary is a real optimized
-#   Release build (and therefore not byte-identical to whatever the
-#   reference workflow has been publishing).
-# - qtkeychain installs into a private prefix here instead of the
-#   reference's `sudo cmake --install . --prefix "$BREW_PREFIX"` (which
-#   mutates the runner's shared Homebrew installation). This changes nothing
-#   about how qtkeychain itself is built, only where the result is installed
-#   and looked up from (via CMAKE_PREFIX_PATH).
-# - DMG creation uses `hdiutil` instead of the reference's `appdmg` (an npm
-#   package). This drops the custom icon-layout background image but avoids
-#   adding a Node/npm dependency to a Bash pipeline; it does not affect the
-#   signed/notarized .app inside the DMG.
-#
-# Reproducibility additions layered on top of that proven baseline (per
-# instruction to add these once the build itself matches a known-working
-# reference): a clean-checkout assertion before any build starts, SHA-256
-# verification of every downloaded archive, exact commit verification for
-# Olm and HWI (kept because the reference already does this for those two;
-# not added for qtkeychain, which the reference clones by tag only, since no
-# commit hash was available to verify against without inventing one),
-# SOURCE_DATE_EPOCH-driven deterministic packaging (handled by
-# package_macos.sh), and a canonical hash-checked output archive. Compiler
-# flags such as -ffile-prefix-map (present in git history of this file) are
-# deliberately NOT reinstated in this pass -- they touch every dependency's
-# build and were never validated against this from-scratch rewrite; adding
-# them is a candidate follow-up once this simpler version is confirmed to
-# build successfully in CI.
+# Build an unsigned native macOS payload using Xcode clang and macos.lock.env.
+# Keep dependencies and output outside the source checkout.
+# Original build reference: https://github.com/tongvanlinh/macdeploynunchuk/blob/main/.github/workflows/nunchuk-macos_matrix.yml
 
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 LOCK_FILE="${PROJECT_DIR}/reproducible-builds/macos.lock.env"
@@ -114,37 +65,14 @@ for controlled_directory in "${BUILD_ROOT}" "${OUTPUT_DIR}"; do
 done
 
 export SOURCE_DATE_EPOCH
-# Qt's rcc (resource compiler) embeds a per-resource last-modified timestamp
-# into the compiled .qrc data by default (real wall-clock/filesystem mtime
-# at compile time, not SOURCE_DATE_EPOCH-derived on its own) -- this env var
-# is Qt's own documented override for that, already relied on by
-# build_windows.ps1 for the same reason. qml.qrc/fonts_Lato.qrc/
-# fonts_Montserrat.qrc are compiled via qt_add_resources() in the top-level
-# CMakeLists.txt straight into the app's own executable target (not a
-# prebuilt Qt framework, not any other packaged file), which matches exactly
-# what a CI reproducibility-check rebuild showed: only the linked Nunchuk
-# binary differs between two from-scratch builds of the same commit, and
-# that difference survives stripping local/debug symbols (ruling out
-# ld64's object-mtime debug map as the cause) -- rcc's embedded timestamp is
-# the next concrete, evidenced candidate.
+# Fix the rcc invocation timestamp; tracked resource mtimes are normalized below.
 export QT_RCC_SOURCE_DATE_OVERRIDE="${SOURCE_DATE_EPOCH}"
 export TZ=UTC
 export LANG=C
 export LC_ALL=C
 export MACOSX_DEPLOYMENT_TARGET
 export PATH="${QT_ROOT}/bin:${PATH}"
-# CMake 4.0 removed support for cmake_minimum_required()/cmake_policy(VERSION)
-# calls below 3.5, and several vendored dependencies below (libevent, Olm,
-# qtkeychain) pin an older minimum in their own CMakeLists.txt that this
-# script does not control. The top-level app's own CMakeLists.txt already
-# works around this for itself (see its CMAKE_VERSION >= 3.25 check setting
-# this same variable), but that only takes effect once CMake is already
-# inside that project's own configure step -- it cannot help a *different*
-# project's cmake_minimum_required() call. Setting this as an environment
-# variable is CMake's own documented mechanism for exactly this situation:
-# it seeds the CMAKE_POLICY_VERSION_MINIMUM cache entry for every new build
-# tree this script configures (the app and every dependency), without
-# patching any dependency's source.
+# Allow older vendored CMake projects to configure with CMake 4.
 export CMAKE_POLICY_VERSION_MINIMUM=3.5
 umask 022
 
@@ -178,29 +106,10 @@ checkout_commit() {
     fi
 }
 
-# The checked-out source must start byte-clean so a repeated invocation in
-# the same workspace behaves the same as a first run -- required for the
-# opt-in reproducibility-check rebuild, which runs this script twice in the
-# same checkout. More than one vendored dependency is known to rewrite or
-# delete its own tracked files in place as a side effect of being built:
-# OpenSSL under contrib/libnunchuk/contrib/openssl (./config + make
-# install_dev), and zlib under
-# contrib/libnunchuk/contrib/bbqr-cpp/contrib/zlib, whose upstream
-# Makefile deletes its own committed zconf.h on `make clean`/`distclean`
-# (confirmed by a CI failure that showed exactly "D zconf.h" there). Rather
-# than track every individual path some dependency's build happens to dirty,
-# this resets the whole checkout -- the top-level tree and every submodule,
-# recursively -- to what git actually committed.
+# Vendored OpenSSL and zlib builds modify tracked sources. Restore the
+# disposable checkout before and after building so repeated builds start clean.
 cleanup_source_tree_residue() {
-    # `checkout -- .` first reverts any tracked file a dependency's own
-    # build process rewrote or deleted in place -- `git clean` alone cannot
-    # touch modified/deleted tracked files, only untracked ones. `-ff`
-    # (double force, not `-f`) is required for `clean` to also remove
-    # untracked directories that themselves look like git repositories,
-    # which some of these builds can leave behind. Without both, a nested
-    # tree can stay dirty after a build even though this cleanup ran, which
-    # fails the very next clean-tree check below on a second invocation in
-    # the same checkout.
+    # Restore tracked changes and remove generated files, including nested repositories.
     git -C "${PROJECT_DIR}" checkout --quiet -- . >/dev/null 2>&1 || true
     git -C "${PROJECT_DIR}" clean -ffdx --quiet >/dev/null 2>&1 || true
     git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '
@@ -217,17 +126,7 @@ trap cleanup_source_tree_residue EXIT
 if [[ -n "$(git -C "${PROJECT_DIR}" status --porcelain --untracked-files=all)" ]]; then
     echo "The reproducible macOS builder requires a completely clean source tree." >&2
     git -C "${PROJECT_DIR}" status --short --untracked-files=all >&2
-    # The line(s) above only report *that* a submodule is dirty (e.g. " M
-    # contrib/libnunchuk") -- git's top-level status never expands into a
-    # submodule's own working tree, so a dirty-submodule failure alone gives
-    # no actionable detail. Two independent things can each cause that " M":
-    # (1) modified/untracked content inside the submodule's own working
-    # tree, or (2) the submodule's checked-out commit itself having moved
-    # away from what the superproject's index recorded, with no local
-    # content changes at all -- e.g. something ran `git checkout`/`git
-    # submodule update` to a different ref during configure/build. Case (2)
-    # produces no output from a plain `git status` inside the submodule, so
-    # both are checked and reported separately below.
+    # Report dirty submodules individually to identify the offending dependency.
     echo "--- git submodule status --recursive (a leading +/- means a checked-out commit changed) ---" >&2
     git -C "${PROJECT_DIR}" submodule status --recursive >&2
     git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '
@@ -246,23 +145,8 @@ git -C "${PROJECT_DIR}" submodule foreach --quiet --recursive '
     fi
 '
 
-# Normalize the mtime of every tracked file in this project's own top-level
-# tree (git ls-files does not descend into submodules, so contrib/* is
-# untouched) to SOURCE_DATE_EPOCH before anything compiles. The checkout
-# itself is reused in place -- never re-cloned -- across the two
-# from-scratch builds the opt-in reproducibility check runs in the same CI
-# job, so file *content* is already identical between them. But
-# cleanup_source_tree_residue()'s own `git checkout -- .` (run at the start
-# of each invocation, above) can rewrite a file's on-disk mtime to whatever
-# wall-clock time that particular invocation happened to run at, even when
-# the content it writes back is byte-for-byte the same. Some tools embed a
-# source file's own mtime into their compiled output independently of any
-# build-wide "source date" override -- e.g. Qt's rcc records each resource
-# file's last-modified time for its runtime QResource API, which
-# QT_RCC_SOURCE_DATE_OVERRIDE does not touch, that being rcc's own
-# invocation timestamp, not a per-input-file value. Fixing every source
-# file's mtime to the same deterministic value up front removes that
-# variable regardless of which specific tool turns out to be reading it.
+# Normalize tracked application resource mtimes before rcc embeds them.
+# QT_RCC_SOURCE_DATE_OVERRIDE alone does not control per-resource timestamps.
 normalized_source_timestamp="$(date -u -r "${SOURCE_DATE_EPOCH}" '+%Y%m%d%H%M.%S')"
 while IFS= read -r -d '' tracked_file; do
     touch -h -t "${normalized_source_timestamp}" "${PROJECT_DIR}/${tracked_file}"
@@ -282,36 +166,9 @@ if [[ "${actual_qt_version}" != "${QT_VERSION}" ]]; then
     exit 1
 fi
 
-# --- HWI, built from source for both architectures (matching the reference
-# workflow's own approach; the previous draft used a prebuilt x86_64 release
-# asset instead, which was never actually validated).
-export HOMEBREW_NO_AUTO_UPDATE=1
-brew install pyenv libusb >/dev/null
-
-# Matches the reference workflow exactly: `brew install pyenv` only installs
-# the pyenv command itself; PYENV_ROOT ($HOME/.pyenv) is created lazily by
-# pyenv on first use, not by this script.
-export PYENV_ROOT="${HOME}/.pyenv"
-export PATH="${PYENV_ROOT}/bin:${PATH}"
-eval "$(pyenv init --path)"
-pyenv install --skip-existing "${PYTHON_VERSION}"
-pyenv global "${PYTHON_VERSION}"
-python3 --version
-
-hwi_source_dir="${SOURCE_ROOT}/hwi"
-checkout_commit "https://github.com/nogibi/HWI.git" "${HWI_COMMIT}" "${hwi_source_dir}"
-(
-    cd "${hwi_source_dir}"
-    ./contrib/build_bin.sh --without-gui
-)
-hwi_built_binary="$(find "${hwi_source_dir}/dist" -path '*.tar.gz.dir/hwi' -type f -perm -111 -print -quit)"
-if [[ -z "${hwi_built_binary}" ]]; then
-    echo "HWI build did not produce the expected dist/*.tar.gz.dir/hwi executable." >&2
-    exit 1
-fi
+# --- HWI: use the same checksum-pinned release asset on every rebuild.
 hwi_binary="${BUILD_ROOT}/hwi/hwi"
-mkdir -p "$(dirname "${hwi_binary}")"
-install -m 0755 "${hwi_built_binary}" "${hwi_binary}"
+bash "${PROJECT_DIR}/reproducible-builds/download_hwi.sh" mac "${ARCH}" "${hwi_binary}"
 if ! lipo "${hwi_binary}" -verify_arch "${ARCH}"; then
     echo "HWI does not contain the requested architecture ${ARCH}." >&2
     exit 1
@@ -481,14 +338,8 @@ cmake -S "${qtkeychain_source_dir}" \
 cmake --build "${BUILD_ROOT}/qtkeychain-build" --parallel "${JOBS}"
 cmake --install "${BUILD_ROOT}/qtkeychain-build"
 
-# --- OpenSSL: NOT downloaded. This builds the copy already vendored inside
-# the libnunchuk submodule at contrib/openssl, installing to contrib/openssl/lib
-# because contrib/libnunchuk/CMakeLists.txt hard-requires that exact in-tree
-# path (`if(EXISTS ".../contrib/openssl/lib") set(OPENSSL_ROOT_DIR ...)`) --
-# an out-of-tree build here would leave the app unable to find OpenSSL at
-# all. Build residue inside this submodule is removed on exit (see the
-# cleanup_source_tree_residue trap set up near the top of this script) so a
-# repeated run starts clean.
+# --- OpenSSL: build the version pinned by libnunchuk. Its CMake project
+# expects the installed libraries under contrib/openssl/lib.
 openssl_source_dir="${PROJECT_DIR}/contrib/libnunchuk/contrib/openssl"
 (
     cd "${openssl_source_dir}"
@@ -505,21 +356,8 @@ export BOOST_ROOT="${boost_prefix}"
 export PATH="${QT_ROOT}/bin:${PATH}"
 
 app_build_dir="${BUILD_ROOT}/app-build"
-# ${boost_prefix} is in CMAKE_PREFIX_PATH (in addition to -DBOOST_ROOT below)
-# because two independent Boost lookups happen during this configure, not
-# one: the top-level app's own find_package(Boost) (classic MODULE mode via
-# CMake's bundled FindBoost.cmake, which honors BOOST_ROOT) and, separately,
-# contrib/libnunchuk/contrib/bitcoin/cmake/module/AddBoostIfNeeded.cmake's
-# find_package(Boost 1.73.0 REQUIRED CONFIG) (CONFIG mode, which does not
-# consult BOOST_ROOT at all, only Boost_ROOT/CMAKE_PREFIX_PATH/registry).
-# Without this, the second lookup either fails outright or -- worse, on a
-# machine with Homebrew's own boost installed -- silently resolves to
-# whatever version Homebrew currently ships instead of this pinned build
-# (see macos.lock.env's BOOST_VERSION comment for why that already broke
-# once). ${boost_prefix} satisfies both: CMake's CONFIG search checks
-# <prefix>/lib/cmake/Boost-${BOOST_VERSION}/ for every entry in
-# CMAKE_PREFIX_PATH, which is where `b2 install` places the package-config
-# files this Boost version generates.
+# Use the pinned Boost for both legacy BOOST_ROOT and CONFIG-mode lookups,
+# including nested Bitcoin Core projects; do not fall back to Homebrew Boost.
 cmake -S "${PROJECT_DIR}" -B "${app_build_dir}" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET}" \
@@ -528,15 +366,7 @@ cmake -S "${PROJECT_DIR}" -B "${app_build_dir}" \
     -Devent_lib:FILEPATH="${libevent_prefix}/lib/libevent.a" \
     -DAPPEND_CPPFLAGS="-I${libevent_prefix}/include" \
     -DUR__DISABLE_TESTS=ON
-# Retried rather than dropped to -j1: a transient host-level I/O flake has
-# been observed here ("ranlib: can't write to output file (Input/output
-# error)"), consistent with the same kind of macOS-runner disk-arbitration
-# hiccup already retried for hdiutil in sign_macos.sh, not a determinism bug
-# in this build. A retry is cheap -- cmake/make only recompile/relink
-# whatever object failed to write, not a full rebuild -- and does not cost
-# extra time on the (normal) non-flaky run, unlike permanently lowering
-# --parallel, which would slow down every single build to guard against a
-# rare event.
+# Retry transient host I/O failures without reducing build parallelism.
 app_build_succeeded=0
 for attempt in 1 2 3; do
     if cmake --build "${app_build_dir}" --parallel "${JOBS}"; then

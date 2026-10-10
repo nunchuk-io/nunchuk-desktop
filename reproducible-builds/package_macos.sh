@@ -1,24 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Deployment steps re-derived from the manually-run reference workflow (see
-# build_macos.sh's header for the link and the rationale). macdeployqt
-# invocation, the QtShaderTools.framework copy fix, and the
-# QtWebEngineProcess rpath/dependency patch below all mirror that reference
-# workflow's own steps -- none of the previous draft's architecture-thinning,
-# signature-stripping or exhaustive Mach-O dependency-closure checks are
-# carried over, since those were tuned for a different Qt version/module set
-# that was never actually validated. Signature removal now happens in
-# sign_macos.sh immediately before each codesign call (`codesign
-# --remove-signature` per file), matching how the reference workflow's own
-# signing step does it, rather than as a separate packaging-time pass.
-#
-# Reproducibility additions kept from the previous draft (generic packaging
-# mechanics, not build-specific, so not affected by the "don't trust the old
-# build steps" instruction): a payload manifest recording every file's mode,
-# type and SHA-256; SOURCE_DATE_EPOCH-normalized timestamps; and a
-# deterministic GNU-format tar so the canonical archive's bytes depend only
-# on file contents, not on incidental filesystem/tar metadata.
+# Deploy Qt and HWI, normalize timestamps and permissions, then write the
+# unsigned payload manifest and deterministic tar archive.
 
 required_variables=(
     APP_PATH
@@ -40,7 +24,8 @@ done
 # shellcheck source=macos.lock.env
 source "${PROJECT_DIR}/reproducible-builds/macos.lock.env"
 
-if [[ ! -d "${APP_PATH}" || ! -x "${APP_PATH}/Contents/MacOS/Nunchuk" ]]; then
+nunchuk_executable="${APP_PATH}/Contents/MacOS/Nunchuk"
+if [[ ! -d "${APP_PATH}" || ! -x "${nunchuk_executable}" ]]; then
     echo "Invalid application bundle: ${APP_PATH}" >&2
     exit 1
 fi
@@ -55,7 +40,7 @@ export LC_ALL=C
 umask 022
 
 "${QT_ROOT}/bin/macdeployqt" "${APP_PATH}" \
-    -executable="${APP_PATH}/Contents/MacOS/Nunchuk" \
+    -executable="${nunchuk_executable}" \
     -qmldir="${PROJECT_DIR}" \
     -always-overwrite
 
@@ -67,6 +52,38 @@ shader_tools_destination="${APP_PATH}/Contents/Frameworks/QtShaderTools.framewor
 if [[ -d "${shader_tools_source}" && ! -d "${shader_tools_destination}" ]]; then
     cp -R "${shader_tools_source}" "${APP_PATH}/Contents/Frameworks/"
 fi
+
+# macdeployqt can leave only build-machine rpaths in the main executable.
+# Resolve its @rpath dependencies inside the bundle before signing it.
+framework_rpath='@executable_path/../Frameworks'
+current_rpaths="$(otool -l "${nunchuk_executable}" \
+    | awk '/cmd LC_RPATH/{read_path=1; next} read_path && /path /{
+        sub(/^[[:space:]]*path /, ""); sub(/ \(offset [0-9]+\)$/, "");
+        print; read_path=0
+    }' | sort -u)"
+if ! grep -Fqx "${framework_rpath}" <<< "${current_rpaths}"; then
+    install_name_tool -add_rpath "${framework_rpath}" "${nunchuk_executable}"
+fi
+while IFS= read -r rpath; do
+    if [[ "${rpath}" == /* ]]; then
+        install_name_tool -delete_rpath "${rpath}" "${nunchuk_executable}"
+    fi
+done <<< "${current_rpaths}"
+
+dependencies="$(otool -L "${nunchuk_executable}" | awk 'NR > 1 {print $1}')"
+while IFS= read -r dependency; do
+    case "${dependency}" in
+        @rpath/*) library="${APP_PATH}/Contents/Frameworks/${dependency#@rpath/}" ;;
+        @executable_path/*) library="${APP_PATH}/Contents/MacOS/${dependency#@executable_path/}" ;;
+        @loader_path/*) library="${APP_PATH}/Contents/MacOS/${dependency#@loader_path/}" ;;
+        /System/Library/*|/usr/lib/*) continue ;;
+        *) echo "Unbundled application dependency: ${dependency}" >&2; exit 1 ;;
+    esac
+    if [[ ! -f "${library}" ]]; then
+        echo "Missing application dependency: ${library}" >&2
+        exit 1
+    fi
+done <<< "${dependencies}"
 
 install -m 0755 "${HWI_BINARY}" "${APP_PATH}/Contents/MacOS/hwi"
 
@@ -102,6 +119,21 @@ if [[ -f "${helper_executable}" ]]; then
     fi
 fi
 
+# Each release targets one architecture, while Qt ships universal binaries.
+# Thin regular Mach-O files before hashing and signing; preserve bundle symlinks.
+while IFS= read -r -d '' binary; do
+    binary_type="$(file -b "${binary}")"
+    case "${binary_type}" in
+        *Mach-O*) ;;
+        *) continue ;;
+    esac
+    lipo "${binary}" -verify_arch "${ARCH}"
+    if [[ "$(lipo -archs "${binary}")" != "${ARCH}" ]]; then
+        echo "Keeping ${ARCH}: ${binary#"${APP_PATH}/"}"
+        lipo "${binary}" -thin "${ARCH}" -output "${binary}"
+    fi
+done < <(find "${APP_PATH}" -type f -print0)
+
 source_commit="$(git -C "${PROJECT_DIR}" rev-parse HEAD)"
 {
     printf 'schema=nunchuk-macos-build-inputs-v1\n'
@@ -117,7 +149,6 @@ source_commit="$(git -C "${PROJECT_DIR}" rev-parse HEAD)"
     printf 'olm=%s@%s\n' "${OLM_VERSION}" "${OLM_COMMIT}"
     printf 'hwi=%s@%s\n' "${HWI_VERSION}" "${HWI_COMMIT}"
     printf 'hwi_binary_sha256=%s\n' "$(shasum -a 256 "${APP_PATH}/Contents/MacOS/hwi" | awk '{ print $1 }')"
-    printf 'python=%s\n' "${PYTHON_VERSION}"
     printf 'xcode=%s\n' "$(xcodebuild -version | paste -sd ' ' -)"
     printf 'clang=%s\n' "$(clang --version | sed -n '1p')"
     printf '%s\n' 'submodules:'
@@ -139,14 +170,7 @@ while IFS= read -r -d '' payload_file; do
         chmod 0644 "${payload_file}"
     fi
 done < <(find "${payload_root}" -type f -print0)
-# Absolute path, not a bare `xattr`: this script's PATH (inherited from
-# build_macos.sh, which prepends pyenv/PyInstaller-related bin directories
-# for the HWI build step earlier in the same run) can put a same-named PyPI
-# `xattr` console-script ahead of the real /usr/bin/xattr. That package's CLI
-# does not support -r at all ("option -r not recognized") despite otherwise
-# looking similar, unlike Apple's own xattr which does -- confirmed by an
-# actual CI failure with that exact message. Matches the same
-# already-qualified /usr/bin/ditto call above, for the same reason.
+# Use the system xattr even when Python packages add commands to PATH.
 /usr/bin/xattr -cr "${payload_root}"
 
 python3 - "${payload_root}/Nunchuk.app" "${payload_root}/payload-manifest.json" \
@@ -205,7 +229,7 @@ chmod 0644 "${payload_root}/payload-manifest.json"
 normalized_timestamp="$(date -u -r "${SOURCE_DATE_EPOCH}" '+%Y%m%d%H%M.%S')"
 find "${payload_root}" -exec touch -h -t "${normalized_timestamp}" {} +
 
-archive="${OUTPUT_DIR}/nunchuk-macos-${ARCH}-v${TAG}-unsigned.tar"
+archive="${OUTPUT_DIR}/nunchuk-macos-v${TAG}-${ARCH}-unsigned.tar"
 # Apple's bsdtar writes PAX ctime/atime records and can emit AppleDouble
 # metadata even after xattr cleanup. Build each header explicitly instead so
 # the canonical archive contains only source-controlled values. GNU tar

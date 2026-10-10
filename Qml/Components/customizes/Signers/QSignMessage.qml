@@ -215,7 +215,6 @@ QOnScreenContentTypeA {
         type: eTypeE
         enabled: message_input !== "" && path_input !== ""
         onButtonClicked: {
-            signerInfo.message = message_input
             _indicator.loading()
             AppModel.walletInfo.updateSignMessage(fingerPrint, wallet_type, message_input, path_input)
         }
@@ -224,7 +223,7 @@ QOnScreenContentTypeA {
         id: exportMessage
         fileMode: FileDialog.SaveFile
         onAccepted: {
-            AppModel.walletInfo.exportBitcoinSignedMessage(fingerPrint, exportMessage.currentFile, wallet_type)
+            AppModel.walletInfo.exportBitcoinSignedMessage(fingerPrint, exportMessage.currentFile)
         }
     }
 

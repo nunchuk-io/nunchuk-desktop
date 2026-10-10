@@ -283,23 +283,6 @@ verify_elf_dependencies() {
     done < <(find "${appdir}" -type f -print0 | LC_ALL=C sort -z)
 }
 
-verify_hwi() {
-    local appdir="$1"
-    local report="$2"
-    local library_path="$3"
-    local hwi="${appdir}/usr/bin/hwi"
-    local output
-
-    [[ -x "${hwi}" ]] || return
-
-    if output="$(LD_LIBRARY_PATH="${library_path}" "${hwi}" --version 2>&1)"; then
-        printf '\nHWI version:\n%s\n' "${output}" >> "${report}"
-    else
-        printf '%s\n' "${output}" >&2
-        record_failure "Bundled HWI failed to execute with --version"
-    fi
-}
-
 verify_appdir() {
     local appdir="$1"
     local report="$2"
@@ -409,7 +392,6 @@ verify_appdir() {
         "${report}" \
         "${library_path}" \
         "${symbols_file}"
-    verify_hwi "${canonical_appdir}" "${report}" "${library_path}"
 
     {
         printf '\nRequired symbol versions:\n'

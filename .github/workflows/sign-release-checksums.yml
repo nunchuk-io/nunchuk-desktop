@@ -37,8 +37,6 @@ permissions:
 jobs:
   sign-checksums:
     runs-on: ubuntu-24.04
-    # Uncomment if the secrets/variables live in this environment.
-    # environment: release-signing
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
