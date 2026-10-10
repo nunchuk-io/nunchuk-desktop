@@ -422,7 +422,26 @@ chmod 0755 "${CUSTOM_APPRUN}"
 
 export PATH="/usr/local/bin:${QT_INSTALLED_PREFIX}/bin:${PATH}"
 export QMAKE
-export QML_SOURCES_PATHS="${PROJECT_DIR}"
+# Scan only the resources compiled into Nunchuk. Scanning the whole checkout
+# also picks up QML from extracted AppImages, SDKs and previous build outputs.
+QML_SOURCES_PATHS="$(mktemp -d)"
+trap 'rm -rf -- "${QML_SOURCES_PATHS}"' EXIT
+python3 - "${PROJECT_DIR}" "${QML_SOURCES_PATHS}" <<'PY'
+from pathlib import Path
+import shutil
+import sys
+import xml.etree.ElementTree as ET
+
+project, destination = map(Path, sys.argv[1:])
+for entry in ET.parse(project / "qml.qrc").iter("file"):
+    relative_path = Path(entry.text.strip())
+    if relative_path.suffix not in (".qml", ".js", ".mjs") and relative_path.name != "qmldir":
+        continue
+    target = destination / relative_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(project / relative_path, target)
+PY
+export QML_SOURCES_PATHS
 export NO_STRIP=1
 export EXTRA_QT_MODULES=svg
 unset EXTRA_QT_PLUGINS EXTRA_PLATFORM_PLUGINS
