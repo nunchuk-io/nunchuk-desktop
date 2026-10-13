@@ -51,7 +51,7 @@ Item {
                 top: parent.top
                 topMargin: 8
             }
-            width: parent.width
+            width: isTransaction ? parent.width - 20 - parent.spacing : parent.width  // exclude timer icon so text can't run under lock status
             spacing: 2
             Row {
                 width: parent.width
@@ -71,12 +71,12 @@ Item {
                     // height: isTransaction ? 40 : 20
                     text: getTitle()
                     font.weight: Font.Normal
-                    font.pixelSize: miniscript.lockType === ScriptNodeHelper.TimelockBased.TIME_LOCK ? 12 : 16
+                    font.pixelSize: (!isTransaction && miniscript.lockType === ScriptNodeHelper.TimelockBased.TIME_LOCK) ? 12 : 16  // transaction: same size as firstLine
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     lineHeight: 20
                     lineHeightMode: Text.FixedHeight
-                    wrapMode: Text.WrapAnywhere
+                    wrapMode: isTransaction ? Text.WordWrap : Text.WrapAnywhere  // transaction: break at word boundary (date / hh:mm)
                 }
             }
             QLato {

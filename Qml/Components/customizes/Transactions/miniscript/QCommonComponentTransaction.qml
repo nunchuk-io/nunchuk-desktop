@@ -51,7 +51,7 @@ Item {
             top: parent.top
             topMargin: 8
             right: parent.right
-            rightMargin: 12
+            rightMargin: 0
         }
         height: 36
         visible: miniscript.type === ScriptNodeHelper.Type.HASH160 ||

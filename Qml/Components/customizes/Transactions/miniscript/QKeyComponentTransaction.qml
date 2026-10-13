@@ -34,6 +34,7 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Item {
     property alias signerData: dataSingle
+    property int actionWidth: 0  // width of right-side action (Sign/Signed...); 0 = no bound on key name
     QSingleSignerData {
         id: dataSingle
     }
@@ -62,6 +63,7 @@ Item {
                 height: 20
                 spacing: 4
                 QLato {
+                    id: firstLineText
                     width: paintedWidth
                     height: 20
                     text: miniscript.firstLine
@@ -70,7 +72,9 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                 }
                 QLato {
-                    width: paintedWidth
+                    // 24 = key icon + spacing, 4 = row spacing, 8 = gap to action; elide instead of running under it
+                    width: actionWidth > 0 ? Math.max(0, Math.min(implicitWidth, column.width - 24 - firstLineText.paintedWidth - 4 - actionWidth - 8)) : implicitWidth  // not paintedWidth: with elide it collapses to 0
+                    elide: (actionWidth > 0 && width < implicitWidth) ? Text.ElideRight : Text.ElideNone  // only when truncated
                     height: 20
                     text: {
                         if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {

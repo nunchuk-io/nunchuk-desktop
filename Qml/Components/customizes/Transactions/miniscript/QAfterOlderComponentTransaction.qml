@@ -39,7 +39,7 @@ Item {
 
     QAfterOlderComponent {
         id: baseCommon
-        width: parent.width - 112 - 12
+        width: parent.width - actionLoader.width - 8  // 8 = gap to lock status
         height: parent.height
         isTransaction: true
     }
@@ -48,7 +48,7 @@ Item {
         id: actionLoader
         anchors {
             right: parent.right
-            rightMargin: 12
+            rightMargin: 0
         }
         height: 36
         visible: miniscript.type ===  ScriptNodeHelper.Type.OLDER || miniscript.type ===  ScriptNodeHelper.Type.AFTER

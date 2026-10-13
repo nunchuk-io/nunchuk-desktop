@@ -50,6 +50,8 @@ Popup {
     // so no onAboutToShow repositioning is needed here.
 
     background: Rectangle {
+        id: _subBg
+        transformOrigin: subOptionsMenu._openRight ? Item.Left : Item.Right   // cùng gốc với content
         radius: 8
         color: "#FFFFFF"
         layer.enabled: true
@@ -67,12 +69,14 @@ Popup {
         ParallelAnimation {
             NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
             NumberAnimation { target: _subContentWrapper; property: "scale"; from: 0.82; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: _subBg; property: "scale"; from: 0.82; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
         }
     }
     exit: Transition {
         ParallelAnimation {
             NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 120; easing.type: Easing.InCubic }
             NumberAnimation { target: _subContentWrapper; property: "scale"; from: 1.0; to: 0.82; duration: 120; easing.type: Easing.InCubic }
+            NumberAnimation { target: _subBg; property: "scale"; from: 1.0; to: 0.82; duration: 120; easing.type: Easing.InCubic }
         }
     }
 

@@ -99,7 +99,15 @@ Menu {
                     if (mSubMenu !== null && modelData.subMenu !== null) {
                         internalMenu = storeMenu
                         internalMenu.mapMenu = mapMenu[index].subMenu
-                        internalMenu.popup()
+                        // Popup (Qt6) has no popup(); position explicitly in the
+                        // parent coordinate space, like QMultiContextMenu.onEntered.
+                        var dy = 12  // contentItem top margin
+                        for (var i = 0; i < index; i++) {
+                            if (mapMenu[i].visible) dy += mapMenu[i].height
+                        }
+                        internalMenu.x = optionMenu.x + optionMenu.menuWidth
+                        internalMenu.y = optionMenu.y + dy
+                        internalMenu.open()
                     }
                 }
             }

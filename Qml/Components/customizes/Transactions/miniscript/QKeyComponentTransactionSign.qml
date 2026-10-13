@@ -43,13 +43,16 @@ QKeyComponentTransaction {
     property int  tx_status     : transactionInfo.status
     property bool signerReadyToSign: miniscript.signerReadyToSign
     property int  signerType    : miniscript.signerType
+    // Item-wrapped actions have width 0, so they expose real width via "actionW"
+    actionWidth: !actionLoader.item ? 0 : (actionLoader.item.actionW !== undefined ? actionLoader.item.actionW : actionLoader.item.width)
 
     Loader {
+        id: actionLoader
         anchors {
             top: parent.top
             topMargin: 8
             right: parent.right
-            rightMargin: 12
+            rightMargin: 0
         }
         height: 36
         sourceComponent: {
@@ -109,6 +112,7 @@ QKeyComponentTransaction {
     Component {
         id: requiredScan
         Item {
+            property int actionW: 70
             QRefreshButton {
                 width: 70
                 height: 36
@@ -125,7 +129,9 @@ QKeyComponentTransaction {
     Component {
         id: keysignOption
         Item {
+            property int actionW: signOptionBtn.width
             QTextButton {
+                id: signOptionBtn
                 width: label.width + 36
                 height: 36
                 label.text: STR.STR_QML_509

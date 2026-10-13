@@ -63,6 +63,8 @@ Popup {
     ]
 
     background: Rectangle {
+        id: _bg
+        transformOrigin: optionMenu._origin   // scale cùng gốc với content
         radius: 8
         color: "#FFFFFF"
         layer.enabled: true
@@ -255,6 +257,7 @@ Popup {
         ParallelAnimation {
             NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutCubic }
             NumberAnimation { target: _contentWrapper; property: "scale"; from: 0.82; to: 1.0; duration: 200; easing.type: Easing.OutCubic }
+            NumberAnimation { target: _bg; property: "scale"; from: 0.82; to: 1.0; duration: 200; easing.type: Easing.OutCubic }
         }
     }
     // ── Exit: reverse ──
@@ -262,6 +265,7 @@ Popup {
         ParallelAnimation {
             NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 140; easing.type: Easing.InCubic }
             NumberAnimation { target: _contentWrapper; property: "scale"; from: 1.0; to: 0.82; duration: 140; easing.type: Easing.InCubic }
+            NumberAnimation { target: _bg; property: "scale"; from: 1.0; to: 0.82; duration: 140; easing.type: Easing.InCubic }
         }
     }
 
