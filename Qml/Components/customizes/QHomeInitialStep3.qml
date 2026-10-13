@@ -410,7 +410,10 @@ Item {
                             visible: (myRole !== "OBSERVER") && (myRole !== "FACILITATOR_ADMIN")
                             icon: "qrc:/Images/Images/more_horiz_24px.png"
                             onClicked: {
-                                optionMenu.popup(_more,mouse.x - 250 + 24,24)
+                                var p = _more.mapToItem(optionMenu.parent, _more.width, _more.height)
+                                optionMenu.x = p.x - optionMenu.implicitWidth
+                                optionMenu.y = p.y + 4
+                                optionMenu.open()
                             }
                         }
                     }
