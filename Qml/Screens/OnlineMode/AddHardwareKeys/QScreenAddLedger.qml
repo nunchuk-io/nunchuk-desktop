@@ -195,6 +195,7 @@ QScreenAdd {
             isSuccess: stateScreen.screenFlow === "eSCREEN_SUCCESS"
             resultTitle: isSuccess ? STR.STR_QML_827 : STR.STR_QML_964
             resultSubtitle: isSuccess ? STR.STR_QML_828 : ""
+            doneLabel: STR.STR_QML_097
             onDoneClicked: doneOrTryAgainAddHardwareKey(isSuccess)
         }
     }

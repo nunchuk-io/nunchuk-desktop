@@ -272,7 +272,7 @@ Item {
                         spacing: 12
                         QTextField {
                             id: messageField
-                            width: parent.width - emojiPicker.width - parent.spacing
+                            width: parent.width - emojiPicker.width - sendBtn.width - 2*parent.spacing
                             height: parent.height
                             anchors.verticalCenter: parent.verticalCenter
                             placeholderText: "Type your message..."
@@ -310,6 +310,25 @@ Item {
                             id: emojiPicker
                             targetInput: messageField
                             anchors.verticalCenter: parent.verticalCenter
+                        }
+                        // BUGFIX: send button was missing - Enter key was the only way to send.
+                        MouseArea {
+                            id: sendBtn
+                            width: 40
+                            height: 40
+                            anchors.verticalCenter: parent.verticalCenter
+                            enabled: messageField.text.trim().length > 0
+                            hoverEnabled: true
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            QIcon {
+                                anchors.centerIn: parent
+                                iconSize: 24
+                                scale: sendBtn.pressed ? 0.9 : (sendBtn.containsMouse && sendBtn.enabled ? 1.1 : 1)
+                                source: sendBtn.enabled
+                                        ? "qrc:/Images/Images/SendMessage-dark.png"
+                                        : "qrc:/Images/Images/SendMessage.png"
+                            }
+                            onClicked: messageField.sendRequest()
                         }
                     }
                 }

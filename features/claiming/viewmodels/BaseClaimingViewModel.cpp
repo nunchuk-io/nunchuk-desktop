@@ -17,8 +17,8 @@ void BaseClaimingViewModel::handleErrorCode(int error_code, const QString &error
     GUARD_FLOW_MANAGER()
     switch (error_code) {
     case DRACO_CODE::INHERITANCE_801:
-        // show popup: Invalid phrase. Please try again
-        showToast(0, STR_CPP_115, EWARNING::WarningType::ERROR_MSG);
+        // BUGFIX: was wrongly using STR_CPP_115 ("Invalid password...restore backup"), unrelated message.
+        showToast(0, STR_CPP_136, EWARNING::WarningType::ERROR_MSG);
         break;
     case DRACO_CODE::INHERITANCE_802:
         // show popup: It looks like the original subscription has expired for more than 3 years.

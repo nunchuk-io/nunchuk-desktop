@@ -30,6 +30,15 @@ void InheritanceUnlockedViewModel::onInit() {
 
 void InheritanceUnlockedViewModel::viewWalletClicked() {
     GUARD_APP_MODEL()
+    // Select the specific claimed wallet before switching tabs, not just a generic tab switch.
+    GUARD_FLOW_MANAGER()
+    auto claimingFlow = qobject_cast<ClaimingFlow *>(flowMng->currentFlow());
+    if (claimingFlow) {
+        QString walletId = QString::fromStdString(claimingFlow->nunWallet().get_id());
+        if (auto wallet = appModel->walletListPtr()->getWalletById(walletId)) {
+            appModel->setWalletInfo(wallet);
+        }
+    }
     QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
 }
 

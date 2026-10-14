@@ -3558,20 +3558,38 @@ bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::Ad
                  << "signer_type: " << SignerTypeToStr(signer->originSingleSigner().get_type())
                  << "signer_tag: " << (int)signer->signerTag();
 
-        bool address_type_match = address_type_str.isEmpty() || (address_type_str == "") || qUtils::AddressTypeFromStr(address_type_str) == addressType;
-        bool signer_type_match = signer_type_str.isEmpty() || (signer_type_str == "") || SignerTypeFromStr(signer_type_str.toStdString()) == signer->originSingleSigner().get_type();
-        bool signer_tag_match = signer_tag_str.isEmpty() || (signer_tag_str == "") || SignerTagFromStr(signer_tag_str.toStdString()) == signer->signerTag();
-        // bool wallet_type_match = wallet_type_str.isEmpty() || (wallet_type_str == "") || qUtils::WalletTypeFromStr(wallet_type_str) == walletType;
-        // bool wallet_template_match = wallet_template_str.isEmpty();
+        // SignerTypeFromStr()/SignerTagFromStr() (libnunchuk) throw on an unrecognized string -
+        // an unexpected/malformed backend entry must not crash the whole match, just fail to
+        // match this one entry.
+        try {
+            // Compare as strings (canonical form via qAddressTypeToStr) rather than via
+            // AddressTypeFromStr, which silently aliases unrecognized strings to ANY -
+            // same hardening as wallet_type_match below, applied consistently.
+            bool address_type_match = address_type_str.isEmpty() || (address_type_str == "") ||
+                                       qUtils::strCompare(address_type_str, qUtils::qAddressTypeToStr(addressType));
+            bool signer_type_match = signer_type_str.isEmpty() || (signer_type_str == "") || SignerTypeFromStr(signer_type_str.toStdString()) == signer->originSingleSigner().get_type();
+            bool signer_tag_match = signer_tag_str.isEmpty() || (signer_tag_str == "") || SignerTagFromStr(signer_tag_str.toStdString()) == signer->signerTag();
+            // Compare as strings (canonical form via WalletTypeToStr) rather than via
+            // WalletTypeFromStr, which silently aliases unrecognized strings to MULTI_SIG.
+            bool wallet_type_match = wallet_type_str.isEmpty() || (wallet_type_str == "") ||
+                                      qUtils::strCompare(wallet_type_str, qUtils::WalletTypeToStr(walletType));
+            // bool wallet_template_match = wallet_template_str.isEmpty();
 
-        DBG_INFO << "address_type_match:" << address_type_match
-                 << "signer_type_match:" << signer_type_match
-                 << "signer_tag_match:" << signer_tag_match;
+            DBG_INFO << "address_type_match:" << address_type_match
+                     << "signer_type_match:" << signer_type_match
+                     << "signer_tag_match:" << signer_tag_match
+                     << "wallet_type_match:" << wallet_type_match;
 
-        return address_type_match && signer_type_match && signer_tag_match;
+            return address_type_match && signer_type_match && signer_tag_match && wallet_type_match;
+        } catch (const nunchuk::BaseException &ex) {
+            DBG_INFO << "IsTapootSupported: malformed supported-signers entry, skipping:" << ex.code() << ex.what();
+            return false;
+        } catch (const std::exception &e) {
+            DBG_INFO << "IsTapootSupported: malformed supported-signers entry, skipping:" << e.what();
+            return false;
+        }
     });
-    bool ret = it != supported_types.end();
-    return ret;
+    return it != supported_types.end();
 }
 
 bool bridge::nunchukRevealPreimage(const QString &wallet_id, const QString &tx_id, const std::vector<uint8_t> &hash,

@@ -295,6 +295,7 @@ QScreenAdd {
             isSuccess: true
             resultTitle: STR.STR_QML_1541
             resultSubtitle: STR.STR_QML_828
+            doneLabel: STR.STR_QML_097
             onDoneClicked: doneAddHardwareKey()
         }
     }

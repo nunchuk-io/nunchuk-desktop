@@ -139,13 +139,15 @@ QScreenAdd {
             content: QAddAnExistingKey {
                 notice: STR.STR_QML_916
             }
-            onPrevClicked: {
-                if (stateScreen.isEmptyScreenFlow()) {
-                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                } else {
-                    stateScreen.backScreen()
-                }
-            }
+            // BUGFIX: this is the entry screen of the dialog (SCR_ADD_HARDWARE_EXIST.qml loads it
+            // directly, no earlier screen to go back to) - Cancel must always close, matching the
+            // other 4 hardware types (QScreenAddLedgerExist.qml etc. all just call closeTo() here).
+            // The old isEmptyScreenFlow()/backScreen() logic relied on the shared SignerManagement
+            // stack being empty, which isn't guaranteed (stale entries from a previous add-key
+            // attempt) - when non-empty, backScreen() popped an unrelated entry, landed on a
+            // screenFlow value this file's map_flow doesn't recognize, and the Loader's fallback
+            // just redisplayed this same screen, making Cancel look like a no-op.
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             bottomRight: Row {
                 spacing: 12
                 QTextButton {
@@ -403,6 +405,7 @@ QScreenAdd {
             isSuccess: true
             resultTitle: STR.STR_QML_913
             resultSubtitle: STR.STR_QML_828
+            doneLabel: STR.STR_QML_097
             onDoneClicked: doneAddHardwareKey()
         }
     }

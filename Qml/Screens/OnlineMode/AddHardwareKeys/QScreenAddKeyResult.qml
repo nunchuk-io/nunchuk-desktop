@@ -44,6 +44,9 @@ QOnScreenContent {
     property string resultSubtitle: STR.STR_QML_828
     property string resultIcon: isSuccess ? "qrc:/Images/Images/check-dark.svg" : "qrc:/Images/Images/error_outline_24px.png"
     property string resultColor: isSuccess ? "#A7F0BA" : "#FFD7D9"
+    // Overridable per-caller so only the pending-wallet add-key screens can say "Continue"
+    // instead of "Done" without affecting the other (unrelated) callers of this component.
+    property string doneLabel: STR.STR_QML_777
     signal doneClicked()
     
     Column {
@@ -84,7 +87,7 @@ QOnScreenContent {
         QTextButton {
             width: 120
             height: 48
-            label.text: STR.STR_QML_777
+            label.text: doneLabel
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: doneClicked()

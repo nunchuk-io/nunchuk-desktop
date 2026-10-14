@@ -139,4 +139,5 @@ const static QString STR_CPP_133 = QString("Add Jade");
 // KEEPKEY: used by map_keys in QAssistedDraftWallets.cpp.
 const static QString STR_CPP_134 = QString("Add KeepKey to your assisted wallet");
 const static QString STR_CPP_135 = QString("Add KeepKey");
+const static QString STR_CPP_136 = QString("Invalid Magic Phrase. Please try again.");
 #endif // STR_CPP_H
