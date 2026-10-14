@@ -746,6 +746,23 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                 firstLineObj["lockType"] = static_cast<int>(lockType);
                 firstLineObj["timelockType"] = static_cast<int>(timelock.type());
                 firstLineObj["coinsGroup"] = generateCoinsGroup(frame.coinsGroup);
+
+                // BUGFIX: unlike MUSIG below, this never set txStatus/pendingSignature, so the
+                // "Pending x signatures" badge never showed for plain multisig nodes. Plain
+                // multisig has no nonce round, so only ever flag PENDING_SIGNATURES here - never
+                // propagate a PENDING_NONCE status onto this node (that only applies to MuSig).
+                // Pending count is against k (M of M-of-N), not all N keys - only M signatures
+                // are ever needed, so remaining = max(0, M - signedSoFar).
+                firstLineObj["pendingNonce"] = 0;
+                if (tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES) {
+                    int signedCount = 0;
+                    for (const auto &key : frame.node->get_keys()) {
+                        std::string xfp = qUtils::ParseSignerString(QString::fromStdString(key), msg).get_master_fingerprint();
+                        if (signers[xfp]) signedCount++;
+                    }
+                    firstLineObj["txStatus"] = tx_status;
+                    firstLineObj["pendingSignature"] = std::max(0, (int)frame.node->get_k() - signedCount);
+                }
                 frame.result.append(firstLineObj);
                 for (int i = 0; i < frame.node->get_keys().size(); i++) {
                     QJsonObject keyObj;
@@ -819,21 +836,24 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                 tx_status = tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES ? (int)keyset.first : tx_status;
                 nunchuk::KeyStatus keystatus = keyset.second;
 
+                // BUGFIX: keystatus spans this node's full N keys (get_keyset_status matches by
+                // exact xfp set), but only k (M of M-of-N) nonces/signatures are ever needed -
+                // count against k, not against all N, same fix as the MULTI case above.
                 int pending_nonce = 0;
                 if (tx_status == (int)nunchuk::TransactionStatus::PENDING_NONCE) {
+                    int doneCount = 0;
                     for (auto it = keystatus.begin(); it != keystatus.end(); ++it) {
-                        if (!it->second) {
-                            pending_nonce++;
-                        }
+                        if (it->second) doneCount++;
                     }
+                    pending_nonce = std::max(0, (int)frame.node->get_k() - doneCount);
                 }
                 int pending_signature = 0;
                 if (tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES) {
+                    int doneCount = 0;
                     for (auto it = keystatus.begin(); it != keystatus.end(); ++it) {
-                        if (!it->second) {
-                            pending_signature++;
-                        }
+                        if (it->second) doneCount++;
                     }
+                    pending_signature = std::max(0, (int)frame.node->get_k() - doneCount);
                 }
                 firstLineObj["txStatus"] = tx_status;
                 firstLineObj["pendingNonce"] = pending_nonce;

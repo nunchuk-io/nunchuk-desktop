@@ -34,16 +34,13 @@ import "../../customizes/Chats"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
+    // No self-anchoring here: caller positions this (e.g. as a Row child placed alongside
+    // the "Pending x..." text, both right-aligned together) - see QCommonComponent.qml.
     width: 76
     height: 16
     radius: 20
     property var txStatus: 0
     property bool hasSigned: true
-    anchors {
-        right: parent.right
-        rightMargin: 0
-        verticalCenter: parent.verticalCenter
-    }
     color: {
         if (txStatus === NUNCHUCKTYPE.READY_TO_BROADCAST) {return "#1C652D"}
         else if (txStatus === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "#FFCB2E"}

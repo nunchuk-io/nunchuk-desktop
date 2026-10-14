@@ -69,10 +69,10 @@ Item {
                 width: parent.width
                 height: 20
                 Row {
-                    width: parent.width
+                    width: parent.width - trailingRow.width - (trailingRow.width > 0 ? 8 : 0)
                     height: 20
                     spacing: 4
-                    
+
                     QLato {
                         width: paintedWidth
                         height: 20
@@ -107,25 +107,38 @@ Item {
                             anchors.centerIn: parent
                         }
                     }
+                }
+
+                // "Pending x..." text and the Round x/y badge (when present) are grouped
+                // together and right-aligned as one row, instead of the text sitting left-packed
+                // and only the round badge being pinned right.
+                Row {
+                    id: trailingRow
+                    spacing: 8
+                    anchors {
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                    }
+
                     QIconText {
                         icon: "qrc:/Images/Images/PendingSignatures.png"
                         visible: miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE || miniscript.txStatus === NUNCHUCKTYPE.PENDING_SIGNATURES
                         text.text: miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE ? STR.str_QML_1884(miniscript.pendingNonce) : STR.str_QML_220(miniscript.pendingSignature)
+                        text.horizontalAlignment: Text.AlignRight
                         anchors.verticalCenter: parent.verticalCenter
                     }
-                }
 
-                QRoundBadgeStatus {
-                    anchors {
-                        right: parent.right
-                        rightMargin: 0
-                        verticalCenter: parent.verticalCenter
+                    QRoundBadgeStatus {
+                        anchors.verticalCenter: parent.verticalCenter
+                        hasSigned: miniscript.m > miniscript.pendingNonce
+                        // "Round 1/2"/"Round 2/2" only makes sense for MuSig/Taproot (nonce round
+                        // then signature round) - plain multisig has no nonce round, so never show.
+                        visible: miniscript.type === ScriptNodeHelper.Type.MUSIG &&
+                                    (miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE ||
+                                    miniscript.txStatus === NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                    miniscript.txStatus === NUNCHUCKTYPE.READY_TO_BROADCAST)
+                        txStatus: miniscript.txStatus
                     }
-                    hasSigned: miniscript.m > miniscript.pendingNonce
-                    visible: miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE ||
-                                miniscript.txStatus === NUNCHUCKTYPE.PENDING_SIGNATURES ||
-                                miniscript.txStatus === NUNCHUCKTYPE.READY_TO_BROADCAST
-                    txStatus: miniscript.txStatus
                 }
             }
             
