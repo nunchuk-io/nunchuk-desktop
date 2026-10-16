@@ -205,7 +205,7 @@ QScreen {
     }
     Connections {
         target: keyRecovery
-        onKeyRecoveryPendingApproval: {
+        function onKeyRecoveryPendingApproval() {
             errorConfirm.open()
         }
     }

@@ -47,14 +47,14 @@ QScreen {
     }
     Connections {
         target: ServiceSetting
-        onVerifyPasswordTokenAlert: {
+        function onVerifyPasswordTokenAlert(errormsg) {
             passphraseModel.processing = false
             passphraseModel.setErrorText(errormsg)
         }
     }
     Connections {
         target: ServiceSetting.servicesTag
-        onLockdownPeriodsAlert: {
+        function onLockdownPeriodsAlert(errormsg) {
             passphraseModel.processing = false
             passphraseModel.setErrorText(errormsg)
         }

@@ -61,7 +61,11 @@ QOnScreenContentTypeA {
         QListView {
             id: questions
             width: 539
-            height: childrenRect.height + 16
+            // BUGFIX: childrenRect.height created a binding loop (the view's own height feeds back
+            // into its delegate layout, which feeds back into childrenRect). contentHeight is the
+            // ListView-native equivalent for a non-interactive, self-sizing list - same visual
+            // result, no loop.
+            height: contentHeight + 16
             spacing: 16
             clip: true
             model: ServiceSetting.servicesTag.securityQuestions
@@ -103,7 +107,7 @@ QOnScreenContentTypeA {
                 }
                 Connections {
                     target: ServiceSetting.servicesTag
-                    onAnswerErrorAlert: {
+                    function onAnswerErrorAlert(errormsg) {
                         answer.errorText = errormsg
                         answer.isValid = false
                         answer.showError = true
@@ -111,7 +115,7 @@ QOnScreenContentTypeA {
                 }
                 Connections {
                     target: _content
-                    onClearText: {
+                    function onClearText() {
                         answer.textInputted = ""
                     }
                 }

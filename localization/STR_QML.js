@@ -865,9 +865,10 @@ var STR_QML_721 = qsTr("The lockdown will last <b>%1</b>.")
 var STR_QML_722 = qsTr("If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \n \
 TAPSIGNER’s private key using the encrypted backup from the server. Please note the \n \
 following:")
-var STR_QML_723 = qsTr("Once you have entered the lockdown, no one—including yourself—will \n \
-be able to sign in to your account and access your wallet.")
-var STR_QML_724 = qsTr("There is no way to end the lockdown early.")
+var STR_QML_723 = qsTr("The Backup Password is required, please have it ready. The password is printed \n \
+on the back of the TAPSIGNER. You should have had a copy of this when setting up the TAPSIGNER \n \
+for the first time.")
+var STR_QML_724 = qsTr("This procedure will convert the TAPSIGNER into a software key on this device.")
 
 var STR_QML_725 = qsTr("Enter Backup Password")
 var STR_QML_726 = qsTr("Please enter the Backup Password for [<b>%1</b>] (card ID: <b>••%2</b>).")

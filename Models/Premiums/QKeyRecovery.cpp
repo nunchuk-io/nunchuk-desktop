@@ -113,16 +113,10 @@ bool QKeyRecovery::UserKeysCalculateRequiredSignatures(const QString &xfp)
     setSigner(xfp);
     if (m_signer.isEmpty()) return false;
     DBG_INFO << m_signer;
-    if (ClientController::instance()->isUserWallet()) {
-        QJsonObject resultObj;
-        resultObj["type"] = "SECURITY_QUESTION";
-        servicesTagPtr()->setReqiredSignatures(resultObj);
-        if (servicesTagPtr()->CreateSecurityQuestionsAnswered()) {
-            QEventProcessor::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
-        }
-        return true;
-    }
-    else {
+    {
+        // TRIAL: trước đây personal wallet (isUserWallet()) hardcode SECURITY_QUESTION, bỏ qua backend.
+        // Gọi backend thật cho mọi loại ví (endpoint USER_KEYS_CALCULATE_REQUIRED_SIGNATURES không phân
+        // biệt personal/group) để kiểm chứng backend có thực sự luôn trả SECURITY_QUESTION hay không.
         QJsonObject output;
         QString errormsg;
         bool ret = Draco::instance()->UserKeysCalculateRequiredSignatures(xfp, output, errormsg);

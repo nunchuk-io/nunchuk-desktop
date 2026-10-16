@@ -759,8 +759,8 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_722, "If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \\n TAPSIGNER's private key using "
                                         "the encrypted backup from the server. Please note the \\n following:")
     DEFINE_STRING_PROPERTY(STR_QML_723,
-                           "Once you have entered the lockdown, no one—including yourself—will \\n be able to sign in to your account and access your wallet.")
-    DEFINE_STRING_PROPERTY(STR_QML_724, "There is no way to end the lockdown early.")
+                           "The Backup Password is required, please have it ready. The password is printed \\n on the back of the TAPSIGNER. You should have had a copy of this when setting up the TAPSIGNER \\n for the first time.")
+    DEFINE_STRING_PROPERTY(STR_QML_724, "This procedure will convert the TAPSIGNER into a software key on this device.")
     DEFINE_STRING_PROPERTY(STR_QML_725, "Enter Backup Password")
     DEFINE_STRING_PROPERTY(STR_QML_726, "Please enter the Backup Password for [<b>%1</b>] (card ID: <b>••%2</b>).")
     DEFINE_STRING_PROPERTY(STR_QML_727, "Backup Password")
