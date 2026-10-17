@@ -161,6 +161,7 @@ public slots:
     void updateSignersMiniscript(const QString &key, const QSingleSignerPtr &value, bool autoreuse = true);
     void removeSignersMiniscript(const QString &key);
     void clearSignersMiniscript();
+    void refreshTaprootSupported();
     void requestAddSigner(const QString group, const QString &key);
     void requestRemoveSigner(const QString group, const QString &key);
     void requestAddNewKey();

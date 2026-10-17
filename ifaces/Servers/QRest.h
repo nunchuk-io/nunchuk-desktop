@@ -79,14 +79,17 @@ public:
         constexpr GetRequestOptions(
             NetworkErrorPolicy networkError = NetworkErrorPolicy::ShowToast,
             AuthenticationPolicy authentication = AuthenticationPolicy::CurrentToken,
-            VerificationTokenPolicy verificationToken = VerificationTokenPolicy::Include)
+            VerificationTokenPolicy verificationToken = VerificationTokenPolicy::Include,
+            int timeoutMs = 0)
             : networkErrorPolicy(networkError),
               authenticationPolicy(authentication),
-              verificationTokenPolicy(verificationToken) {}
+              verificationTokenPolicy(verificationToken),
+              transferTimeoutMs(timeoutMs) {}
 
         NetworkErrorPolicy networkErrorPolicy;
         AuthenticationPolicy authenticationPolicy;
         VerificationTokenPolicy verificationTokenPolicy;
+        int transferTimeoutMs;
     };
 
     QRest();

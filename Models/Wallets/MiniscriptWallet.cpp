@@ -5,6 +5,7 @@
 #include "ViewsEnums.h"
 #include "QAppEngine/QEventProcessor/Common/WorkerThread.h"
 #include "bridgeifaces.h"
+#include "Servers/Draco.h"
 #include <descriptor.h>
 #include <QPointer>
 #include <QTimer>
@@ -1360,6 +1361,12 @@ void MiniscriptWallet::removeSignersMiniscript(const QString &key) {
 void MiniscriptWallet::clearSignersMiniscript() {
     ++m_signerStructureGeneration;
     m_signersMiniscript.clear();
+}
+
+void MiniscriptWallet::refreshTaprootSupported() {
+    if (walletAddressType() == static_cast<int>(nunchuk::AddressType::TAPROOT)) {
+        Draco::instance()->RefreshTaprootSupportedAsync();
+    }
 }
 
 void MiniscriptWallet::requestAddSigner(const QString group, const QString &key) {

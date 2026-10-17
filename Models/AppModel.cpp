@@ -1227,9 +1227,6 @@ void AppModel::timerFeeRatesHandle()
         Draco::instance()->btcRates();
         Draco::instance()->exchangeRates(AppSetting::instance()->currency());
         startGetEstimatedFee();
-
-        //Get taproot supported
-        Draco::instance()->GetTaprootSupportedCached(true);
     });
 }
 

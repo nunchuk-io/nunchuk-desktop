@@ -31,7 +31,7 @@ TextEdit {
     selectByMouse: true
     renderType: Text.QtRendering
     textFormat: TextEdit.RichText
-    onLinkActivated: {
+    onLinkActivated: function(link) {
         Qt.openUrlExternally(link)
     }
     onLinkHovered: {

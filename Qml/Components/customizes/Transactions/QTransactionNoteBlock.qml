@@ -80,7 +80,7 @@ Column {
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         anchors.horizontalCenter: parent.horizontalCenter
         visible: !isEditing
-        onLinkActivated: {
+        onLinkActivated: function(link) {
             Qt.openUrlExternally(link)
         }
         function convertToClickableLinks(text) {

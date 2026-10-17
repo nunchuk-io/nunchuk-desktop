@@ -118,8 +118,8 @@ QOnScreenContentTypeA {
 
     content: QCreateTransactionClaimInheritance {
         transactionInfo: vm.transactionInfo
-        onSignalDraftTransaction: vm.createDraftTransaction(msg)
-        onSignalCreateTransaction: vm.createTransaction(msg)
+        onSignalDraftTransaction: (msg) => vm.createDraftTransaction(msg)
+        onSignalCreateTransaction: (msg) => vm.createTransaction(msg)
         onRequestSort: {
         }
     }

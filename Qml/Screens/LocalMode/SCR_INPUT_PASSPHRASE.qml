@@ -47,6 +47,8 @@ QScreen {
     }
     Connections {
         target: AppModel
-        onFinishSendPassphraseToDevice : passphraseModel.processing = false
+        function onFinishSendPassphraseToDevice() {
+            passphraseModel.processing = false
+        }
     }
 }

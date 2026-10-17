@@ -144,7 +144,7 @@ QScreen {
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 16
                     wrapMode: Text.WordWrap
-                    onLinkActivated: Qt.openUrlExternally(link)
+                    onLinkActivated: (link) => Qt.openUrlExternally(link)
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: privacyTerms.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor

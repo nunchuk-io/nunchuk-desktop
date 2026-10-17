@@ -57,7 +57,7 @@ Item {
         QSelectAnAssistedWallet {
             header: STR.STR_QML_738
             wallets: ServiceSetting.servicesTag.listPolicy
-            onSelectWalletRequest: {
+            onSelectWalletRequest: function(wallet_id) {
                 var _input = {
                     type: "platform-key-co-signing-policies",
                     wallet_id: wallet_id

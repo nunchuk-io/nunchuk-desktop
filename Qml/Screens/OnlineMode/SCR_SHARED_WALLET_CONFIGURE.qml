@@ -385,7 +385,7 @@ QScreen {
                             "qrc:/Images/Images/Export.png",
                             "qrc:/Images/Images/QRCodeScan.png"
                         ]
-                        onItemClicked: {
+                        onItemClicked: function(index) {
                             switch(index){
                             case 0:
                                 exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD

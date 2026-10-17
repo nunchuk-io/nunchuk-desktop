@@ -231,7 +231,7 @@ QScreen {
                 anchors.bottomMargin: 16
                 anchors.right: parent.right
                 anchors.rightMargin: 16
-                onPageRequest: {
+                onPageRequest: function(pageNumber) {
                     pageinfo.currentPage = pageNumber
                     var nextindex = (pageNumber-1)*10
                     transaction_lst.positionViewAtIndex(nextindex, ListView.Beginning)

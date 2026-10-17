@@ -114,7 +114,7 @@ QOnScreenContentTypeA {
                         label: QSTR.STR_QML_799
                         description: QSTR.STR_QML_2139
                         checked: vm.enableSpendingLimit
-                        onToggled: {
+                        onToggled: function(checked) {
                             vm.enableSpendingLimit = checked
                         }
                     }
@@ -126,13 +126,13 @@ QOnScreenContentTypeA {
                         currency: vm.currency
                         interval: vm.interval
                         visible: vm.enableSpendingLimit
-                        onLimitInputChanged: {
+                        onLimitInputChanged: function(value) {
                             vm.balance = value
                         }
-                        onCurrencyInputChanged: {
+                        onCurrencyInputChanged: function(value) {
                             vm.currency = value
                         }
-                        onIntervalInputChanged: {
+                        onIntervalInputChanged: function(value) {
                             vm.interval = value
                         }
                     }
@@ -150,7 +150,7 @@ QOnScreenContentTypeA {
                         label: QSTR.STR_QML_795
                         description: QSTR.STR_QML_796
                         checked: vm.enableCoSigningDelay
-                        onToggled: {
+                        onToggled: function(checked) {
                             vm.enableCoSigningDelay = checked
                         }
                     }
@@ -200,7 +200,7 @@ QOnScreenContentTypeA {
                         label: QSTR.STR_QML_2125
                         description: QSTR.STR_QML_2136
                         checked: vm.autoBroadcast
-                        onToggled: {
+                        onToggled: function(checked) {
                             vm.autoBroadcast = checked
                         }
                     }

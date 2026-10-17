@@ -508,7 +508,7 @@ Row {
                     file_path: model.file_path
                     onRequestCancelWallet: conversationPageRoot.requestCancelWallet()
                 }
-                onWheel: {
+                onWheel: function(wheel) {
                     wheel.accepted = false
                     if(wheel.angleDelta.y !== 0){
                         if(scrollContact)
@@ -761,7 +761,7 @@ Row {
                                          && !conversationPageRoot.createRoom
                                          && RoomWalletData.currentRoom !== null
                                 anchors.fill: parent
-                                onDropped: {
+                                onDropped: function(drop) {
                                     attachedFile.fileLocalPath = ""
                                     if(drop.urls.length > 1){ AppModel.showToast(-696, STR.STR_QML_696, EWARNING.EXCEPTION_MSG); }
                                     else{
@@ -896,7 +896,7 @@ Row {
                                 true,
                                 true
                             ]
-                            onItemClicked: {
+                            onItemClicked: function(index) {
                                 switch(index){
                                 case 0: // Send Photos or videos
                                     openfileDialog.nameFilters = ["Image files (*.png *.jpg *.jpeg)", "Video files (*.mp4)"]

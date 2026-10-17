@@ -54,7 +54,7 @@ Rectangle {
             wrapMode: Text.WrapAnywhere
             horizontalAlignment: Text.AlignLeft
             anchors.verticalCenter: parent.verticalCenter
-            onLinkActivated: {
+            onLinkActivated: function(link) {
                 if (link == "dummycode.tbd") {
                     hyperlinkClicked()
                 } else {

@@ -45,9 +45,7 @@ Popup {
     background: Item {
     }
     function loadToastMessage(toastObj) {
-        console.log(toastObj.code, toastObj.type, toastObj.what)
         for(var i = 0; i < toastLoader.model.count; i++){
-            console.log(toastLoader.model.get(i).code , toastObj.code, toastObj.type)
             if(toastLoader.model.get(i).code === toastObj.code && (toastObj.type > EWARNING.ERROR_MSG)) {
                 return;
             }

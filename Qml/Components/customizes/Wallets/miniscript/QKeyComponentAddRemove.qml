@@ -36,7 +36,7 @@ QKeyComponent {
     signal addClicked(string key)
     signal platformConfigClicked()
 
-    property var itemData: miniscript.keyObj
+    property var itemData: miniscript.keyObj ? miniscript.keyObj : ({})
     signerData {
         single_name: itemData.singleSigner_name
         single_type: itemData.single_signer_type

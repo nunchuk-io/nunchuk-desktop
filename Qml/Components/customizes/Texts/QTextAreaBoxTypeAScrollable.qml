@@ -120,7 +120,7 @@ Column {
                 font.pixelSize: 16
                 clip: true
                 maximumLength: enableLengthLimit ? maxLength : -1
-                onTypingFinished: textipboxType.typingFinished(currentText)
+                onTypingFinished: (currentText) => textipboxType.typingFinished(currentText)
                 Keys.onDownPressed: { downKeyRequest() }
                 Keys.onUpPressed: { upKeyRequest() }
                 Keys.onPressed: function (keyEvent) {

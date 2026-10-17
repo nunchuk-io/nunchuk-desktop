@@ -49,7 +49,7 @@ Item {
             transactionInfo: _send.transactionInfo
             isDummy: _send.isDummy
             myRole: _send.myRole
-            onAddrToVerify: _send.addrToVerify(addr)
+            onAddrToVerify: (addr) => _send.addrToVerify(addr)
             onNewMemoNotify: (newMemo) => _send.newMemoNotify(newMemo)
         }
         QFeeRate {

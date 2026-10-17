@@ -96,7 +96,7 @@ Rectangle {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: {
+                    onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             if (allowRightClick) {
                                 optionMenu.functions = [function(){
@@ -287,7 +287,7 @@ Rectangle {
         icons: [
             ""
         ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             functions[index]()
         }
     }

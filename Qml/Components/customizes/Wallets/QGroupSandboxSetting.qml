@@ -84,7 +84,7 @@ QOnScreenContentTypeB {
                         typeOption: sandbox.addressType
                         isEnabled: sandbox.isCreate
                         walletConfigType: walletConfig.option
-                        onSelectTypeOption: {
+                        onSelectTypeOption: function(type) {
                             addressTypeSelection.typeOption = type
                             newWalletInfo.customizeMiniscript = ""
                             if (type !== sandbox.addressType && sandbox.addedCount > 0) {

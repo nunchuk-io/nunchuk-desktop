@@ -42,14 +42,14 @@ QScreen {
         onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: QCreateTransactionClaimInheritance {
             transactionInfo: AppModel.transactionInfo
-            onSignalDraftTransaction: {
+            onSignalDraftTransaction: function(msg) {
                 var input = {
                     type: "update-fee",
                     fee: msg
                 }
                 QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
             }
-            onSignalCreateTransaction: {
+            onSignalCreateTransaction: function(msg) {
                 var walletType = AppModel.transactionInfo.walletType
                 if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
                     var input = {

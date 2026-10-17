@@ -48,6 +48,8 @@ QScreen {
     }
     Connections {
         target: AppModel
-        onFinishSendPinToDevice : pinModel.processing = false
+        function onFinishSendPinToDevice() {
+            pinModel.processing = false
+        }
     }
 }

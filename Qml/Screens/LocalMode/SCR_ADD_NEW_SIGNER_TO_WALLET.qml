@@ -582,7 +582,7 @@ QScreen {
                                     QMLHandle.sendEvent(EVT.EVT_RECOVER_SOFTWARE_SIGNER_TO_WALLET)
                                 },
                             ]
-                            onItemClicked: {
+                            onItemClicked: function(index) {
                                 functions[index]()
                             }
                         }

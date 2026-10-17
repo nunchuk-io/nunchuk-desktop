@@ -135,11 +135,11 @@ Column {
                 vm.onAddKeyClicked({groupId : sandbox.groupId, key: index})
                 AppModel.newWalletInfo.sandbox.requestAddOrRepaceKey({ idx: index })
             }
-            onRemoveClicked: {
+            onRemoveClicked: function(idx) {
                 _confirmRemoveKey.idx = idx
                 _confirmRemoveKey.open()
             }
-            onRecoverKeyClick: {
+            onRecoverKeyClick: function(idx, xfp) {
                 var obj = {
                     idx: index,
                     fingerPrint: xfp

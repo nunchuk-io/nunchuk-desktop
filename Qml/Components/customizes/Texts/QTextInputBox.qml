@@ -91,7 +91,7 @@ Rectangle {
         color: "#031F2B"
         font.pixelSize: fontPixelSize
         wrapMode: Text.WrapAnywhere
-        onTypingFinished: textipbox.typingFinished(currentText)
+        onTypingFinished: (currentText) => textipbox.typingFinished(currentText)
         onTextEdited: textipbox.textEdited()
         onEditingFinished: textipbox.editingFinished()
         clip: true

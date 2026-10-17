@@ -54,7 +54,7 @@ Item {
         colors: [
             "#CF4018"
         ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             switch(index){
             case 0:
                 var _input = {

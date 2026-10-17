@@ -786,7 +786,7 @@ QScreen {
 
     Connections {
         target: AppModel
-        onStartCreateRemoteSigner: { }
+        function onStartCreateRemoteSigner() { }
         onFinishedCreateRemoteSigner: {
             createRemoteBusyBox.close()
         }

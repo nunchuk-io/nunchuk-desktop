@@ -213,7 +213,7 @@ QOnScreenContentTypeA {
                     ls.push("#CF4018")
                     return ls
                 }
-                onItemClicked: {
+                onItemClicked: function(index) {
                     functions[index]()
                 }
             }

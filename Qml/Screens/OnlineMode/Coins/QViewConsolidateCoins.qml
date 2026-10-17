@@ -84,7 +84,7 @@ QOnScreenContentTypeB {
             id: signingPolicy
             width: parent.width
             height: parent.height
-            onContinueClicked : {
+            onContinueClicked: function(use_script_path, keyset_index) {
                 var saved = [];
                 var savedObj = {
                     "toAddress": walletInfo.unUseAddress,

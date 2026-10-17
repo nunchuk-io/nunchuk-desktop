@@ -59,7 +59,7 @@ Item {
             header: STR.STR_QML_697
             wallets: ServiceSetting.servicesTag.listLockdown
             walletsDisabled: ServiceSetting.servicesTag.listLocked
-            onSelectWalletRequest: {
+            onSelectWalletRequest: function(wallet_id) {
                 var _input = {
                     type: "emergency-lockdown",
                     wallet_id: wallet_id

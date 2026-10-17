@@ -19,7 +19,6 @@ Result<AddressToVerifyResult> AddressToVerifyUseCase::execute(const AddressToVer
         return Result<AddressToVerifyResult>::failure(msg.contentDisplay());
     }
 
-    // Chỉ verify trên device là signer của wallet
     QWarningMessage walletMsg;
     const auto wallet = bridge::nunchukGetOriginWallet(input.wallet_id, walletMsg);
     if (!walletMsg.isSuccess()) {
@@ -40,7 +39,6 @@ Result<AddressToVerifyResult> AddressToVerifyUseCase::execute(const AddressToVer
         return Result<AddressToVerifyResult>::failure(QString("No connected device matches this wallet"));
     }
 
-    // Lỗi của bất kỳ device nào đều tính là thất bại
     QString firstError;
     for (const QString &xfp : xfps) {
         QWarningMessage devMsg;

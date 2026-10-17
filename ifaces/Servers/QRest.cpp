@@ -879,6 +879,9 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
     }
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    if (options.transferTimeoutMs > 0) {
+        requester_.setTransferTimeout(options.transferTimeoutMs);
+    }
 
     OurSharedPointer<QNetworkAccessManager> manager = networkManager();
     if (manager.isNull()) {
@@ -958,6 +961,9 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
     }
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    if (options.transferTimeoutMs > 0) {
+        requester_.setTransferTimeout(options.transferTimeoutMs);
+    }
     // Add addional params
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));

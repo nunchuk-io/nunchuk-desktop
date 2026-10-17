@@ -108,8 +108,8 @@ QOnScreenContentTypeA {
                                     emailError: vm.assetAllocation[index].emailError || ""
 
                                     onDeleteBeneficiaryClicked: vm.deleteBeneficiary(beneficiaryIndex)
-                                    onEmailChanged: vm.updateBeneficiaryEmail(beneficiaryIndex, email)
-                                    onPercentageChanged: vm.updateBeneficiaryPercentage(beneficiaryIndex, percent)
+                                    onEmailChanged: (index, email) => vm.updateBeneficiaryEmail(beneficiaryIndex, email)
+                                    onPercentageChanged: (index, percent) => vm.updateBeneficiaryPercentage(beneficiaryIndex, percent)
                                 }
                             }
                         }

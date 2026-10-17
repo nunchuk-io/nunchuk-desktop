@@ -70,7 +70,7 @@ QButtonLargeTail {
         colors:   [ "#031F2B", "#031F2B", "#031F2B", "#CF4018", "#031F2B"]
         enables:  [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction, enableShowInvoice ]
         visibles: [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction, enableShowInvoice ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             functions[index]()
         }
     }

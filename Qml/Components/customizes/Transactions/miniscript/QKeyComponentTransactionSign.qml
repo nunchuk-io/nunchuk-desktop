@@ -156,7 +156,7 @@ QKeyComponentTransaction {
                     "qrc:/Images/Images/ExportFile.svg",
                     "qrc:/Images/Images/importFile.svg",
                 ]
-                onItemClicked: {
+                onItemClicked: function(index) {
                     switch(index){
                     case 0: // Export transaction
                         exportRequest()

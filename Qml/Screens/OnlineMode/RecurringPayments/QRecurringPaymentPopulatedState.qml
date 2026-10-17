@@ -60,7 +60,7 @@ QOnScreenContentTypeB {
             delegate: QRecurringPaymentViewingDelegate {
                 width: _payments.width - 12
                 paymentDel: modelData
-                onSignalSelectedPayment: {
+                onSignalSelectedPayment: function(payment_id) {
                     var _input = {
                         type: "select-recurring-payment",
                         recurring_payment_id: payment_id

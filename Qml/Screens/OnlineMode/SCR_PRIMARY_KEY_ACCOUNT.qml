@@ -191,7 +191,7 @@ QScreen {
                         ""
                     ]
                     enables: [false,true,true]
-                    onItemClicked: {
+                    onItemClicked: function(index) {
                         switch(index){
                         case 0: // Sign in remotely via QR
 

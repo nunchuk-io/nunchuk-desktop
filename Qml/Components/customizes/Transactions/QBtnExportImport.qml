@@ -56,7 +56,7 @@ QButtonLargeTail {
             "qrc:/Images/Images/QRCodeScan.png"
         ]
 
-        onItemClicked: {
+        onItemClicked: function(index) {
             functions[index]()
         }
     }

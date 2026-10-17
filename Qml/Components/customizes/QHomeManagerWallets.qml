@@ -108,12 +108,6 @@ Rectangle {
             return
         }
         _lastWalletFocusTrace = signature
-        console.info("[WALLET_FOCUS_TRACE:v2]",
-                     "focus:", GlobalData.listFocusing,
-                     "selectedIndex:", _selectedWalletModelIndex,
-                     "wallets:", AppModel.walletList.count,
-                     "pending:", pendingWalletCount,
-                     "pendingGroups:", pendingGroupCount)
     }
 
     function syncWalletFocus() {

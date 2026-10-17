@@ -67,7 +67,7 @@ Rectangle {
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             anchors.verticalCenter: parent.verticalCenter
-            onLinkActivated: Qt.openUrlExternally(link)
+            onLinkActivated: (link) => Qt.openUrlExternally(link)
             MouseArea {
                 anchors.fill: parent
                 cursorShape: _txt.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor

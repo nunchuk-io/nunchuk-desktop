@@ -89,7 +89,7 @@ QRadioSelect {
                 clip: true
                 text: radioRoot.textOutput
                 enabled: radioRoot.selected && radioRoot.enabled
-                onTypingFinished: radioRoot.typingFinished(currentText)
+                onTypingFinished: (currentText) => radioRoot.typingFinished(currentText)
                 onTextChanged: {
                     if (radioRoot.textOutput !== text) {
                         radioRoot.textOutput = text
