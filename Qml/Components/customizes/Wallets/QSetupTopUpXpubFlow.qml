@@ -58,10 +58,10 @@ Item {
 
     Connections {
         target: AppModel
-        onStartTopXPUBsSigner:{
+        function onStartTopXPUBsSigner() {
             _busyTopUp.open()
         }
-        onFinishTopXPUBsSigner:{
+        function onFinishTopXPUBsSigner() {
             _busyTopUp.close()
         }
     }

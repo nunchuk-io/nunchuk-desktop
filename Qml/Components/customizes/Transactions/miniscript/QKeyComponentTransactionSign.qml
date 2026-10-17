@@ -43,7 +43,6 @@ QKeyComponentTransaction {
     property int  tx_status     : transactionInfo.status
     property bool signerReadyToSign: miniscript.signerReadyToSign
     property int  signerType    : miniscript.signerType
-    // Item-wrapped actions have width 0, so they expose real width via "actionW"
     actionWidth: !actionLoader.item ? 0 : (actionLoader.item.actionW !== undefined ? actionLoader.item.actionW : actionLoader.item.width)
 
     Loader {

@@ -60,11 +60,11 @@ Rectangle {
             id: miniscriptContainer
             anchors.fill: parent
             anchors.margins: 12
-            anchors.rightMargin: 10  // 8 (QScrollBar width) + 2 gap; right-side actions anchor flush to this edge
+            anchors.rightMargin: 10
             spacing: 8
             Rectangle {
                 id: _timeLocked
-                width: parent.width - 10  // keep banner width unchanged after rightMargin 20 -> 10
+                width: parent.width - 10
                 height: 60
                 visible: (timelockedUntil !== undefined && timelockedUntil !== null) && timelockedUntil.hasLocked
                 color: "#FFEAF9"

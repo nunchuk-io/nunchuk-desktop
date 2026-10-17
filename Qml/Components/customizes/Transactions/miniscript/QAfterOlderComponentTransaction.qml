@@ -39,7 +39,7 @@ Item {
 
     QAfterOlderComponent {
         id: baseCommon
-        width: parent.width - actionLoader.width - 8  // 8 = gap to lock status
+        width: parent.width - actionLoader.width - 8
         height: parent.height
         isTransaction: true
     }

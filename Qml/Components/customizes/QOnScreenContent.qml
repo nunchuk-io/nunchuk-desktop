@@ -117,7 +117,7 @@ Item {
                     }
                     Loader {
                         id: extraHeaderInfo
-                        height: extraHeaderInfo.sourceComponent ? extraHeaderInfo.item.height : 0
+                        height: extraHeaderInfo.item ? extraHeaderInfo.item.height : 0
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
