@@ -194,6 +194,12 @@ bool QKeyRecovery::startRecovery(const QString &backup_password)
         AppModel::instance()->masterSignerList()->addMasterSigner(signer);
         AppModel::instance()->setMasterSignerInfo(signer);
         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(AppModel::instance()->masterSignerInfo()->id()));
+        foreach (QWalletPtr w, AppModel::instance()->walletList()->fullList()) {
+            if (w.data()->singleSignersAssigned()->containsMasterSignerId(fingerPrint)) {
+                w.data()->signersPtr()->cleardata();
+                AppModel::instance()->requestSyncWalletDb(w.data()->walletId());
+            }
+        }
         return true;
     } else {
         if (msg.code() == -6625) {

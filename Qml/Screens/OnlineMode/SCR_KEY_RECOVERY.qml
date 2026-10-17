@@ -153,6 +153,8 @@ QScreen {
                     horizontalCenter: parent.horizontalCenter
                 }
                 label.text: ""
+                property bool processingRecovery: false
+                nextEnable: !processingRecovery
                 onCloseClicked: {
                     _chose.close()
                 }
@@ -193,8 +195,11 @@ QScreen {
                 }
 
                 onNextClicked: {
+                    if (processingRecovery) return
+                    processingRecovery = true
                     var item = keyRecovery.tapsigners[signers.currentIndex]
                     QMLHandle.sendEvent(EVT.EVT_INPUT_TAPSIGNER_SELECT_REQUEST,item)
+                    processingRecovery = false
                 }
             }
         }
