@@ -806,7 +806,7 @@ QString UTXO::blocktimeDisplay()
         return "--/--/----"; // There is no time
     }
     else{
-        return QDateTime::fromMSecsSinceEpoch(this->blocktime()).toString( "MM/dd/yyyy hh:mm AP");
+        return QDateTime::fromSecsSinceEpoch(static_cast<qint64>(this->blocktime())).toString( "MM/dd/yyyy hh:mm AP");
     }
 }
 
@@ -816,7 +816,7 @@ QString UTXO::blocktimeDisplayTwo()
         return "--/--/----"; // There is no time
     }
     else{
-        QDateTime date_time = QDateTime::fromMSecsSinceEpoch(this->blocktime());
+        QDateTime date_time = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(this->blocktime()));
         return QString("%1 at %2")
             .arg(date_time.date().toString("MM/dd/yyyy"))
             .arg(date_time.time().toString("hh:mm AP"));
@@ -842,7 +842,7 @@ QString UTXO::scheduleTimeDisplay()
         return "--/--/----"; // There is no time
     }
     else{
-        return QDateTime::fromMSecsSinceEpoch(this->scheduleTime()).toString( "MM/dd/yyyy hh:mm AP");
+        return QDateTime::fromSecsSinceEpoch(static_cast<qint64>(this->scheduleTime())).toString( "MM/dd/yyyy hh:mm AP");
     }
 }
 

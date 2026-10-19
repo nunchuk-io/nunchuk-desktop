@@ -1576,7 +1576,7 @@ void Controller::slotFinishHealthCheckMasterSigner(const int state_id,
         AppModel::instance()->masterSignerInfo()->setSignature(signature);
         AppModel::instance()->masterSignerInfo()->setMessage(message);
         if(AppModel::instance()->walletList()) {
-            AppModel::instance()->walletList()->updateSignerHealthStatus(xfp, status, QDateTime::currentDateTime().toMSecsSinceEpoch());
+            AppModel::instance()->walletList()->updateSignerHealthStatus(xfp, status, QDateTime::currentDateTime().toSecsSinceEpoch());
         }
         emit finishedHealthCheckMasterSigner(true);
     }

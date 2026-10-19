@@ -1693,7 +1693,7 @@ void QNunchukRoom::downloadHistorical()
                 snapshot.consumeEvent.set_room_id(roomId.toStdString());
                 snapshot.consumeEvent.set_sender(event->senderId().toStdString());
                 snapshot.consumeEvent.set_ts(
-                            event->originTimestamp().toMSecsSinceEpoch());
+                            event->originTimestamp().toSecsSinceEpoch());
             }
             snapshots.push_back(std::move(snapshot));
         }
@@ -2603,7 +2603,7 @@ void QNunchukRoom::nunchukConsumeEvent(const RoomEvent &evt)
         e.set_content(QString(QJsonDocument(evt.contentJson()).toJson(QJsonDocument::Compact)));
         e.set_room_id(m_room->id());
         e.set_sender(evt.senderId());
-        e.set_ts(evt.originTimestamp().toMSecsSinceEpoch());
+        e.set_ts(evt.originTimestamp().toSecsSinceEpoch());
         matrixbrigde::ConsumeEvent(m_room->id(), e);
     }
 }
@@ -2619,7 +2619,7 @@ void QNunchukRoom::nunchukConsumeSyncEvent(const RoomEvent &evt)
             e.set_content(QString(QJsonDocument(evt.contentJson()).toJson(QJsonDocument::Compact)));
             e.set_room_id(m_room->id());
             e.set_sender(evt.senderId());
-            e.set_ts(evt.originTimestamp().toMSecsSinceEpoch());
+            e.set_ts(evt.originTimestamp().toSecsSinceEpoch());
             matrixbrigde::ConsumeSyncEvent(m_room->id(),e);
         }
     }
