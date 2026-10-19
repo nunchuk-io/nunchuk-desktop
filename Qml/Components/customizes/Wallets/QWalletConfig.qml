@@ -119,13 +119,8 @@ QOnScreenContentTypeA {
                     }
                 }
                 property bool isCanDeleted: !walletInfo.isAssistedWallet || isAssisted
-                // isAssistedWallet becomes false after replacement, so retain the
-                // underlying assisted-account identity through the service type.
-                property bool isAssistedAccount: walletInfo.isUserWallet || walletInfo.isGroupWallet
-                property bool canToggleArchive: walletInfo.isArchived
-                                                || !isAssistedAccount
-                                                || ((walletInfo.isReplaced || walletInfo.isLocked)
-                                                    && walletInfo.walletBalanceSats === 0)
+                property bool isAssistedAccount: walletInfo.isAssistedWallet || walletInfo.isUserWallet || walletInfo.isGroupWallet
+                property bool canToggleArchive: walletInfo.isArchived || !isAssistedAccount || walletInfo.walletBalanceSats === 0
                 property bool isPrimaryOwner: (myRole === "MASTER" || myRole === "ADMIN") && (walletInfo.ownerMembers.length > 0)
                 menuWidth: 300
                 property var exportMenu: [
@@ -320,9 +315,6 @@ QOnScreenContentTypeA {
                         enable: canToggleArchive,
                         subMenu: null,
                         action: function(){
-                            if (!canToggleArchive) {
-                                return
-                            }
                             othersContextMenu.close()
                             walletInfo.handleArchiveWallet()
                         }
