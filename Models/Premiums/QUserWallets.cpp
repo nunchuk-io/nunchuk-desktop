@@ -1,5 +1,6 @@
 #include <QQmlEngine>
 #include <QJsonDocument>
+#include <QThread>
 #include "bridgeifaces.h"
 #include "AppModel.h"
 #include "QUserWallets.h"
@@ -65,7 +66,11 @@ void QUserWallets::ApplyDraftWallet(bool fetched, const QJsonObject &output)
             QJsonArray members;
             members.append(member);
             info["members"] = members;
-            emit makeDashBoard(info);
+            if (QThread::currentThread() == thread()) {
+                slotMakeDashBoard(info);
+            } else {
+                emit makeDashBoard(info);
+            }
             QJsonArray signers = draft_wallet["signers"].toArray();
             for (auto js : signers) {
                 QJsonObject signer = js.toObject();

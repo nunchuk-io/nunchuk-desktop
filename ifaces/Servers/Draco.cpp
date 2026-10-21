@@ -2200,6 +2200,9 @@ bool Draco::assistedWalletUpdate(const QString &wallet_id, const QString &name, 
 
 bool Draco::assistedKeyUpdateName(const QString &fingerPrint, const QString &name, const QJsonObject& json)
 {
+    if (!CLIENT_INSTANCE->isNunchukLoggedIn()) {
+        return false;
+    }
     QJsonObject data;
     if (json.isEmpty()) {
         data["name"] = name;
