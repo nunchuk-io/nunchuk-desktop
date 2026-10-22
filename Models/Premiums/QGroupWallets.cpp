@@ -289,6 +289,11 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
 
 void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
 {
+    if (wallet_id.isEmpty() && !group_id.isEmpty()) {
+        if (auto target = GetDashboard(group_id)) {
+            target->setShowDashBoard(true);
+        }
+    }
     setDashboardInfo(group_id, wallet_id);
     DBG_INFO << mDashboard;
     if (mDashboard) {
@@ -389,13 +394,9 @@ void QGroupWallets::setDashboardInfo(const QString &group_id, const QString &wal
         emit dashboardInfoChanged();
     }
     else if (group_id != "") {
-        if (mDashboard) {
-            if (qUtils::strCompare(group_id, mDashboard->groupId())){
-                return;
-            }
-            else{
-                mDashboard->setShowDashBoard(false);
-            }
+        QGroupDashboardPtr previous = mDashboard;
+        if (previous && qUtils::strCompare(group_id, previous->groupId())) {
+            return;
         }
 
         for (auto ptr : mPendingWallets) {
@@ -412,6 +413,9 @@ void QGroupWallets::setDashboardInfo(const QString &group_id, const QString &wal
             }
         }
         emit dashboardInfoChanged();
+        if (previous) {
+            previous->setShowDashBoard(false);
+        }
     }
     else {
         if (mDashboard) {

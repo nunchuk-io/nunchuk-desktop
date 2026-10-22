@@ -20,7 +20,8 @@ class SetUpBufferPeriodViewModel : public ActionViewModel {
     
   public slots:
     void onContinueClicked();
-  private: 
+  private:
+    void applyCurrentBufferPeriod();
     GetListBufferPeriodsUseCase m_getListBufferPeriodsUC;
 };
 } // namespace features::inheritance::offchain::viewmodels

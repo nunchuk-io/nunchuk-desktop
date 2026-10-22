@@ -63,10 +63,7 @@ QtObject {
         if (isKeyHolderLimitedRestricted(tag)) return false
         return SignerManagement.isSupportedInheritance(tag, walletType)
     }
-    // BUGFIX: MINISCRIPT (on-chain) hardware support is NOT wallet-type-agnostic (e.g. Trezor/BitBox
-    // can't sign MINISCRIPT yet - confirmed real device test) - must check backend supported_signers[]
-    // for MINISCRIPT. MULTI_SIG (off-chain) keeps the old static list unconditionally (confirmed
-    // backend has no reliable non-inheritance data for MULTI_SIG - avoid any off-chain impact here).
+
     function isSupportedNotInheritance(tag) {
         if (isKeyHolderLimitedRestricted(tag)) return false
         if (isMiniscript) {
@@ -89,13 +86,9 @@ QtObject {
                           ? function(tag) { return isSupportedInheritance(tag) }
                           : function(tag) { return isSupportedNotInheritance(tag) }
 
-        // Filter keys by support predicate, ignoring invalid entries.
-        // BUGFIX: Krux has no real add-key flow wired on Desktop - hide it unconditionally even if
-        // backend supported_signers[] lists it as supported (it's a mobile-only capability for now).
         var ret = allKeys.filter(function(key) {
             return key && key.tag && key.tag !== "KRUX" && isSupported(key.tag)
         })
-        console.log("Supported Keys: ", ret)
         return ret
     }
 }
