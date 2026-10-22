@@ -193,7 +193,7 @@ QScreen {
     }
     Connections {
         target: Draco
-        onChangePasswordResult: {
+        function onChangePasswordResult(https_code, error_code, error_msg) {
             processingChangePasswordResult(https_code, error_code, error_msg)
         }
     }

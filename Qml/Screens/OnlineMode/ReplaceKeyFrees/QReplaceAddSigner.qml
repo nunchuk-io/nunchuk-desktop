@@ -88,7 +88,7 @@ QOnScreenContentTypeA {
         state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
         Connections {
             target: walletInfo
-            onDeviceListChanged: {
+            function onDeviceListChanged() {
                 mDevicelist.currentIndex = -1
             }
         }

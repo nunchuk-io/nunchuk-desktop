@@ -143,11 +143,11 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: vm
-        onStartLoading: {
+        function onStartLoading() {
             createTxBusyBox.open();
             timerCreateTx.restart();
         }
-        onStopLoading: {
+        function onStopLoading() {
             createTxBusyBox.close();
         }
     }

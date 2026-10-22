@@ -41,7 +41,7 @@ QScreen {
     property var challengemessage:""
     Connections{
         target: Draco
-        onSignalpkey_signin:{
+        function onSignalpkey_signin(https_code, error_code, error_msg) {
             loadercontent.item.signalpkey_signin(https_code, error_code, error_msg)
         }
     }

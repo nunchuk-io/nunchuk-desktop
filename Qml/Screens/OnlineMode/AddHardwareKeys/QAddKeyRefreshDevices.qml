@@ -256,7 +256,7 @@ Item {
     }
     Connections {
         target: vm
-        onNotifySignerExist: {
+        function onNotifySignerExist(isSoftware) {
             showPopupInfo(isSoftware, selected_xfp)
         }
     }

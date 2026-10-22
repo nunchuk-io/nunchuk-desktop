@@ -68,7 +68,7 @@ Item {
 
     Connections {
         target: ServiceSetting.servicesTag
-        onSecurityQuestionChanged: {
+        function onSecurityQuestionChanged() {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 _Security.action = function() {
                     var _input = {
@@ -79,7 +79,7 @@ Item {
                 _Security.open();
             }
         }
-        onInheritanceDiscardChangeAlert: {
+        function onInheritanceDiscardChangeAlert() {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 _confirm.title = STR.STR_QML_024
                 _confirm.contentText = STR.STR_QML_919

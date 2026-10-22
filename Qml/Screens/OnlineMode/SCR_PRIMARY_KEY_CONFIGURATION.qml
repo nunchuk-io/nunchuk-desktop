@@ -119,7 +119,7 @@ QScreen {
     }
     Connections{
         target: Draco
-        onSignalpkey_signup:{
+        function onSignalpkey_signup(https_code, error_code, error_msg) {
             signalpkey_signup(https_code, error_code, error_msg)
         }
     }

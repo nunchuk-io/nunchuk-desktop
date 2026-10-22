@@ -1237,10 +1237,10 @@ Item {
     }
     Connections {
         target: walletInfo
-        onRollOverProcess: {
+        function onRollOverProcess(address) {
             requestRollOverProcess(address)
         }
-        onRequestCreateTransaction: {
+        function onRequestCreateTransaction(address) {
             requestSelectedCoin(address)
         }
     }

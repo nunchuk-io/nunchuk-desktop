@@ -29,19 +29,19 @@ RightPanelNavigator {
     }
     Connections {
         target: ServiceSetting.servicesTag
-        onNotPaidAlert: {
+        function onNotPaidAlert() {
             _InfoVer.notPaidAlert()
         }
-        onIsExpiredAlert: {
+        function onIsExpiredAlert() {
             _InfoVer.isExpiredAlert()
         }
-        onHasNotBeenActivatedYetAlert: {
+        function onHasNotBeenActivatedYetAlert() {
             _info1.open()
         }
-        onComeBackLaterAlert: {
+        function onComeBackLaterAlert(errormsg) {
             _info1.comeBackLaterAlert(errormsg)
         }
-        onSecurityDepositRequiredAlert:  {
+        function onSecurityDepositRequiredAlert(errormsg) {
             _InfoVer.securityDepositRequiredAlert(errormsg)
         }
     }

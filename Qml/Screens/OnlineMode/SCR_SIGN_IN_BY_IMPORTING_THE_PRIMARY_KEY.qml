@@ -42,7 +42,7 @@ QScreen {
     property string passphrase: ""
     Connections{
         target: Draco
-        onSignalpkey_signin:{
+        function onSignalpkey_signin(https_code, error_code, error_msg) {
             loadercontent.item.signalpkey_signin(https_code, error_code, error_msg)
         }
     }
@@ -455,7 +455,7 @@ QScreen {
 
             Connections {
                 target: AppModel
-                onNotifySignerExist: {
+                function onNotifySignerExist(isSoftware, fingerPrint) {
                     _content.showPopupInfo(isSoftware, fingerPrint)
                 }
             }

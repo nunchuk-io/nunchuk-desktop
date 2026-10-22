@@ -86,7 +86,7 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: keyRecovery
-        onBackupPasswordErrorAlert: {
+        function onBackupPasswordErrorAlert(errormsg) {
             backupPassword.errorText = errormsg
             backupPassword.isValid = false
             backupPassword.showError = true

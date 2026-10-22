@@ -193,7 +193,7 @@ Item {
                 Rectangle {
                     id: hourHand
                     width: 4
-                    height: parent.height * 0.3
+                    height: (analogClock.hours >= 13 || analogClock.hours === 0 ? parent.width/2 - 18 : parent.width/2 - 35) - 20
                     color: analogClock.settingHours ? "#4CAF50" : "#999999"
                     radius: 2
                     anchors.horizontalCenter: parent.horizontalCenter

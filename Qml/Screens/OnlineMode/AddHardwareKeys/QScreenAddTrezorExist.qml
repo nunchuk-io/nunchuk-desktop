@@ -308,7 +308,7 @@ QScreenAdd {
     // Events mapping to ScreenState
     Connections {
         target: draftWallet
-        onAddHardwareAlert: {
+        function onAddHardwareAlert() {
             stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
         }
     }

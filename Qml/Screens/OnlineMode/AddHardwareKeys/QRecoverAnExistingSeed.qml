@@ -301,7 +301,7 @@ QOnScreenContentTypeB {
     }
     Connections {
         target: vm
-        onNotifySignerExist: {
+        function onNotifySignerExist(isSoftware, fingerPrint) {
             showPopupInfo(isSoftware, fingerPrint)
         }
     }

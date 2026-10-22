@@ -229,7 +229,7 @@ QOnScreenContentTypeA {
 
     Connections {
         target: AppModel.walletInfo
-        onSignMessageChanged: {
+        function onSignMessageChanged() {
             _indicator.stop()
         }
     }

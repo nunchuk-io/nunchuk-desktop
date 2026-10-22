@@ -385,10 +385,10 @@ Item {
 
     Connections {
         target: Draco
-        onCreateAccountResult: {
+        function onCreateAccountResult(https_code, error_code, error_msg) {
             contentLoader.item.processingCreateAccountResult(https_code, error_code, error_msg)
         }
-        onChangePasswordResult: {
+        function onChangePasswordResult(https_code, error_code, error_msg) {
             contentLoader.item.processingChangePasswordResult(https_code, error_code, error_msg)
         }
     }

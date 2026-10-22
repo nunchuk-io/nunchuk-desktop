@@ -57,7 +57,7 @@ QOnScreenContentTypeB {
             }
             Connections {
                 target: vm
-                onValueTimezoneChanged: {
+                function onValueTimezoneChanged() {
                     settingTimezone.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
                 }
             }

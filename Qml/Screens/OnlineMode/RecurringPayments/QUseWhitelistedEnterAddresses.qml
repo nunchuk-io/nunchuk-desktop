@@ -65,13 +65,13 @@ Item {
     }
     Connections {
         target: _content
-        onSignalAddAddress: {
+        function onSignalAddAddress() {
             _item.addAddress()
         }
-        onSignalSetAddress: (address) => {
+        function onSignalSetAddress(index, address) {
             _item.setAddress(index, address)
         }
-        onSignalFinalAddress: {
+        function onSignalFinalAddress() {
             if (isSelected) {
                 var _input = {
                     type: "import-address-list",

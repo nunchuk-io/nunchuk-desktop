@@ -243,13 +243,13 @@ QScreen {
 
                 Connections {
                     target: AppModel
-                    onNotifySignerExist: {
+                    function onNotifySignerExist(isSoftware, fingerPrint) {
                         _content.showPopupInfo(isSoftware, fingerPrint)
                     }
                 }
                 Connections {
                     target: _info
-                    onYesClicked: {
+                    function onYesClicked() {
                         var signerObj = {
                             "signername"    : rootAddsignerToWallet.signerNameInputted,
                             "passphrase"    : passphrase.textInputted,
@@ -461,7 +461,7 @@ QScreen {
         }
         Connections {
             target: AppModel
-            onAddSignerPercentageChanged : {
+            function onAddSignerPercentageChanged() {
                 if(AppModel.addSignerPercentage === 100){
                     delayClose.restart()
                 }

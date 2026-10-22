@@ -42,10 +42,10 @@ Item {
     enabled: !isDisable
     Connections {
         target: ServiceSetting.servicesTag
-        onServerKeyVerifyPasswordAlert: {
+        function onServerKeyVerifyPasswordAlert() {
             ServiceSetting.optionIndex = _PLATFORM_KEY_CO_SIGNING_POLICIES
         }
-        onSecurityQuestionChanged: {
+        function onSecurityQuestionChanged() {
             if (ServiceSetting.optionIndex === _PLATFORM_KEY_CO_SIGNING_POLICIES) {
                 _Security.action = function() {
                     QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED)
@@ -53,18 +53,18 @@ Item {
                 _Security.open();
             }
         }
-        onThereNoAssistedWalletAlert: {
+        function onThereNoAssistedWalletAlert() {
             _info1.thereNoWalletAssitedAlert()
         }
     }
     Connections {
         target: ServiceSetting.walletInfo.serverKeyInfo
-        onSecurityQuestionClosed: {
+        function onSecurityQuestionClosed() {
             if (ServiceSetting.optionIndex === _PLATFORM_KEY_CO_SIGNING_POLICIES) {
                 _Security.close()
             }
         }
-        onServerKeyDummyTransactionAlert: {
+        function onServerKeyDummyTransactionAlert() {
             if (ServiceSetting.optionIndex === _PLATFORM_KEY_CO_SIGNING_POLICIES) {
                 QMLHandle.sendEvent(EVT.EVT_HEALTH_CHECK_STARTING_REQUEST)
             }

@@ -170,7 +170,7 @@ QScreen {
     }
     Connections {
         target: Draco
-        onCreateAccountResult: {
+        function onCreateAccountResult(https_code, error_code, error_msg) {
             processingCreateAccountResult(https_code, error_code, error_msg)
         }
     }

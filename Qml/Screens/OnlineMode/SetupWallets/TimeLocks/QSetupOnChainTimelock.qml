@@ -193,17 +193,17 @@ QOnScreenContentTypeA {
 
                         Connections {
                             target: vm
-                            onValueTimezoneChanged: {
+                            function onValueTimezoneChanged() {
                                 if (_timezoneInput.selectedTimezone !== vm.valueTimezone) {
                                     _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
                                 }
                             }
-                            onIsShowBlockHeightChanged: {
+                            function onIsShowBlockHeightChanged() {
                                 if(vm.isShowBlockHeight && !vm.isInit){
                                     blockBaseInfo.blockBasedTimelock();
                                 }
                             }
-                            onInvalidDateAlert: {
+                            function onInvalidDateAlert() {
                                 _invalidDateAlert.open()
                             }
                         }

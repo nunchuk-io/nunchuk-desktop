@@ -159,7 +159,7 @@ QOnScreenContentTypeA {
         }
         Connections {
             target: walletInfo
-            onUpdateTagNameChanged: {
+            function onUpdateTagNameChanged(isError) {
                 if (isError) {
                     coinname.isValid = false
                     coinname.showError = true

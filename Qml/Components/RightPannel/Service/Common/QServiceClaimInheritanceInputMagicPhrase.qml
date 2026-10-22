@@ -240,18 +240,20 @@ Item {
                                 }
 
                                 function enterKeyRequest() {
-                                    if (sglst.currentIndex !== -1) {
+                                    var current = sglst.currentIndex !== -1 ? modelSearch.get(sglst.currentIndex) : null;
+                                    if (current) {
                                         var splitString = magicPhrase.textInputted.split(" ");
-                                        splitString[splitString.length - 1] = modelSearch.get(sglst.currentIndex).mnemonic;
+                                        splitString[splitString.length - 1] = current.mnemonic;
                                         magicPhrase.textInputted = splitString.toString(" ");
                                         sglst.currentIndex = -1;
                                     }
                                 }
 
                                 function mouseKeyRequest(index) {
-                                    if (index !== -1) {
+                                    var picked = index !== -1 ? modelSearch.get(index) : null;
+                                    if (picked) {
                                         var splitString = magicPhrase.textInputted.split(" ");
-                                        splitString[splitString.length - 1] = modelSearch.get(index).mnemonic;
+                                        splitString[splitString.length - 1] = picked.mnemonic;
                                         magicPhrase.textInputted = splitString.toString(" ");
                                     }
                                     sglst.currentIndex = -1;
@@ -346,7 +348,7 @@ Item {
 
     Connections {
         target: vm
-        onGotoOnChain: {
+        function onGotoOnChain(inheritance_key_count) {
             _prepareInheritanceKey.onChainClaim(inheritance_key_count);
         }
     }

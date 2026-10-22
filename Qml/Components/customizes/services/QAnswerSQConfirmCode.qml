@@ -76,19 +76,19 @@ QOnScreenContentTypeA {
         }
         Connections {
             target: ServiceSetting.servicesTag
-            onAnswerErrorAlert: {
+            function onAnswerErrorAlert(errormsg) {
                 answer.errorText = errormsg
                 answer.isValid = false
                 answer.showError = true
                 _indicator.visible = false
             }
-            onConfirmCodeVerified: {
+            function onConfirmCodeVerified() {
                 _indicator.visible = false
             }
         }
         Connections {
             target: _content
-            onClearText: {
+            function onClearText() {
                 answer.textInputted = ""
             }
         }

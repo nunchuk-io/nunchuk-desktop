@@ -513,7 +513,7 @@ QScreen {
     }
     Connections {
         target: AppModel
-        onAddSignerPercentageChanged : {
+        function onAddSignerPercentageChanged() {
             if(AppModel.addSignerPercentage === 100){
                 stateAddSignerXPRV.visible = false
             }

@@ -445,12 +445,12 @@ Item {
    
     Connections {
         target: inheritancePlanInfo
-        onSecurityQuestionClosed: {
+        function onSecurityQuestionClosed() {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 _Security.close()
             }
         }
-        onInheritanceDummyTransactionAlert: {
+        function onInheritanceDummyTransactionAlert() {
             if (ServiceSetting.optionIndex === _VIEW_INHERITANCE_PLANING) {
                 QMLHandle.sendEvent(EVT.EVT_HEALTH_CHECK_STARTING_REQUEST)
             }

@@ -67,7 +67,7 @@ Item {
     }
     Connections {
         target: _content
-        onSignalSetAddress: (address) => {
+        function onSignalSetAddress(address) {
             wallet_address = address
         }
     }

@@ -74,7 +74,7 @@ QOnScreenContentTypeA {
                 }
                 Connections {
                     target: _content
-                    onSignalFrequencyApply: {
+                    function onSignalFrequencyApply() {
                         if (AppModel.walletInfo.recurringPayment.isValidDate(_date.start_date, _date.end_date, _date.noEndate, _repeat.option))
                         {
                             var _input = {
@@ -86,7 +86,7 @@ QOnScreenContentTypeA {
                             QMLHandle.sendEvent(EVT.EVT_RECURRING_PAYMENTS_ENTER, _input)
                         }
                     }
-                    onSignalBeginApply: {
+                    function onSignalBeginApply() {
                         if (_date.start_date === "") {
                             AppModel.showToast(-1, STR.STR_QML_1168, EWARNING.ERROR_MSG);
                         }
@@ -102,7 +102,7 @@ QOnScreenContentTypeA {
                             }
                         }
                     }
-                    onSignalChangeDate: {
+                    function onSignalChangeDate() {
                         _date.needChangeDate()
                     }
                 }

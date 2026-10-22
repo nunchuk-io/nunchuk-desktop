@@ -106,7 +106,7 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: AppModel
-        onMnemonicChanged: {
+        function onMnemonicChanged() {
             _content.contentItem.randomSeedSelection()
         }
     }

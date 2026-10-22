@@ -249,7 +249,7 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: dummyTx
-        onRegisterWalletWithDevice: {
+        function onRegisterWalletWithDevice() {
             _warning.open()
         }
     }

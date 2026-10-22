@@ -50,7 +50,7 @@ QScreen {
     }
     Connections {
         target: dashboardInfo
-        onEditMembersSuccessChanged: {
+        function onEditMembersSuccessChanged() {
             config_flow = "edit_members_success"
         }
     }

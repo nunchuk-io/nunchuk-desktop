@@ -168,7 +168,7 @@ Item {
     }
     Connections {
         target: walletInfo
-        onUpdateTagNameChanged: {
+        function onUpdateTagNameChanged(isError) {
             if (isError) {
                 inputTag.isValid = false
                 inputTag.showError = true

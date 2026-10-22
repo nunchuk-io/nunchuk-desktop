@@ -100,7 +100,7 @@ QPopupEmpty {
             }
             Connections {
                 target: walletInfo
-                onUpdateCollectionNameChanged: {
+                function onUpdateCollectionNameChanged(isError) {
                     if (isError) {
                         collection_name.isValid = false
                         collection_name.showError = true
@@ -182,7 +182,7 @@ QPopupEmpty {
             }
             Connections {
                 target: _collect_name
-                onClearPopup: {
+                function onClearPopup() {
                     clear()
                 }
             }

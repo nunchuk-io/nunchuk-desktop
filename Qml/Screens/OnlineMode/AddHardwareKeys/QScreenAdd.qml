@@ -34,7 +34,7 @@ Item {
 
     Connections {
         target: draftWallet
-        onAddHardwareAlert: {
+        function onAddHardwareAlert() {
             if (_item.visible) {
                 _info1.open()
             }

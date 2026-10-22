@@ -100,7 +100,7 @@ Item {
                 property var networkSave
                 Connections {
                     target: AppSetting
-                    onMainnetServerSelected: {
+                    function onMainnetServerSelected(network) {
                         mainnetsever.textOutput = network.name
                         devselection.networkSave = network
                     }
