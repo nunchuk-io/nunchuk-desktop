@@ -324,7 +324,7 @@ Item {
                     QLato {
                         width: 150
                         height: 28
-                        text: STR.STR_QML_954.arg(slot_index)
+                        text: slot_index === 1 ? STR.STR_QML_084 : STR.STR_QML_954.arg(slot_index)
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -526,7 +526,7 @@ Item {
                     spacing: 4
                     QLato {
                         width: 150
-                        text: STR.STR_QML_954.arg(slot_index)
+                        text: slot_index === 1 ? STR.STR_QML_084 : STR.STR_QML_954.arg(slot_index)
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
