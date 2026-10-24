@@ -85,7 +85,7 @@ QOnScreenContentTypeB {
                     height: visible ? 122 : 0
                     visible: modelData.keyinfo.type !== "SERVER" && (modelData.reminder ? false : true)
                     isChecked: listChecked[index]
-                    onNotifyChecked: {
+                    onNotifyChecked: function(isChecked) {
                         listChecked[index] = isChecked
                         listXfp[index] = isChecked ? modelData.keyinfo.xfp : ""
                         change = !change

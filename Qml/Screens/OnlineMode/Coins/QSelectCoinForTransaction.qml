@@ -57,7 +57,7 @@ QOnScreenContentTypeA {
             QSearchingBoxTwo {
                 id: _search
                 width: 622
-                onFilterTextChanged: {
+                onFilterTextChanged: function(text) {
                     var input = {
                         type: "filtering-text",
                         searchText: text

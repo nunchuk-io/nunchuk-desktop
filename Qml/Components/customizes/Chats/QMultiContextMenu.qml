@@ -64,7 +64,7 @@ Popup {
 
     background: Rectangle {
         id: _bg
-        transformOrigin: optionMenu._origin   // scale cùng gốc với content
+        transformOrigin: optionMenu._origin
         radius: 8
         color: "#FFFFFF"
         layer.enabled: true

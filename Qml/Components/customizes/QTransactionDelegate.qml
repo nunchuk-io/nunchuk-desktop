@@ -241,7 +241,7 @@ Rectangle {
                     text: memo.convertToClickableLinks(transactionMemo)
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
-                    onLinkActivated: {
+                    onLinkActivated: function(link) {
                         Qt.openUrlExternally(link)
                     }
                     function convertToClickableLinks(text) {

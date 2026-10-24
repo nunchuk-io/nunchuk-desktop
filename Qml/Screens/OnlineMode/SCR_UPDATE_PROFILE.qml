@@ -137,7 +137,7 @@ QScreen {
 
     Connections {
         target: ClientController
-        onUserChanged: {
+        function onUserChanged() {
             avatar.avatarUrl = ClientController.user.avatar
             avatar.avatarLocal = ClientController.user.avatar
             username.textInputted = ClientController.user.name
@@ -155,7 +155,7 @@ QScreen {
 
     Connections{
         target: Draco
-        onUpdateProfileResult:{
+        function onUpdateProfileResult(https_code, error_code) {
             if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                 _warning.open()
             }

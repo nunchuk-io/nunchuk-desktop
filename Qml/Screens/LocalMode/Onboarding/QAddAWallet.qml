@@ -405,7 +405,7 @@ QOnScreenContentTypeA {
         id: enterLink
         title: STR.STR_QML_1637
         btnLabels: [STR.STR_QML_035, STR.STR_QML_097]
-        onEnterText: {
+        onEnterText: function(str) {
             var _input = {
                 type: "enter-link-url",
                 sandboxUrl: str
@@ -415,7 +415,7 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: SharedWallet
-        onGroupWalletLimitChanged: {
+        function onGroupWalletLimitChanged() {
             if (isGuest) {
                 _guest_user.open()
             } else {

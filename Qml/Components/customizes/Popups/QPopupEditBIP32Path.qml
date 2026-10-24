@@ -129,8 +129,8 @@ Popup {
                             QCircleIcon {
                                 bgSize: 48
                                 icon.iconSize: 24
-                                icon.type: singleData.single_signer_type
-                                icon.tag: singleData.single_signer_tag
+                                icon.type: singleData.single_signer_type || 0
+                                icon.tag: singleData.single_signer_tag || ""
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: "#F5F5F5"
                             }
@@ -140,7 +140,7 @@ Popup {
                                 QText {
                                     width: 146
                                     height: 20
-                                    text: singleData.singleSigner_name
+                                    text: singleData.singleSigner_name || ""
                                     color: "#031F2B"
                                     font.weight: Font.Normal
                                     font.family: "Lato"
@@ -167,7 +167,7 @@ Popup {
                         enabled: false
                         titleFontSize: 12
                         disabledColor: "#F5F5F5"
-                        textInputted: singleData.singleSigner_derivationPath
+                        textInputted: singleData.singleSigner_derivationPath || ""
                     }
                     Column {
                         width: parent.width
@@ -179,7 +179,7 @@ Popup {
                             boxHeight: 48
                             isValid: true
                             titleFontSize: 12
-                            textInputted: singleData.singleSigner_derivationPath
+                            textInputted: singleData.singleSigner_derivationPath || ""
                             onTextInputtedChanged: {
                                 if(!newBip32Path.isValid) {
                                     newBip32Path.isValid = true

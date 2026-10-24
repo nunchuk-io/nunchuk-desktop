@@ -1576,7 +1576,7 @@ void Controller::slotFinishHealthCheckMasterSigner(const int state_id,
         AppModel::instance()->masterSignerInfo()->setSignature(signature);
         AppModel::instance()->masterSignerInfo()->setMessage(message);
         if(AppModel::instance()->walletList()) {
-            AppModel::instance()->walletList()->updateSignerHealthStatus(xfp, status, QDateTime::currentDateTime().toMSecsSinceEpoch());
+            AppModel::instance()->walletList()->updateSignerHealthStatus(xfp, status, QDateTime::currentDateTime().toSecsSinceEpoch());
         }
         emit finishedHealthCheckMasterSigner(true);
     }
@@ -2091,13 +2091,15 @@ void Controller::slotFinishReloadGroupWallets(std::vector<nunchuk::Wallet> walle
     }
 }
 
-void Controller::slotApplySyncWalletSnapshot(const QString &,
+void Controller::slotApplySyncWalletSnapshot(const QString &wallet_id,
                                              nunchuk::Wallet wallet,
                                              bool walletLoaded)
 {
-    auto currentWallet = AppModel::instance()->walletInfo();
-    if (walletLoaded && currentWallet) {
-        currentWallet->setNunchukWallet(wallet);
+    if (!walletLoaded) return;
+    if (auto list = AppModel::instance()->walletList()) {
+        if (QWalletPtr target = list->getWalletById(wallet_id)) {
+            target->setNunchukWallet(wallet);
+        }
     }
 }
 

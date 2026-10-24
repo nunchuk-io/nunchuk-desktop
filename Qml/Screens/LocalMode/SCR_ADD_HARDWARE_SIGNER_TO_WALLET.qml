@@ -312,13 +312,13 @@ QScreen {
                     }
                     Connections {
                         target: AppModel
-                        onNotifySignerExist: {
+                        function onNotifySignerExist(isSoftware, fingerPrint) {
                             showPopupInfo(isSoftware, fingerPrint)
                         }
                     }
                     Connections {
                         target: _info
-                        onYesClicked: {
+                        function onYesClicked() {
                             if (tabselect.currentIndex === 0) {
                                 var masterSignerObj = {
                                     "key_name"              : signerName.textOutput,
@@ -403,7 +403,7 @@ QScreen {
 
                     Connections {
                         target: qrscaner
-                        onTagFound: {
+                        function onTagFound() {
                             var jsonstring = "";
                             jsonstring = AppModel.parseQRSigners(qrscaner.tags)
                             if(jsonstring !== ""){
@@ -422,7 +422,7 @@ QScreen {
 
                     Connections{
                         target: fileDialog
-                        onAccepted: {
+                        function onAccepted() {
                             var jsonstring = "";
                             jsonstring = AppModel.parseJSONSigners(fileDialog.file)
                             tabremoteSigner.jsonProcess(jsonstring)
@@ -431,14 +431,14 @@ QScreen {
 
                     Connections {
                         target: AppModel
-                        onNotifySignerExist: {
+                        function onNotifySignerExist(isSoftware, fingerPrint) {
                             showPopupInfo(isSoftware, fingerPrint)
                         }
                     }
 
                     Connections {
                         target: _info
-                        onYesClicked: {
+                        function onYesClicked() {
                             if (tabselect.currentIndex === 1) {
                                 selectType = eADD_KEY
                             }
@@ -786,8 +786,8 @@ QScreen {
 
     Connections {
         target: AppModel
-        onStartCreateRemoteSigner: { }
-        onFinishedCreateRemoteSigner: {
+        function onStartCreateRemoteSigner() { }
+        function onFinishedCreateRemoteSigner() {
             createRemoteBusyBox.close()
         }
     }

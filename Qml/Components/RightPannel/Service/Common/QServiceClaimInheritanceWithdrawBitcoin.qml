@@ -174,7 +174,7 @@ Item {
                             function() { vm.withdrawToWalletClicked() },
                             function() { vm.withdrawToAddressClicked() },
                         ]
-                        onItemClicked: {
+                        onItemClicked: function(index) {
                             var action = imExContextMenu.functions[index]
                             action()
                         }

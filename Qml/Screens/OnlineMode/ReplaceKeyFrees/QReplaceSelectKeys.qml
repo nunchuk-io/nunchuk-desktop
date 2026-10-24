@@ -82,7 +82,7 @@ QOnScreenContentTypeA {
                         setReplaceFlow("replace-existing-key")
                         selectReplaceKey(model.singleSigner_masterFingerPrint, index)
                     }
-                    onRemoveClicked: {
+                    onRemoveClicked: function(idx) {
                         _confirmRemoveKey.idx = idx
                         _confirmRemoveKey.open()
                     }
@@ -135,7 +135,7 @@ QOnScreenContentTypeA {
                     ls.push("#031F2B")
                     return ls
                 }
-                onItemClicked: {
+                onItemClicked: function(index) {
                     functions[index]()
                 }
             }

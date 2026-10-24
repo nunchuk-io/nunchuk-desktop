@@ -131,6 +131,8 @@ Rectangle {
 
     Connections {
         target: AppModel
-        onFinishedScanDevices : stopRefresh()
+        function onFinishedScanDevices() {
+            stopRefresh()
+        }
     }
 }

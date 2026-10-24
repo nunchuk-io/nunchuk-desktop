@@ -158,7 +158,7 @@ Rectangle {
             !ClientController.isNunchukLoggedIn,
         ]
 
-        onItemClicked: {
+        onItemClicked: function(index) {
             switch(index){
             case 0:// Update profile
                 updateProfileRequest()

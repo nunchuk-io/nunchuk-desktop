@@ -615,13 +615,13 @@ QScreen {
     }
     Connections {
         target: AppModel
-        onFinishGenerateSigner : {
+        function onFinishGenerateSigner() {
             busyOverlay.visible = false
             indexSignerNeedGetXpub = -1
             nameSignerNeedGetXpub = ""
             busyIndi.sourceComponent = null
         }
-        onFinishedCreateWallet: {
+        function onFinishedCreateWallet() {
             busyIndi.sourceComponent = null
             busyOverlay.visible = false
             createWalletWithoutBackupTimer.stop()

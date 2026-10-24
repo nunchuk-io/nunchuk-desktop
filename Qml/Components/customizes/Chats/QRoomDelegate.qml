@@ -248,7 +248,7 @@ Rectangle {
         icons: [
             "qrc:/Images/Images/Delete.svg"
         ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             functions[index]()
         }
     }

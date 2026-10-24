@@ -44,6 +44,11 @@ Rectangle {
     property string _focusedPendingGroupId: ""
     property string _focusedPendingWalletId: ""
     property string _lastWalletFocusTrace: ""
+    property string _autoSelectKey: ""
+    property string _groupFocusWalletId: ""
+    property string focusedPendingGroupName: ""
+    readonly property bool isPendingGroupFocused: GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET
+                                                  && _focusedPendingGroupId !== ""
     // QAbstractItemModel::modelReset can replace/reorder rows without changing
     // count. Keep an explicit dependency so the selected wallet ID is rescanned.
     property int _walletModelRevision: 0
@@ -108,18 +113,13 @@ Rectangle {
             return
         }
         _lastWalletFocusTrace = signature
-        console.info("[WALLET_FOCUS_TRACE:v2]",
-                     "focus:", GlobalData.listFocusing,
-                     "selectedIndex:", _selectedWalletModelIndex,
-                     "wallets:", AppModel.walletList.count,
-                     "pending:", pendingWalletCount,
-                     "pendingGroups:", pendingGroupCount)
     }
 
     function syncWalletFocus() {
         var pendingGroupIndex = pendingGroupIndexById(_focusedPendingGroupId)
         if (GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET
-                && pendingGroupIndex >= 0) {
+                && pendingGroupIndex >= 0
+                && _selectedWalletId === _groupFocusWalletId) {
             if (SharedWallet.currentIndex !== pendingGroupIndex) {
                 SharedWallet.currentIndex = pendingGroupIndex
             }
@@ -128,6 +128,7 @@ Rectangle {
         }
         if (hasActivePendingWalletDashboard()) {
             var pendingIndex = pendingWalletIndexById(GroupWallet.dashboardInfo.groupId)
+            _autoSelectKey = ""
             _focusedPendingGroupId = ""
             _focusedPendingWalletId = GroupWallet.dashboardInfo.groupId
             if (GroupWallet.currentIndex !== pendingIndex) {
@@ -135,18 +136,87 @@ Rectangle {
             }
             GlobalData.listFocusing = _FOCUS_PENDING_WALLET
         } else if (_hasValidWalletSelection) {
+            _autoSelectKey = ""
             _focusedPendingGroupId = ""
             _focusedPendingWalletId = ""
             if (AppModel.walletListCurrentIndex !== _selectedWalletModelIndex) {
                 AppModel.walletListCurrentIndex = _selectedWalletModelIndex
             }
             GlobalData.listFocusing = _FOCUS_WALLET
-        } else {
+        } else if (!autoSelectFirstItem()) {
             _focusedPendingGroupId = ""
             _focusedPendingWalletId = ""
             GlobalData.listFocusing = _FOCUS_NONE
         }
         traceWalletFocus()
+    }
+
+    function autoSelectFirstItem() {
+        var groupId = firstPendingWalletGroupId()
+        var target = groupId === "" ? firstWalletTarget() : null
+        var key = groupId !== "" ? "pending:" + groupId : (target ? "wallet:" + target.wallet_id : "")
+        if (key === "") {
+            _autoSelectKey = ""
+            return false
+        }
+        var alreadyRequested = key === _autoSelectKey
+        _autoSelectKey = key
+        _focusedPendingGroupId = ""
+        _focusedPendingWalletId = groupId
+        GlobalData.listFocusing = groupId !== "" ? _FOCUS_PENDING_WALLET : _FOCUS_WALLET
+        if (alreadyRequested) {
+            return true
+        }
+        if (groupId !== "") {
+            GroupWallet.currentIndex = pendingWalletIndexById(groupId)
+            QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, {
+                                    type: "dashboard",
+                                    group_id: groupId
+                                })
+        } else {
+            QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, {
+                                    type: "selected",
+                                    data: target.index,
+                                    group_id: target.wallet_group_id,
+                                    wallet_id: target.wallet_id
+                                })
+        }
+        return true
+    }
+
+    function firstWalletTarget() {
+        var archived = null
+        for (var i = 0; i < AppModel.walletList.count; ++i) {
+            var item = AppModel.walletList.get(i)
+            if (!item || !item.wallet_id) {
+                continue
+            }
+            var entry = {
+                index: i,
+                wallet_id: item.wallet_id,
+                wallet_group_id: item.wallet_group_id
+            }
+            if (!item.wallet_isArchived) {
+                return entry
+            }
+            if (!archived) {
+                archived = entry
+            }
+        }
+        return archived
+    }
+
+    function firstPendingWalletGroupId() {
+        var dashboards = GroupWallet.dashboards
+        if (!dashboards) {
+            return ""
+        }
+        for (var i = 0; i < dashboards.length; ++i) {
+            if (dashboards[i] && !dashboards[i].hasWallet && dashboards[i].groupId) {
+                return dashboards[i].groupId
+            }
+        }
+        return ""
     }
 
     // True when the wallet shown in the detail pane is archived.
@@ -288,6 +358,8 @@ Rectangle {
                                 onDeny: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
                                     walletsRoot._focusedPendingGroupId = model.group_id
+                                    walletsRoot._groupFocusWalletId = walletsRoot._selectedWalletId
+                                    walletsRoot.focusedPendingGroupName = model.group_name
                                     SharedWallet.currentIndex = index
                                     var obj = {
                                         type: "denySandbox",
@@ -298,6 +370,8 @@ Rectangle {
                                 onAccept: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
                                     walletsRoot._focusedPendingGroupId = model.group_id
+                                    walletsRoot._groupFocusWalletId = walletsRoot._selectedWalletId
+                                    walletsRoot.focusedPendingGroupName = model.group_name
                                     SharedWallet.currentIndex = index
                                     var obj = {
                                         type: "acceptSandbox",
@@ -308,6 +382,8 @@ Rectangle {
                                 onButtonClicked: {
                                     GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
                                     walletsRoot._focusedPendingGroupId = model.group_id
+                                    walletsRoot._groupFocusWalletId = walletsRoot._selectedWalletId
+                                    walletsRoot.focusedPendingGroupName = model.group_name
                                     SharedWallet.currentIndex = index
                                     var obj = {
                                         type: "setup-group-wallet",

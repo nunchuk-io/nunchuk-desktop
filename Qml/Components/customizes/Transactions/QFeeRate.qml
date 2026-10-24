@@ -168,7 +168,7 @@ Item {
                     text: STR.STR_QML_1709.arg(transactionInfo.scriptPathFeeRate)
                     visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
                              && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
-                             && (AppModel.walletInfo.walletType === NUNCHUCKTYPE.MULTISIG)
+                             && (AppModel.walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG)
                 }
                 QLato {
                     id: cpfptext

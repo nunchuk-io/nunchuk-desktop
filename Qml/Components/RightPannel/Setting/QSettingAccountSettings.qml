@@ -553,10 +553,10 @@ Item {
     Connections {
         target: Draco
 
-        onChangePasswordResult: {
+        function onChangePasswordResult(https_code, error_code, error_msg) {
             changePassword.processingChangePasswordResult(https_code, error_code, error_msg)
         }
-        onLoggedInDeviceChanged:{
+        function onLoggedInDeviceChanged(https_code, error_code, error_msg) {
             loggedInDevice.loggedInDeviceChanged(https_code, error_code, error_msg)
         }
     }

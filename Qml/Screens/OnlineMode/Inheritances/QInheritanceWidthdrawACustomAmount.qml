@@ -151,7 +151,7 @@ QOnScreenContentTypeB {
             function() { _customAmount.contentItem.withdrawToWallet() },
             function() { _customAmount.contentItem.withdrawToAddress() },
         ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             var action = imExContextMenu.functions[index]
             action()
         }

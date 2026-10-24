@@ -1123,7 +1123,7 @@ Item {
         id: signingPolicy
         width: parent.width
         height: parent.height
-        onContinueClicked : {
+        onContinueClicked: function(use_script_path, keyset_index) {
             requestCreateTransaction(use_script_path, keyset_index)
         }
     }
@@ -1229,10 +1229,10 @@ Item {
     }
     Connections {
         target: walletInfo
-        onRollOverProcess: {
+        function onRollOverProcess(address) {
             requestRollOverProcess(address)
         }
-        onRequestCreateTransaction: {
+        function onRequestCreateTransaction(address) {
             requestSelectedCoin(address)
         }
     }

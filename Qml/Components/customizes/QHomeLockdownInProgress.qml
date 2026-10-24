@@ -47,7 +47,7 @@ Item {
         propagateComposedEvents: false
         hoverEnabled: true
         preventStealing: true
-        onPositionChanged: {
+        onPositionChanged: function(mouse) {
             mouse.accepted = false
         }
     }

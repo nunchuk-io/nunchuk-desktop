@@ -213,7 +213,7 @@ QOnScreenContentTypeA {
                     ls.push("#CF4018")
                     return ls
                 }
-                onItemClicked: {
+                onItemClicked: function(index) {
                     functions[index]()
                 }
             }
@@ -457,28 +457,28 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: AppModel
-        onStartHealthCheckMasterSigner: {
+        function onStartHealthCheckMasterSigner() {
             busyOverlay.visible = true
         }
-        onFinishedHealthCheckMasterSigner : {
+        function onFinishedHealthCheckMasterSigner(isResult) {
             busyOverlay.visible = false
             if (isResult) { 
                 AppModel.showToast(0, STR.STR_QML_155.arg(signerName), EWARNING.SUCCESS_MSG);
             }
         }
-        onStartTopXPUBsMasterSigner:{
+        function onStartTopXPUBsMasterSigner() {
             _busyTopUp.open()
         }
-        onFinishedTopXPUBsMasterSigner:{
+        function onFinishedTopXPUBsMasterSigner() {
             _busyTopUp.close()
         }
-        onFinishedHealthCheckRemoteSigner: {
+        function onFinishedHealthCheckRemoteSigner(isResult) {
             busyOverlay.visible = false
             if (isResult) { 
                 AppModel.showToast(0, STR.STR_QML_155.arg(signerName), EWARNING.SUCCESS_MSG);
             }
         }
-        onSyncingConfirmWalletRemoveKey: {
+        function onSyncingConfirmWalletRemoveKey(fingerPrint) {
             _syncing_wallet_remove_key.contentText = STR.STR_QML_1290.arg(fingerPrint.toUpperCase())
             _syncing_wallet_remove_key.open()
         }

@@ -122,7 +122,7 @@ Item {
             }
             return ls
         }
-        onItemClicked: {
+        onItemClicked: function(index) {
             switch(index){
             case 0:
                 vm.cancelInheritancePlan()

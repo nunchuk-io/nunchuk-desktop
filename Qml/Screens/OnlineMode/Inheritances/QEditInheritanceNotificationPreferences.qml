@@ -76,7 +76,10 @@ QOnScreenContentTypeB {
                     var emails_valid = [];
                     for(var i = 0; i < requestlist.length; i ++){
                         var emailAddress = requestlist[i]
-                        var isValid = validateEmail(emailAddress)
+                        // BUGFIX: validateEmail() was undefined here (only exists on _email_user),
+                        // throwing every call and silently blocking this whole filter - so deleted/
+                        // invalid emails never left the "emails" string sent to the backend.
+                        var isValid = _email_user.validateEmail(emailAddress)
                         if(isValid){
                             emails_valid[emails_valid.length] = emailAddress
                         }

@@ -40,6 +40,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1696
     readonly property int widthHalf: 450
+    Component.onCompleted: AppModel.newWalletInfo.refreshTaprootSupported()
     content: Flickable {
         flickableDirection: Flickable.VerticalFlick
         ScrollBar.vertical: QScrollBar { }

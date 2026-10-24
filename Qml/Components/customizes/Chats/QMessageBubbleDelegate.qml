@@ -105,7 +105,7 @@ Item {
         icons: [
             "qrc:/Images/Images/copy-dark.svg"
         ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             functions[index]()
         }
     }

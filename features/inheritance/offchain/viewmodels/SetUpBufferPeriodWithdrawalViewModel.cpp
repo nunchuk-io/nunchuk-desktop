@@ -12,7 +12,18 @@ SetUpBufferPeriodWithdrawalViewModel::SetUpBufferPeriodWithdrawalViewModel(QObje
 }
 
 void SetUpBufferPeriodWithdrawalViewModel::onInit() {
-    // Initialize view model
+    GUARD_FLOW_MANAGER()
+    auto flow = flowMng->startFlow<PhasedRolloutFlow>();
+    if (!flow) {
+        return;
+    }
+    const QJsonObject inheritance = flow->inheritance();
+    const bool isShared = qUtils::strCompare(inheritance.value("release_method").toString(), "SHARED");
+    const QJsonObject holder = isShared ? inheritance : flow->beneficiarySelected();
+    const QString applyOn = holder.value("buffer_apply_on").toString();
+    if (applyOn == "FIRST_WITHDRAWAL" || applyOn == "EVERY_WITHDRAWAL") {
+        setbuffer_apply_on(applyOn);
+    }
 }
 
 void SetUpBufferPeriodWithdrawalViewModel::onContinueClicked() {

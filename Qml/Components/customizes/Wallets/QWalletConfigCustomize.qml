@@ -38,7 +38,7 @@ Rectangle {
 
     Connections {
         target: _walletConfig
-        onAddressTypeChanged: {
+        function onAddressTypeChanged() {
             if (addressType == NUNCHUCKTYPE.TAPROOT) {
                 if (customizeN > 5) customizeN = 5
             }

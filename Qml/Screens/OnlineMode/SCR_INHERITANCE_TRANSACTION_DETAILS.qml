@@ -66,7 +66,7 @@ QScreen {
     }
     Connections {
         target: transactionInfo
-        onNunchukTransactionChanged: {
+        function onNunchukTransactionChanged() {
             if (transactionInfo.status !== NUNCHUCKTYPE.PENDING_SIGNATURES &&
                 transactionInfo.status !== NUNCHUCKTYPE.READY_TO_BROADCAST) {
                 if (!_congra.opened) {

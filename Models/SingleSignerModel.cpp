@@ -192,11 +192,11 @@ QString QSingleSigner::lastHealthCheck() {
     if (0 == time) {
         return "N/A"; // There is no time
     }
-    return this->timeGapCalculationShort(QDateTime::fromMSecsSinceEpoch(time)); // last_health_check_.toString( "MM/dd/yyyy hh:mm AP" );
+    return this->timeGapCalculationShort(QDateTime::fromSecsSinceEpoch(static_cast<qint64>(time)));
 }
 
 QDateTime QSingleSigner::lastHealthCheckDateTime() const {
-    return QDateTime::fromMSecsSinceEpoch(singleSigner_.get_last_health_check());
+    return QDateTime::fromSecsSinceEpoch(static_cast<qint64>(singleSigner_.get_last_health_check()));
 }
 
 bool QSingleSigner::signerSigned() const {

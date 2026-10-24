@@ -74,6 +74,28 @@ QScreen {
         }
     }
     Component {
+        id: pendingGroupWallet
+        Rectangle {
+            anchors.fill: parent
+            color: "#F5F5F5"
+            Item {
+                anchors {
+                    fill: parent
+                    margins: 24
+                }
+                QLato {
+                    width: parent.width
+                    height: 48
+                    font.pixelSize: 28
+                    font.weight: Font.Bold
+                    text: walletmanagerlst.focusedPendingGroupName
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+        }
+    }
+    Component {
         id: viewCoinsWallet
         QHomeViewCoinsWallet {
             anchors.fill: parent
@@ -214,7 +236,10 @@ QScreen {
                     var isShowDashBoard = dashboard ? dashboard.isShowDashBoard : false
                     var wallet = AppModel.walletInfo
                     var isViewCoinsWallet = wallet ? wallet.isViewCoinShow : false
-                    if (isViewCoinsWallet) {
+                    if (walletmanagerlst.isPendingGroupFocused) {
+                        return pendingGroupWallet
+                    }
+                    else if (isViewCoinsWallet) {
                         return viewCoinsWallet
                     }
                     else if (isShowDashBoard) {

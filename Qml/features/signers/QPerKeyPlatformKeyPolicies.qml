@@ -212,8 +212,12 @@ QOnScreenContentTypeA {
 
     Connections {
         target: vm
-        onNotifySecurityDelayRequired: _SecurityDelayRequired.open()
-        onNotifyDummyTransactionRequired: _DummyTransactionRequired.open()
+        function onNotifySecurityDelayRequired() {
+            _SecurityDelayRequired.open()
+        }
+        function onNotifyDummyTransactionRequired() {
+            _DummyTransactionRequired.open()
+        }
     }
 
     PerKeyPlatformKeyPoliciesViewModel {

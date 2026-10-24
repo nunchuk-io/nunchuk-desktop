@@ -194,7 +194,7 @@ QPopupOverlayScreen {
     }
     Connections {
         target: AppModel
-        onNotifySignerExist: {
+        function onNotifySignerExist(isSoftware, fingerPrint) {
             showPopupInfo(isSoftware, fingerPrint)
         }
     }
@@ -213,7 +213,7 @@ QPopupOverlayScreen {
 
     Connections {
         target: ServiceSetting.servicesTag
-        onResultClaimInheritanceAlert: {
+        function onResultClaimInheritanceAlert(result) {
             if (result === "CLAIM_INHERITANCE_SECOND_KEY") {
                 _infoPopup.onChainClaimSecond(inheritance_key_count)
             } else if (result === "CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS") {

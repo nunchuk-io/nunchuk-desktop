@@ -59,7 +59,7 @@ QScreen {
                             username.isValid = true
                             username.errorText = ""
                         }
-                        email.showError = false;
+                        username.showError = false;
                     }
                 }
                 QTextInputBoxTypeB {
@@ -144,7 +144,7 @@ QScreen {
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 16
                     wrapMode: Text.WordWrap
-                    onLinkActivated: Qt.openUrlExternally(link)
+                    onLinkActivated: (link) => Qt.openUrlExternally(link)
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: privacyTerms.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -156,8 +156,9 @@ QScreen {
     }
     function processingCreateAccountResult(https_code, error_code, error_msg){
         if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.REGISTER_EXCEPTION){
-            commonError.visible = true
-            commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_399)
+            email.isValid = false
+            email.errorText = STR.STR_QML_399
+            email.showError = true
         }
         else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
             QMLHandle.sendEvent(EVT.EVT_CHANGE_PASSWORD_SHOW_REQUEST)
@@ -165,12 +166,12 @@ QScreen {
         else{
             email.isValid = false
             email.errorText = error_msg
-            email.showError = true;
+            email.showError = true
         }
     }
     Connections {
         target: Draco
-        onCreateAccountResult: {
+        function onCreateAccountResult(https_code, error_code, error_msg) {
             processingCreateAccountResult(https_code, error_code, error_msg)
         }
     }

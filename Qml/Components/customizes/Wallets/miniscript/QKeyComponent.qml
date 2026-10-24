@@ -38,6 +38,7 @@ Item {
         id: dataSingle
     }
     property var showEdit: true
+    readonly property bool hasKey: miniscript.keyObj !== null && miniscript.keyObj !== undefined
     signal bip32PathClick(string key, string xfp, string path)
 
     Row {
@@ -128,12 +129,15 @@ Item {
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM
                 text: {
+                    if (!hasKey) {
+                        return ""
+                    }
                     if (miniscript.keyObj.single_signer_device_cardid !== "") {
                         var card_id_text = miniscript.keyObj.single_signer_device_cardid
                         var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
                         return "Card ID: ••" + textR
                     } else {
-                        "XFP: " + miniscript.keyObj.singleSigner_masterFingerPrint
+                        return "XFP: " + miniscript.keyObj.singleSigner_masterFingerPrint
                     }
                 }
                 horizontalAlignment: Text.AlignLeft
@@ -147,7 +151,7 @@ Item {
                          && miniscript.keyObj !== undefined
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM
-                text: qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath)
+                text: hasKey ? qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath) : ""
                 color: miniscript.keyStrCount > 1 ? "#CF4018": "#757575"
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
@@ -161,7 +165,8 @@ Item {
                         verticalCenter: parent.verticalCenter
                         right: parent.right
                     }
-                    visible: (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SOFTWARE || miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.HARDWARE)
+                    visible: hasKey
+                             && (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SOFTWARE || miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.HARDWARE)
                              && showEdit
                 }
                 MouseArea {
@@ -175,7 +180,7 @@ Item {
                 }
             }
             QLato {
-                text: dataSingle.single_platformkeyPolicyType
+                text: dataSingle.single_platformkeyPolicyType ? dataSingle.single_platformkeyPolicyType : ""
                 color: "#031F2B"
                 font.pixelSize: 12
                 horizontalAlignment: Text.AlignLeft

@@ -171,7 +171,7 @@ QScreen {
 
     Connections {
         target: sandbox
-        onRecoverKeyError: {
+        function onRecoverKeyError() {
             _error.open()
         }
     }

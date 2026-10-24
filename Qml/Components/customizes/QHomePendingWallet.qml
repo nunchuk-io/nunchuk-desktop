@@ -193,7 +193,7 @@ Rectangle {
                         }
                     ]
                     colors: [ "#031F2B", "#031F2B", "#031F2B", "#031F2B", "#031F2B" ]
-                    onItemClicked: {
+                    onItemClicked: function(index) {
                         functions[index]()
                     }
                 }
@@ -228,7 +228,7 @@ Rectangle {
                             _confirm.open()
                         }
                     ]
-                    onItemClicked: {
+                    onItemClicked: function(index) {
                         functions[index]()
                     }
                 }

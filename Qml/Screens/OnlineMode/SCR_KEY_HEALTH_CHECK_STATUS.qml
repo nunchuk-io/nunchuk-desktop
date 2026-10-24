@@ -68,10 +68,10 @@ QScreen {
     Component {
         id: _checkFrequencyRepeat
         QHealthCheckFrequencyRepeat {
-            onHealthCheckBack: {
+            onHealthCheckBack: function(obj) {
                 QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, obj)
             }
-            onHealthCheckSave: {
+            onHealthCheckSave: function(obj) {
                 QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, obj)
             }
         }

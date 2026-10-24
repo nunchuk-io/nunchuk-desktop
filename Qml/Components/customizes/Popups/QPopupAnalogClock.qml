@@ -47,7 +47,7 @@ QPopup {
             hours: customHours
             minutes: customMinutes
             
-            onTimeChanged: {
+            onTimeChanged: function(newHours, newMinutes) {
                 customHours = newHours
                 customMinutes = newMinutes
             }
@@ -59,7 +59,7 @@ QPopup {
                 _infoPopup.close()
             }
             
-            onOkClicked: {
+            onOkClicked: function(hours, minutes) {
                 timeString = hours.toString().padStart(2,'0') + ":" + minutes.toString().padStart(2,'0')
                 _infoPopup.close()
             }

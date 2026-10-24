@@ -267,7 +267,9 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result, errorMsg)
+                function onVerifySingleSignerResult(result, errorMsg) {
+                    verifyResult(result, errorMsg)
+                }
             }
         }
     }
@@ -459,7 +461,9 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result, errorMsg)
+                function onVerifySingleSignerResult(result, errorMsg) {
+                    verifyResult(result, errorMsg)
+                }
             }
         }
     }
@@ -473,7 +477,9 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result, errorMsg)
+                function onVerifySingleSignerResult(result, errorMsg) {
+                    verifyResult(result, errorMsg)
+                }
             }
         }
     }
@@ -487,7 +493,9 @@ QPopupOverlayScreen {
             }
             Connections {
                 target: draftWallet
-                onVerifySingleSignerResult: verifyResult(result, errorMsg)
+                function onVerifySingleSignerResult(result, errorMsg) {
+                    verifyResult(result, errorMsg)
+                }
             }
         }
     }

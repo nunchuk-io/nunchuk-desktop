@@ -80,7 +80,7 @@ Column {
             clip: true
             leftPadding: 0
             echoMode: TextInput.Normal
-            onTypingFinished: textipboxType.typingFinished(currentText)
+            onTypingFinished: (currentText) => textipboxType.typingFinished(currentText)
             Keys.onDownPressed: { downKeyRequest() }
             Keys.onUpPressed: { upKeyRequest() }
             Keys.onReturnPressed: { enterKeyRequest() }

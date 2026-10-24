@@ -71,7 +71,7 @@ QOnScreenContentTypeA {
                     boxHeight: 48
                     validator: RegularExpressionValidator { regularExpression: /[]+/ }
                     textInputted: walletInfo.ownerPrimary.name
-                    onOwnerNameChanged: {
+                    onOwnerNameChanged: function(member) {
                         membership_id = member.membership_id
                     }
                 }

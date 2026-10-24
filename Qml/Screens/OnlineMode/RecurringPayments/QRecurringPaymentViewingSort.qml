@@ -42,7 +42,7 @@ Popup {
     property string option: recurringPayment.sortOption
     Connections {
         target: recurringPayment
-        onSortOptionChanged: {
+        function onSortOptionChanged() {
             option = recurringPayment.sortOption
         }
     }

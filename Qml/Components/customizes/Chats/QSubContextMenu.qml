@@ -51,7 +51,7 @@ Popup {
 
     background: Rectangle {
         id: _subBg
-        transformOrigin: subOptionsMenu._openRight ? Item.Left : Item.Right   // cùng gốc với content
+        transformOrigin: subOptionsMenu._openRight ? Item.Left : Item.Right
         radius: 8
         color: "#FFFFFF"
         layer.enabled: true

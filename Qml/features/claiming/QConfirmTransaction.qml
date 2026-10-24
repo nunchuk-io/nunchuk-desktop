@@ -118,8 +118,8 @@ QOnScreenContentTypeA {
 
     content: QCreateTransactionClaimInheritance {
         transactionInfo: vm.transactionInfo
-        onSignalDraftTransaction: vm.createDraftTransaction(msg)
-        onSignalCreateTransaction: vm.createTransaction(msg)
+        onSignalDraftTransaction: (msg) => vm.createDraftTransaction(msg)
+        onSignalCreateTransaction: (msg) => vm.createTransaction(msg)
         onRequestSort: {
         }
     }
@@ -143,11 +143,11 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: vm
-        onStartLoading: {
+        function onStartLoading() {
             createTxBusyBox.open();
             timerCreateTx.restart();
         }
-        onStopLoading: {
+        function onStopLoading() {
             createTxBusyBox.close();
         }
     }

@@ -228,8 +228,34 @@ if result.get("status") != "Accepted":
 PY
 
 echo "Stapling notarization ticket to the app bundle..."
-xcrun stapler staple "${APP_PATH}"
-xcrun stapler validate "${APP_PATH}"
+stapled=0
+for attempt in 1 2 3; do
+    if xcrun stapler staple "${APP_PATH}"; then
+        stapled=1
+        break
+    fi
+    if (( attempt < 3 )); then
+        sleep $((attempt * 30))
+    fi
+done
+if (( stapled != 1 )); then
+    echo "Stapling notarization ticket failed after three attempts." >&2
+    exit 1
+fi
+validated=0
+for attempt in 1 2 3; do
+    if xcrun stapler validate "${APP_PATH}"; then
+        validated=1
+        break
+    fi
+    if (( attempt < 3 )); then
+        sleep $((attempt * 30))
+    fi
+done
+if (( validated != 1 )); then
+    echo "Stapled ticket validation failed after three attempts." >&2
+    exit 1
+fi
 codesign --verify --deep --strict --verbose=4 "${APP_PATH}"
 spctl --assess --type execute --verbose=4 "${APP_PATH}"
 

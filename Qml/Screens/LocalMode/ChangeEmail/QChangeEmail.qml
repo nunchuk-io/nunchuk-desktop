@@ -64,7 +64,7 @@ QOnScreenContentTypeB {
 
         Connections {
             target: _content
-            onNextClicked: {
+            function onNextClicked() {
                 if (email_name == ClientController.user.email) {
                     _info1.open()
                 }

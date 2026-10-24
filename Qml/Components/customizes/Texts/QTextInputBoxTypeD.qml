@@ -124,7 +124,7 @@ Column {
                 color: "#031F2B"
                 font.pixelSize: 16
                 clip: true
-                onTypingFinished: textipboxType.typingFinished(currentText)
+                onTypingFinished: (currentText) => textipboxType.typingFinished(currentText)
 
                 Keys.onDownPressed: {downKeyRequest()}
                 Keys.onUpPressed: {upKeyRequest()}
@@ -135,12 +135,12 @@ Column {
                     anchors.fill: parent
                     propagateComposedEvents: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onPressed: {
+                    onPressed: function(mouse) {
                         if (mouse.button === Qt.LeftButton) {
                             mouse.accepted = false
                         }
                     }
-                    onClicked: {
+                    onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             optionMenu.popup(input,Math.min(185,mouse.x),mouse.y)
                         }
@@ -157,7 +157,7 @@ Column {
             icons: [
                 "qrc:/Images/Images/copy-dark.svg"
             ]
-            onItemClicked: {
+            onItemClicked: function(index) {
                 switch(index){
                 case 0:
                 default:

@@ -40,8 +40,7 @@ Popup {
     readonly property Item itemInfo: contentInfo.item
     closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
     background: Item{}
-    // TEMP DEBUG: log boxmask geometry to diagnose square-corner bug - remove after root cause found.
-    onOpened: console.log("QPopup DEBUG boxmask:", boxmask.width, boxmask.height, "radius:", boxmask.radius, "implicit:", contentInfo.implicitWidth, contentInfo.implicitHeight)
+
     Rectangle {
         id: boxmask
         width: contentInfo.implicitWidth + offset*2

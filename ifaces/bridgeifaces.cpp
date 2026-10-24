@@ -3492,6 +3492,9 @@ std::vector<nunchuk::SingleSigner> bridge::CreateSupportedSigners(const nunchuk:
 }
 
 QJsonArray bridge::makeExistingSigners(const nunchuk::AddressType& address_type, const nunchuk::WalletType &walletType) {
+    if (address_type == nunchuk::AddressType::TAPROOT) {
+        Draco::instance()->GetTaprootSupportedCached();
+    }
     std::vector<nunchuk::SingleSigner> available_signers = bridge::CreateSupportedSigners(address_type, walletType);
     QList<QJsonObject> list;
     for (const auto &signer : available_signers) {
@@ -3541,7 +3544,7 @@ bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::Ad
     auto get_str = [](const QJsonObject &obj, const QString &key) -> QString {
         return obj.contains(key) ? obj[key].toString() : "";
     };
-    QJsonArray supported_types = Draco::instance()->GetTaprootSupportedCached();
+    QJsonArray supported_types = Draco::instance()->GetTaprootSupportedLocal();
 
     auto it = std::find_if(supported_types.begin(), supported_types.end(),[&, walletType, addressType](const QJsonValue &js) {
         QJsonObject info = js.toObject();
@@ -3552,11 +3555,6 @@ bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::Ad
         QString signer_type_str = get_str(info, "signer_type");
 
         // nunchuk::WalletTemplate info_wallet_template = qUtils::WalletTemplateFromStr(wallet_template_str);
-
-        DBG_INFO << "wallet_type: " << (int)walletType
-                 << "address_type: " << (int)addressType
-                 << "signer_type: " << SignerTypeToStr(signer->originSingleSigner().get_type())
-                 << "signer_tag: " << (int)signer->signerTag();
 
         // SignerTypeFromStr()/SignerTagFromStr() (libnunchuk) throw on an unrecognized string -
         // an unexpected/malformed backend entry must not crash the whole match, just fail to
@@ -3574,11 +3572,6 @@ bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::Ad
             bool wallet_type_match = wallet_type_str.isEmpty() || (wallet_type_str == "") ||
                                       qUtils::strCompare(wallet_type_str, qUtils::WalletTypeToStr(walletType));
             // bool wallet_template_match = wallet_template_str.isEmpty();
-
-            DBG_INFO << "address_type_match:" << address_type_match
-                     << "signer_type_match:" << signer_type_match
-                     << "signer_tag_match:" << signer_tag_match
-                     << "wallet_type_match:" << wallet_type_match;
 
             return address_type_match && signer_type_match && signer_tag_match && wallet_type_match;
         } catch (const nunchuk::BaseException &ex) {
@@ -3609,6 +3602,9 @@ void bridge::CreateAssignAvailableSigners(nunchuk::AddressType address_type,
     std::vector<nunchuk::SingleSigner> captured_signers = bridge::CreateSupportedSigners(address_type, wallet_type);
     runInConcurrent(
         [address_type, wallet_type, captured_signers]() -> std::vector<nunchuk::SingleSigner> {
+            if (address_type == nunchuk::AddressType::TAPROOT) {
+                Draco::instance()->GetTaprootSupportedCached();
+            }
             return captured_signers;
         },
         [address_type, wallet_type, callback](std::vector<nunchuk::SingleSigner> signers) {

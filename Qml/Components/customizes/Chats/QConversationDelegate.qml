@@ -163,7 +163,7 @@ Item {
                                 wrapMode: Text.WordWrap
                                 property string webLink: "https://resources.nunchuk.io/getting-started/"
                                 text: STR.STR_QML_474.arg(webLink)
-                                onLinkActivated: Qt.openUrlExternally(link)
+                                onLinkActivated: (link) => Qt.openUrlExternally(link)
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: _readOurGuide.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -330,7 +330,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: {
+                                onClicked: function(mouse) {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
                                         optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
@@ -1098,7 +1098,7 @@ Item {
                 anchors.fill: contentCreatingWl
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 propagateComposedEvents: true
-                onClicked: {
+                onClicked: function(mouse) {
                     if (mouse.button === Qt.RightButton) {
                         optionMenu.width = 200
                         optionMenu.labels = [STR.STR_QML_691]
@@ -1510,7 +1510,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: {
+                                onClicked: function(mouse) {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
                                         optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
@@ -1547,7 +1547,7 @@ Item {
                                     lineHeight: 1.5
                                     font.pixelSize: 16
                                     horizontalAlignment: Text.AlignJustify
-                                    onLinkActivated: Qt.openUrlExternally( link )
+                                    onLinkActivated: (link) => Qt.openUrlExternally( link )
                                 }
                             }
                         }
@@ -1675,7 +1675,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: {
+                                onClicked: function(mouse) {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
                                         optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
@@ -1711,7 +1711,7 @@ Item {
                                     textFormat: Text.RichText
                                     lineHeight: 1.5
                                     horizontalAlignment: Text.AlignJustify
-                                    onLinkActivated: Qt.openUrlExternally( link )
+                                    onLinkActivated: (link) => Qt.openUrlExternally( link )
                                 }
                             }
                         }
@@ -1839,7 +1839,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: {
+                                onClicked: function(mouse) {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
                                         optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
@@ -1876,7 +1876,7 @@ Item {
                                     lineHeight: 1.5
                                     font.pixelSize: 16
                                     horizontalAlignment: Text.AlignJustify
-                                    onLinkActivated: Qt.openUrlExternally( link )
+                                    onLinkActivated: (link) => Qt.openUrlExternally( link )
                                 }
                             }
                         }
@@ -1922,7 +1922,7 @@ Item {
         icons: [
             "qrc:/Images/Images/copy-dark.svg"
         ]
-        onItemClicked: {
+        onItemClicked: function(index) {
             functions[index]()
         }
     }

@@ -153,7 +153,7 @@ QOnScreenContentTypeA {
 
     Connections {
         target: vm
-        onOpenHardwareAddKeyPopup: {
+        function onOpenHardwareAddKeyPopup() {
             _hardwareAddKey.isInheritance = true
             _hardwareAddKey.open()
         }

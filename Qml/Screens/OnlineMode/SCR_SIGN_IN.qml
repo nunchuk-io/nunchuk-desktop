@@ -75,7 +75,7 @@ QScreen {
                             _password.isValid = true
                             _password.errorText = ""
                         }
-                        email.showError = false;
+                        _password.showError = false;
                     }
                 }
                 QText {
@@ -161,7 +161,7 @@ QScreen {
     }
     Connections {
         target: Draco
-        onSigninResult: {
+        function onSigninResult(https_code, error_code, error_msg) {
             processingSigninResult(https_code, error_code, error_msg)
         }
     }

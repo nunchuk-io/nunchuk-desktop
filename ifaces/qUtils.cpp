@@ -24,6 +24,10 @@
 #include "ifaces/Servers/Draco.h"
 #include "utils/enumconverter.hpp"
 #include <QCryptographicHash>
+#include <QDateTime>
+#include <QLocale>
+#include <algorithm>
+#include <cmath>
 #include <QFileInfo>
 #include <QHash>
 #include <QJsonDocument>
@@ -2219,4 +2223,121 @@ QString qUtils::ExtractColdcardMessageSignature(const QString &value, QWarningMe
         msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return "";
+}
+
+QVariantList qUtils::BuildTimelockTimeline(std::vector<int64_t> locks, int based, int64_t currentHeight, bool *anyLocked) {
+    const bool isTimeBased = based == (int)nunchuk::Timelock::Based::TIME_LOCK;
+    const bool isHeightBased = based == (int)nunchuk::Timelock::Based::HEIGHT_LOCK;
+    QVariantList ret;
+    if (anyLocked) {
+        *anyLocked = false;
+    }
+    if (!isTimeBased && !isHeightBased) {
+        return ret;
+    }
+    std::sort(locks.begin(), locks.end());
+    locks.erase(std::unique(locks.begin(), locks.end()), locks.end());
+
+    const QDateTime nowUtc = QDateTime::currentDateTimeUtc();
+    const QLocale locale(QLocale::English);
+    int activeIndex = -1;
+    for (int i = 0; i < (int)locks.size(); ++i) {
+        const int64_t val = locks[i];
+        const bool locked = isTimeBased ? nowUtc.secsTo(QDateTime::fromSecsSinceEpoch(val, Qt::UTC)) > 0 : val > currentHeight;
+        if (locked && activeIndex < 0) {
+            activeIndex = i;
+        }
+    }
+    const bool hasLocked = activeIndex >= 0;
+    if (anyLocked) {
+        *anyLocked = hasLocked;
+    }
+
+    for (int i = 0; i < (int)locks.size(); ++i) {
+        const int64_t val = locks[i];
+        QString valueNode;
+        QString valueRemaining;
+        QString remainingString;
+        qint64 remainingNumeric = 0;
+        bool needVisibleWarning = false;
+        bool locked = false;
+        const bool active = i == activeIndex;
+
+        if (isTimeBased) {
+            const QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
+            const qint64 secs = nowUtc.secsTo(dt);
+            valueNode = dt.toString("MM/dd/yyyy");
+            if (secs > 0) {
+                locked = true;
+                const qint64 days = secs / 86400;
+                const qint64 hours = secs / 3600;
+                if (secs <= 3600) {
+                    const qint64 mins = (secs + 59) / 60;
+                    valueNode = QString("%1:%2").arg(mins / 60, 2, 10, QChar('0')).arg(mins % 60, 2, 10, QChar('0'));
+                } else if (secs < 86400) {
+                    valueNode = dt.toString("MM/dd HH:mm");
+                }
+                if (days > 0) {
+                    valueRemaining = QString::number(days) + (days == 1 ? " day left" : " days left");
+                    remainingString = QString::number(days) + (days == 1 ? " day" : " days");
+                    remainingNumeric = days;
+                    needVisibleWarning = days < 7;
+                } else if (hours > 0) {
+                    valueRemaining = QString::number(hours) + (hours == 1 ? " hour left" : " hours left");
+                    remainingString = QString::number(hours) + (hours == 1 ? " hour" : " hours");
+                    remainingNumeric = 1;
+                    needVisibleWarning = true;
+                } else {
+                    double rounded = std::round(secs / 360.0) / 10.0;
+                    if (rounded < 0.1) {
+                        rounded = 0.1;
+                    }
+                    const QString hourStr = rounded >= 1.0 ? QString("1") : QString::number(rounded, 'f', 1);
+                    valueRemaining = hourStr + (rounded >= 1.0 ? " hour left" : " hours left");
+                    remainingString = hourStr + " hour";
+                    remainingNumeric = 1;
+                    needVisibleWarning = true;
+                }
+            }
+        } else {
+            valueNode = locale.toString((qlonglong)val);
+            if (val > currentHeight) {
+                locked = true;
+                const int64_t remain = val - currentHeight;
+                valueRemaining = QString::number(remain) + (remain == 1 ? " block left" : " blocks left");
+                remainingString = locale.toString((qlonglong)remain) + (remain == 1 ? " block" : " blocks");
+                remainingNumeric = remain;
+                needVisibleWarning = remain < 1008;
+            }
+        }
+
+        QVariantMap obj;
+        obj["valueNode"] = valueNode;
+        obj["valueIndex"] = i;
+        obj["valueLocked"] = locked;
+        obj["valueActive"] = active;
+        obj["valuePassed"] = !locked;
+        obj["valueSynthetic"] = false;
+        obj["valueRemaining"] = !locked ? QString("Unlocked") : (active ? valueRemaining : QString());
+        obj["valueRemainingString"] = remainingString;
+        obj["valueRemainingNumeric"] = remainingNumeric;
+        obj["valueNeedVisibleWarning"] = needVisibleWarning;
+        ret << obj;
+    }
+
+    if (ret.size() == 1) {
+        QVariantMap tail;
+        tail["valueNode"] = "";
+        tail["valueIndex"] = ret.size();
+        tail["valueLocked"] = false;
+        tail["valueActive"] = false;
+        tail["valuePassed"] = !hasLocked;
+        tail["valueSynthetic"] = true;
+        tail["valueRemaining"] = QString();
+        tail["valueRemainingString"] = "";
+        tail["valueRemainingNumeric"] = 0;
+        tail["valueNeedVisibleWarning"] = false;
+        ret << tail;
+    }
+    return ret;
 }

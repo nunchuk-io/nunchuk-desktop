@@ -91,7 +91,7 @@ QScreen {
                             id: addressTypeSelection
                             width: 360
                             walletConfigType: walletConfig.option
-                            onSelectTypeOption: {
+                            onSelectTypeOption: function(type) {
                                 addressTypeSelection.typeOption = type
                                 newWalletInfo.customizeMiniscript = ""
                             }

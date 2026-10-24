@@ -40,7 +40,7 @@ Item {
     property var addresses: ""
     Connections {
         target: _content
-        onSignalFinalAddress: {
+        function onSignalFinalAddress() {
             if (isSelected) {
                 address_list = addresses.split('\n')
                 var _input = {

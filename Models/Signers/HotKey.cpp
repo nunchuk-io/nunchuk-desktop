@@ -37,7 +37,7 @@ void HotKey::createHotKey() {
     auto ss = bridge::nunchukCreateSoftwareSigner(nameKey, mnemonic, "", false, false, msg);
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         ss->setNeedBackup(true);
-        bridge::nunchukUpdateMasterSigner(ss);
+        bridge::nunchukUpdateMasterSigner(ss, false);
         emit AppModel::instance()->startReloadMasterSigners();
         AppModel::instance()->setMasterSignerInfo(ss);
         finishCreateSoftwareSigner();

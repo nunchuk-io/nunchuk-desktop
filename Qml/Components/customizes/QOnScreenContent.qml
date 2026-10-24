@@ -95,9 +95,9 @@ Item {
                 id: headerContainer
                 width: root.width - (sameOffset ? offset : offsetLeft) - (sameOffset ? offset : offsetRight) + 12
                 height: childrenRect.height
-                // Right-most x the title is allowed to reach: 12px clear of the close (X) button when
+                // Right-most x the title is allowed to reach: 8px clear of the close (X) button when
                 // it's visible, otherwise just the dialog's own content edge.
-                readonly property real maxTitleWidth: (closeButton.visible ? (closeButton.x - 12) : root.width) - (sameOffset ? offset : offsetLeft)
+                readonly property real maxTitleWidth: (closeButton.visible ? (closeButton.x - 8) : root.width) - (sameOffset ? offset : offsetLeft)
                 Row {
                     spacing: 8
                     QHeadLine {
@@ -117,7 +117,7 @@ Item {
                     }
                     Loader {
                         id: extraHeaderInfo
-                        height: extraHeaderInfo.sourceComponent ? extraHeaderInfo.item.height : 0
+                        height: extraHeaderInfo.item ? extraHeaderInfo.item.height : 0
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }

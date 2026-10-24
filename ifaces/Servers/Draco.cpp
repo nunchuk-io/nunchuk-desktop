@@ -23,6 +23,7 @@
 #include <QAuthenticator>
 #include <QNetworkCookieJar>
 #include <QEventLoop>
+#include <QtConcurrent>
 #include <QUrlQuery>
 #include <QSysInfo>
 #include "Servers/QCaptchaVerification.h"
@@ -468,6 +469,10 @@ void Draco::verifyNewDevice(const QString &pin)
         }
         emit verifyNewDeviceResult(reply_code, response_code, response_msg);
     }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit verifyNewDeviceResult(reply_code, -1, reply_msg);
+    }
 }
 
 void Draco::resendVerifyNewDeviceCode()
@@ -672,9 +677,13 @@ void Draco::createAccount(const QString& name, const QString& email)
                 createAccount(name, email);
             });
         }
-        else {
+        else{
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit createAccountResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -715,6 +724,10 @@ void Draco::singin(const QString& email, const QString& password)
         setEmailRequested(email);
         emit signinResult(reply_code, response_code, response_msg);
     }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit signinResult(reply_code, -1, reply_msg);
+    }
 }
 
 bool Draco::signout()
@@ -746,10 +759,14 @@ void Draco::recoverPassword(const QString& email, const QString& forgotToken, co
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code    = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
-        emit recoverPasswordResult(reply_code, response_code, response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+        emit recoverPasswordResult(reply_code, response_code, response_msg);
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit recoverPasswordResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -771,6 +788,10 @@ void Draco::forgotPassword(const QString& email)
         else {
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit forgotPasswordResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -812,6 +833,10 @@ void Draco::changePassword(const QString& oldpassword, const QString& newpasswor
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
         emit changePasswordResult(reply_code, response_code, response_msg);
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit changePasswordResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -2199,6 +2224,9 @@ bool Draco::assistedWalletUpdate(const QString &wallet_id, const QString &name, 
 
 bool Draco::assistedKeyUpdateName(const QString &fingerPrint, const QString &name, const QJsonObject& json)
 {
+    if (!CLIENT_INSTANCE->isNunchukLoggedIn()) {
+        return false;
+    }
     QJsonObject data;
     if (json.isEmpty()) {
         data["name"] = name;
@@ -5188,7 +5216,12 @@ bool Draco::GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg)
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Common::CMD_IDX::TAPROOT_SUPPORTED_SIGNERS];
-    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
+    static constexpr int TAPROOT_SUPPORTED_TIMEOUT_MS = 10 * 1000;
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg,
+                                          QRest::GetRequestOptions(QRest::NetworkErrorPolicy::ShowToast,
+                                                                   QRest::AuthenticationPolicy::CurrentToken,
+                                                                   QRest::VerificationTokenPolicy::Include,
+                                                                   TAPROOT_SUPPORTED_TIMEOUT_MS));
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -5207,18 +5240,45 @@ bool Draco::GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg)
     return false;
 }
 
-QJsonArray Draco::GetTaprootSupportedCached(bool reset)
+void Draco::RefreshTaprootSupportedAsync()
 {
-    if(reset && m_taproot_support_types.size() > 0){
-        m_taproot_support_types = {};
+    if(m_taprootRefreshing.exchange(true)){
+        return;
     }
-    if(m_taproot_support_types.count() == 0){
+    QtConcurrent::run([this]() {
         QJsonObject data;
         QString     error_msg = "";
-        bool get_result = Draco::instance()->GetTaprootSupportedSigners(data, error_msg);
-        if(get_result){
+        if(GetTaprootSupportedSigners(data, error_msg)){
+            QMutexLocker locker(&m_taprootMutex);
             m_taproot_support_types = data["supported_signers"].toArray();
         }
+        m_taprootRefreshing = false;
+    });
+}
+
+QJsonArray Draco::GetTaprootSupportedLocal() const
+{
+    QMutexLocker locker(&m_taprootMutex);
+    return m_taproot_support_types;
+}
+
+QJsonArray Draco::GetTaprootSupportedCached(bool reset)
+{
+    {
+        QMutexLocker locker(&m_taprootMutex);
+        if(reset){
+            m_taproot_support_types = {};
+        }
+        if(!m_taproot_support_types.isEmpty()){
+            return m_taproot_support_types;
+        }
+    }
+    QJsonObject data;
+    QString     error_msg = "";
+    const bool get_result = GetTaprootSupportedSigners(data, error_msg);
+    QMutexLocker locker(&m_taprootMutex);
+    if(get_result){
+        m_taproot_support_types = data["supported_signers"].toArray();
     }
     return m_taproot_support_types;
 }

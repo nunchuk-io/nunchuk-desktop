@@ -43,8 +43,8 @@ Item {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent   
-    property var singleData:{}
-    property var customData:{}
+    property var singleData: ({})
+    property var customData: ({})
     function requestEditBIP32Path(singleData, customData) {
         bip32Path.clearError()
         bip32Path.isShowListDevice = false        
@@ -55,7 +55,7 @@ Item {
     QPopupEditBIP32Path {
         id: bip32Path
         property string key: ""
-        onEnterText: {
+        onEnterText: function(pathBip32) {
             gettingPublicKey.open()
             if (typeof(targetEditBIP32) !== 'undefined' && targetEditBIP32 != null) {                
                 targetEditBIP32.editBIP32Path(singleData, customData, pathBip32)

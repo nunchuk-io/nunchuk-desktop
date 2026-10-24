@@ -26,6 +26,7 @@
 #include "FederatedAuth/QAppleSigninView.h"
 #include "FederatedAuth/QGoogleSigninView.h"
 #include "QRest.h"
+#include <atomic>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
@@ -328,6 +329,8 @@ class Draco : public QObject {
     // Supported signers
     bool GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg);
     QJsonArray GetTaprootSupportedCached(bool reset = false);
+    QJsonArray GetTaprootSupportedLocal() const;
+    void RefreshTaprootSupportedAsync();
 
     // Apple signin
     void requestAppleSigin();
@@ -382,6 +385,8 @@ class Draco : public QObject {
     bool m_federatedSigninBusy;
     QString m_federatedSigninProvider;
     QJsonArray m_taproot_support_types{};
+    mutable QMutex m_taprootMutex;
+    std::atomic_bool m_taprootRefreshing{false};
 
     // Social signin
     QAppleSigninViewPtr m_Apple;

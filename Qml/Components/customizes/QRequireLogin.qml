@@ -93,7 +93,7 @@ Item {
                             username.isValid = true
                             username.errorText = ""
                         }
-                        email.showError = false;
+                        username.showError = false;
                     }
                 }
                 QTextInputBoxTypeB {
@@ -175,7 +175,7 @@ Item {
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 16
                     wrapMode: Text.WordWrap
-                    onLinkActivated: Qt.openUrlExternally(link)
+                    onLinkActivated: (link) => Qt.openUrlExternally(link)
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: privacyTerms.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -185,8 +185,9 @@ Item {
             }
             function processingCreateAccountResult(https_code, error_code, error_msg){
                 if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.REGISTER_EXCEPTION){
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_399)
+                    email.isValid = false
+                    email.errorText = STR.STR_QML_399
+                    email.showError = true
                 }
                 else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereAmI = eCONFIRM_CODE
@@ -194,7 +195,7 @@ Item {
                 else{
                     email.isValid = false
                     email.errorText = error_msg
-                    email.showError = true;
+                    email.showError = true
                 }
             }
         }
@@ -319,6 +320,7 @@ Item {
                             newPass.isValid = true
                             newPass.errorText = ""
                         }
+                        newPass.showError = false
                     }
                 }
                 QTextInputBoxTypeB {
@@ -376,8 +378,9 @@ Item {
                     QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
                 }
                 else{
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_407)
+                    newPass.isValid = false
+                    newPass.errorText = STR.STR_QML_407
+                    newPass.showError = true
                 }
             }
         }
@@ -385,10 +388,10 @@ Item {
 
     Connections {
         target: Draco
-        onCreateAccountResult: {
+        function onCreateAccountResult(https_code, error_code, error_msg) {
             contentLoader.item.processingCreateAccountResult(https_code, error_code, error_msg)
         }
-        onChangePasswordResult: {
+        function onChangePasswordResult(https_code, error_code, error_msg) {
             contentLoader.item.processingChangePasswordResult(https_code, error_code, error_msg)
         }
     }

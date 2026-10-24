@@ -298,7 +298,7 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: dummyTx
-        onRegisterWalletWithDevice: {
+        function onRegisterWalletWithDevice() {
             _warning.open()
         }
     }
@@ -321,7 +321,7 @@ QOnScreenContentTypeA {
 
     Connections {
         target: vm
-        onFinishedSigningTransaction: {
+        function onFinishedSigningTransaction() {
             signingBusyBox.close()
             signingBusyBox.signerType = -1
         }

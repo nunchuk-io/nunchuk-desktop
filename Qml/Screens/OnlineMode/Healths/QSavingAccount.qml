@@ -122,7 +122,7 @@ QOnScreenContentTypeB {
     }
     Connections {
         target: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health : null
-        onRequestHealthCheckSuccess: {
+        function onRequestHealthCheckSuccess() {
             var _continue = {
                 type: "health-check-request-sent"
             }

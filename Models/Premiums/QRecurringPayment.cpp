@@ -532,13 +532,13 @@ QJsonObject QRecurringPayment::ConvertToDisplayQml(QJsonObject data)
 {
     long int start_date_millis = static_cast<long int>(data.value("start_date_millis").toDouble()/1000);
     if (start_date_millis > 0) {
-        data["start_date"] = QDateTime::fromMSecsSinceEpoch(start_date_millis).date().toString("MM/dd/yyyy");
+        data["start_date"] = QDateTime::fromSecsSinceEpoch(start_date_millis).date().toString("MM/dd/yyyy");
     } else {
         data["start_date"] = "";
     }
     long int end_date_millis = static_cast<long int>(data.value("end_date_millis").toDouble()/1000);
     if (end_date_millis > 0) {
-        data["end_date"] = QDateTime::fromMSecsSinceEpoch(end_date_millis).date().toString("MM/dd/yyyy");
+        data["end_date"] = QDateTime::fromSecsSinceEpoch(end_date_millis).date().toString("MM/dd/yyyy");
     } else {
         data["end_date"] = "";
     }

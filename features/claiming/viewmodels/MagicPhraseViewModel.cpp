@@ -4,7 +4,9 @@
 #include "features/claiming/flows/OffChainClaimingFlow.h"
 #include "features/claiming/flows/OnChainClaimingFlow.h"
 #include "generated_qml_keys.hpp"
+#include "localization/STR_CPP.h"
 #include "nunchuk.h"
+#include "qUtils.h"
 
 namespace features::claiming::viewmodels {
 using namespace core::viewmodels;
@@ -24,6 +26,15 @@ void MagicPhraseViewModel::startOffChainClaimingFlow(const QString &magicPhrase,
 }
 
 void MagicPhraseViewModel::claimInit(const QString &magicPhrase) {
+    const QStringList words = magicPhrase.trimmed().split(' ', Qt::SkipEmptyParts);
+    const QStringList wordList = qUtils::GetBIP39WordList();
+    for (const QString &word : words) {
+        if (!wordList.contains(word, Qt::CaseInsensitive)) {
+            showToast(0, STR_CPP_136, EWARNING::WarningType::ERROR_MSG);
+            return;
+        }
+    }
+
     InitializeInheritanceClaimingInput input;
     input.magic = magicPhrase;
     initializeInheritanceClaimingUC.executeAsync(input, [this, magicPhrase](const core::usecase::Result<InitializeInheritanceClaimingResult> &result) {

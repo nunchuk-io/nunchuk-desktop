@@ -110,7 +110,7 @@ Column {
                 color: "#031F2B"
                 font.pixelSize: 16
                 clip: true
-                onTypingFinished: textipboxType.typingFinished(currentText)
+                onTypingFinished: (currentText) => textipboxType.typingFinished(currentText)
                 Keys.onDownPressed: {downKeyRequest()}
                 Keys.onUpPressed: {upKeyRequest()}
                 Keys.onReturnPressed: { enterKeyRequest()}

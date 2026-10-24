@@ -27,8 +27,49 @@ void SetUpBufferPeriodViewModel::onInit() {
                 periodsList.append(periodObj.toVariantMap());
             }
             setperiods(periodsList);
+            applyCurrentBufferPeriod();
         }
     });
+}
+
+void SetUpBufferPeriodViewModel::applyCurrentBufferPeriod() {
+    GUARD_FLOW_MANAGER()
+    auto flow = flowMng->startFlow<PhasedRolloutFlow>();
+    if (!flow) {
+        return;
+    }
+    const QJsonObject inheritance = flow->inheritance();
+    const bool isShared = qUtils::strCompare(inheritance.value("release_method").toString(), "SHARED");
+    const QJsonObject holder = isShared ? inheritance : flow->beneficiarySelected();
+    if (holder.isEmpty()) {
+        return;
+    }
+    const QJsonObject current = holder.value("buffer_period").toObject();
+    QString currentId = current.value("id").toString();
+    if (currentId.isEmpty()) {
+        currentId = holder.value("buffer_period_id").toString();
+    }
+    const QString interval = current.value("interval").toString();
+    const int count = current.value("interval_count").toInt();
+    const bool hasBuffer = !currentId.isEmpty() || (count > 0 && !interval.isEmpty());
+    if (!hasBuffer) {
+        setbuffer_period_id(QString());
+        return;
+    }
+    for (const auto &period : periodList()) {
+        const QJsonObject periodObj = period.toObject();
+        const QString id = periodObj.value("id").toString();
+        if (id.isEmpty()) {
+            continue;
+        }
+        const bool sameId = !currentId.isEmpty() && id == currentId;
+        const bool sameInterval = count > 0 && qUtils::strCompare(periodObj.value("interval").toString(), interval) &&
+                                  periodObj.value("interval_count").toInt() == count;
+        if (sameId || sameInterval) {
+            setbuffer_period_id(id);
+            return;
+        }
+    }
 }
 
 void SetUpBufferPeriodViewModel::onContinueClicked() {

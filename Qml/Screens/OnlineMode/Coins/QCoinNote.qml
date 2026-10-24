@@ -79,7 +79,7 @@ Item {
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             elide: Text.ElideRight
             maximumLineCount: 1
-            onLinkActivated: {
+            onLinkActivated: function(link) {
                 Qt.openUrlExternally(link)
             }
         }

@@ -193,7 +193,7 @@ Item {
                 Rectangle {
                     id: hourHand
                     width: 4
-                    height: parent.height * 0.3
+                    height: (analogClock.hours >= 13 || analogClock.hours === 0 ? parent.width/2 - 18 : parent.width/2 - 35) - 20
                     color: analogClock.settingHours ? "#4CAF50" : "#999999"
                     radius: 2
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -216,7 +216,8 @@ Item {
                 Rectangle {
                     id: minuteHand
                     width: 3
-                    height: parent.height * 0.4
+                    // BUGFIX: shortened so the tip stops before the minute-number ring (radius - 25), avoiding overlap.
+                    height: parent.width/2 - 25 - 20
                     color: !analogClock.settingHours ? "#4CAF50" : "#999999"
                     radius: 1.5
                     anchors.horizontalCenter: parent.horizontalCenter

@@ -675,7 +675,7 @@ QScreen {
 
     QPopupEnterPreimageInHex {
         id: enterPreimage
-        onEnterText: {
+        onEnterText: function(str) {
             transactionInfo.enterPreimageInput(enterPreimage.hashData, str, enterPreimage.typeNode)
         }
     }

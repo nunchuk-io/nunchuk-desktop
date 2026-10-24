@@ -727,7 +727,7 @@ QString BaseTransaction::blocktimeDisplay() const {
     if (0 >= m_transaction.get_blocktime()) {
         return "--/--/----"; // There is no time
     } else {
-        return QDateTime::fromMSecsSinceEpoch(m_transaction.get_blocktime()).toString("MM/dd/yyyy hh:mm AP");
+        return QDateTime::fromSecsSinceEpoch(static_cast<qint64>(m_transaction.get_blocktime())).toString("MM/dd/yyyy hh:mm AP");
     }
 }
 
@@ -1216,7 +1216,7 @@ void BaseTransaction::createGroupTransactionState() {
         QString displayMessage;
         if (groupTransactionStateMessage(groupStatus,
                                          QString::fromStdString(groupState.get_message()),
-                                         groupState.get_cosign_at(),
+                                         static_cast<qint64>(groupState.get_cosign_at()) * 1000,
                                          displayMessage)) {
             m_platformKeyMessage = displayMessage;
         } else {
@@ -1352,7 +1352,7 @@ void BaseTransaction::fetchGroupTransactionState(quint64 generation) {
                 if (result.success) {
                     result.status = state.get_status();
                     result.message = QString::fromStdString(state.get_message());
-                    result.cosignAt = state.get_cosign_at();
+                    result.cosignAt = static_cast<qint64>(state.get_cosign_at()) * 1000;
                 }
             } catch (const std::exception &exception) {
                 DBG_ERROR << "GetGroupTransactionState failed:" << exception.what();

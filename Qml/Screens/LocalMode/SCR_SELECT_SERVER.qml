@@ -173,7 +173,7 @@ QScreen {
 
     QPopupEnterTextInput {
         id: enterServerAddress
-        onEnterText: {
+        onEnterText: function(str) {
             var _input = {
                 type: "enter-add-server",
                 serverAddress: str

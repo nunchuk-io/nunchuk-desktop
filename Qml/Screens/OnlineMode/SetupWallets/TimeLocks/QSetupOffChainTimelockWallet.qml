@@ -113,7 +113,7 @@ QOnScreenContentTypeA {
 
                     Connections {
                         target: vm
-                        onValueTimezoneChanged: {
+                        function onValueTimezoneChanged() {
                             if (_timezoneInput.selectedTimezone !== vm.valueTimezone) {
                                 _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
                             }

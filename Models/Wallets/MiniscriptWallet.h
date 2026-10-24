@@ -149,6 +149,7 @@ CreateMiniscript:
     QVariantMap timelockInfo();
 
 public slots:
+    void refreshTimelocklist();
     bool isValidTapscriptTemplate(const QString &userInput);
     bool isValidMiniscriptTemplate(const QString &userInput);
     bool enterCustomMiniscript(const QString &userInput);
@@ -161,6 +162,7 @@ public slots:
     void updateSignersMiniscript(const QString &key, const QSingleSignerPtr &value, bool autoreuse = true);
     void removeSignersMiniscript(const QString &key);
     void clearSignersMiniscript();
+    void refreshTaprootSupported();
     void requestAddSigner(const QString group, const QString &key);
     void requestRemoveSigner(const QString group, const QString &key);
     void requestAddNewKey();
@@ -218,6 +220,7 @@ private:
     QMap<QString, int> m_defaultKeys;
     bool m_needCheckDuplicate {false};
     QVariantList m_timelocklist {};
+    std::vector<int64_t> m_rawTimelocks {};
     QVariantMap  m_timelockInfo {};
     bool    m_timeLocked {false};
     struct CheckBoxInfo {

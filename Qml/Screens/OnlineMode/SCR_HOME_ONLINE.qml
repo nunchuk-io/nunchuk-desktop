@@ -971,12 +971,12 @@ QScreen {
         id: contactInfo
         QContactInfoPage{
             anchors.fill: parent
-            onSend_a_messageClicked: {
+            onSend_a_messageClicked: function(user) {
                 tabselect.currentIndex = 0
                 ClientController.createRoomDirectChat(user.chat_id, user.name, "")
                 conversationContentLoader.changeRoomComponent(false)
             }
-            onSend_removeContact: {
+            onSend_removeContact: function(id) {
                 if(ClientController.rooms.hasContact(id)){
                     deleteContactInfo.open()
                 }
@@ -1090,7 +1090,7 @@ QScreen {
                     colors: [
                         "#CF4018"
                     ]
-                    onItemClicked: {
+                    onItemClicked: function(index) {
                         if(ClientController.rooms.hasContact(model.id)){
                             deleteContactInfo.open()
                         }
