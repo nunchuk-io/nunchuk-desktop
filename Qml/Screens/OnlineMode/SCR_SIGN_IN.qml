@@ -75,7 +75,7 @@ QScreen {
                             _password.isValid = true
                             _password.errorText = ""
                         }
-                        email.showError = false;
+                        _password.showError = false;
                     }
                 }
                 QText {

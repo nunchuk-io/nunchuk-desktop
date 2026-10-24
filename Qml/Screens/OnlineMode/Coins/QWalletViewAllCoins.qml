@@ -41,6 +41,19 @@ Rectangle {
     id: _coinsroot
     property var    walletInfo: AppModel.walletInfo
     property bool   isMiniscript: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
+    function refreshTimelockState() {
+        if (isMiniscript && walletInfo.refreshTimelocklist) {
+            walletInfo.refreshTimelocklist()
+        }
+        if (walletInfo.utxoList) {
+            walletInfo.utxoList.spendableChanged()
+        }
+    }
+    Component.onCompleted: refreshTimelockState()
+    Connections {
+        target: AppModel
+        function onBlockheightChanged() { _coinsroot.refreshTimelockState() }
+    }
 
     QContextMenu {
         id: optionMenu
@@ -231,7 +244,7 @@ Rectangle {
                     radius: 8
                     color: "#EAEAEA"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    visible: isMiniscript
+                    visible: isMiniscript && walletInfo.timelocklist.length > 0
                     Row {
                         anchors.fill: parent
                         spacing: 12

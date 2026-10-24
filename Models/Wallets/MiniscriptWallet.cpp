@@ -88,7 +88,7 @@ void MiniscriptWallet::convertToMiniscript(const nunchuk::Wallet &w, bool invali
         setTimelockType(static_cast<int>(nunchuk::Timelock::Type::LOCKTYPE_RELATIVE));
         setTimelocklist(timeline.get_relative_locks());
     } else {
-        // NONE
+        setTimelocklist({});
     }
 
     std::vector<std::string> tmp;
@@ -1056,78 +1056,17 @@ QVariantList MiniscriptWallet::timelocklist() {
 }
 
 void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks) {
-    QVariantList ret;
+    m_rawTimelocks = timelocks;
+    refreshTimelocklist();
+}
+
+void MiniscriptWallet::refreshTimelocklist() {
+    if (m_rawTimelocks.empty() && m_timelocklist.isEmpty()) {
+        return;
+    }
     bool anyLocked = false;
-
-    for (int i = 0; i < (int)timelocks.size(); ++i) {
-        int64_t val = timelocks[i];
-        QVariantMap obj;
-        QString valueNodeStr;
-        QString valueRemainingStr;
-        QString valueFrom = "today";
-        bool isLocked = false;
-        if (timeUnit() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
-            QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
-            valueNodeStr = dt.toString("MM/dd/yyyy");
-            QDate dateNode = dt.date();
-            QDate today = QDateTime::currentDateTimeUtc().date();
-            int days = today.daysTo(dateNode);
-            if (days > 0) {
-                valueRemainingStr = QString::number(days) + (days == 1 ? " day" : " days");
-                isLocked = true;
-            } else {
-                qint64 secondsTo = QDateTime::currentDateTimeUtc().secsTo(dt);
-                qint64 hours = secondsTo / 3600;
-                qint64 minutes = (secondsTo % 3600) / 60;
-                if (hours >= 1) {
-                    valueRemainingStr = QString::number(hours) + (hours == 1 ? " hour" : " hours");
-                    isLocked = true;
-                } else if (minutes >= 1) {
-                    valueRemainingStr = QString::number(minutes) + (minutes == 1 ? " minute" : " minutes");
-                    isLocked = true;
-                } else {
-                    valueRemainingStr = "";
-                    valueFrom = "now";
-                    isLocked = false;
-                }
-            }
-        } else {
-            QLocale locale(QLocale::English);
-            int64_t currentHeight = AppModel::instance()->blockHeight();
-            int64_t remain = val - currentHeight;
-            valueNodeStr = locale.toString(val);
-            if (val > currentHeight) {
-                QString remainStr = locale.toString(remain);
-                valueRemainingStr = remainStr + (remain == 1 ? " block" : " blocks");
-                isLocked = true;
-            } else {
-                valueRemainingStr = "";
-                valueFrom = "now";
-            }
-        }
-
-        if (isLocked)
-            anyLocked = true;
-
-        obj["valueNode"] = valueNodeStr;
-        obj["valueIndex"] = i;
-        obj["valueRemaining"] = valueRemainingStr;
-        obj["valueLocked"] = isLocked;
-        obj["valueFrom"] = valueFrom;
-        ret << obj;
-    }
-
-    if (ret.size() == 1) {
-        QVariantMap emptyObj;
-        emptyObj["valueNode"] = "";
-        emptyObj["valueIndex"] = ret.size();
-        emptyObj["valueLocked"] = false;
-        emptyObj["valueRemaining"] = anyLocked ? "" : "Unlocked";
-        emptyObj["valueFrom"] = "today";
-        ret << emptyObj;
-    }
+    m_timelocklist = qUtils::BuildTimelockTimeline(m_rawTimelocks, timeUnit(), AppModel::instance()->blockHeight(), &anyLocked);
     setTimeLocked(anyLocked);
-    m_timelocklist = ret;
     emit timelocklistChanged();
 }
 

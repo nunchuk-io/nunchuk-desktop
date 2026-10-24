@@ -92,7 +92,7 @@ QScreen {
                 bottomMargin: 36
             }
             onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_CONFIGURATION_BACK)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
         }
         QTextButton {

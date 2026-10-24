@@ -187,8 +187,9 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_CHANGE_PASSWORD)
         }
         else{
-            commonError.visible = true
-            commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_407)
+            temporary.isValid = false
+            temporary.errorText = STR.STR_QML_407
+            temporary.showError = true
         }
     }
     Connections {

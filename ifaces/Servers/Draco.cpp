@@ -469,6 +469,10 @@ void Draco::verifyNewDevice(const QString &pin)
         }
         emit verifyNewDeviceResult(reply_code, response_code, response_msg);
     }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit verifyNewDeviceResult(reply_code, -1, reply_msg);
+    }
 }
 
 void Draco::resendVerifyNewDeviceCode()
@@ -673,9 +677,13 @@ void Draco::createAccount(const QString& name, const QString& email)
                 createAccount(name, email);
             });
         }
-        else {
+        else{
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit createAccountResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -716,6 +724,10 @@ void Draco::singin(const QString& email, const QString& password)
         setEmailRequested(email);
         emit signinResult(reply_code, response_code, response_msg);
     }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit signinResult(reply_code, -1, reply_msg);
+    }
 }
 
 bool Draco::signout()
@@ -747,10 +759,14 @@ void Draco::recoverPassword(const QString& email, const QString& forgotToken, co
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code    = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
-        emit recoverPasswordResult(reply_code, response_code, response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+        emit recoverPasswordResult(reply_code, response_code, response_msg);
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit recoverPasswordResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -772,6 +788,10 @@ void Draco::forgotPassword(const QString& email)
         else {
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit forgotPasswordResult(reply_code, -1, reply_msg);
     }
 }
 
@@ -813,6 +833,10 @@ void Draco::changePassword(const QString& oldpassword, const QString& newpasswor
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
         emit changePasswordResult(reply_code, response_code, response_msg);
+    }
+    else{
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        emit changePasswordResult(reply_code, -1, reply_msg);
     }
 }
 

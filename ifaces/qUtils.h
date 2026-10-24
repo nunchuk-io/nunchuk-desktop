@@ -29,6 +29,7 @@
 #include <QByteArray>
 #include <QObject>
 #include <QTimeZone>
+#include <QVariant>
 #include <functional>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -293,5 +294,7 @@ QStringList ExportBBQRJSON(const QString &value, QWarningMessage &msg);
 QString ExtractColdcardMessageSignature(const QStringList &qr_data, QWarningMessage &msg);
 
 QString ExtractColdcardMessageSignature(const QString &value, QWarningMessage &msg);
+
+QVariantList BuildTimelockTimeline(std::vector<int64_t> locks, int based, int64_t currentHeight, bool *anyLocked = nullptr);
 } // namespace qUtils
 #endif // QUTILS_H

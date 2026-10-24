@@ -190,6 +190,13 @@ QScreen {
                     boxWidth: 338
                     boxHeight: 48
                     input.placeholderText: STR.STR_QML_1500
+                    onTextInputtedChanged: {
+                        if(!emailaddrs.isValid){
+                            emailaddrs.isValid = true
+                            emailaddrs.errorText = ""
+                        }
+                        emailaddrs.showError = false
+                    }
                     onEnterKeyRequest: {
                         btnSignin.buttonClicked(null)
                     }
@@ -381,15 +388,16 @@ QScreen {
                     }
                 }
                 else {
-                    inputUserEmail.isValid = false
-                    inputUserEmail.errorText = error_msg
-                    inputUserEmail.showError = true;
+                    emailaddrs.isValid = false
+                    emailaddrs.errorText = error_msg
+                    emailaddrs.showError = true
                 }
             }
             function processingCreateAccountResult(https_code, error_code, error_msg){
                 if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.REGISTER_EXCEPTION){
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_399)
+                    emailaddrs.isValid = false
+                    emailaddrs.errorText = STR.STR_QML_399
+                    emailaddrs.showError = true
                 }
                 else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereAmI = eCHANGE_TEMPO_PASSWORD_NEW
@@ -580,9 +588,9 @@ QScreen {
                         errorInfo.open()
                     }
                     else {
-                        emailaddrs.isValid = false
-                        emailaddrs.errorText = error_msg
-                        emailaddrs.showError = true;
+                        passwd.isValid = false
+                        passwd.errorText = error_msg
+                        passwd.showError = true
                     }
                 } else {
                     if(https_code === DRACO_CODE.SUCCESSFULL) {
@@ -606,6 +614,7 @@ QScreen {
                     else {
                         passwd.isValid = false
                         passwd.errorText = error_msg
+                        passwd.showError = true
                     }
                 }
             }
@@ -813,6 +822,11 @@ QScreen {
                 if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK) {
                     QMLHandle.sendEvent(EVT.EVT_NUNCHUK_LOGIN_SUCCEEDED)
                 }
+                else{
+                    passwd.isValid = false
+                    passwd.errorText = error_msg
+                    passwd.showError = true
+                }
             }
         }
     }
@@ -858,6 +872,7 @@ QScreen {
                         emailbackup.isValid = true
                         emailbackup.errorText = ""
                     }
+                    emailbackup.showError = false
                 }
                 onEnterKeyRequest: {
                     btnResetPassword.buttonClicked(null)
@@ -909,8 +924,9 @@ QScreen {
 
             function processingResetPasswordResult(https_code, error_code, error_msg){
                 if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.FORGOT_PASSWORD_EXCEPTION){
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_411)
+                    emailbackup.isValid = false
+                    emailbackup.errorText = STR.STR_QML_411
+                    emailbackup.showError = true
                 }
                 else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereAmI = eRECOVER_PASSWORD
@@ -918,6 +934,7 @@ QScreen {
                 else{
                     emailbackup.isValid = false
                     emailbackup.errorText = error_msg
+                    emailbackup.showError = true
                 }
             }
         }
@@ -974,6 +991,13 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
+                    onTextInputtedChanged: {
+                        if(!oldPassword.isValid){
+                            oldPassword.isValid = true
+                            oldPassword.errorText = ""
+                        }
+                        oldPassword.showError = false
+                    }
                 }
                 QTextInputBoxTypeB {
                     id: newPassword
@@ -1054,8 +1078,9 @@ QScreen {
                     whereAmI = eSIGN_IN_OLD_ACCOUNT
                 }
                 else{
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_407)
+                    oldPassword.isValid = false
+                    oldPassword.errorText = STR.STR_QML_407
+                    oldPassword.showError = true
                 }
             }
             function processingSigninResult(https_code, error_code, error_msg){
@@ -1066,6 +1091,11 @@ QScreen {
                         "newPassword" : newPassword.textInputted,
                     };
                     QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_CHANGE_PASSWORD, requestBody)
+                }
+                else{
+                    oldPassword.isValid = false
+                    oldPassword.errorText = STR.STR_QML_407
+                    oldPassword.showError = true
                 }
             }
         }
@@ -1122,6 +1152,13 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
+                    onTextInputtedChanged: {
+                        if(!oldPassword.isValid){
+                            oldPassword.isValid = true
+                            oldPassword.errorText = ""
+                        }
+                        oldPassword.showError = false
+                    }
                 }
                 QTextInputBoxTypeB {
                     id: newPassword
@@ -1197,8 +1234,9 @@ QScreen {
                     whereAmI = eSIGN_IN_NEW_ACCOUNT
                 }
                 else{
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_407)
+                    oldPassword.isValid = false
+                    oldPassword.errorText = STR.STR_QML_407
+                    oldPassword.showError = true
                 }
             }
         }
@@ -1255,6 +1293,13 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
+                    onTextInputtedChanged: {
+                        if(!tokenPassword.isValid){
+                            tokenPassword.isValid = true
+                            tokenPassword.errorText = ""
+                        }
+                        tokenPassword.showError = false
+                    }
                 }
                 QTextInputBoxTypeB {
                     id: newPassword
@@ -1326,8 +1371,9 @@ QScreen {
 
             function processingRecoverPasswordResult(https_code, error_code, error_msg){
                 if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.RECOVER_PASSWORD_RESET_EXCEPTION || error_code === DRACO_CODE.RECOVER_PASSWORD_RESET_FAIL){
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_414)
+                    tokenPassword.isValid = false
+                    tokenPassword.errorText = STR.STR_QML_414
+                    tokenPassword.showError = true
                 }
                 else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereAmI = eSIGN_IN_OLD_ACCOUNT
@@ -1335,6 +1381,7 @@ QScreen {
                 else{
                     tokenPassword.isValid = false
                     tokenPassword.errorText = error_msg
+                    tokenPassword.showError = true
                 }
             }
             function processingResetPasswordResult(https_code, error_code, error_msg){
@@ -1387,6 +1434,7 @@ QScreen {
                         confirmCode.isValid = true
                         confirmCode.errorText = ""
                     }
+                    confirmCode.showError = false
                 }
                 onEnterKeyRequest: {
                     btnVerifyNewDevice.buttonClicked(null)
@@ -1440,8 +1488,9 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_NUNCHUK_LOGIN_SUCCEEDED)
                 }
                 else{
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3]").arg(https_code).arg(error_code).arg(error_msg)
+                    confirmCode.isValid = false
+                    confirmCode.errorText = STR.STR_QML_2341
+                    confirmCode.showError = true
                 }
             }
         }
@@ -1557,8 +1606,9 @@ QScreen {
             }
             function processingCreateAccountResult(https_code, error_code, error_msg){
                 if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.REGISTER_EXCEPTION){
-                    commonError.visible = true
-                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_399)
+                    email.isValid = false
+                    email.errorText = STR.STR_QML_399
+                    email.showError = true
                 }
                 else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereAmI = eCHANGE_TEMPO_PASSWORD_NEW
@@ -1566,7 +1616,7 @@ QScreen {
                 else{
                     email.isValid = false
                     email.errorText = error_msg
-                    email.showError = true;
+                    email.showError = true
                 }
             }
         }

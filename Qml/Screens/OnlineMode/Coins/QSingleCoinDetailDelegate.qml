@@ -64,7 +64,7 @@ Rectangle {
 
 
     property var    walletInfo: AppModel.walletInfo
-    property bool   showCoinAge: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) && walletInfo.timelockType !== ScriptNodeHelper.TimelockType.ABSOLUTE
+    property bool   showCoinAge: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) && walletInfo.timelockType !== ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE
 
     signal coinViewClicked()
     signal coinViewCheck()

@@ -989,119 +989,15 @@ int UTXO::timelockCount()
 
 QVariantList UTXO::timelocklist()
 {
-    QVariantList ret;
-    std::vector<int64_t> timelocks = mUnspentOutputOrigin.get_timelocks();
-
-    bool anyLocked = false;
-
-    for (int i = 0; i < (int)timelocks.size(); ++i) {
-        int64_t val = timelocks[i];
-
-        QVariantMap obj;
-        QString valueNodeStr;
-        QString valueRemainingStr;
-        QString remainingString  = "";
-        qint64  remainingNumeric = 0;
-        bool    needVisibleWarning = false;
-        bool    isLocked = false;
-
-        if (timelockbase() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
-            DBG_INFO << val << QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
-            QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
-            valueNodeStr = dt.toString("MM/dd/yyyy");
-            qint64 secondsTo = QDateTime::currentDateTimeUtc().secsTo(dt);
-            if (secondsTo <= 0) {
-                valueRemainingStr = "";
-                remainingString = "";
-                remainingNumeric = 0;
-                isLocked = false;
-                needVisibleWarning = false;
-            }
-            else {
-                qint64 days = secondsTo / 86400;
-                qint64 hours = (secondsTo % 86400) / 3600;
-                qint64 minutes = (secondsTo % 3600) / 60;
-
-                if (days > 0) {
-                    valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
-                    remainingString   = QString::number(days) + (days == 1 ? " day" : " days");
-                    remainingNumeric  = days;
-                    needVisibleWarning = days < 7;
-                }
-                else if (hours > 0) {
-                    valueRemainingStr = QString::number(hours) + (hours == 1 ? " hour left" : " hours left");
-                    remainingString   = QString::number(hours) + (hours == 1 ? " hour" : " hours");
-                    remainingNumeric  = 1;
-                    needVisibleWarning = true;
-                }
-                else {
-                    double hourDecimal = minutes / 60.0;
-                    double rounded = qRound(hourDecimal * 10.0) / 10.0;
-                    QString hourStr;
-                    if (qFuzzyCompare(rounded, floor(rounded))) {
-                        hourStr = QString::number(static_cast<int>(rounded));
-                    } else {
-                        hourStr = QString::number(rounded, 'f', 1);
-                    }
-                    // valueRemainingStr = hourStr + " hour left";
-                    valueRemainingStr = QString::number(minutes) + (minutes == 1 ? " minute left" : " minutes left");
-                    remainingString   = hourStr + " hour";
-                    remainingNumeric  = 1;
-                    needVisibleWarning = true;
-                }
-                isLocked = true;
-            }
-        }
-        else if(timelockbase() == (int)nunchuk::Timelock::Based::HEIGHT_LOCK) {
-            QLocale locale(QLocale::English);
-            int64_t currentHeight = AppModel::instance()->blockHeight();
-            int64_t remain = val - currentHeight;
-            valueNodeStr = locale.toString(val);
-            if (val > currentHeight) {
-                QString remainStr = locale.toString(remain);
-                valueRemainingStr = remainStr + (remain == 1 ? " block left" : " blocks left");
-                remainingString  = remainStr + (remain == 1 ? " block" : " blocks");
-                remainingNumeric = remain;
-                needVisibleWarning = remain < 1008;
-                isLocked = true;
-            } else {
-                valueRemainingStr = "";
-            }
-        }
-        else {
-            continue;
-        }
-
-        if (isLocked) anyLocked = true;
-
-        obj["valueNode"] = valueNodeStr;
-        obj["valueIndex"] = i;
-        obj["valueLocked"] = isLocked;
-        obj["valueRemaining"] = valueRemainingStr;
-        obj["valueRemainingString"]  = remainingString;
-        obj["valueRemainingNumeric"] = remainingNumeric;
-        obj["valueNeedVisibleWarning"] = needVisibleWarning;
-        ret << obj;
-    }
-
-    if (ret.size() == 1) {
-        QVariantMap emptyObj;
-        emptyObj["valueNode"] = "";
-        emptyObj["valueIndex"] = ret.size();
-        emptyObj["valueLocked"] = false;
-        emptyObj["valueRemaining"] = anyLocked ? "" : "Unlocked";
-        emptyObj["valueRemainingString"]  = "";
-        emptyObj["valueRemainingNumeric"] = 0;
-        emptyObj["valueNeedVisibleWarning"] = false;
-        ret << emptyObj;
-    }
-    setTimeLocked(anyLocked);
-    return ret;
+    return qUtils::BuildTimelockTimeline(mUnspentOutputOrigin.get_timelocks(), timelockbase(), AppModel::instance()->blockHeight());
 }
 
 bool UTXO::timeLocked() const
 {
-    return m_timeLocked;
+    bool anyLocked = false;
+    qUtils::BuildTimelockTimeline(mUnspentOutputOrigin.get_timelocks(), (int)mUnspentOutputOrigin.get_lock_based(),
+                                  AppModel::instance()->blockHeight(), &anyLocked);
+    return anyLocked;
 }
 
 void UTXO::setTimeLocked(bool newTimeLocked)
@@ -1115,6 +1011,10 @@ void UTXO::setTimeLocked(bool newTimeLocked)
 QUTXOListModel::QUTXOListModel(QString wallet_id) : m_wallet_id(wallet_id)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    connect(this, &QAbstractItemModel::modelReset, this, &QUTXOListModel::spendableChanged);
+    connect(this, &QAbstractItemModel::rowsInserted, this, &QUTXOListModel::spendableChanged);
+    connect(this, &QAbstractItemModel::rowsRemoved, this, &QUTXOListModel::spendableChanged);
+    connect(this, &QAbstractItemModel::dataChanged, this, &QUTXOListModel::spendableChanged);
 }
 
 QUTXOListModel::~QUTXOListModel(){
@@ -1635,14 +1535,14 @@ QString QUTXOListModel::spendableDisplay()
 
 qint64 QUTXOListModel::spendableSats()
 {
+    qint64 spendable = 0;
     foreach (QUTXOPtr it, m_data) {
-        DBG_INFO << it.data()->isLocked() << it.data()->amountSats();
-        // if(!it.data()->isLocked()){
-        if(!it.data()->timeLocked()){
-            m_spendableSats += it.data()->amountSats();
+        if (it && !it.data()->timeLocked()) {
+            spendable += it.data()->amountSats();
         }
     }
-    return m_spendableSats;
+    m_spendableSats = spendable;
+    return spendable;
 }
 
 QString QUTXOListModel::spendableBTC()
