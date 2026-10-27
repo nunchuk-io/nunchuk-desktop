@@ -15,6 +15,7 @@ class LetConfigureYourWalletViewModel : public OnChainTimelockViewModel {
     void onInit() override;
   public slots:
     void onConfigureClicked();
+    void onConfigureFallbackClicked(int fallback_index);
   private:
     TimeLockSetupGetUseCase m_timeLockGetUC;
 };

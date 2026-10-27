@@ -16,7 +16,8 @@ LetConfigureYourWalletViewModel::LetConfigureYourWalletViewModel(QObject *parent
 void LetConfigureYourWalletViewModel::onInit() {
     GUARD_DASHBOARD()
     TimeLockSetupGetInput input;
-    input.group_id = dashboard->groupId();    
+    input.group_id = dashboard->groupId();
+    input.fallback_index = -1;
     m_timeLockGetUC.executeAsync(input, [this](core::usecase::Result<TimeLockSetupGetResult> result){
         if (result.isSuccess()) {
             auto timelock = result.value().timelock;
@@ -26,6 +27,12 @@ void LetConfigureYourWalletViewModel::onInit() {
 }
 
 void LetConfigureYourWalletViewModel::onConfigureClicked() {
+    onConfigureFallbackClicked(-1);
+}
+
+void LetConfigureYourWalletViewModel::onConfigureFallbackClicked(int fallback_index) {
+    GUARD_DASHBOARD()
+    dashboard->setEditingFallbackIndex(fallback_index);
     GUARD_SUB_SCREEN_MANAGER()
     subMng->show(qml::screens::onlinemode::setupwallets::timelocks::qsetuponchaintimelockdraftwallet);
     QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);

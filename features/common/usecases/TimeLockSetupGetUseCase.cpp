@@ -1,6 +1,7 @@
 #include "TimeLockSetupGetUseCase.h"
 #include "core/restapi/RestApi.h"
 #include "core/utils/Utils.h"
+#include <QJsonArray>
 
 namespace features::common::usecases {
 using namespace core::usecase;
@@ -18,6 +19,17 @@ Result<TimeLockSetupGetResult> TimeLockSetupGetUseCase::execute(const TimeLockSe
 
     QJsonObject draftWallet = output["draft_wallet"].toObject();
     QJsonObject timelock = draftWallet.value("timelock").toObject();
+    if (input.fallback_index >= 0) {
+        timelock = {};
+        QJsonArray fallbacks = draftWallet.value("onchain_inheritance_policy").toObject().value("fallbacks").toArray();
+        for (const auto &js : fallbacks) {
+            QJsonObject fallback = js.toObject();
+            if (fallback.value("index").toInt(-1) == input.fallback_index) {
+                timelock = fallback.value("timelock").toObject();
+                break;
+            }
+        }
+    }
 
     if (ret) {
         result.timelock = timelock;

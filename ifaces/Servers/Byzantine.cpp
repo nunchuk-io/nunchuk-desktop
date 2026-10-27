@@ -2801,6 +2801,82 @@ bool Byzantine::DraftWalletUploadBackupFile(const QString& group_id, const QMap<
     return false;
 }
 
+
+static bool parseGroupDraftPolicyReply(const QJsonObject &jsonObj, int reply_code, const QString &reply_msg, QJsonObject &output, QString &errormsg)
+{
+    if (reply_code != DRACO_CODE::SUCCESSFULL) {
+        errormsg = reply_msg;
+        return false;
+    }
+    QJsonObject errorObj = jsonObj["error"].toObject();
+    int response_code = errorObj["code"].toInt();
+    if (response_code == DRACO_CODE::RESPONSE_OK) {
+        output = jsonObj["data"].toObject();
+        return true;
+    }
+    errormsg = errorObj["message"].toString();
+    output = QJsonObject{{"error", errorObj}};
+    AppModel::instance()->showToast(response_code, errormsg, EWARNING::WarningType::EXCEPTION_MSG);
+    return false;
+}
+
+bool Byzantine::DraftWalletUpdatePrimary(const QString &group_id, const QJsonObject &request_body, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_PRIMARY];
+    cmd.replace("{group_id}", group_id);
+    QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
+    return parseGroupDraftPolicyReply(jsonObj, reply_code, reply_msg, output, errormsg);
+}
+
+bool Byzantine::DraftWalletResetPrimary(const QString &group_id, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_PRIMARY];
+    cmd.replace("{group_id}", group_id);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
+    return parseGroupDraftPolicyReply(jsonObj, reply_code, reply_msg, output, errormsg);
+}
+
+bool Byzantine::DraftWalletAddFallback(const QString &group_id, const QJsonObject &request_body, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_FALLBACKS];
+    cmd.replace("{group_id}", group_id);
+    QJsonObject jsonObj = m_rest->postSync(cmd, request_body, reply_code, reply_msg);
+    return parseGroupDraftPolicyReply(jsonObj, reply_code, reply_msg, output, errormsg);
+}
+
+bool Byzantine::DraftWalletUpdateFallback(const QString &group_id, int fallback_index, const QJsonObject &request_body, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_FALLBACK_INDEX];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{fallback_index}", QString::number(fallback_index));
+    QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
+    return parseGroupDraftPolicyReply(jsonObj, reply_code, reply_msg, output, errormsg);
+}
+
+bool Byzantine::DraftWalletRemoveFallback(const QString &group_id, int fallback_index, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_FALLBACK_INDEX];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{fallback_index}", QString::number(fallback_index));
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
+    return parseGroupDraftPolicyReply(jsonObj, reply_code, reply_msg, output, errormsg);
+}
+
 bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QJsonObject& request_body, QJsonObject &output, QString &errormsg)
 {
     if (group_id.isEmpty()) return false;
@@ -2827,7 +2903,7 @@ bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QJsonOb
     return false;
 }
 
-bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg)
+bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg, const QJsonObject &key)
 {
     QJsonObject data;
     // BUGFIX: omit for on-chain (empty) callers - see Draco::DraftWalletSignerVerify().
@@ -2837,6 +2913,9 @@ bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& 
     data["verification_type"] = type;
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;
+    }
+    if (!key.isEmpty()) {
+        data["key"] = key;
     }
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_VERIFY];
     cmd.replace("{group_id}", group_id);

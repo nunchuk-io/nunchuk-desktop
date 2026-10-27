@@ -38,6 +38,7 @@ QOnScreenContentTypeB {
     id: _onScreen
     property var dashInfo: GroupWallet.dashboardInfo
     property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
+    readonly property bool isConfigurable: dashInfo.isConfigurablePolicy === true
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
@@ -61,7 +62,8 @@ QOnScreenContentTypeB {
         var n = dashInfo.nInfo
         var allowInheritance = dashInfo.allowInheritance
         if (m === 2 && n === 4) {
-            return "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.svg"
+            return isConfigurable ? "qrc:/Images/Images/onchain_2_of_4_left_panel.svg"
+                                  : "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.svg"
         } else if (m === 3 && n === 5) {
             return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.svg"
                                     : "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg"
@@ -111,317 +113,396 @@ QOnScreenContentTypeB {
                         id: _contentColumn
                         width: parent.width - 8  // leave room for QScrollBar (8px) — was 346
                         spacing: 4
-                        QLato {
+                        QOnChainConfigurablePolicy {
                             width: parent.width
-                            text: guideTextMap()[0].description
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 20
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
+                            visible: _onScreen.isConfigurable
+                            dashInfo: _onScreen.dashInfo
+                            isKeyHolderLimited: _onScreen.isKeyHolderLimited
+                            primaryDateText: vm.valueDate.length > 0 ? qsTr("%1 %2").arg(vm.valueDate).arg(vm.valueTime) : ""
+                            primarySubText: vm.isShowBlockHeight ? qsTr("%1 %2").arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight))).arg(STR.STR_QML_188) : ""
+                            onKeyInheritanceClicked: function(key) { handleInheritanceKey(key.flat_index, key) }
+                            onKeyHardwareClicked: function(key) { handleHardwareKey(key.flat_index, key) }
+                            onKeyServerClicked: function(key) { handleServerKey() }
+                            onKeyBackupClicked: function(key) { handleBackupKey(key.flat_index, key) }
+                            onKeyChangeClicked: function(key) {
+                                dashInfo.startChangeKeyAtIndex(key.flat_index)
+                                _hardwareAddKey.key_index = key.key_index
+                                _hardwareAddKey.isInheritance = key.is_inheritance === true
+                                _deviceSafety.open()
+                            }
+                            onRefreshClicked: GroupWallet.refresh()
+                            onPrimaryTimelockClicked: vm.onConfigureFallbackClicked(-1)
+                            onCustomizePrimaryClicked: {
+                                var p = dashInfo.primaryPolicy
+                                _conditionKeys.target = -1
+                                _conditionKeys.openWith(STR.STR_QML_2350, p.m !== undefined ? p.m : 2, p.n !== undefined ? p.n : 4)
+                            }
+                            onAddFallbackClicked: dashInfo.addFallback(1, 1)
+                            onEditFallbackClicked: function(fallback) {
+                                _conditionKeys.target = fallback.index
+                                _conditionKeys.openWith(STR.STR_QML_2356.arg(fallback.index + 1), fallback.m, fallback.n)
+                            }
+                            onRemoveFallbackClicked: function(fallback) {
+                                _confirmRemoveFallback.fallbackIndex = fallback.index
+                                _confirmRemoveFallback.title = STR.STR_QML_2358.arg(fallback.index + 1)
+                                _confirmRemoveFallback.open()
+                            }
+                            onFallbackTimelockClicked: function(fallback) { vm.onConfigureFallbackClicked(fallback.index) }
                         }
-                        Item { width: parent.width; height: 12 }
                         Column {
                             width: parent.width
-                            spacing: 16
-                            Repeater {
-                                id: signers
-                                model: dashInfo.keys
-                                QAddRequestKey {
-                                    width: parent.width  // = _contentColumn.width - 8 = 338
-                                    onInheritanceKeyClicked: {
-                                        dashInfo.startAddKeyAtIndex(index)
-                                        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
-                                        if (!has) {
-                                            _hardwareAddKey.key_index = modelData.key_index
-                                            _inheritanceConfigureGuide.openGuide()
-                                        } else {
-                                            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
-                                            dashInfo.requestStartKeyCreate(modelData.tag, true)
-                                        }
+                            spacing: 4
+                            visible: !_onScreen.isConfigurable
+                            QLato {
+                                width: parent.width
+                                text: guideTextMap()[0].description
+                                lineHeightMode: Text.FixedHeight
+                                lineHeight: 20
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            Item { width: parent.width; height: 12 }
+                            Column {
+                                width: parent.width
+                                spacing: 16
+                                Repeater {
+                                    id: signers
+                                    model: dashInfo.keys
+                                    QAddRequestKey {
+                                        width: parent.width  // = _contentColumn.width - 8 = 338
+                                        onInheritanceKeyClicked: handleInheritanceKey(index, modelData)
+                                        onHardwareClicked: handleHardwareKey(index, modelData)
+                                        onSerkeyClicked: handleServerKey()
+                                        onBackupClicked: handleBackupKey(index, modelData)
                                     }
-                                    onHardwareClicked: {
-                                        dashInfo.startAddKeyAtIndex(index)
-                                        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
-                                        if (!has) {
-                                            _hardwareAddKey.key_index = modelData.key_index
-                                            // BUGFIX: was hardcoded false; any hardware slot can now be an
-                                            // inheritance key per backend is_inheritance, so read it from modelData.
-                                            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
-                                            _hardwareAddKey.open()
-                                        } else {
-                                            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
-                                            dashInfo.requestStartKeyCreate(modelData.tag, true)
-                                        }
+                                }
+                            }
+                            Item {
+                                width: parent.width
+                                height: 48
+                                QRefreshButtonA {
+                                    anchors {
+                                        horizontalCenter: parent.horizontalCenter
+                                        top: parent.top
+                                        topMargin: 4
                                     }
-                                    onSerkeyClicked: {
-                                        _info.contentText = STR.STR_QML_962
-                                        _info.open()
+                                    width: 70
+                                    height: 36
+                                    color: "transparent"
+                                    border.color: "transparent"
+                                    iconSize: 18
+                                    iconSpacing: 4
+                                    label: STR.STR_QML_652
+                                    fontPixelSize: 12
+                                    onButtonClicked: {
+                                        GroupWallet.refresh()
+                                        stopRefresh()
                                     }
-                                    onBackupClicked: {
-                                        dashInfo.startAddKeyAtIndex(index)
-                                        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
-                                        // (MULTI_SIG, NUN-10192) concept only; checking it before wallet_type
-                                        // risked routing an on-chain MINISCRIPT key into the off-chain
-                                        // verify-backups/distribution-choice screens if claim_options were
-                                        // ever non-empty for it. MINISCRIPT must always keep the pre-existing
-                                        // on-chain flow below, untouched by the off-chain feature.
-                                        if (modelData.wallet_type === "MULTI_SIG") {
-                                            // Route by claim_options (NUN-10192) chosen in Key Distribution
-                                            // Choice. BUGFIX: single-option keys (seed-only/encrypted-only)
-                                            // used to skip straight into their own flow; now every configured
-                                            // key (1 or 2 options) always goes through the Verify-your-backups
-                                            // checklist (Setup 12c), which shows only the row(s) matching
-                                            // claim_options and picks startFlow()/startVerifyOnly() itself
-                                            // based on upload state.
-                                            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
-                                            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                                            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                                            if (hasSeed || hasEncrypted) {
-                                                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
-                                            } else {
-                                                // Setup 20dD (NUN-10192): empty claim_options reopens Key
-                                                // Distribution Choice instead of the old Coldcard-import flow.
-                                                // ROLLOUT WARNING: NUN-10192 is still "To Do" on backend - until
-                                                // deployed, claim_options is empty for all existing inheritance
-                                                // MULTI_SIG keys, so this FE must ship in sync with the backend.
-                                                _changeDistribution.hwType = modelData.hwType
-                                                _changeDistribution.openFor(modelData.xfp, modelData.tag)
+                                }
+                            }
+                            QLato {
+                                width: parent.width
+                                text: guideTextMap()[1].description
+                                lineHeightMode: Text.FixedHeight
+                                lineHeight: 20
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            Item { width: parent.width; height: 12 }
+                            Loader {
+                                width: parent.width
+                                height: 72
+                                sourceComponent: if (vm.isShowBlockHeight) return _blockHeightLock
+                                                else if (vm.valueDate.length > 0) return _timeLock
+                                                else return _timeLockEmpty
+                                Component {
+                                    id: _blockHeightLock
+                                    Rectangle {
+                                        width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
+                                        height: 72
+                                        radius: 8
+                                        color: "#A7F0BA"
+                                        Row {
+                                            anchors {
+                                                fill: parent
+                                                margins: 12
                                             }
-                                        } else {
-                                            GroupWallet.qAddHardware = modelData.hwType
-                                            _backupSeedPhraseFlow.startFlow()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Item {
-                            width: parent.width
-                            height: 48
-                            QRefreshButtonA {
-                                anchors {
-                                    horizontalCenter: parent.horizontalCenter
-                                    top: parent.top
-                                    topMargin: 4
-                                }
-                                width: 70
-                                height: 36
-                                color: "transparent"
-                                border.color: "transparent"
-                                iconSize: 18
-                                iconSpacing: 4
-                                label: STR.STR_QML_652
-                                fontPixelSize: 12
-                                onButtonClicked: {
-                                    GroupWallet.refresh()
-                                    stopRefresh()
-                                }
-                            }
-                        }
-                        QLato {
-                            width: parent.width
-                            text: guideTextMap()[1].description
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 20
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        Item { width: parent.width; height: 12 }
-                        Loader {
-                            width: parent.width
-                            height: 72
-                            sourceComponent: if (vm.isShowBlockHeight) return _blockHeightLock
-                                            else if (vm.valueDate.length > 0) return _timeLock
-                                            else return _timeLockEmpty
-                            Component {
-                                id: _blockHeightLock
-                                Rectangle {
-                                    width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
-                                    height: 72
-                                    radius: 8
-                                    color: "#A7F0BA"
-                                    Row {
-                                        anchors {
-                                            fill: parent
-                                            margins: 12
-                                        }
-                                        spacing: 12
-                                        QBadge {
-                                            width: 48
-                                            height: 48
-                                            radius: 48
-                                            iconSize: 24
-                                            icon: "qrc:/Images/Images/Timer.svg"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            color: "#F5F5F5"
-                                        }
-                                        Column {
-                                            width: 150
-                                            height: 40
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            spacing: 4
-                                            QLato {
+                                            spacing: 12
+                                            QBadge {
+                                                width: 48
+                                                height: 48
+                                                radius: 48
+                                                iconSize: 24
+                                                icon: "qrc:/Images/Images/Timer.svg"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                color: "#F5F5F5"
+                                            }
+                                            Column {
                                                 width: 150
-                                                height: 20
-                                                text: qsTr("Est. %1 %2").arg(vm.valueDate).arg(vm.valueTime)
-                                                horizontalAlignment: Text.AlignLeft
-                                                verticalAlignment: Text.AlignVCenter
-                                            }
-                                            QLato {
-                                                width: 150
-                                                height: 16
-                                                font.pixelSize: 12
-                                                text: qsTr("%1 %2").arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight))).arg(STR.STR_QML_188)
-                                                horizontalAlignment: Text.AlignLeft
-                                                verticalAlignment: Text.AlignVCenter
+                                                height: 40
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                spacing: 4
+                                                QLato {
+                                                    width: 150
+                                                    height: 20
+                                                    text: qsTr("Est. %1 %2").arg(vm.valueDate).arg(vm.valueTime)
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                QLato {
+                                                    width: 150
+                                                    height: 16
+                                                    font.pixelSize: 12
+                                                    text: qsTr("%1 %2").arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight))).arg(STR.STR_QML_188)
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
                                             }
                                         }
-                                    }
-                                    QTextButton {
-                                        anchors {
-                                            verticalCenter: parent.verticalCenter
-                                            right: parent.right
-                                            rightMargin: 12
-                                        }
-                                        width: label.paintedWidth + 2*20
-                                        height: 36
-                                        type: eTypeB
-                                        label.text: STR.STR_QML_1413
-                                        label.font.pixelSize: 16
-                                        onButtonClicked: {
-                                            vm.onConfigureClicked()
+                                        QTextButton {
+                                            anchors {
+                                                verticalCenter: parent.verticalCenter
+                                                right: parent.right
+                                                rightMargin: 12
+                                            }
+                                            width: label.paintedWidth + 2*20
+                                            height: 36
+                                            type: eTypeB
+                                            label.text: STR.STR_QML_1413
+                                            label.font.pixelSize: 16
+                                            onButtonClicked: {
+                                                vm.onConfigureClicked()
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            Component {
-                                id: _timeLock
-                                Rectangle {
-                                    width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
-                                    height: 72
-                                    radius: 8
-                                    color: "#A7F0BA"
-                                    Row {
-                                        anchors {
-                                            fill: parent
-                                            margins: 12
-                                        }
-                                        spacing: 12
-                                        QBadge {
-                                            width: 48
-                                            height: 48
-                                            radius: 48
-                                            iconSize: 24
-                                            icon: "qrc:/Images/Images/Timer.svg"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            color: "#F5F5F5"
-                                        }
-                                        Column {
-                                            width: 150
-                                            height: 48
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            spacing: 4
-                                            QLato {
-                                                width: 150
-                                                height: 20
-                                                text: STR.STR_QML_1988
-                                                horizontalAlignment: Text.AlignLeft
-                                                verticalAlignment: Text.AlignVCenter
+                                Component {
+                                    id: _timeLock
+                                    Rectangle {
+                                        width: parent.width  // = Loader.width = _contentColumn.width - 8 = 338
+                                        height: 72
+                                        radius: 8
+                                        color: "#A7F0BA"
+                                        Row {
+                                            anchors {
+                                                fill: parent
+                                                margins: 12
                                             }
-                                            QLato {
+                                            spacing: 12
+                                            QBadge {
+                                                width: 48
+                                                height: 48
+                                                radius: 48
+                                                iconSize: 24
+                                                icon: "qrc:/Images/Images/Timer.svg"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                color: "#F5F5F5"
+                                            }
+                                            Column {
                                                 width: 150
-                                                height: 20
-                                                text: qsTr("%1 %2").arg(vm.valueDate).arg(vm.valueTime)
-                                                horizontalAlignment: Text.AlignLeft
-                                                verticalAlignment: Text.AlignVCenter
+                                                height: 48
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                spacing: 4
+                                                QLato {
+                                                    width: 150
+                                                    height: 20
+                                                    text: STR.STR_QML_1988
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                QLato {
+                                                    width: 150
+                                                    height: 20
+                                                    text: qsTr("%1 %2").arg(vm.valueDate).arg(vm.valueTime)
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
                                             }
                                         }
-                                    }
-                                    QTextButton {
-                                        anchors {
-                                            verticalCenter: parent.verticalCenter
-                                            right: parent.right
-                                            rightMargin: 12
-                                        }
-                                        width: label.paintedWidth + 2*20
-                                        height: 36
-                                        type: eTypeB
-                                        label.text: STR.STR_QML_1413
-                                        label.font.pixelSize: 16
-                                        onButtonClicked: {
-                                            vm.onConfigureClicked()
+                                        QTextButton {
+                                            anchors {
+                                                verticalCenter: parent.verticalCenter
+                                                right: parent.right
+                                                rightMargin: 12
+                                            }
+                                            width: label.paintedWidth + 2*20
+                                            height: 36
+                                            type: eTypeB
+                                            label.text: STR.STR_QML_1413
+                                            label.font.pixelSize: 16
+                                            onButtonClicked: {
+                                                vm.onConfigureClicked()
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            Component {
-                                id: _timeLockEmpty
-                                QDashRectangle {
-                                    width: 346
-                                    height: 72
-                                    radius: 8
-                                    borderWitdh: 2
-                                    borderColor: "#031F2B"
-                                    Row {
-                                        anchors {
-                                            fill: parent
-                                            margins: 12
+                                Component {
+                                    id: _timeLockEmpty
+                                    QDashRectangle {
+                                        width: 346
+                                        height: 72
+                                        radius: 8
+                                        borderWitdh: 2
+                                        borderColor: "#031F2B"
+                                        Row {
+                                            anchors {
+                                                fill: parent
+                                                margins: 12
+                                            }
+                                            spacing: 12
+                                            QBadge {
+                                                width: 48
+                                                height: 48
+                                                radius: 48
+                                                iconSize: 24
+                                                icon: "qrc:/Images/Images/Timer.svg"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                color: "#F5F5F5"
+                                            }
+                                            QLato {
+                                                width: 150
+                                                height: 28
+                                                text: STR.STR_QML_1896
+                                                horizontalAlignment: Text.AlignLeft
+                                                verticalAlignment: Text.AlignVCenter
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
                                         }
-                                        spacing: 12
-                                        QBadge {
-                                            width: 48
-                                            height: 48
-                                            radius: 48
-                                            iconSize: 24
-                                            icon: "qrc:/Images/Images/Timer.svg"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            color: "#F5F5F5"
-                                        }
-                                        QLato {
-                                            width: 150
-                                            height: 28
-                                            text: STR.STR_QML_1896
-                                            horizontalAlignment: Text.AlignLeft
-                                            verticalAlignment: Text.AlignVCenter
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QTextButton {
-                                        anchors {
-                                            verticalCenter: parent.verticalCenter
-                                            right: parent.right
-                                            rightMargin: 12
-                                        }
-                                        width: label.paintedWidth + 2*20
-                                        height: 36
-                                        type: eTypeB
-                                        label.text: STR.STR_QML_958
-                                        label.font.pixelSize: 16
-                                        onButtonClicked: {
-                                            vm.onConfigureClicked()
+                                        QTextButton {
+                                            anchors {
+                                                verticalCenter: parent.verticalCenter
+                                                right: parent.right
+                                                rightMargin: 12
+                                            }
+                                            width: label.paintedWidth + 2*20
+                                            height: 36
+                                            type: eTypeB
+                                            label.text: STR.STR_QML_958
+                                            label.font.pixelSize: 16
+                                            onButtonClicked: {
+                                                vm.onConfigureClicked()
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }                        
+                            }                        
+                        }
                     }
                 }
             }
         }
     }
+    function handleInheritanceKey(index, modelData) {
+        dashInfo.startAddKeyAtIndex(index)
+        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+        if (!has) {
+            _hardwareAddKey.key_index = modelData.key_index
+            _inheritanceConfigureGuide.openGuide()
+        } else {
+            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
+            dashInfo.requestStartKeyCreate(modelData.tag, true)
+        }
+    }
+    function handleHardwareKey(index, modelData) {
+        dashInfo.startAddKeyAtIndex(index)
+        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+        if (!has) {
+            _hardwareAddKey.key_index = modelData.key_index
+            // BUGFIX: was hardcoded false; any hardware slot can now be an
+            // inheritance key per backend is_inheritance, so read it from modelData.
+            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
+            if (_onScreen.isConfigurable) {
+                _deviceSafety.open()
+            } else {
+                _hardwareAddKey.open()
+            }
+        } else {
+            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
+            dashInfo.requestStartKeyCreate(modelData.tag, true)
+        }
+    }
+    function handleServerKey() {
+        _info.contentText = STR.STR_QML_962
+        _info.open()
+    }
+    function handleBackupKey(index, modelData) {
+        dashInfo.startAddKeyAtIndex(index)
+        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
+        // (MULTI_SIG, NUN-10192) concept only; checking it before wallet_type
+        // risked routing an on-chain MINISCRIPT key into the off-chain
+        // verify-backups/distribution-choice screens if claim_options were
+        // ever non-empty for it. MINISCRIPT must always keep the pre-existing
+        // on-chain flow below, untouched by the off-chain feature.
+        if (modelData.wallet_type === "MULTI_SIG") {
+            // Route by claim_options (NUN-10192) chosen in Key Distribution
+            // Choice. BUGFIX: single-option keys (seed-only/encrypted-only)
+            // used to skip straight into their own flow; now every configured
+            // key (1 or 2 options) always goes through the Verify-your-backups
+            // checklist (Setup 12c), which shows only the row(s) matching
+            // claim_options and picks startFlow()/startVerifyOnly() itself
+            // based on upload state.
+            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+            if (hasSeed || hasEncrypted) {
+                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
+            } else {
+                // Setup 20dD (NUN-10192): empty claim_options reopens Key
+                // Distribution Choice instead of the old Coldcard-import flow.
+                // ROLLOUT WARNING: NUN-10192 is still "To Do" on backend - until
+                // deployed, claim_options is empty for all existing inheritance
+                // MULTI_SIG keys, so this FE must ship in sync with the backend.
+                _changeDistribution.hwType = modelData.hwType
+                _changeDistribution.openFor(modelData.xfp, modelData.tag)
+            }
+        } else {
+            GroupWallet.qAddHardware = modelData.hwType
+            _backupSeedPhraseFlow.startFlow()
+        }
+    }
     onPrevClicked: closeScreen()
-    bottomRight: Item{}
+    bottomRight: QTextButton {
+        visible: _onScreen.isConfigurable
+        width: 99
+        height: 48
+        label.text: STR.STR_QML_265
+        label.font.pixelSize: 16
+        type: eTypeE
+        enabled: dashInfo.draftReadyToContinue === true
+        onButtonClicked: {
+            GroupWallet.refresh()
+            closeScreen()
+        }
+    }
     QmlUtils {
         id: utils
     }
     QInheritanceConfigureGuide {
         id: _inheritanceConfigureGuide
+        isConfigurable: _onScreen.isConfigurable
+        isCustomized: _onScreen.isConfigurable && dashInfo.primaryPolicy.is_customized === true
         onNextClicked: {
             _hardwareAddKey.isInheritance = true
             _hardwareAddKey.open()
+        }
+    }
+
+    QPopupOverlayScreen {
+        id: _deviceSafety
+        content: _deviceSafetyComp
+        Component {
+            id: _deviceSafetyComp
+            QBeforeYouUseThisDevice {
+                onCloseClicked: _deviceSafety.close()
+                onPrevClicked: _deviceSafety.close()
+                onNextClicked: {
+                    _deviceSafety.close()
+                    _hardwareAddKey.open()
+                }
+            }
         }
     }
 
@@ -557,6 +638,30 @@ QOnScreenContentTypeB {
             if (idx < 0) return
             applyDistributionChoice(idx, claimOptions)
         }
+    }
+
+    QPopupOnChainConditionKeys {
+        id: _conditionKeys
+        property int target: -1
+        onSaved: function(m, n) {
+            if (target < 0) {
+                dashInfo.customizePrimary(m, n)
+            } else {
+                dashInfo.editFallback(target, m, n)
+            }
+        }
+    }
+
+    QPopupInfoTwoButtons {
+        id: _confirmRemoveFallback
+        property int fallbackIndex: -1
+        contentText: STR.STR_QML_2359
+        isVertical: false
+        labels: [STR.STR_QML_035, STR.STR_QML_1134]
+        funcs: [
+            function() {},
+            function() { dashInfo.removeFallback(_confirmRemoveFallback.fallbackIndex) }
+        ]
     }
 
     LetConfigureYourWalletViewModel {

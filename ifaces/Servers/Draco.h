@@ -323,7 +323,7 @@ class Draco : public QObject {
                                      QString &errormsg);
     bool DraftWalletDownloadBackupFile(const QString &xfp, QJsonObject &output, QString &errormsg);
     bool DraftWalletUploadBackupFile(const QMap<QString, QVariant> &requestBody, QJsonObject &output, QString &errormsg);
-    bool DraftWalletSignerVerify(const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, QString &errormsg);
+    bool DraftWalletSignerVerify(const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, QString &errormsg, const QJsonObject &key = QJsonObject());
     bool DraftWalletSetClaimOptions(const QString &xfp, const QStringList &claim_options, QJsonObject &output, QString &errormsg);
 
     // Supported signers
@@ -347,6 +347,11 @@ class Draco : public QObject {
     // Mini script
     bool GetWalletSetupConfig(QJsonObject &output, QString &errormsg);
     bool DraftWalletUpdateTimelock(const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
+    bool DraftWalletUpdatePrimary(const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
+    bool DraftWalletResetPrimary(QJsonObject &output, QString &errormsg);
+    bool DraftWalletAddFallback(const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
+    bool DraftWalletUpdateFallback(int fallback_index, const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
+    bool DraftWalletRemoveFallback(int fallback_index, QJsonObject &output, QString &errormsg);
 
     // Replace or change timelock
     bool walletChangeTimelock(const QString &wallet_id, const QJsonObject &request_body, const QString &verify_token, QJsonObject &output);

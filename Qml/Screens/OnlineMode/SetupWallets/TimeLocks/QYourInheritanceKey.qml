@@ -32,6 +32,8 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1941
+    property bool isConfigurable: false
+    property bool isCustomized: false
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
@@ -46,7 +48,7 @@ QOnScreenContentTypeB {
                 QPicture {
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectFit
-                    source: "qrc:/Images/Images/your-inheritance-key.svg"
+                    source: isConfigurable ? "qrc:/Images/Images/d_key_03g.svg" : "qrc:/Images/Images/your-inheritance-key.svg"
                 }
             }
             Item {
@@ -57,7 +59,7 @@ QOnScreenContentTypeB {
                     spacing: 20
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1942
+                        text: isConfigurable && !isCustomized ? STR.STR_QML_2362 : STR.STR_QML_1942
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -75,7 +77,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1944
+                        text: isConfigurable ? STR.STR_QML_2363 : STR.STR_QML_1944
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap

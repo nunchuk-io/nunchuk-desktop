@@ -608,69 +608,87 @@ QJsonObject QGroupDashboard::CreateAccountIndexAndKeyIndices(const QJsonArray &s
         signer["group_id"] = groupId();
         return signer;
     } else if (wallet_type == "MINISCRIPT") {
-        // For MINISCRIPT, each logical index maps to two key indices
         QList<int> indices = mapIndexMiniscript.value(idx);
-        const int key_index_first = indices.value(0, -1);
-        const int key_index_second = indices.value(1, -1);
-
-        QJsonObject signer_first = findSigner(key_index_first, signers);
-        QJsonObject signer_second = findSigner(key_index_second, signers);
-        QJsonObject ret;
-
-        if (signer_first.isEmpty() && signer_second.isEmpty()) {
-            // No keys yet: mark both slots as placeholders X/Y
-            ret["key_index"] = key_index_first;
-            ret["account_indexs"] = QJsonArray::fromStringList({"X", "Y"});
-            ret["account_index"] = 0;
-        } else if (!signer_first.isEmpty() && !signer_second.isEmpty()) {
-            // Both keys present: collect both indices
-            const int index_first = qUtils::GetIndexFromPath(signer_first.value("derivation_path").toString());
-            const int index_second = qUtils::GetIndexFromPath(signer_second.value("derivation_path").toString());
-            QList<QString> accountIndexs{QString::number(index_first), QString::number(index_second)};
-            ret = signer_first;
-            ret["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
-            // No single "account_index" is primary in this combined case
-            ret["account_index"] = {};
-            // Both present; no "next" key_index to set
-            ret["key_index"] = key_index_second;
-        } else if (!signer_first.isEmpty()) {
-            // Only first present: second missing
-            const int index_first = qUtils::GetIndexFromPath(signer_first.value("derivation_path").toString());
-            QList<QString> accountIndexs{QString::number(index_first), "Y"};
-            ret = signer_first;
-            ret["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
-            // Next expected key_index should be the second slot
-            ret["key_index"] = key_index_second;
-            // Indicate next expected slot (second)
-            ret["account_index"] = 1;
-        } else { // only signer_second present
-            const int index_second = qUtils::GetIndexFromPath(signer_second.value("derivation_path").toString());
-            QList<QString> accountIndexs{"X", QString::number(index_second)};
-            ret = signer_second;
-            ret["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
-            // Next expected key_index should be the first slot
-            ret["key_index"] = key_index_first;
-            // Indicate current filled slot (first missing -> 0)
-            ret["account_index"] = 0;
-        }
-
-        // Always provide both key indices for the logical slot
-        ret["key_indices"] = QJsonArray::fromVariantList({key_index_first, key_index_second});
-
-        // hasSecond denotes whether the second slot is already present
-        const QJsonArray ret_accountIndexs = ret.value("account_indexs").toArray();
-        if (!ret_accountIndexs.isEmpty()) {
-            ret["has"] = !ret_accountIndexs.contains("X");
-            ret["hasSecond"] = !ret_accountIndexs.contains("Y");
-        }
-        ret["wallet_type"] = wallet_type;
-        ret["group_id"] = groupId();
-        return ret;
+        return BuildMiniscriptPair(signers, indices.value(0, -1), indices.value(1, -1));
     }
     return QJsonObject();
 }
 
+QJsonObject QGroupDashboard::BuildMiniscriptPair(const QJsonArray &signers, int key_index_first, int key_index_second) {
+    auto findSigner = [](const int key_index, const QJsonArray &signers_tmp) {
+        for (const auto &js : signers_tmp) {
+            QJsonObject signer = js.toObject();
+            if (signer.value("key_index").toInt() == key_index && !signer.value("xfp").toString().isEmpty()) {
+                return signer;
+            }
+        }
+        return QJsonObject();
+    };
+    QString wallet_type = walletType();
+    QJsonObject signer_first = findSigner(key_index_first, signers);
+    QJsonObject signer_second = findSigner(key_index_second, signers);
+    QJsonObject ret;
+
+    if (signer_first.isEmpty() && signer_second.isEmpty()) {
+        // No keys yet: mark both slots as placeholders X/Y
+        ret["key_index"] = key_index_first;
+        ret["account_indexs"] = QJsonArray::fromStringList({"X", "Y"});
+        ret["account_index"] = 0;
+    } else if (!signer_first.isEmpty() && !signer_second.isEmpty()) {
+        // Both keys present: collect both indices
+        const int index_first = qUtils::GetIndexFromPath(signer_first.value("derivation_path").toString());
+        const int index_second = qUtils::GetIndexFromPath(signer_second.value("derivation_path").toString());
+        QList<QString> accountIndexs{QString::number(index_first), QString::number(index_second)};
+        ret = signer_first;
+        ret["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
+        // No single "account_index" is primary in this combined case
+        ret["account_index"] = {};
+        // Both present; no "next" key_index to set
+        ret["key_index"] = key_index_second;
+    } else if (!signer_first.isEmpty()) {
+        // Only first present: second missing
+        const int index_first = qUtils::GetIndexFromPath(signer_first.value("derivation_path").toString());
+        QList<QString> accountIndexs{QString::number(index_first), "Y"};
+        ret = signer_first;
+        ret["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
+        // Next expected key_index should be the second slot
+        ret["key_index"] = key_index_second;
+        // Indicate next expected slot (second)
+        ret["account_index"] = 1;
+    } else { // only signer_second present
+        const int index_second = qUtils::GetIndexFromPath(signer_second.value("derivation_path").toString());
+        QList<QString> accountIndexs{"X", QString::number(index_second)};
+        ret = signer_second;
+        ret["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
+        // Next expected key_index should be the first slot
+        ret["key_index"] = key_index_first;
+        // Indicate current filled slot (first missing -> 0)
+        ret["account_index"] = 0;
+    }
+
+    // Always provide both key indices for the logical slot
+    ret["key_indices"] = QJsonArray::fromVariantList({key_index_first, key_index_second});
+
+    // hasSecond denotes whether the second slot is already present
+    const QJsonArray ret_accountIndexs = ret.value("account_indexs").toArray();
+    if (!ret_accountIndexs.isEmpty()) {
+        ret["has"] = !ret_accountIndexs.contains("X");
+        ret["hasSecond"] = !ret_accountIndexs.contains("Y");
+    }
+    ret["wallet_type"] = wallet_type;
+    ret["group_id"] = groupId();
+    return ret;
+}
+
 void QGroupDashboard::UpdateKeys(const QJsonObject &data) {
+    m_policy = data["onchain_inheritance_policy"].toObject();
+    if (isConfigurablePolicy()) {
+        UpdateConfigurableKeys(data);
+        return;
+    }
+    m_primaryPolicy.clear();
+    m_fallbackPolicies.clear();
+    m_generalValidationErrors.clear();
     QJsonObject wallet_config = data["wallet_config"].toObject();
     QString wallet_type = data["wallet_type"].toString();
     bool allow_inheritance = wallet_config["allow_inheritance"].toBool();
@@ -1479,6 +1497,27 @@ void QGroupDashboard::startAddKeyAtIndex(int index) {
     QSignerManagement::instance()->setCurrentSigner(key);
 }
 
+void QGroupDashboard::startChangeKeyAtIndex(int index) {
+    if (index < 0 || index >= m_keys.size())
+        return;
+    QJsonObject key = m_keys.at(index).toObject();
+    QJsonObject change;
+    for (const QString &field : {"key_index", "key_indices", "wallet_type", "group_id", "section", "fallback_index", "card_index", "flat_index",
+                                 "single_account", "card_account_index", "account_index_by_xfp", "is_inheritance"}) {
+        if (key.contains(field)) {
+            change[field] = key.value(field);
+        }
+    }
+    if (key.value("is_inheritance").toBool()) {
+        change["tags"] = QJsonArray{"INHERITANCE"};
+    }
+    change["has"] = false;
+    change["hasSecond"] = true;
+    change["account_indexs"] = QJsonArray{QString("X")};
+    change["new_account_index"] = key.value("card_account_index").toInt(-1) < 0 ? 0 : key.value("card_account_index").toInt();
+    QSignerManagement::instance()->setCurrentSigner(change);
+}
+
 void QGroupDashboard::startReplaceKeyAtIndex(int index) {
     if (index < 0 || index >= m_replaceKeys.size())
         return;
@@ -1846,6 +1885,316 @@ QString QGroupDashboard::generateName(const QStringList &tags) {
     QString tag = tagList.first();
     int index = 0;
     return createName(tag, index);
+}
+
+static QString formatPolicyTimelock(const QJsonObject &timelock) {
+    qint64 timestamp = timelock.value("value").toVariant().toLongLong();
+    if (timestamp <= 0) {
+        return QString();
+    }
+    QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timelock.value("timezone").toString());
+    return dt.toString("MM/dd/yyyy HH:mm");
+}
+
+static bool matchValidationTarget(const QJsonObject &error, const QString &section, int fallback_index) {
+    if (error.value("section").toString() != section) {
+        return false;
+    }
+    if (section == "FALLBACK") {
+        return error.value("fallback_index").toInt(-1) == fallback_index;
+    }
+    return true;
+}
+
+static QVariantMap timelockVariant(const QJsonObject &timelock) {
+    QVariantMap ret = timelock.toVariantMap();
+    ret["display"] = formatPolicyTimelock(timelock);
+    ret["isHeightLock"] = timelock.value("based").toString() == "HEIGHT_LOCK";
+    return ret;
+}
+
+void QGroupDashboard::UpdateConfigurableKeys(const QJsonObject &data) {
+    QJsonObject wallet_config = data["wallet_config"].toObject();
+    QString wallet_type = data["wallet_type"].toString();
+    m_nInfo = wallet_config["n"].toInt();
+    m_mInfo = wallet_config["m"].toInt();
+    m_allow_inheritance = wallet_config["allow_inheritance"].toBool();
+    bool hasServer = !CLIENT_INSTANCE->isFinney();
+
+    QJsonArray signers = data["signers"].toArray();
+    QJsonArray cards = data["cards"].toArray();
+    QJsonArray errors = data["validation_errors"].toArray();
+
+    auto findSigner = [&signers](int key_index) {
+        for (const auto &js : signers) {
+            QJsonObject signer = js.toObject();
+            if (signer.value("key_index").toInt(-1) == key_index && !signer.value("xfp").toString().isEmpty()) {
+                return signer;
+            }
+        }
+        return QJsonObject();
+    };
+
+    QJsonArray array;
+    for (int ci = 0; ci < cards.size(); ci++) {
+        QJsonObject card = cards.at(ci).toObject();
+        QJsonArray cardKeys = card.value("keys").toArray();
+        if (cardKeys.isEmpty()) {
+            continue;
+        }
+        QString section = card.value("section").toString();
+        int fallback_index = card.value("fallback_index").toInt(-1);
+        bool cardInheritance = card.value("tags").toArray().contains("INHERITANCE");
+        QJsonObject obj;
+        if (card.value("type").toString() == "SERVER_KEY") {
+            int key_index = cardKeys.first().toObject().value("key_index").toInt(-1);
+            QJsonObject signer = findSigner(key_index);
+            if (signer.isEmpty()) {
+                obj["key_index"] = key_index;
+                obj["has"] = false;
+                if (hasServer) {
+                    obj["type"] = "SERVER";
+                }
+            } else {
+                obj = signer;
+                obj["has"] = true;
+            }
+            obj["account_indexs"] = QJsonArray();
+            obj["key_indices"] = QJsonArray{key_index};
+            obj["wallet_type"] = wallet_type;
+            obj["group_id"] = groupId();
+            obj = createOrUpdateSignerInfo(obj, ci);
+        } else if (cardKeys.size() >= 2) {
+            int first = cardKeys.at(0).toObject().value("key_index").toInt(-1);
+            int second = cardKeys.at(1).toObject().value("key_index").toInt(-1);
+            obj = createOrUpdateSignerInfo(BuildMiniscriptPair(signers, first, second), ci);
+            QJsonArray allAccounts = obj.value("account_indexs").toArray();
+            QJsonArray shownAccounts;
+            for (int ki = 0; ki < 2 && ki < allAccounts.size(); ki++) {
+                if (!cardKeys.at(ki).toObject().value("section").isNull()) {
+                    shownAccounts.append(allAccounts.at(ki));
+                }
+            }
+            obj["account_indexs"] = shownAccounts;
+        } else {
+            QJsonObject cardKey = cardKeys.first().toObject();
+            int key_index = cardKey.value("key_index").toInt(-1);
+            QJsonValue account_index = cardKey.value("account_index");
+            QJsonObject signer = findSigner(key_index);
+            if (signer.isEmpty()) {
+                obj["key_index"] = key_index;
+                obj["has"] = false;
+                obj["account_indexs"] = QJsonArray{QString("X")};
+            } else {
+                obj = signer;
+                obj["has"] = true;
+                obj["account_indexs"] = QJsonArray{QString::number(qUtils::GetIndexFromPath(signer.value("derivation_path").toString()))};
+            }
+            obj["hasSecond"] = true;
+            obj["single_account"] = true;
+            obj["card_account_index"] = account_index.isDouble() ? account_index.toInt() : -1;
+            obj["account_index_by_xfp"] = card.value("account_index_by_xfp").toObject();
+            obj["key_indices"] = QJsonArray{key_index};
+            obj["wallet_type"] = wallet_type;
+            obj["group_id"] = groupId();
+            obj = createOrUpdateSignerInfo(obj, ci);
+            obj["new_account_index"] = obj["card_account_index"].toInt() < 0 ? 0 : obj["card_account_index"].toInt();
+        }
+        if (cardInheritance) {
+            obj["is_inheritance"] = true;
+            QJsonArray tags = obj.value("tags").toArray();
+            if (!tags.contains("INHERITANCE")) {
+                tags.append("INHERITANCE");
+                obj["tags"] = tags;
+            }
+        }
+        QJsonArray cardKeyIndices = obj.value("key_indices").toArray();
+        bool hasError = false;
+        for (const auto &e : errors) {
+            QJsonObject err = e.toObject();
+            if (err.value("field").toString() != "keys" || !matchValidationTarget(err, section, fallback_index)) {
+                continue;
+            }
+            for (const auto &k : err.value("key_indices").toArray()) {
+                if (cardKeyIndices.contains(k)) {
+                    hasError = true;
+                }
+            }
+        }
+        obj["section"] = section;
+        obj["fallback_index"] = fallback_index;
+        obj["card_index"] = ci;
+        obj["flat_index"] = array.size();
+        obj["has_error"] = hasError;
+        array.append(obj);
+    }
+
+    QJsonObject primary = m_policy.value("primary").toObject();
+    QVariantMap primaryMap = primary.toVariantMap();
+    primaryMap["timelock"] = timelockVariant(primary.value("timelock").toObject());
+    QStringList primaryMessages;
+    bool primaryTimelockError = false;
+    QVariantList general;
+    for (const auto &e : errors) {
+        QJsonObject err = e.toObject();
+        QString section = err.value("section").toString();
+        if (section == "PRIMARY") {
+            primaryMessages.append(err.value("message").toString());
+            if (err.value("field").toString() == "timelock") {
+                primaryTimelockError = true;
+            }
+        } else if (section != "FALLBACK") {
+            general.append(err.value("message").toString());
+        }
+    }
+    primaryMap["messages"] = primaryMessages;
+    primaryMap["timelock_error"] = primaryTimelockError;
+
+    QVariantList fallbackList;
+    for (const auto &js : m_policy.value("fallbacks").toArray()) {
+        QJsonObject fallback = js.toObject();
+        int index = fallback.value("index").toInt(-1);
+        QVariantMap item = fallback.toVariantMap();
+        item["timelock"] = timelockVariant(fallback.value("timelock").toObject());
+        QStringList messages;
+        bool timelockError = false;
+        for (const auto &e : errors) {
+            QJsonObject err = e.toObject();
+            if (!matchValidationTarget(err, "FALLBACK", index)) {
+                continue;
+            }
+            messages.append(err.value("message").toString());
+            if (err.value("field").toString() == "timelock") {
+                timelockError = true;
+            }
+        }
+        item["messages"] = messages;
+        item["timelock_error"] = timelockError;
+        fallbackList.append(item);
+    }
+
+    m_primaryPolicy = primaryMap;
+    m_fallbackPolicies = fallbackList;
+    m_generalValidationErrors = general;
+    m_keys = array;
+    emit draftWalletChanged();
+    ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
+}
+
+bool QGroupDashboard::isConfigurablePolicy() const {
+    return m_policy.value("type").toString() == "CONFIGURABLE";
+}
+
+QVariantMap QGroupDashboard::primaryPolicy() const {
+    return m_primaryPolicy;
+}
+
+QVariantList QGroupDashboard::fallbackPolicies() const {
+    return m_fallbackPolicies;
+}
+
+QVariantList QGroupDashboard::generalValidationErrors() const {
+    return m_generalValidationErrors;
+}
+
+bool QGroupDashboard::draftReadyToContinue() const {
+    return m_walletDraftInfo.value("finalized").toBool() && m_walletDraftInfo.value("validation_errors").toArray().isEmpty();
+}
+
+int QGroupDashboard::editingFallbackIndex() const {
+    return m_editingFallbackIndex;
+}
+
+void QGroupDashboard::setEditingFallbackIndex(int index) {
+    if (m_editingFallbackIndex == index)
+        return;
+    m_editingFallbackIndex = index;
+    emit editingFallbackIndexChanged();
+}
+
+QJsonObject QGroupDashboard::editingTimelock() const {
+    if (m_editingFallbackIndex < 0) {
+        return m_walletDraftInfo.value("timelock").toObject();
+    }
+    for (const auto &js : m_policy.value("fallbacks").toArray()) {
+        QJsonObject fallback = js.toObject();
+        if (fallback.value("index").toInt(-1) == m_editingFallbackIndex) {
+            return fallback.value("timelock").toObject();
+        }
+    }
+    return {};
+}
+
+void QGroupDashboard::runDraftPolicyRequest(std::function<bool(const QString &, QJsonObject &, QString &)> request) {
+    const QString gid = groupId();
+    const bool isGroup = !isUserDraftWallet() && !isUserWallet();
+    QPointer<QGroupDashboard> safeThis(this);
+    runInThread(
+        this,
+        [request, gid, isGroup]() -> QJsonObject {
+            QJsonObject output;
+            QString error_msg;
+            bool ok = request(isGroup ? gid : QString(), output, error_msg);
+            output["__ok"] = ok;
+            output["__message"] = error_msg;
+            return output;
+        },
+        [safeThis](QJsonObject output) {
+            if (!safeThis) {
+                return;
+            }
+            bool ok = output.value("__ok").toBool();
+            QJsonObject draft_wallet = output.value("draft_wallet").toObject();
+            if (ok && !draft_wallet.isEmpty()) {
+                safeThis->m_walletDraftInfo = draft_wallet;
+                QJsonArray draftSigners = draft_wallet.value("signers").toArray();
+                if (!draftSigners.isEmpty()) {
+                    safeThis->m_signerInfo = draftSigners;
+                }
+                safeThis->UpdateKeys(draft_wallet);
+            } else if (ok) {
+                safeThis->GetDraftWalletInfo();
+            }
+            emit safeThis->draftPolicyRequestFinished(ok, output.value("__message").toString());
+        });
+}
+
+void QGroupDashboard::customizePrimary(int m, int n) {
+    QJsonObject body{{"m", m}, {"n", n}};
+    runDraftPolicyRequest([body](const QString &gid, QJsonObject &output, QString &error_msg) {
+        return gid.isEmpty() ? Draco::instance()->DraftWalletUpdatePrimary(body, output, error_msg)
+                             : Byzantine::instance()->DraftWalletUpdatePrimary(gid, body, output, error_msg);
+    });
+}
+
+void QGroupDashboard::resetPrimary() {
+    runDraftPolicyRequest([](const QString &gid, QJsonObject &output, QString &error_msg) {
+        return gid.isEmpty() ? Draco::instance()->DraftWalletResetPrimary(output, error_msg)
+                             : Byzantine::instance()->DraftWalletResetPrimary(gid, output, error_msg);
+    });
+}
+
+void QGroupDashboard::addFallback(int m, int n) {
+    QJsonObject body{{"m", m}, {"n", n}};
+    runDraftPolicyRequest([body](const QString &gid, QJsonObject &output, QString &error_msg) {
+        return gid.isEmpty() ? Draco::instance()->DraftWalletAddFallback(body, output, error_msg)
+                             : Byzantine::instance()->DraftWalletAddFallback(gid, body, output, error_msg);
+    });
+}
+
+void QGroupDashboard::editFallback(int fallback_index, int m, int n) {
+    QJsonObject body{{"m", m}, {"n", n}};
+    runDraftPolicyRequest([fallback_index, body](const QString &gid, QJsonObject &output, QString &error_msg) {
+        return gid.isEmpty() ? Draco::instance()->DraftWalletUpdateFallback(fallback_index, body, output, error_msg)
+                             : Byzantine::instance()->DraftWalletUpdateFallback(gid, fallback_index, body, output, error_msg);
+    });
+}
+
+void QGroupDashboard::removeFallback(int fallback_index) {
+    runDraftPolicyRequest([fallback_index](const QString &gid, QJsonObject &output, QString &error_msg) {
+        return gid.isEmpty() ? Draco::instance()->DraftWalletRemoveFallback(fallback_index, output, error_msg)
+                             : Byzantine::instance()->DraftWalletRemoveFallback(gid, fallback_index, output, error_msg);
+    });
 }
 
 QVariantList QGroupDashboard::keys() const {

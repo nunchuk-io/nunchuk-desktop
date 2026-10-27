@@ -44,6 +44,12 @@ QOnScreenContentTypeA {
         {height: 40,  description: STR.STR_QML_1889 },
         {height: 40,  description: STR.STR_QML_1890 },
     ]
+    readonly property var onchain_2_of_4_description_map: [
+        {height: 40,  description: STR.STR_QML_2343 },
+        {height: 40,  description: STR.STR_QML_2344 },
+        {height: 60,  description: STR.STR_QML_2345 },
+    ]
+    readonly property bool is2Of4: dashInfo.mInfo === 2 && dashInfo.nInfo === 4
     readonly property var hb_premier_description_map: [
         {height: 40,  description: STR.STR_QML_1892 },
         {height: 40,  description: STR.STR_QML_1893 },
@@ -57,7 +63,7 @@ QOnScreenContentTypeA {
         var n = dashInfo.nInfo
         var allowInheritance = dashInfo.allowInheritance
         if (m === 2 && n === 4) {
-            return "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.svg"
+            return "qrc:/Images/Images/onchain_2_of_4_left_panel.svg"
         }
         else if (m === 3 && n === 5) {
             return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.svg"
@@ -68,7 +74,10 @@ QOnScreenContentTypeA {
         }
     }
     function guideTextMap() {
-        if (walletInfo.isHoneyBadger) {
+        if (is2Of4) {
+            return onchain_2_of_4_description_map
+        }
+        else if (walletInfo.isHoneyBadger) {
             return hb_description_map
         }
         else if (walletInfo.isHoneyBadgerPremier || walletInfo.isByzantinePro) {
@@ -85,7 +94,7 @@ QOnScreenContentTypeA {
         var m = dashInfo.mInfo
         var n = dashInfo.nInfo
         if (m === 2 && n === 4) {
-            return STR.STR_QML_940_one
+            return STR.STR_QML_2346
         } else if (m === 3 && n === 5) {
             return STR.STR_QML_940_two
         } else {
@@ -116,7 +125,7 @@ QOnScreenContentTypeA {
                     spacing: 4
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1951
+                        text: is2Of4 ? STR.STR_QML_2342 : STR.STR_QML_1951
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap

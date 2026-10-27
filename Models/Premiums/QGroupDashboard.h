@@ -7,6 +7,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QTimer>
+#include <functional>
 #include <nunchuk.h>
 
 class AlertEnum : public QObject {
@@ -130,6 +131,12 @@ class QGroupDashboard : public QBasePremium {
     Q_PROPERTY(QVariantMap timelockObj READ timelockObj NOTIFY groupInfoChanged)
     Q_PROPERTY(QString timelockDisplay READ timelockDisplay NOTIFY groupInfoChanged)
     Q_PROPERTY(QString lastUploadedBackupChecksum READ lastUploadedBackupChecksum NOTIFY lastUploadedBackupChecksumChanged)
+    Q_PROPERTY(bool isConfigurablePolicy READ isConfigurablePolicy NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantMap primaryPolicy READ primaryPolicy NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantList fallbackPolicies READ fallbackPolicies NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantList generalValidationErrors READ generalValidationErrors NOTIFY draftWalletChanged)
+    Q_PROPERTY(bool draftReadyToContinue READ draftReadyToContinue NOTIFY draftWalletChanged)
+    Q_PROPERTY(int editingFallbackIndex READ editingFallbackIndex WRITE setEditingFallbackIndex NOTIFY editingFallbackIndexChanged)
 
   public:
     QGroupDashboard(const QString &wallet_id);
@@ -170,6 +177,22 @@ class QGroupDashboard : public QBasePremium {
     QJsonObject createOrUpdateSignerInfo(const QJsonObject &info, int index);
     void UpdateKeys(const QJsonObject &data);
     QJsonObject CreateAccountIndexAndKeyIndices(const QJsonArray &signers, int index);
+    QJsonObject BuildMiniscriptPair(const QJsonArray &signers, int key_index_first, int key_index_second);
+    void UpdateConfigurableKeys(const QJsonObject &data);
+    bool isConfigurablePolicy() const;
+    QVariantMap primaryPolicy() const;
+    QVariantList fallbackPolicies() const;
+    QVariantList generalValidationErrors() const;
+    bool draftReadyToContinue() const;
+    int editingFallbackIndex() const;
+    void setEditingFallbackIndex(int index);
+    QJsonObject editingTimelock() const;
+    Q_INVOKABLE void customizePrimary(int m, int n);
+    Q_INVOKABLE void resetPrimary();
+    Q_INVOKABLE void addFallback(int m, int n);
+    Q_INVOKABLE void editFallback(int fallback_index, int m, int n);
+    Q_INVOKABLE void removeFallback(int fallback_index);
+    void runDraftPolicyRequest(std::function<bool(const QString &, QJsonObject &, QString &)> request);
     void UpdateReplacementKeys(const QJsonObject &data);
     bool GetKeyReplacementStatus();
     QJsonObject GetSigerReplacement(const QString &xfp);
@@ -283,6 +306,7 @@ class QGroupDashboard : public QBasePremium {
 
     void startAddKeyAtIndex(int index);
     void startReplaceKeyAtIndex(int index);
+    Q_INVOKABLE void startChangeKeyAtIndex(int index);
     bool enoughKeyAdded(const QString &xfp);
     bool dismissAlert();
 
@@ -304,6 +328,8 @@ class QGroupDashboard : public QBasePremium {
     void historyPeriodIdChanged();
     void groupChatExistedChanged();
     void lastUploadedBackupChecksumChanged();
+    void editingFallbackIndexChanged();
+    void draftPolicyRequestFinished(bool success, const QString &message);
 
     void editMembersChanged();
     void editMembersSuccessChanged();
@@ -319,6 +345,11 @@ class QGroupDashboard : public QBasePremium {
     QJsonObject m_walletDraftInfo{};
     QJsonArray m_keys{};
     QJsonArray m_replaceKeys{};
+    QJsonObject m_policy{};
+    QVariantMap m_primaryPolicy{};
+    QVariantList m_fallbackPolicies{};
+    QVariantList m_generalValidationErrors{};
+    int m_editingFallbackIndex{-1};
     bool m_showDashBoard{false};
     int m_mInfo{0};
     int m_nInfo{0};

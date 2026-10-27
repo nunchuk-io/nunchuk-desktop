@@ -304,7 +304,12 @@ public:
     bool DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
 
     bool DraftWalletUpdateTimelock(const QString& group_id, const QJsonObject& request_body, QJsonObject& output, QString& errormsg);
-    bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg);
+    bool DraftWalletUpdatePrimary(const QString& group_id, const QJsonObject& request_body, QJsonObject& output, QString& errormsg);
+    bool DraftWalletResetPrimary(const QString& group_id, QJsonObject& output, QString& errormsg);
+    bool DraftWalletAddFallback(const QString& group_id, const QJsonObject& request_body, QJsonObject& output, QString& errormsg);
+    bool DraftWalletUpdateFallback(const QString& group_id, int fallback_index, const QJsonObject& request_body, QJsonObject& output, QString& errormsg);
+    bool DraftWalletRemoveFallback(const QString& group_id, int fallback_index, QJsonObject& output, QString& errormsg);
+    bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& verification_method, const QString& type, const QString& key_checksum, QString& errormsg, const QJsonObject &key = QJsonObject());
     bool DraftWalletSetClaimOptions(const QString &group_id, const QString& xfp, const QStringList& claim_options, QJsonObject& output, QString& errormsg);
 
     bool walletChangeTimelock(const QString &wallet_id, const QString& group_id, const QJsonObject& request_body, const QString &verify_token, QJsonObject& output);

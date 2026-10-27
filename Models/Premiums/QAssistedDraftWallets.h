@@ -131,6 +131,11 @@ class QAssistedDraftWallets : public QSwitchAPI {
     bool requestAddOrReplacementBothIndicesIfPossible(const QString &xfp);
     bool requestAddOrReplacementBothIndicesIfPossibleAsync(const QString &xfp);
   private:
+    QJsonObject configurableVerifyKey(const QString &verifyType, const QString &verificationMethod);
+    void setRecoveredVerifyKey(const nunchuk::SingleSigner &signer);
+    bool isConfigurableDraft() const;
+    int configurableVerifyAccountIndex() const;
+    QJsonObject m_recoveredVerifyKey{};
     QMap<Key, StructAddHardware> m_requests{};
     StructAddHardware m_request{};
     QVariantList m_hardwareReq{};

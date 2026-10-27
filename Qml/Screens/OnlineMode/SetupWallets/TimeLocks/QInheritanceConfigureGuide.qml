@@ -34,6 +34,8 @@ import "../../../../../localization/STR_QML.js" as STR
 QPopupOverlayScreen {
     id: _infoPopup
     signal nextClicked()
+    property bool isConfigurable: false
+    property bool isCustomized: false
     QScreenStateFlow {
         id: stateScreen
     }
@@ -41,6 +43,7 @@ QPopupOverlayScreen {
     readonly property var map_flow: [
         {screen: "your-inheritance-key",                    screen_component: your_inheritance_key},
         {screen: "important-notice-about-passphrase",       screen_component: important_notice_about_passphrase},
+        {screen: "before-you-use-this-device",              screen_component: before_you_use_this_device},
     ]
 
     content: {
@@ -61,6 +64,8 @@ QPopupOverlayScreen {
     Component {
         id: your_inheritance_key
         QYourInheritanceKey {
+            isConfigurable: _infoPopup.isConfigurable
+            isCustomized: _infoPopup.isCustomized
             onCloseClicked: _infoPopup.close()
             // BUGFIX: Back must go to the previous screen, not cancel the whole flow; Close/X does that.
             onPrevClicked: stateScreen.backScreen()
@@ -71,8 +76,24 @@ QPopupOverlayScreen {
     Component {
         id: important_notice_about_passphrase
         QImportantNoticeAboutPassphraseOnchain {
+            isConfigurable: _infoPopup.isConfigurable
             onCloseClicked: _infoPopup.close()
             // BUGFIX: Back returns to "your-inheritance-key", it must not cancel the flow.
+            onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                if (_infoPopup.isConfigurable) {
+                    stateScreen.setScreenFlow("before-you-use-this-device")
+                } else {
+                    _infoPopup.close()
+                    _infoPopup.nextClicked()
+                }
+            }
+        }
+    }
+    Component {
+        id: before_you_use_this_device
+        QBeforeYouUseThisDevice {
+            onCloseClicked: _infoPopup.close()
             onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
                 _infoPopup.close()

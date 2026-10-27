@@ -6,7 +6,8 @@
 namespace features::common::usecases {
 
 #define FIELDS_INPUT(X)       \
-    X(QString, group_id)
+    X(QString, group_id)      \
+    X(int, fallback_index)
 
 DEFINE_USECASE_INPUT(TimeLockSetupGetInput)
 

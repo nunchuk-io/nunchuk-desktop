@@ -16,7 +16,8 @@ SetupAnOnChainTimelockViewModel::SetupAnOnChainTimelockViewModel(QObject *parent
 void SetupAnOnChainTimelockViewModel::onInit() {
     GUARD_DASHBOARD()
     TimeLockSetupGetInput input;
-    input.group_id = dashboard->groupId();    
+    input.group_id = dashboard->groupId();
+    input.fallback_index = dashboard->editingFallbackIndex();
     m_timeLockGetUC.executeAsync(input, [this](core::usecase::Result<TimeLockSetupGetResult> result){
         if (result.isSuccess()) {
             auto timelock = result.value().timelock;            
@@ -34,19 +35,31 @@ void SetupAnOnChainTimelockViewModel::setupTimeLock() {
     input.based = based();
     input.block_height = blockHeight();
     input.isShowBlockHeight = isShowBlockHeight();
+    input.fallback_index = dashboard->editingFallbackIndex();
     m_timeLockUpdateUC.executeAsync(input, [this](core::usecase::Result<TimeLockSetupUpdateResult> result) {
         if (result.isSuccess()) {
             auto timelock = result.value().timelock;
             clearTimeLock(timelock);
+            refreshDashboard();
             close();
-            QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
         } else {
             emit invalidDateAlert();
         }
     });
 }
 
+void SetupAnOnChainTimelockViewModel::refreshDashboard() {
+    GUARD_DASHBOARD()
+    dashboard->GetDraftWalletInfo();
+}
+
+void SetupAnOnChainTimelockViewModel::resetEditingFallback() {
+    GUARD_DASHBOARD()
+    dashboard->setEditingFallbackIndex(-1);
+}
+
 void SetupAnOnChainTimelockViewModel::close() {
+    resetEditingFallback();
     OnChainTimelockViewModel::close();
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }

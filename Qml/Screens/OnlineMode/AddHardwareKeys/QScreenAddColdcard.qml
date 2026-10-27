@@ -387,6 +387,8 @@ QScreenAdd {
             var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim
             if (onlyUseForClaim) {
                 ServiceSetting.servicesTag.requestDownloadWalletViaImportFile(filePath, 0)
+            } else if (SignerManagement.currentSigner.single_account === true) {
+                return draftWallet.requestImportFileAddOrReplacementWithIndexAsync(filePath, SignerManagement.currentSigner.new_account_index)
             } else {
                 var has = SignerManagement.currentSigner.has
                 var hasSecond = SignerManagement.currentSigner.hasSecond

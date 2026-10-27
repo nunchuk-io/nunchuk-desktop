@@ -332,6 +332,10 @@ enum CMD_IDX {
 
     TIMELOCK_CONVERT,
 
+    DRAFT_WALLET_PRIMARY,
+    DRAFT_WALLET_FALLBACKS,
+    DRAFT_WALLET_FALLBACK_INDEX,
+
     CMD_MAX
 };
 }
@@ -451,6 +455,10 @@ enum CMD_IDX {
     GROUP_DRAFT_WALLET_TIMELOCK,
     GROUP_DRAFT_WALLET_VERIFY,
     GROUP_WALLET_REPLACEMENT_TIMELOCK,
+
+    GROUP_DRAFT_WALLET_PRIMARY,
+    GROUP_DRAFT_WALLET_FALLBACKS,
+    GROUP_DRAFT_WALLET_FALLBACK_INDEX,
 
     CMD_MAX
 };
@@ -937,6 +945,13 @@ const QMap<int, QString> commands{
 
     // Group Miniscript
     {Command::Group::GROUP_DRAFT_WALLET_TIMELOCK, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/timelock")},
+
+    {Command::Premium::DRAFT_WALLET_PRIMARY, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/primary")},
+    {Command::Premium::DRAFT_WALLET_FALLBACKS, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/fallbacks")},
+    {Command::Premium::DRAFT_WALLET_FALLBACK_INDEX, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/fallbacks/{fallback_index}")},
+    {Command::Group::GROUP_DRAFT_WALLET_PRIMARY, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/primary")},
+    {Command::Group::GROUP_DRAFT_WALLET_FALLBACKS, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/fallbacks")},
+    {Command::Group::GROUP_DRAFT_WALLET_FALLBACK_INDEX, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/fallbacks/{fallback_index}")},
 
     // Claiming wallets
     {Premium::CMD_IDX::CLAIMING_WALLET_GET_BY_ID, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}")},

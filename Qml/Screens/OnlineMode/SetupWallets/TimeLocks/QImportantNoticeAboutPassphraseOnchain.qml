@@ -32,6 +32,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1608
+    property bool isConfigurable: false
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
@@ -46,7 +47,7 @@ QOnScreenContentTypeB {
                 QPicture {
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectFit
-                    source: "qrc:/Images/Images/important-notice-about-passphrase.svg"
+                    source: isConfigurable ? "qrc:/Images/Images/d_key_04g.svg" : "qrc:/Images/Images/important-notice-about-passphrase.svg"
                 }
             }
             Item {
@@ -66,7 +67,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1946
+                        text: isConfigurable ? STR.STR_QML_2364 : STR.STR_QML_1946
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -75,7 +76,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1946Two
+                        text: isConfigurable ? STR.STR_QML_2365 : STR.STR_QML_1946Two
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -84,6 +85,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         width: parent.width
+                        visible: !isConfigurable
                         text: STR.STR_QML_1947
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20

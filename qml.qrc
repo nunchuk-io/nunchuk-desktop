@@ -715,6 +715,11 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseQuestion.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchain.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchainRead.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainConfigurablePolicy.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QBeforeYouUseThisDevice.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainKeyList.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainTimelockCard.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupOnChainConditionKeys.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchainUnread.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QYourInheritanceKey.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QImportantNoticeAboutPassphraseOnchain.qml</file>
@@ -1258,6 +1263,10 @@
         <file>Images/zen-hodl.svg</file>
         <file>Images/illustration-3-of-5-and-2-of-4.svg</file>
         <file>Images/inheritance-illustration-2-of-4-and-1-of-3.svg</file>
+        <file>Images/onchain_2_of_4_left_panel.svg</file>
+        <file>Images/d_key_02.svg</file>
+        <file>Images/d_key_03g.svg</file>
+        <file>Images/d_key_04g.svg</file>
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4.svg</file>
         <file>Images/important-notice-about-passphrase.svg</file>
         <file>Images/your-inheritance-key.svg</file>

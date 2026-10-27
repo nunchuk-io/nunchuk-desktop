@@ -21,6 +21,8 @@ class SetupAnOnChainTimelockViewModel : public OnChainTimelockViewModel {
     void setupTimeLock();
     void close() override;
   private:
+    void refreshDashboard();
+    void resetEditingFallback();
     TimeLockSetupUpdateUseCase m_timeLockUpdateUC;
     TimeLockSetupGetUseCase m_timeLockGetUC;
 };

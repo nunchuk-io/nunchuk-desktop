@@ -11,11 +11,12 @@ namespace features::common::usecases {
     X(double, timestamp)                                                                                                                                       \
     X(QString, based)                                                                                                                                          \
     X(double, block_height)                                                                                                                                    \
-    X(bool, isShowBlockHeight)
+    X(bool, isShowBlockHeight)                                                                                                                                 \
+    X(int, fallback_index)
 
 DEFINE_USECASE_INPUT(TimeLockSetupUpdateInput)
 
-#define FIELDS_RESULT(X) X(QJsonObject, timelock)
+#define FIELDS_RESULT(X) X(QJsonObject, timelock) X(QJsonObject, draft_wallet)
 
 DEFINE_USECASE_RESULT(TimeLockSetupUpdateResult)
 

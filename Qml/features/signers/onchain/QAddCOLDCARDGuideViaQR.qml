@@ -171,7 +171,9 @@ QOnScreenContentTypeA {
                     ServiceSetting.servicesTag.requestDownloadWalletViaQR(qrscaner.tags, 0)
                 } else {
                     var noKey = SignerManagement.currentSigner.has != undefined && !SignerManagement.currentSigner.has
-                    if (noKey) {
+                    if (SignerManagement.currentSigner.single_account === true) {
+                        draftWallet.requestQRAddOrReplacementWithIndexAsync(qrscaner.tags, SignerManagement.currentSigner.new_account_index)
+                    } else if (noKey) {
                         draftWallet.requestQRAddOrReplacementWithIndexAsync(qrscaner.tags, 0)
                     } else {
                         draftWallet.requestQRAddOrReplacementWithIndexAsync(qrscaner.tags, 1)

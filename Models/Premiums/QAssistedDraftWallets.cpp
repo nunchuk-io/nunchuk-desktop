@@ -401,6 +401,20 @@ bool QAssistedDraftWallets::requestKeyReplacement(nunchuk::SingleSigner hardware
     return false;
 }
 
+static int resolveSingleAccountIndex(const QJsonObject &info, const QString &xfp) {
+    int cardIndex = info.value("card_account_index").toInt(-1);
+    if (cardIndex >= 0) {
+        return cardIndex;
+    }
+    QJsonObject byXfp = info.value("account_index_by_xfp").toObject();
+    for (auto it = byXfp.constBegin(); it != byXfp.constEnd(); ++it) {
+        if (qUtils::strCompare(it.key(), xfp)) {
+            return it.value().isDouble() ? it.value().toInt() : -1;
+        }
+    }
+    return 0;
+}
+
 QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardViaFile(const QString &fileName, int new_index) {
     // Preserve old behavior by delegating based on canReplaceKey() 
     DBG_INFO << "canReplaceKey:" << canReplaceKey() << "fileName:" << fileName << "new_index: " << new_index;
@@ -586,6 +600,15 @@ void QAssistedDraftWallets::setSignerExistList(QVariantList signerExistList) {
 }
 
 bool QAssistedDraftWallets::requestAddOrReplacementWithIndex(const QString &xfp, int index) {
+    QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+    if (currentSignerInfo.value("single_account").toBool()) {
+        index = resolveSingleAccountIndex(currentSignerInfo, xfp);
+        if (index < 0) {
+            AppModel::instance()->showToast(0, STR_CPP_137, EWARNING::WarningType::EXCEPTION_MSG);
+            resultAddOrUpdateAKeyToDraftWallet("eSCREEN_ERROR");
+            return false;
+        }
+    }
     DBG_INFO << "xfp: " << xfp << "index: " << index;
     nunchuk::SingleSigner outSigner;
     bool ret = checkAndGetSingleSigner(xfp, index, outSigner);
@@ -672,6 +695,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
                 if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
                     emit verifySingleSignerResult(0, msg.what());
                 } else {
+                    setRecoveredVerifyKey(signer);
                     requestVerifySingleSigner(verifyType, verificationMethod);
                 }
             }
@@ -687,7 +711,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     runInConcurrent([this, qr_data, verifyType, verificationMethod]() ->bool{
         QWarningMessage msg;
-        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
+        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, configurableVerifyAccountIndex(), msg);
         // BUGFIX (Setup 13cD): invalid/unmatched QR content used to fall through to the descriptor
         // comparison below with an empty signer instead of failing immediately here, same as ViaConnectDevice.
         if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
@@ -696,12 +720,13 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr
         }
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
-        auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
+        auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, configurableVerifyAccountIndex(), msg);
         // BUGFIX (Setup 13cD root cause): same as ViaConnectDevice - descriptor mismatch is caught here,
         // before the backend call, so it must emit the result signal too, not just a toast.
         if (signer.get_descriptor() != qrSigner.get_descriptor()) {
             emit verifySingleSignerResult(0, msg.what());
         } else {
+            setRecoveredVerifyKey(qrSigner);
             requestVerifySingleSigner(verifyType, verificationMethod);
         }
         return true;
@@ -716,7 +741,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &file
     runInConcurrent([this, fileName, verifyType, verificationMethod]() ->bool{
         QWarningMessage msg;
         QString file_path = qUtils::QGetFilePath(fileName);
-        nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
+        nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, configurableVerifyAccountIndex(), nunchuk::SignerType::AIRGAP, msg);
         // BUGFIX (Setup 13cD): a wrong-format/invalid file (e.g. a .bsms file instead of a Coldcard JSON
         // export) used to fall through to the descriptor comparison below with an empty signer instead
         // of failing immediately here, same as ViaConnectDevice - this is why an invalid file could still
@@ -727,11 +752,12 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &file
         }
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
-        auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
+        auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, configurableVerifyAccountIndex(), msg);
         // BUGFIX (Setup 13cD root cause): same as ViaConnectDevice.
         if (signer.get_descriptor() != fileSigner.get_descriptor()) {
             emit verifySingleSignerResult(0, msg.what());
         } else {
+            setRecoveredVerifyKey(fileSigner);
             requestVerifySingleSigner(verifyType, verificationMethod);
         }
         return true;
@@ -751,15 +777,59 @@ bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType,
     return false;
 }
 
+bool QAssistedDraftWallets::isConfigurableDraft() const {
+    auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+    return dashboard && dashboard->isConfigurablePolicy();
+}
+
+int QAssistedDraftWallets::configurableVerifyAccountIndex() const {
+    if (!isConfigurableDraft()) {
+        return 0;
+    }
+    QString path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
+    return path.isEmpty() ? 0 : qMax(0, qUtils::GetIndexFromPath(path));
+}
+
+void QAssistedDraftWallets::setRecoveredVerifyKey(const nunchuk::SingleSigner &signer) {
+    m_recoveredVerifyKey = {};
+    if (!isConfigurableDraft()) {
+        return;
+    }
+    QString xfp = QString::fromStdString(signer.get_master_fingerprint());
+    m_recoveredVerifyKey["xfp"] = xfp.isEmpty() ? QString::fromStdString(signer.get_master_signer_id()) : xfp;
+    m_recoveredVerifyKey["derivation_path"] = QString::fromStdString(signer.get_derivation_path());
+    m_recoveredVerifyKey["xpub"] = QString::fromStdString(signer.get_xpub());
+}
+
+QJsonObject QAssistedDraftWallets::configurableVerifyKey(const QString &verifyType, const QString &verificationMethod) {
+    Q_UNUSED(verifyType)
+    QJsonObject key = m_recoveredVerifyKey;
+    m_recoveredVerifyKey = {};
+    if (!verificationMethod.isEmpty() || !isConfigurableDraft()) {
+        return {};
+    }
+    if (key.isEmpty()) {
+        QJsonObject current = QSignerManagement::instance()->currentSignerJs();
+        key["xfp"] = current.value("xfp").toString();
+        key["derivation_path"] = current.value("derivation_path").toString();
+        key["xpub"] = current.value("xpub").toString();
+    }
+    return key;
+}
+
 bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType, const QString &verificationMethod, const QString &keyChecksum) {
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         QString error_msg;
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         bool ret{false};
+        QJsonObject key = configurableVerifyKey(verifyType, verificationMethod);
         if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
+            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg, key);
         } else {
-            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg);
+            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verificationMethod, verifyType, keyChecksum, error_msg, key);
+        }
+        if (ret && !key.isEmpty()) {
+            dashboard->GetDraftWalletInfo();
         }
         DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "ret: " << ret << "error_msg: " << error_msg;
         // BUGFIX: used to only emit on success, so QML had no way to detect/route a failed verify
@@ -853,7 +923,18 @@ bool QAssistedDraftWallets::requestQRAddOrReplacementWithIndexAsync(const QStrin
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     runInConcurrent([this, index, qr_data]() ->bool{
         QWarningMessage msg;
-        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, index, msg);
+        int accountIndex = index;
+        QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+        if (currentSignerInfo.value("single_account").toBool()) {
+            QJsonObject parsed = QJsonDocument::fromJson(bridge::nunchukParseQRSigners(qr_data).toUtf8()).object();
+            accountIndex = resolveSingleAccountIndex(currentSignerInfo, parsed.value("fingerprint").toString());
+            if (accountIndex < 0) {
+                AppModel::instance()->showToast(0, STR_CPP_137, EWARNING::WarningType::EXCEPTION_MSG);
+                resultAddOrUpdateAKeyToDraftWallet("eSCREEN_ERROR");
+                return false;
+            }
+        }
+        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, accountIndex, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             bool ret = requestAddOrReplacementToServer(qrSigner);
             QList<uint> states = QEventProcessor::instance()->getCurrentStates();
@@ -879,7 +960,17 @@ bool QAssistedDraftWallets::requestImportFileAddOrReplacementWithIndexAsync(cons
     DBG_INFO << "index: " << index << "fileName: " << fileName;
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     runInConcurrent([this, index, fileName]() ->bool{
-        auto ret = ImportColdcardViaFile(fileName, index);
+        int accountIndex = index;
+        QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+        if (currentSignerInfo.value("single_account").toBool()) {
+            accountIndex = resolveSingleAccountIndex(currentSignerInfo, reuseKeyXfp(fileName));
+            if (accountIndex < 0) {
+                AppModel::instance()->showToast(0, STR_CPP_137, EWARNING::WarningType::EXCEPTION_MSG);
+                resultAddOrUpdateAKeyToDraftWallet("eSCREEN_INPUT_INDEX");
+                return false;
+            }
+        }
+        auto ret = ImportColdcardViaFile(fileName, accountIndex);
         using Enum = QAssistedDraftWallets::ImportColdcard_t;
         if (ret == Enum::eOK) {
             resultAddOrUpdateAKeyToDraftWallet("eSCREEN_SUCCESS");
@@ -903,7 +994,7 @@ bool QAssistedDraftWallets::requestImportFileAddOrReplacementWithIndexAsync(cons
 bool QAssistedDraftWallets::requestAddOrReplacementBothIndicesIfPossible(const QString &xfp) {
     QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
     const QString wallet_type = currentSignerInfo.value("wallet_type").toString();
-    const bool isMiniscript = qUtils::strCompare(wallet_type, "MINISCRIPT");
+    const bool isMiniscript = qUtils::strCompare(wallet_type, "MINISCRIPT") && !currentSignerInfo.value("single_account").toBool();
 
     auto handleMiniscript = [&, this]() -> bool {
         bool has = currentSignerInfo.value("has").toBool();

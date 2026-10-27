@@ -140,4 +140,5 @@ const static QString STR_CPP_133 = QString("Add Jade");
 const static QString STR_CPP_134 = QString("Add KeepKey to your assisted wallet");
 const static QString STR_CPP_135 = QString("Add KeepKey");
 const static QString STR_CPP_136 = QString("Invalid Magic Phrase. Please try again.");
+const static QString STR_CPP_137 = QString("The account for this key can't be determined yet. Please refresh and try again.");
 #endif // STR_CPP_H

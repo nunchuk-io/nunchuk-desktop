@@ -50,11 +50,13 @@ Item {
     signal serkeyClicked()
     signal hardwareClicked()
     signal backupClicked()
+    signal changeClicked()
 
     property var  key_index: modelData.wallet_type === "MULTI_SIG" ? (modelData.key_index + 1) : modelData.key_index
     property var  walletType: modelData.wallet_type
     property int  slot_index: index + 1
     property bool isBeforeSlot: modelData.has && !modelData.hasSecond
+    readonly property bool isConfigurableCard: modelData.section !== undefined
     Loader {
         id: _source
         anchors.fill: parent
@@ -62,6 +64,9 @@ Item {
     }
 
     function component() {
+        if (isConfigurableCard && modelData.type !== "SERVER" && modelData.has && !isBeforeSlot) {
+            return inheritanceAdded
+        }
         if(modelData.is_inheritance) {
             return modelData.has ? inheritanceAdded : inheritanceAdd
         }
@@ -111,6 +116,17 @@ Item {
         }
     }
     Component {
+        id: changeButton
+        QTextButton {
+            width: label.paintedWidth + 2*16
+            height: 36
+            type: eTypeB
+            label.text: STR.STR_QML_1413
+            label.font.pixelSize: 16
+            onButtonClicked: changeClicked()
+        }
+    }
+    Component {
         id: addedCheck
         QBadge {
             anchors {
@@ -122,7 +138,7 @@ Item {
             height: 24
             iconSize: 24
             icon: "qrc:/Images/Images/check-circle-dark.svg"
-            text: STR.STR_QML_104
+            text: isConfigurableCard && (modelData.verification_type === "SELF_VERIFIED" || modelData.verification_type === "APP_VERIFIED") ? STR.STR_QML_2279 : STR.STR_QML_104
             color: "#A7F0BA"
         }
     }
@@ -229,6 +245,7 @@ Item {
         return allVerified ? "ADDED" : "VERIFY_BACKUP" // Setup 20D (Added) vs 20bD/20cD/20eD (Verify backup)
     }
     function inheritanceActionComponent() {
+        if (isConfigurableCard && modelData.has_error === true) return changeButton
         switch (inheritanceState()) {
         case "ADD": return addButton
         case "SET_UP": return setUpButton
@@ -277,7 +294,7 @@ Item {
                     QLato {
                         width: 150
                         height: 28
-                        text: slot_index === 1 ? STR.STR_QML_084 : STR.STR_QML_954.arg(slot_index)
+                        text: isConfigurableCard && modelData.section === "PRIMARY" ? STR.STR_QML_2373 : (slot_index === 1 ? STR.STR_QML_084 : STR.STR_QML_954.arg(slot_index))
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -308,6 +325,7 @@ Item {
                 }
                 width: 81
                 height: 14
+                visible: !isConfigurableCard
                 source: "qrc:/Images/Images/Inheritance_badge.svg"
             }
         }
@@ -319,6 +337,7 @@ Item {
             // BUGFIX: background color/isDashed used to read the legacy inheritance() while the action
             // button used inheritanceState(), causing mismatches. Both now share inheritanceState().
             color: {
+                if (isConfigurableCard && modelData.has_error === true) return "#FFFFFF"
                 switch (inheritanceState()) {
                 case "ADD": return "#66A7F0BA"
                 case "SET_UP": return "#FDEBD2"
@@ -462,6 +481,7 @@ Item {
                 }
                 width: 81
                 height: 14
+                visible: !isConfigurableCard
                 source: "qrc:/Images/Images/Inheritance_badge.svg"
             }
         }
