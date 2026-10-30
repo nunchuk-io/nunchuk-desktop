@@ -423,6 +423,7 @@ public:
     void AddGroupDeleteListener(std::function<void(const std::string& groupId)> listener);
     void AddReplaceRequestListener(std::function<void(const std::string& walletId, const std::string& replaceGroupId)> listener);
     void AddGroupWalletDashboardListener(std::function<void(const std::string& walletId)> listener);
+    void AddInvalidTransactionListener(std::function<void(std::string /* tx_id */, std::string /* wallet_id */)> listener);
 
     nunchuk::SingleSigner ParseKeystoneSigner(const std::string& qr_data,
                                               QWarningMessage& msg);

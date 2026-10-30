@@ -95,12 +95,6 @@ AppModel::AppModel(): m_inititalized{false},
         bridge::stopAllNunchuk();
         DBG_INFO << "[SHUTDOWN] stopAllNunchuk END";
 
-        // Clear wallet objects while the event loop is still running so that
-        // OurDeleterWithDeleteLater can use deleteLater() instead of direct
-        // delete. Without this, QGroupDashboard objects survive until the
-        // QWalletManagement static destructor fires (after QCoreApplication is
-        // gone), forcing a direct delete while QML bindings are still alive
-        // → crash in QInputMethod during QQmlData::destroyed().
         DBG_INFO << "[SHUTDOWN] WalletsMng clear BEGIN";
         WalletsMng->clear();
         DBG_INFO << "[SHUTDOWN] WalletsMng clear END";
@@ -115,8 +109,6 @@ AppModel::AppModel(): m_inititalized{false},
 
         DBG_INFO << "[SHUTDOWN] APPLICATION ABOUT TO QUIT END"
                  << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
-        // QThreadPool::globalInstance()->clear();
-        // QThreadPool::globalInstance()->setMaxThreadCount(0);
     });
 }
 

@@ -51,6 +51,7 @@ void nunchukiface::registerCallback()
     AddGroupOnlineListener(GroupOnlineListener);
     AddReplaceRequestListener(ReplaceRequestListener);
     AddGroupWalletDashboardListener(GroupWalletDashboardListener);
+    AddInvalidTransactionListener(InvalidTransactionListener);
 }
 
 nunchukiface *nunchukiface::instance() {
@@ -2023,6 +2024,21 @@ void nunchukiface::AddGroupWalletDashboardListener(std::function<void (const std
     try {
         if(nunchuk_instance_[nunchukMode()]){
             nunchuk_instance_[nunchukMode()]->AddGroupWalletDashboardListener(listener);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION";
+    }
+}
+
+void nunchukiface::AddInvalidTransactionListener(std::function<void (std::string, std::string)> listener)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddInvalidTransactionListener(listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {

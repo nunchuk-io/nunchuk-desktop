@@ -215,3 +215,12 @@ void GroupWalletDashboardListener(const std::string &walletId)
         DBG_INFO << "AddGroupWalletDashboardListener: " << walletId;
     });
 }
+
+void InvalidTransactionListener(std::string tx_id, std::string wallet_id)
+{
+    QThreadForwarder::instance()->forwardInQueuedConnection([tx_id, wallet_id](){
+        DBG_INFO << "InvalidTransactionListener: " << tx_id << wallet_id;
+        QString message = QString("Transaction %1 returned by the connected Electrum server failed signature verification. The server may be faulty. Consider switching to another server.").arg(QString::fromStdString(tx_id));
+        AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
+    });
+}
