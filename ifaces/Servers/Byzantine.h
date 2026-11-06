@@ -264,7 +264,8 @@ public:
                                 const QString& type,
                                 const QString& key_checksum,
                                 const QString& passwordToken,
-                                QJsonObject& result);
+                                QJsonObject& result,
+                                const QJsonObject &key = QJsonObject());
 
     bool SetClaimOptionsKeyReplacement(const QString &group_id,
                                 const QString &wallet_id,

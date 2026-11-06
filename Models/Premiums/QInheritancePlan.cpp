@@ -156,6 +156,36 @@ QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data) {
     DBG_INFO << data;
     data["activation_timezone"] = qUtils::formatTimeZoneString(data["timezone"].toString());
 
+    QJsonObject onchainPolicy = data.value("onchain_inheritance_policy").toObject();
+    QJsonArray unlockTimes;
+    if (onchainPolicy.value("type").toString() == "CONFIGURABLE") {
+        auto formatUnlock = [](const QJsonObject &timelock) {
+            qint64 value = timelock.value("value").toVariant().toLongLong();
+            if (value <= 0) {
+                return QString();
+            }
+            return qUtils::convertTimestampToDateTime(value, timelock.value("timezone").toString()).toString("MM/dd/yyyy HH:mm");
+        };
+        auto makeItem = [&formatUnlock](int fallback_index, const QJsonObject &condition) {
+            QJsonObject timelock = condition.value("timelock").toObject();
+            QJsonObject item;
+            item["fallback_index"] = fallback_index;
+            item["m"] = condition.value("m").toInt();
+            item["n"] = condition.value("n").toInt();
+            item["display"] = formatUnlock(timelock);
+            item["timezone"] = qUtils::formatTimeZoneString(timelock.value("timezone").toString());
+            item["is_height_lock"] = timelock.value("based").toString() == "HEIGHT_LOCK";
+            item["block_height"] = timelock.value("block_height").toVariant().toLongLong();
+            return item;
+        };
+        unlockTimes.append(makeItem(-1, onchainPolicy.value("primary").toObject()));
+        for (const auto &js : onchainPolicy.value("fallbacks").toArray()) {
+            QJsonObject fallback = js.toObject();
+            unlockTimes.append(makeItem(fallback.value("index").toInt(), fallback));
+        }
+    }
+    data["onchain_unlock_times"] = unlockTimes;
+
     QJsonArray emails = data.value("notification_emails").toArray();
     if (emails.size() > 0) {
         QStringList emailList;
@@ -419,7 +449,7 @@ bool QInheritancePlan::InheritancePlanUpdateSucceed() {
 
     QJsonObject output;
     QString errormsg = "";
-    DBG_INFO << servicesTagPtr()->passwordToken() << servicesTagPtr()->secQuesToken() << data;
+    DBG_INFO << data;
     bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, false,
                                                         output, errormsg);
     DBG_INFO << errormsg << output;
@@ -464,7 +494,7 @@ bool QInheritancePlan::InheritancePlanCancelSucceed() {
         QJsonObject output;
         QString errormsg = "";
 
-        DBG_INFO << servicesTagPtr()->passwordToken() << servicesTagPtr()->secQuesToken() << data;
+        DBG_INFO << data;
         bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, false,
                                                             output, errormsg);
         DBG_INFO << errormsg << output;
@@ -751,11 +781,16 @@ void QInheritancePlan::editPlanInfoOnchain(const QVariant &info) {
                     bool ic =
                         req.contains("include_wallet_config") ? req.value("include_wallet_config").toBool() : item.value("include_wallet_config").toBool();
 
+                    QJsonValue nf = req.contains("notify_fallbacks") ? QJsonValue(QJsonArray::fromVariantList(req.value("notify_fallbacks").toList()))
+                                                                     : item.value("notify_fallbacks");
                     if (item.value("notify_timelock_expires").toBool() != nt || item.value("notify_wallet_changes").toBool() != nw ||
-                        item.value("include_wallet_config").toBool() != ic) {
+                        item.value("include_wallet_config").toBool() != ic || (req.contains("notify_fallbacks") && item.value("notify_fallbacks") != nf)) {
                         item["notify_timelock_expires"] = nt;
                         item["notify_wallet_changes"] = nw;
                         item["include_wallet_config"] = ic;
+                        if (req.contains("notify_fallbacks")) {
+                            item["notify_fallbacks"] = nf;
+                        }
                         list[i] = item;
                         changedLocal = true;
                     }

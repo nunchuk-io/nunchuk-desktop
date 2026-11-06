@@ -30,6 +30,7 @@ import "../../customizes/Texts"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
+    id: _howRoot
     property var planInfo: inheritancePlanInfo.planInfo
     property string title: STR.STR_QML_887
     property string subtitle1: STR.STR_QML_888
@@ -57,10 +58,10 @@ Item {
                 source: "qrc:/Images/Images/1.Active.svg"
             }
             Column {
-                width: 274
+                width: _howRoot.width - 36
                 spacing: 12
                 QLato {
-                    width: 310
+                    width: _howRoot.width - 36
                     text: subtitle1
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignLeft
@@ -69,14 +70,14 @@ Item {
            }
         }
         Row {
-            width: 346
+            width: _howRoot.width
             spacing: 12
             QIcon {
                 iconSize: 24
                 source: "qrc:/Images/Images/2.Active.svg"
             }
             QLato {
-                width: 310
+                width: _howRoot.width - 36
                 text: subtitle2
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignLeft

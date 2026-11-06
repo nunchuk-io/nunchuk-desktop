@@ -93,6 +93,12 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             }
             QTimer::singleShot(100, [ = ]() {
                 QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
+                int pendingEdit = ServiceSetting::instance()->takePendingInheritanceEdit();
+                if (pendingEdit >= 0) {
+                    QTimer::singleShot(300, [ = ]() {
+                        QEventProcessor::instance()->sendEvent(E::EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, pendingEdit);
+                    });
+                }
             });
         }
         break;

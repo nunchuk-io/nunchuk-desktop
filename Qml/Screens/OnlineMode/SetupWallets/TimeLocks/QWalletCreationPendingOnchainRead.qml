@@ -21,6 +21,7 @@ import QtQuick
 import QtQuick.Controls
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
+import EWARNING 1.0
 import Features.Draftwallets.OnChain.ViewModels 1.0
 import "../../../../Components/origins"
 import "../../../../Components/customizes"
@@ -28,6 +29,7 @@ import "../../../../Components/customizes/Texts"
 import "../../../../Components/customizes/Buttons"
 import "../../../../Components/customizes/Signers"
 import "../../../../Components/customizes/Popups"
+import "../../../../Components/customizes/Chats"
 import "../../../OnlineMode/AddHardwareKeys"
 import "../../../OnlineMode/SetupWallets"
 import "../../../OnlineMode/SetupWallets/TimeLocks"
@@ -105,6 +107,7 @@ QOnScreenContentTypeB {
                 width: 346
                 height: parent.height
                 Flickable {
+                    id: _flick
                     anchors.fill: parent
                     contentHeight: _contentColumn.height
                     clip: true
@@ -114,6 +117,7 @@ QOnScreenContentTypeB {
                         width: parent.width - 8  // leave room for QScrollBar (8px) — was 346
                         spacing: 4
                         QOnChainConfigurablePolicy {
+                            id: _configurablePolicy
                             width: parent.width
                             visible: _onScreen.isConfigurable
                             dashInfo: _onScreen.dashInfo
@@ -123,28 +127,47 @@ QOnScreenContentTypeB {
                             onKeyInheritanceClicked: function(key) { handleInheritanceKey(key.flat_index, key) }
                             onKeyHardwareClicked: function(key) { handleHardwareKey(key.flat_index, key) }
                             onKeyServerClicked: function(key) { handleServerKey() }
-                            onKeyBackupClicked: function(key) { handleBackupKey(key.flat_index, key) }
+                            onKeyBackupClicked: function(key) {
+                                if (key.section === "PRIMARY" && key.primary_customized !== true) {
+                                    _verifyBackups.open()
+                                } else {
+                                    handleBackupKey(key.flat_index, key)
+                                }
+                            }
                             onKeyChangeClicked: function(key) {
                                 dashInfo.startChangeKeyAtIndex(key.flat_index)
                                 _hardwareAddKey.key_index = key.key_index
                                 _hardwareAddKey.isInheritance = key.is_inheritance === true
-                                _deviceSafety.open()
+                                var reusable = key.single_account === true ? dashInfo.reusableKeys(key.flat_index) : []
+                                if (reusable.length > 0) {
+                                    _chooseKey.slot = key
+                                    _chooseKey.open()
+                                    if (_chooseKey.itemInfo) {
+                                        _chooseKey.itemInfo.selectedXfp = ""
+                                        _chooseKey.itemInfo.keys = reusable
+                                    }
+                                } else {
+                                    _deviceSafety.open()
+                                }
                             }
                             onRefreshClicked: GroupWallet.refresh()
                             onPrimaryTimelockClicked: vm.onConfigureFallbackClicked(-1)
                             onCustomizePrimaryClicked: {
-                                var p = dashInfo.primaryPolicy
-                                _conditionKeys.target = -1
-                                _conditionKeys.openWith(STR.STR_QML_2350, p.m !== undefined ? p.m : 2, p.n !== undefined ? p.n : 4)
+                                if (dashInfo.customizeIntroSeen()) {
+                                    openCustomizePrimary()
+                                } else {
+                                    dashInfo.markCustomizeIntroSeen()
+                                    _customizeIntro.open()
+                                }
                             }
-                            onAddFallbackClicked: dashInfo.addFallback(1, 1)
+                            onAddFallbackClicked: _fallbackIntro.open()
                             onEditFallbackClicked: function(fallback) {
-                                _conditionKeys.target = fallback.index
-                                _conditionKeys.openWith(STR.STR_QML_2356.arg(fallback.index + 1), fallback.m, fallback.n)
+                                openPolicy(fallback.index, false, fallback.m, fallback.n)
                             }
                             onRemoveFallbackClicked: function(fallback) {
                                 _confirmRemoveFallback.fallbackIndex = fallback.index
                                 _confirmRemoveFallback.title = STR.STR_QML_2358.arg(fallback.index + 1)
+                                _confirmRemoveFallback.contentText = fallback.index < dashInfo.fallbackPolicies.length - 1 ? STR.STR_QML_2431 : STR.STR_QML_2430
                                 _confirmRemoveFallback.open()
                             }
                             onFallbackTimelockClicked: function(fallback) { vm.onConfigureFallbackClicked(fallback.index) }
@@ -400,12 +423,31 @@ QOnScreenContentTypeB {
         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
         if (!has) {
             _hardwareAddKey.key_index = modelData.key_index
-            _inheritanceConfigureGuide.openGuide()
+            var canReuse = _onScreen.isConfigurable && (modelData.section === "FALLBACK" || (modelData.section === "PRIMARY" && modelData.primary_customized === true))
+            var reusable = canReuse ? dashInfo.reusableKeys(index) : []
+            if (reusable.length > 0) {
+                _chooseKey.slot = modelData
+                _chooseKey.open()
+                if (_chooseKey.itemInfo) {
+                    _chooseKey.itemInfo.selectedXfp = ""
+                    _chooseKey.itemInfo.keys = reusable
+                }
+            } else {
+                openNewKeyGuide(modelData)
+            }
         } else {
             GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
             dashInfo.requestStartKeyCreate(modelData.tag, true)
         }
     }
+    function requestRestartWizard() {
+    }
+
+    function openNewKeyGuide(modelData) {
+        _inheritanceConfigureGuide.fallbackNumber = modelData.section === "FALLBACK" ? modelData.fallback_index + 1 : 0
+        _inheritanceConfigureGuide.openGuide()
+    }
+    readonly property var draftWalletObj: GroupWallet.qIsByzantine ? GroupWallet : UserWallet
     function handleHardwareKey(index, modelData) {
         dashInfo.startAddKeyAtIndex(index)
         var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
@@ -414,7 +456,7 @@ QOnScreenContentTypeB {
             // BUGFIX: was hardcoded false; any hardware slot can now be an
             // inheritance key per backend is_inheritance, so read it from modelData.
             _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
-            if (_onScreen.isConfigurable) {
+            if (_onScreen.isConfigurable && modelData.section !== "SPENDING") {
                 _deviceSafety.open()
             } else {
                 _hardwareAddKey.open()
@@ -464,6 +506,14 @@ QOnScreenContentTypeB {
         }
     }
     onPrevClicked: closeScreen()
+    bottomLeft: QTextButton {
+        width: 80
+        height: 48
+        label.text: _onScreen.isConfigurable ? STR.STR_QML_059 : STR.STR_QML_245
+        label.font.pixelSize: 16
+        type: eTypeF
+        onButtonClicked: _onScreen.prevClicked()
+    }
     bottomRight: QTextButton {
         visible: _onScreen.isConfigurable
         width: 99
@@ -640,14 +690,226 @@ QOnScreenContentTypeB {
         }
     }
 
-    QPopupOnChainConditionKeys {
-        id: _conditionKeys
+    Timer {
+        id: _scrollToLastKey
+        interval: 100
+        onTriggered: {
+            var key = SignerManagement.currentSigner
+            if (!_onScreen.isConfigurable || !key || key.section === undefined || key.section === "SPENDING") return
+            var y = _configurablePolicy.sectionY(key.section, key.fallback_index)
+            _flick.contentY = Math.max(0, Math.min(y, _flick.contentHeight - _flick.height))
+        }
+    }
+    Component.onCompleted: {
+        _scrollToLastKey.start()
+        var pendingFallback = dashInfo.takePendingFallbackTimelock()
+        if (pendingFallback >= 0) {
+            Qt.callLater(function() { vm.onConfigureFallbackClicked(pendingFallback) })
+        }
+    }
+
+    QIconButton {
+        id: _moreButton
+        visible: _onScreen.isConfigurable && !dashInfo.isLocked
+                 && dashInfo.myRole !== "FACILITATOR_ADMIN" && dashInfo.myRole !== "KEYHOLDER_LIMITED"
+        width: 48
+        height: 48
+        bgColor: "transparent"
+        icon: "qrc:/Images/Images/more-horizontal-dark.svg"
+        anchors {
+            right: closebutton.left
+            rightMargin: 8
+            verticalCenter: closebutton.verticalCenter
+        }
+        onClicked: _setupMenu.popup(_moreButton, _moreButton.width - _setupMenu.width, _moreButton.height)
+    }
+
+    QOnChainSetupMenu {
+        id: _setupMenu
+        readonly property bool canCancelCustomization: dashInfo.primaryPolicy.is_customized === true
+        items: [
+            { title: STR.STR_QML_2375, subtitle: STR.STR_QML_2376, visible: canCancelCustomization },
+            { title: STR.STR_QML_2451 },
+            { title: STR.STR_QML_2452 }
+        ]
+        onItemClicked: function(index) {
+            if (index === 0) {
+                _confirmCancelCustomization.open()
+            } else if (index === 1) {
+                requestRestartWizard()
+            } else if (index === 2) {
+                closeScreen()
+            }
+        }
+    }
+
+    QConfirmYesNoPopup {
+        id: _confirmCancelCustomization
+        contentText: STR.STR_QML_2377
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            dashInfo.resetPrimary()
+        }
+    }
+
+    function openCustomizePrimary(fromIntro) {
+        var p = dashInfo.primaryPolicy
+        openPolicy(-1, fromIntro === true, p.m !== undefined ? p.m : 2, p.n !== undefined ? p.n : 4)
+    }
+
+    function openPolicy(target, fromIntro, m, n) {
+        _primaryPolicy.target = target
+        _primaryPolicy.fromIntro = fromIntro
+        _primaryPolicy.open()
+        var item = _primaryPolicy.itemInfo
+        if (!item) return
+        if (target === -1) {
+            item.titleText = STR.STR_QML_2391
+            item.descriptionText = STR.STR_QML_2392
+        } else {
+            var number = target >= 0 ? target + 1 : dashInfo.fallbackPolicies.length + 1
+            item.titleText = STR.STR_QML_2432.arg(number)
+            item.descriptionText = STR.STR_QML_2392
+        }
+        item.setup(m, n)
+    }
+
+    QPopupOverlayScreen {
+        id: _primaryPolicy
         property int target: -1
-        onSaved: function(m, n) {
-            if (target < 0) {
-                dashInfo.customizePrimary(m, n)
-            } else {
-                dashInfo.editFallback(target, m, n)
+        property bool fromIntro: false
+        content: _primaryPolicyComp
+        Component {
+            id: _primaryPolicyComp
+            QPrimaryInheritancePolicy {
+                onCloseClicked: _primaryPolicy.close()
+                onPrevClicked: {
+                    _primaryPolicy.close()
+                    if (!_primaryPolicy.fromIntro) return
+                    if (_primaryPolicy.target === -1) _customizeIntro.open()
+                    else _fallbackIntro.open()
+                }
+                onSaved: function(m, n) {
+                    _primaryPolicy.close()
+                    if (_primaryPolicy.target === -1) dashInfo.customizePrimary(m, n)
+                    else if (_primaryPolicy.target === -2) dashInfo.addFallback(m, n)
+                    else dashInfo.editFallback(_primaryPolicy.target, m, n)
+                }
+            }
+        }
+    }
+
+    QPopupOverlayScreen {
+        id: _fallbackIntro
+        content: _fallbackIntroComp
+        Component {
+            id: _fallbackIntroComp
+            QCustomizeInheritanceIntro {
+                titleText: STR.STR_QML_2354
+                introText: STR.STR_QML_2417
+                stepsHeading: STR.STR_QML_2418
+                steps: [
+                    { title: STR.STR_QML_2419, description: STR.STR_QML_2420 },
+                    { title: STR.STR_QML_2421, description: STR.STR_QML_2422 },
+                    { title: STR.STR_QML_2423, description: STR.STR_QML_2424 }
+                ]
+                footerText: ""
+                infoTexts: [STR.STR_QML_2425, STR.STR_QML_2426]
+                secondaryLabel: STR.STR_QML_2427
+                primaryLabel: STR.STR_QML_2428
+                onCloseClicked: _fallbackIntro.close()
+                onPrevClicked: _fallbackIntro.close()
+                onKeepCurrentClicked: {
+                    _fallbackIntro.close()
+                    openPolicy(-2, true, 1, 1)
+                }
+                onNextClicked: {
+                    _fallbackIntro.close()
+                    dashInfo.addFallback(1, 1)
+                }
+            }
+        }
+    }
+
+    QPopupOverlayScreen {
+        id: _customizeIntro
+        content: _customizeIntroComp
+        Component {
+            id: _customizeIntroComp
+            QCustomizeInheritanceIntro {
+                onCloseClicked: _customizeIntro.close()
+                onPrevClicked: _customizeIntro.close()
+                onKeepCurrentClicked: _customizeIntro.close()
+                onNextClicked: {
+                    _customizeIntro.close()
+                    openCustomizePrimary(true)
+                }
+            }
+        }
+    }
+
+    QPopupOverlayScreen {
+        id: _verifyBackups
+        content: _verifyBackupsComp
+        Component {
+            id: _verifyBackupsComp
+            QVerifyBackups {
+                dashInfo: _onScreen.dashInfo
+                onCloseClicked: _verifyBackups.close()
+                onPrevClicked: _verifyBackups.close()
+                onNextClicked: _verifyBackups.close()
+                onVerifyKeyClicked: function(key) { handleBackupKey(key.flat_index, key) }
+            }
+        }
+    }
+
+    QPopupOverlayScreen {
+        id: _chooseKey
+        property var slot: ({})
+        property var pendingKey: null
+        content: _chooseKeyComp
+        Component {
+            id: _chooseKeyComp
+            QChooseAKey {
+                onCloseClicked: _chooseKey.close()
+                onPrevClicked: _chooseKey.close()
+                onAddNewKeyClicked: {
+                    _chooseKey.close()
+                    openNewKeyGuide(_chooseKey.slot)
+                }
+                onKeySelected: function(key) {
+                    _chooseKey.pendingKey = key
+                    draftWalletObj.addExistingKeyAsync(key.xfp)
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: draftWalletObj
+        function onExistingKeyResult(result, accountIndex, errorMsg) {
+            var key = _chooseKey.pendingKey
+            if (result === 1) {
+                _chooseKey.close()
+                GroupWallet.refresh()
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG)
+                var slot = _chooseKey.slot
+                if (slot && slot.section === "FALLBACK" && dashInfo.fallbackTimelockMissing(slot.fallback_index)) {
+                    vm.onConfigureFallbackClicked(slot.fallback_index)
+                }
+            } else if (result === 2 && key) {
+                _chooseKey.close()
+                if (key.hwType >= 0) {
+                    GroupWallet.addHardwareFromConfig(key.hwType, dashInfo.groupId, _chooseKey.slot.key_index, true)
+                    _checkFirmware.hadwareTag = key.tag
+                    _checkFirmware.open()
+                } else {
+                    _hardwareAddKey.isInheritance = true
+                    _hardwareAddKey.open()
+                }
+            } else if (errorMsg !== "") {
+                AppModel.showToast(-1, errorMsg, EWARNING.EXCEPTION_MSG)
             }
         }
     }
@@ -655,12 +917,12 @@ QOnScreenContentTypeB {
     QPopupInfoTwoButtons {
         id: _confirmRemoveFallback
         property int fallbackIndex: -1
-        contentText: STR.STR_QML_2359
-        isVertical: false
-        labels: [STR.STR_QML_035, STR.STR_QML_1134]
+        contentText: STR.STR_QML_2430
+        isVertical: true
+        labels: [STR.STR_QML_2429, STR.STR_QML_035]
         funcs: [
-            function() {},
-            function() { dashInfo.removeFallback(_confirmRemoveFallback.fallbackIndex) }
+            function() { dashInfo.removeFallback(_confirmRemoveFallback.fallbackIndex) },
+            function() {}
         ]
     }
 

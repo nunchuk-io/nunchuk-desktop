@@ -424,6 +424,7 @@ static const QHash<QString, QString> QML_REGISTRY = {
     { "qml.screens.onlinemode.addhardwarekeys.qscreenresultfinalize", "qrc:/Qml/Screens/OnlineMode/AddHardwareKeys/QScreenResultFinalize.qml" },
     { "qml.screens.onlinemode.addhardwarekeys.qselectpassphrasequestion", "qrc:/Qml/Screens/OnlineMode/AddHardwareKeys/QSelectPassPhraseQuestion.qml" },
     { "qml.screens.onlinemode.claiming.claiminheritanceplanresult", "qrc:/Qml/Screens/OnlineMode/Claiming/ClaimInheritancePlanResult.qml" },
+    { "qml.screens.onlinemode.claiming.claimtimelockactive", "qrc:/Qml/Screens/OnlineMode/Claiming/ClaimTimelockActive.qml" },
     { "qml.screens.onlinemode.coins.qchangetagsintransaction", "qrc:/Qml/Screens/OnlineMode/Coins/QChangeTagsInTransaction.qml" },
     { "qml.screens.onlinemode.coins.qcoinage", "qrc:/Qml/Screens/OnlineMode/Coins/QCoinAge.qml" },
     { "qml.screens.onlinemode.coins.qcoinancestry", "qrc:/Qml/Screens/OnlineMode/Coins/QCoinAncestry.qml" },

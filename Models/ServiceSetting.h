@@ -15,8 +15,13 @@ class ServiceSetting : public QStateFlow
     Q_PROPERTY(int optionIndex                      READ optionIndex                    WRITE setOptionIndex            NOTIFY optionIndexChanged)
     Q_PROPERTY(QVariant servicesTag                 READ servicesTag                                                    NOTIFY walletInfoChanged)
     Q_PROPERTY(Wallet* walletInfo                   READ walletInfo                                                     NOTIFY walletInfoChanged)
+    Q_PROPERTY(bool planSetupFlow                   READ planSetupFlow                  WRITE setPlanSetupFlow          NOTIFY planSetupFlowChanged)
 
 public:
+    Q_INVOKABLE void setPendingInheritanceEdit(int action) { m_pendingInheritanceEdit = action; }
+    int takePendingInheritanceEdit() { int ret = m_pendingInheritanceEdit; m_pendingInheritanceEdit = -1; return ret; }
+    bool planSetupFlow() const { return m_planSetupFlow; }
+    void setPlanSetupFlow(bool value) { if (m_planSetupFlow == value) return; m_planSetupFlow = value; emit planSetupFlowChanged(); }
     Q_ENUMS(InheritanceEdit)
     enum class InheritanceEdit {
         IE_NONE,
@@ -54,11 +59,14 @@ public slots:
     void clearWalletInfo();
     void requestSignerInitialClaimSetup(const QString &tag);
 signals:
+    void planSetupFlowChanged();
     void verifyPasswordTokenAlert(const QString& errormsg);
     void optionIndexChanged();
     void walletInfoChanged();
 private:
     int m_optionIndex = 0;
+    int m_pendingInheritanceEdit = -1;
+    bool m_planSetupFlow = false;
     QWalletPtr          walletInfo_;
 };
 

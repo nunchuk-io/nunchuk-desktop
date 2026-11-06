@@ -48,6 +48,10 @@ void SetupAnOnChainTimelockViewModel::setupTimeLock() {
     });
 }
 
+double SetupAnOnChainTimelockViewModel::selectedTimestamp() const {
+    return qUtils::convertDateTimeToTimestamp(valueDate(), valueTime(), valueTimezone());
+}
+
 void SetupAnOnChainTimelockViewModel::refreshDashboard() {
     GUARD_DASHBOARD()
     dashboard->GetDraftWalletInfo();

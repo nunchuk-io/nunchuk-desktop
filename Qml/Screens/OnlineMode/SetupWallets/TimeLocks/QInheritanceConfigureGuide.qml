@@ -36,6 +36,7 @@ QPopupOverlayScreen {
     signal nextClicked()
     property bool isConfigurable: false
     property bool isCustomized: false
+    property int fallbackNumber: 0
     QScreenStateFlow {
         id: stateScreen
     }
@@ -66,6 +67,7 @@ QPopupOverlayScreen {
         QYourInheritanceKey {
             isConfigurable: _infoPopup.isConfigurable
             isCustomized: _infoPopup.isCustomized
+            fallbackNumber: _infoPopup.fallbackNumber
             onCloseClicked: _infoPopup.close()
             // BUGFIX: Back must go to the previous screen, not cancel the whole flow; Close/X does that.
             onPrevClicked: stateScreen.backScreen()
@@ -77,6 +79,7 @@ QPopupOverlayScreen {
         id: important_notice_about_passphrase
         QImportantNoticeAboutPassphraseOnchain {
             isConfigurable: _infoPopup.isConfigurable
+            isFallback: _infoPopup.fallbackNumber > 0
             onCloseClicked: _infoPopup.close()
             // BUGFIX: Back returns to "your-inheritance-key", it must not cancel the flow.
             onPrevClicked: stateScreen.backScreen()

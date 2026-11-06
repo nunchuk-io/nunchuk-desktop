@@ -18,6 +18,7 @@ class MagicPhraseViewModel : public BaseClaimingViewModel {
     void claimInit(const QString& magicPhrase);
   signals:
     void gotoOnChain(int inheritance_key_count);
+    void gotoOnChainChooseKeyCount(const QVariantList &counts);
   private:    
     InitializeInheritanceClaimingUseCase initializeInheritanceClaimingUC;
 };

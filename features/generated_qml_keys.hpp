@@ -427,6 +427,7 @@ QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qscreenaddtrezorexist, "qm
 QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qscreenresultfinalize, "qml.screens.onlinemode.addhardwarekeys.qscreenresultfinalize");
 QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qselectpassphrasequestion, "qml.screens.onlinemode.addhardwarekeys.qselectpassphrasequestion");
 QML_KEY_IN(qml::screens::onlinemode::claiming, claiminheritanceplanresult, "qml.screens.onlinemode.claiming.claiminheritanceplanresult");
+QML_KEY_IN(qml::screens::onlinemode::claiming, claimtimelockactive, "qml.screens.onlinemode.claiming.claimtimelockactive");
 QML_KEY_IN(qml::screens::onlinemode::coins, qchangetagsintransaction, "qml.screens.onlinemode.coins.qchangetagsintransaction");
 QML_KEY_IN(qml::screens::onlinemode::coins, qcoinage, "qml.screens.onlinemode.coins.qcoinage");
 QML_KEY_IN(qml::screens::onlinemode::coins, qcoinancestry, "qml.screens.onlinemode.coins.qcoinancestry");

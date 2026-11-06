@@ -49,7 +49,7 @@ QOnScreenContentTypeA {
         {height: 40,  description: STR.STR_QML_2344 },
         {height: 60,  description: STR.STR_QML_2345 },
     ]
-    readonly property bool is2Of4: dashInfo.mInfo === 2 && dashInfo.nInfo === 4
+    readonly property bool is2Of4: dashInfo.mInfo === 2 && dashInfo.nInfo === 4 && dashInfo.isConfigurablePolicy === true
     readonly property var hb_premier_description_map: [
         {height: 40,  description: STR.STR_QML_1892 },
         {height: 40,  description: STR.STR_QML_1893 },
@@ -63,7 +63,7 @@ QOnScreenContentTypeA {
         var n = dashInfo.nInfo
         var allowInheritance = dashInfo.allowInheritance
         if (m === 2 && n === 4) {
-            return "qrc:/Images/Images/onchain_2_of_4_left_panel.svg"
+            return is2Of4 ? "qrc:/Images/Images/onchain_2_of_4_left_panel.svg" : "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.svg"
         }
         else if (m === 3 && n === 5) {
             return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.svg"
@@ -94,7 +94,7 @@ QOnScreenContentTypeA {
         var m = dashInfo.mInfo
         var n = dashInfo.nInfo
         if (m === 2 && n === 4) {
-            return STR.STR_QML_2346
+            return is2Of4 ? STR.STR_QML_2346 : STR.STR_QML_940_one
         } else if (m === 3 && n === 5) {
             return STR.STR_QML_940_two
         } else {

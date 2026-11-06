@@ -62,6 +62,7 @@ QOnScreenContentTypeB {
             }
         }
         inheritance: planInfo
+        oldInheritance: AppModel.walletInfo.inheritancePlanInfo ? AppModel.walletInfo.inheritancePlanInfo.planInfoOld : null
         isCancel: planIsCancel
         isOnChain: walletType === NUNCHUCKTYPE.MINISCRIPT
     }

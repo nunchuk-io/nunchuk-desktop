@@ -31,9 +31,10 @@ QOnScreenContentTypeB {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1941
     property bool isConfigurable: false
     property bool isCustomized: false
+    property int fallbackNumber: 0
+    label.text: !isConfigurable ? STR.STR_QML_1941 : fallbackNumber > 0 ? STR.STR_QML_2437.arg(fallbackNumber) : isCustomized ? STR.STR_QML_2434 : STR.STR_QML_1941
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
@@ -59,7 +60,7 @@ QOnScreenContentTypeB {
                     spacing: 20
                     QLato {
                         width: parent.width
-                        text: isConfigurable && !isCustomized ? STR.STR_QML_2362 : STR.STR_QML_1942
+                        text: !isConfigurable ? STR.STR_QML_1942 : fallbackNumber > 0 ? STR.STR_QML_2438.arg(fallbackNumber) : isCustomized ? STR.STR_QML_2435 : STR.STR_QML_2362
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -77,7 +78,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         width: parent.width
-                        text: isConfigurable ? STR.STR_QML_2363 : STR.STR_QML_1944
+                        text: !isConfigurable ? STR.STR_QML_1944 : fallbackNumber > 0 ? STR.STR_QML_2439.arg(fallbackNumber) : isCustomized ? STR.STR_QML_2436 : STR.STR_QML_2363
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap

@@ -17,10 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
+import QtQuick
+import "../../../../localization/STR_QML.js" as STR
 
 QAddBlockstreamJadeViaQR {
-    label.text: isFlowClamOrAddKeyClaim() ? QSTR.STR_QML_2067 : QSTR.STR_QML_1925.arg(1)
-    guideDescriptionOne: isFlowClamOrAddKeyClaim() ? QSTR.STR_QML_817 : QSTR.STR_QML_1926
-    guideDescriptionTwo: isFlowClamOrAddKeyClaim() ? "" : QSTR.STR_QML_1927
-    guideExportString: QSTR.STR_QML_2044.arg("0")
+    readonly property var configurableSigner: SignerManagement.currentSigner
+    readonly property bool hasClaimAccount: configurableSigner.claim_account !== undefined
+    readonly property bool isSingleAccountCard: configurableSigner.single_account === true
+    readonly property bool isFallbackCard: isSingleAccountCard && configurableSigner.section === "FALLBACK"
+    readonly property bool hasPresetAccount: isSingleAccountCard && configurableSigner.preset_account !== undefined
+    readonly property int reusedAccount: hasPresetAccount ? configurableSigner.preset_account : (isFallbackCard ? configurableSigner.fallback_index + 2 : 0)
+    label.text: isSingleAccountCard ? QSTR.STR_QML_2067 : (isFlowClamOrAddKeyClaim() ? QSTR.STR_QML_2067 : QSTR.STR_QML_1925.arg(1))
+    guideDescriptionOne: isSingleAccountCard ? "" : (isFlowClamOrAddKeyClaim() ? QSTR.STR_QML_817 : QSTR.STR_QML_1926)
+    guideDescriptionTwo: isFallbackCard ? (hasPresetAccount ? STR.STR_QML_2444.arg(configurableSigner.fallback_index + 1).arg(reusedAccount) : STR.STR_QML_2379.arg(reusedAccount)) : (isSingleAccountCard ? STR.STR_QML_2378 : (isFlowClamOrAddKeyClaim() ? "" : QSTR.STR_QML_1927))
+    guideExportString: hasClaimAccount ? QSTR.STR_QML_2044.arg(configurableSigner.claim_account) : (isFallbackCard ? (hasPresetAccount ? QSTR.STR_QML_2044.arg(reusedAccount) : QSTR.STR_QML_2044.arg(STR.STR_QML_2380.arg(reusedAccount))) : QSTR.STR_QML_2044.arg("0"))
 }

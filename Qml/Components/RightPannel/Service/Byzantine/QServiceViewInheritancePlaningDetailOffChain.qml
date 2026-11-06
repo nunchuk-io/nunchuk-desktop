@@ -41,7 +41,7 @@ import "../Common"
 Item {
     id: viewByzantineinheritancePlanRoot
     property var    inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
-    property var    planInfo: inheritancePlanInfo.planInfo
+    property var    planInfo: inheritancePlanInfo ? inheritancePlanInfo.planInfo : null
     property string walletName: ServiceSetting.walletInfo.walletName
     // BUGFIX: ServiceSetting.walletInfo.myRole (AssistedWallet::myRole()) falls back to a
     // possibly-stale cached role whenever the dashboard's live role hasn't loaded yet, so a real
@@ -81,7 +81,7 @@ Item {
     }
     // BUGFIX: _img_bg was a fixed height sized for exactly 1 key card; grow it for extra stacked cards (mockup 04D).
     function extraKeyCardsHeight() {
-        var n = planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
+        var n = planInfo && planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
         return n > 1 ? (n - 1) * 104 : 0
     }
     function keyInfoClicked(options) {
@@ -166,7 +166,7 @@ Item {
                         // gate on isActived - the extra "&& isEdit" added here hid the "..." (cancel
                         // inheritance plan) menu even for MASTER/ADMIN in some cases, regressing the
                         // existing behavior.
-                        visible: inheritancePlanInfo.isActived
+                        visible: inheritancePlanInfo && inheritancePlanInfo.isActived
                         // Keep the button visible so users know the menu exists; grey it out instead of
                         // hiding it when the role has nothing to do there (optionMenu is empty).
                         enabled: isEdit
@@ -227,7 +227,7 @@ Item {
                 label.text: QSTR.STR_QML_835
                 label.font.pixelSize: 16
                 type: eTypeE
-                enabled: planInfo.edit_isChanged || vm.isDataChanged
+                enabled: (planInfo && planInfo.edit_isChanged) || vm.isDataChanged
                 onButtonClicked: {
                     vm.finalizeChanges()
                 }
@@ -238,7 +238,7 @@ Item {
                 label.text: QSTR.STR_QML_805
                 label.font.pixelSize: 16
                 type: eTypeF
-                enabled: planInfo.edit_isChanged || vm.isDataChanged
+                enabled: (planInfo && planInfo.edit_isChanged) || vm.isDataChanged
                 onButtonClicked: {
                     vm.discardChanges()
                 }
@@ -325,13 +325,13 @@ Item {
                         spacing: 12
                         QInheritancePlanMagicPhrases {
                             magicPhrases: vm.assetAllocation
-                            magic: planInfo.magic
+                            magic: planInfo ? planInfo.magic : null
                         }
                         // NUN-10192: 1 card per inheritance key, content driven by that key's claim_options (mockup 01D-04D).
                         Column {
                             spacing: 12
                             Repeater {
-                                model: planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
+                                model: planInfo && planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
                                 Rectangle {
                                     property string _xfp: planInfo.inheritance_keys[index].xfp
                                     property var _claimOptions: viewByzantineinheritancePlanRoot.keyClaimOptions(_xfp)
@@ -480,7 +480,7 @@ Item {
                         width: 651
                         height: 128
                         label.text: QSTR.STR_QML_850
-                        input.text: planInfo.note
+                        input.text: planInfo ? planInfo.note : ""
                         input.backgroundColor: "#F5F5F5"
                         input.verticalAlignment: Text.AlignTop
                         input.height: 96
@@ -511,7 +511,7 @@ Item {
                         width: 651
                         height: 84
                         label.text: QSTR.STR_QML_851
-                        input.text: planInfo.buffer_period.id === "" ? QSTR.STR_QML_921 : planInfo.buffer_period.display_name
+                        input.text: (planInfo && planInfo.buffer_period && planInfo.buffer_period.id !== "") ? planInfo.buffer_period.display_name : QSTR.STR_QML_921
                         input.backgroundColor: "#F5F5F5"
                         input.height: 52
                         input.readOnly: true

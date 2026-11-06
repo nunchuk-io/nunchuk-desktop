@@ -63,9 +63,23 @@ Column {
         }
         return ret
     }
+    function sectionY(section, fallbackIndex) {
+        if (section === "PRIMARY") {
+            return _primaryTitle.mapToItem(_policy, 0, 0).y
+        }
+        if (section === "FALLBACK") {
+            for (var i = 0; i < _fallbackRepeater.count; i++) {
+                var item = _fallbackRepeater.itemAt(i)
+                if (item && item.fallback && item.fallback.index === fallbackIndex) {
+                    return item.mapToItem(_policy, 0, 0).y
+                }
+            }
+        }
+        return 0
+    }
     function requiresText(m, n) {
         if (n === 1) return STR.STR_QML_2352
-        if (m === n) return STR.STR_QML_2361.arg(n)
+        if (m === n) return STR.STR_QML_2361.arg(m).arg(n)
         return STR.STR_QML_2351.arg(m).arg(n)
     }
     function afterTimelockText() {
@@ -177,6 +191,7 @@ Column {
         }
     }
     QOnChainKeyList {
+        id: _primaryKeys
         isKeyHolderLimited: _policy.isKeyHolderLimited
         model: _policy.keysOf("PRIMARY", -1)
         onInheritanceClicked: function(key) { _policy.keyInheritanceClicked(key) }
@@ -220,6 +235,7 @@ Column {
         horizontalAlignment: Text.AlignLeft
     }
     Repeater {
+        id: _fallbackRepeater
         model: _policy.fallbacks
         Column {
             id: _fallback
@@ -288,6 +304,7 @@ Column {
     QIconTextButton {
         width: parent.width
         height: 48
+        enabled: _policy.primary.timelock !== undefined && _policy.primary.timelock.timestamp > 0
         label: _policy.fallbacks.length > 0 ? STR.STR_QML_2372 : STR.STR_QML_2357
         icons: ["add-dark.svg", "add-dark.svg", "add-dark.svg", "add-dark.svg"]
         fontPixelSize: 16

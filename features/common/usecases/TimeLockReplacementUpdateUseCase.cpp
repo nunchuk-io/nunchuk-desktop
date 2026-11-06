@@ -1,6 +1,7 @@
 #include "TimeLockReplacementUpdateUseCase.h"
 #include "core/restapi/RestApi.h"
 #include "core/utils/Utils.h"
+#include <QJsonArray>
 
 namespace features::common::usecases {
 using namespace core::usecase;
@@ -15,6 +16,9 @@ Result<TimeLockReplacementUpdateGetResult> TimeLockReplacementUpdateUseCase::exe
         value["block_height"] = input.block_height;
     }
     data["timelock"] = value;
+    if (input.fallback_index >= 0) {
+        data["fallback_index"] = input.fallback_index;
+    }
     
     QJsonObject output;
     bool ret{false};
@@ -24,14 +28,25 @@ Result<TimeLockReplacementUpdateGetResult> TimeLockReplacementUpdateUseCase::exe
         ret = Draco::instance()->walletChangeTimelock(input.wallet_id, data, input.verifyToken, output);
     }
 
-    QJsonObject status = output["status"].toObject();
-    QJsonObject timelock = status.value("timelock").toObject();
     TimeLockReplacementUpdateGetResult result;
-    if (!timelock.isEmpty()) {
-        result.timelock = timelock;
-        return Result<TimeLockReplacementUpdateGetResult>::success(result);
-    } else {
-        return Result<TimeLockReplacementUpdateGetResult>::failure(QString("Invalid timelock data"));
+    if (!ret) {
+        return Result<TimeLockReplacementUpdateGetResult>::failure(output.value("message").toString());
     }
+    QJsonObject statusOutput;
+    QString error_msg;
+    bool fetched{false};
+    if (qUtils::isValidGroup(input.group_id)) {
+        fetched = Byzantine::instance()->GetKeyReplacementStatus(input.group_id, input.wallet_id, statusOutput, error_msg);
+    } else {
+        fetched = Draco::instance()->GetKeyReplacementStatus(input.wallet_id, statusOutput, error_msg);
+    }
+    QJsonObject status = statusOutput.value("status").toObject();
+    QJsonObject timelock = status.value("timelock").toObject();
+    if (input.fallback_index >= 0) {
+        QJsonArray fallbacks = status.value("fallback_timelocks").toArray();
+        timelock = input.fallback_index < fallbacks.size() ? fallbacks.at(input.fallback_index).toObject() : QJsonObject();
+    }
+    result.timelock = fetched && !timelock.isEmpty() ? timelock : value;
+    return Result<TimeLockReplacementUpdateGetResult>::success(result);
 }
 }

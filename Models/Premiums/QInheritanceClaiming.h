@@ -64,6 +64,10 @@ public:
     void claimInitSaveBsms(const QString& bsms, const nunchuk::Wallet& wallet);
     nunchuk::SingleSigner RecoverAnExistingSeed(const QString &mnemonic);
     void onChainProcessErrorCode(int error_code, const QString &error_msg);
+    Q_INVOKABLE void setClaimKeyCount(int count);
+    Q_INVOKABLE bool usesClaimKeyCounts() const;
+    Q_INVOKABLE int claimAccountIndex() const;
+    Q_INVOKABLE QVariantMap claimPendingAccount() const;
 public slots:
     QJsonArray inheritanceKeys() const;
     bool requestDownloadWallet();
@@ -95,6 +99,14 @@ private:
     std::vector<nunchuk::MasterSigner> master_signers;
     InitializeInheritanceClaimingResult m_claimInit {};
     QJsonArray m_inheritanceKeys{};
+    int m_claimAccountIndex{0};
+    int m_downloadRetry{0};
+    QString m_claimPendingXfp{};
+    QVariantMap m_claimPendingAccount{};
+    int distinctKeyCount() const;
+    bool sameKey(const QJsonObject &a, const QJsonObject &b) const;
+    bool resolveKeyOrigins(const QJsonArray &origins);
+    bool handlePendingDownload(const QJsonObject &output);
     QJsonObject m_walletInfoClaim{};
     QJsonObject m_claimWallet{};
     QJsonObject m_claimTransaction{};

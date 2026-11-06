@@ -2469,7 +2469,7 @@ bool Byzantine::ResetKeyReplacement(const QString &group_id, const QString &wall
     return false;
 }
 
-bool Byzantine::VerifyKeyReplacement(const QString &group_id, const QString &wallet_id, const QString &xfp, const QString& verification_method, const QString& type, const QString& key_checksum, const QString& passwordToken, QJsonObject& result) {
+bool Byzantine::VerifyKeyReplacement(const QString &group_id, const QString &wallet_id, const QString &xfp, const QString& verification_method, const QString& type, const QString& key_checksum, const QString& passwordToken, QJsonObject& result, const QJsonObject &key) {
     if (group_id.isEmpty()) return false;
 
     int reply_code = -1;
@@ -2489,9 +2489,12 @@ bool Byzantine::VerifyKeyReplacement(const QString &group_id, const QString &wal
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;
     }
+    if (!key.isEmpty()) {
+        data["key"] = key;
+    }
     QMap<QString, QString> params;
     params["Verify-token"] = passwordToken;
-    DBG_INFO << data << passwordToken;
+    DBG_INFO << data;
     QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();

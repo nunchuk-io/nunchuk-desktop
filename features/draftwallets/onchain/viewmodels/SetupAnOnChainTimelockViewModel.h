@@ -19,6 +19,7 @@ class SetupAnOnChainTimelockViewModel : public OnChainTimelockViewModel {
   public slots:
     void onInit() override;
     void setupTimeLock();
+    double selectedTimestamp() const;
     void close() override;
   private:
     void refreshDashboard();

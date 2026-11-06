@@ -141,5 +141,10 @@ void ServiceSetting::requestSignerInitialClaimSetup(const QString &tag) {
     info["tag"] = tag;
     info["hwType"] = mapTagkeys.value(tag, -1);
     info["onlyUseForClaim"] = true;
+    if (auto tag_ptr = servicesTagPtr()) {
+        if (tag_ptr->usesClaimKeyCounts() && tag_ptr->claimAccountIndex() > 0) {
+            info["claim_account"] = tag_ptr->claimAccountIndex();
+        }
+    }
     QSignerManagement::instance()->setCurrentSigner(info);
 }

@@ -716,10 +716,15 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchain.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchainRead.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainConfigurablePolicy.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QCustomizeInheritanceIntro.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPrimaryInheritancePolicy.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QChooseAKey.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyBackups.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPlanOverview.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainSetupMenu.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QBeforeYouUseThisDevice.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainKeyList.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainTimelockCard.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupOnChainConditionKeys.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchainUnread.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QYourInheritanceKey.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QImportantNoticeAboutPassphraseOnchain.qml</file>
@@ -742,16 +747,22 @@
         <file>Qml/Components/customizes/Popups/QAnalogClock.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupAnalogClock.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPopupPrepareInheritanceKey.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QClaimChooseKeyCount.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QClaimSafetyNotice.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QYourPlanRequiresTwoInheritanceKeys.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPrepareInheritanceKey.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QRecoverInheritanceKey.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QRestoreSeedPhraseToHardwareDevice.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceInheritanceNotificationPreferencesOnchain.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceOnchainConfigurablePlanSummary.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QYourPlanRequiresTwoInheritanceKeysAddedOne.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QReAddBlockstreamJadeViaQR.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QReAddCOLDCARDGuideViaFile.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QReAddCOLDCARDGuideViaQR.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletReplaceKeyOrChangeTimelock.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainReplacementPolicy.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainReplaceKeyList.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QOnChainReplaceTimelockCard.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyLoadingState.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyResult.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyBusyLoadingState.qml</file>
@@ -768,6 +779,7 @@
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOffChain.qml</file>
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOnChain.qml</file>
         <file>Qml/Screens/OnlineMode/Claiming/ClaimInheritancePlanResult.qml</file>
+        <file>Qml/Screens/OnlineMode/Claiming/ClaimTimelockActive.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceInputBackupPassword.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceInputMagicPhrase.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceOptionsProceed.qml</file>
@@ -1267,6 +1279,11 @@
         <file>Images/d_key_02.svg</file>
         <file>Images/d_key_03g.svg</file>
         <file>Images/d_key_04g.svg</file>
+        <file>Images/plan_inheritance_keys.svg</file>
+        <file>Images/plan_about_timelock.svg</file>
+        <file>Images/how_many_keys_or_seedphrase.svg</file>
+        <file>Images/d_key_warning.svg</file>
+        <file>Images/clock_lock.svg</file>
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4.svg</file>
         <file>Images/important-notice-about-passphrase.svg</file>
         <file>Images/your-inheritance-key.svg</file>

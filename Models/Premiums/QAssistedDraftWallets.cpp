@@ -247,7 +247,21 @@ void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
             m_request = hardware;
             QJsonObject keyInfo = info.value("key").toObject();
             QJsonArray key_indices = info.value("key_indices").toArray();
-            if (!keyInfo.isEmpty() || key_indices.size() == 1) {
+            int requestKeyIndex = key_indices.isEmpty() ? info.value("key_index").toInt(-1) : key_indices.first().toInt(-1);
+            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+            QJsonObject card = dashboard ? dashboard->configurableCardForKeyIndex(requestKeyIndex) : QJsonObject();
+            if (!card.isEmpty() && card.value("single_account").toBool()) {
+                info["key_index"] = requestKeyIndex;
+                info["key_indices"] = QJsonArray{requestKeyIndex};
+                info["has"] = false;
+                info["hasSecond"] = true;
+                for (const QString &field : {"single_account", "card_account_index", "account_index_by_xfp", "section", "fallback_index", "card_index", "flat_index", "is_inheritance"}) {
+                    if (card.contains(field)) {
+                        info[field] = card.value(field);
+                    }
+                }
+                info["new_account_index"] = card.value("card_account_index").toInt(-1) < 0 ? 0 : card.value("card_account_index").toInt();
+            } else if (!keyInfo.isEmpty() || key_indices.size() == 1) {
                 info["key_index"] = key_indices.last().toInt(-1);
                 info["has"] = true;
                 info["new_account_index"] = 1;
@@ -255,6 +269,10 @@ void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
                 info["key_index"] = key_indices.first().toInt(-1);
                 info["has"] = false;
                 info["new_account_index"] = 0;
+            }
+            if (!card.isEmpty() && card.contains("card_account_indices")) {
+                info["card_account_indices"] = card.value("card_account_indices");
+                info["section"] = card.value("section");
             }
             QString magic = info.value("magic").toString();
             info["onlyUseForClaimBanner"] = magic != "";
@@ -322,7 +340,7 @@ QJsonObject QAssistedDraftWallets::progressAddOrReplacementInfo(nunchuk::SingleS
     auto dash = QGroupWallets::instance()->GetDashboard(group_id);
     QString finalName = dash.isNull() ? (name != "" ? name : titleCase(tag)) : dash->generateName({tag});
     bool is_inheritance = currentSignerInfo.value("is_inheritance").toBool();
-    if (is_inheritance && !finalName.contains("(inh.)")) {
+    if (is_inheritance && !currentSignerInfo.contains("section") && !finalName.contains("(inh.)")) {
         finalName += "(inh.)";
     }
     data["name"] = finalName;
@@ -401,6 +419,22 @@ bool QAssistedDraftWallets::requestKeyReplacement(nunchuk::SingleSigner hardware
     return false;
 }
 
+static int resolvePairAccountIndex(const QJsonObject &info, int slot) {
+    QJsonArray accounts = info.value("card_account_indices").toArray();
+    if (slot >= 0 && slot < accounts.size() && accounts.at(slot).isDouble()) {
+        return accounts.at(slot).toInt();
+    }
+    return slot;
+}
+
+static int pairKeyIndex(const QJsonObject &info, int slot) {
+    QJsonArray key_indices = info.value("key_indices").toArray();
+    if (info.contains("card_account_indices") && slot >= 0 && slot < key_indices.size()) {
+        return key_indices.at(slot).toInt(-1);
+    }
+    return -1;
+}
+
 static int resolveSingleAccountIndex(const QJsonObject &info, const QString &xfp) {
     int cardIndex = info.value("card_account_index").toInt(-1);
     if (cardIndex >= 0) {
@@ -430,7 +464,9 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
             bool ret = requestAddOrReplacementToServer(retJson->originSingleSigner());
             return ret ? Enum::eOK : Enum::eError_Keep_Screen;
         } else if (new_index != -1 && current_index != new_index && new_index != account_index) {
-            QString message = QString("The account imported does not match the account that you entered (%1). Please try again.").arg(new_index);
+            QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+            bool reusedFallback = currentSignerInfo.value("single_account").toBool() && currentSignerInfo.value("section").toString() == "FALLBACK" && new_index > 0;
+            QString message = reusedFallback ? STR_CPP_138.arg(new_index) : QString("The account imported does not match the account that you entered (%1). Please try again.").arg(new_index);
             AppModel::instance()->showToast(-1, message, EWARNING::WarningType::EXCEPTION_MSG);
             return Enum::eError_Back;
         } else {
@@ -551,12 +587,12 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSignerMiniscript(const QStri
             }
             if (!has) {
                 int account_index = qUtils::GetIndexFromPath(s->derivationPath());
-                if (account_index == 0) {
+                if (account_index == resolvePairAccountIndex(currentSigerInfo, 0)) {
                     arrays.append(signer);
                 }
             } else if (has && !hasSecond) {
                 int account_index = qUtils::GetIndexFromPath(s->derivationPath());
-                if (account_index == 1) {
+                if (account_index == resolvePairAccountIndex(currentSigerInfo, 1)) {
                     arrays.append(signer);
                 }
             }
@@ -608,6 +644,13 @@ bool QAssistedDraftWallets::requestAddOrReplacementWithIndex(const QString &xfp,
             resultAddOrUpdateAKeyToDraftWallet("eSCREEN_ERROR");
             return false;
         }
+    } else if (currentSignerInfo.contains("card_account_indices") && (index == 0 || index == 1)) {
+        int slotKeyIndex = pairKeyIndex(currentSignerInfo, index);
+        if (slotKeyIndex >= 0) {
+            currentSignerInfo["key_index"] = slotKeyIndex;
+            QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);
+        }
+        index = resolvePairAccountIndex(currentSignerInfo, index);
     }
     DBG_INFO << "xfp: " << xfp << "index: " << index;
     nunchuk::SingleSigner outSigner;
@@ -630,6 +673,32 @@ void QAssistedDraftWallets::requestAddOrReplacementWithIndexAsync(const QString 
     newAccountIndexCached(xfp, index);
     QtConcurrent::run([this, xfp, index]() {
         requestAddOrReplacementWithIndex(xfp, index);
+    });
+}
+
+void QAssistedDraftWallets::addExistingKeyAsync(const QString &xfp) {
+    QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+    int accountIndex = currentSignerInfo.value("single_account").toBool() ? resolveSingleAccountIndex(currentSignerInfo, xfp) : 0;
+    if (accountIndex < 0) {
+        emit existingKeyResult(0, accountIndex, STR_CPP_137);
+        return;
+    }
+    currentSignerInfo["xfp"] = xfp;
+    currentSignerInfo["preset_account"] = accountIndex;
+    QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, xfp, accountIndex]() -> bool {
+        QWarningMessage msg;
+        nunchuk::SingleSigner signer = bridge::nunchukGetOriginSingleSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, accountIndex, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+            emit existingKeyResult(2, accountIndex, QString());
+            return false;
+        }
+        bool ret = requestAddOrReplacementToServer(signer);
+        emit existingKeyResult(ret ? 1 : 0, accountIndex, QString());
+        return ret;
+    }, [](bool) {
+        qApp->restoreOverrideCursor();
     });
 }
 
@@ -695,7 +764,9 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
                 if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
                     emit verifySingleSignerResult(0, msg.what());
                 } else {
-                    setRecoveredVerifyKey(signer);
+                    if (signer) {
+                        setRecoveredVerifyKey(signer->originSingleSigner());
+                    }
                     requestVerifySingleSigner(verifyType, verificationMethod);
                 }
             }
@@ -779,7 +850,7 @@ bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType,
 
 bool QAssistedDraftWallets::isConfigurableDraft() const {
     auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
-    return dashboard && dashboard->isConfigurablePolicy();
+    return dashboard && (dashboard->isConfigurablePolicy() || (dashboard->canReplaceKey() && dashboard->isConfigurableReplacement()));
 }
 
 int QAssistedDraftWallets::configurableVerifyAccountIndex() const {
@@ -799,6 +870,7 @@ void QAssistedDraftWallets::setRecoveredVerifyKey(const nunchuk::SingleSigner &s
     m_recoveredVerifyKey["xfp"] = xfp.isEmpty() ? QString::fromStdString(signer.get_master_signer_id()) : xfp;
     m_recoveredVerifyKey["derivation_path"] = QString::fromStdString(signer.get_derivation_path());
     m_recoveredVerifyKey["xpub"] = QString::fromStdString(signer.get_xpub());
+    m_recoveredVerifyKey["type"] = qUtils::GetSignerTypeString(signer.get_type());
 }
 
 QJsonObject QAssistedDraftWallets::configurableVerifyKey(const QString &verifyType, const QString &verificationMethod) {
@@ -813,6 +885,9 @@ QJsonObject QAssistedDraftWallets::configurableVerifyKey(const QString &verifyTy
         key["xfp"] = current.value("xfp").toString();
         key["derivation_path"] = current.value("derivation_path").toString();
         key["xpub"] = current.value("xpub").toString();
+    }
+    if (key.value("type").toString().isEmpty()) {
+        key["type"] = QSignerManagement::instance()->currentSignerJs().value("type").toString();
     }
     return key;
 }
@@ -845,10 +920,17 @@ bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyT
         QJsonObject result;
         auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
         bool ret{false};
+        QJsonObject key = configurableVerifyKey(verifyType, verificationMethod);
+        if (verifyType == "SKIPPED_VERIFICATION") {
+            key = {};
+        }
         if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
+            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result, key);
         } else {
-            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result);
+            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verificationMethod, verifyType, keyChecksum, servicesTagPtr()->passwordToken(), result, key);
+        }
+        if (ret && dashboard->isConfigurableReplacement()) {
+            dashboard->GetKeyReplacementStatus();
         }
         DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "verificationMethod: " << verificationMethod << "result: " << result;
         // BUGFIX: same as addVerifySingleSigner - always emit; on failure, "result" is the server's
@@ -934,6 +1016,14 @@ bool QAssistedDraftWallets::requestQRAddOrReplacementWithIndexAsync(const QStrin
                 return false;
             }
         }
+        else if (currentSignerInfo.contains("card_account_indices") && (index == 0 || index == 1)) {
+            int slotKeyIndex = pairKeyIndex(currentSignerInfo, index);
+            if (slotKeyIndex >= 0) {
+                currentSignerInfo["key_index"] = slotKeyIndex;
+                QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);
+            }
+            accountIndex = resolvePairAccountIndex(currentSignerInfo, index);
+        }
         nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, accountIndex, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             bool ret = requestAddOrReplacementToServer(qrSigner);
@@ -946,7 +1036,8 @@ bool QAssistedDraftWallets::requestQRAddOrReplacementWithIndexAsync(const QStrin
             }
             return ret;
         } else {
-            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            bool reusedFallback = currentSignerInfo.value("single_account").toBool() && currentSignerInfo.value("section").toString() == "FALLBACK" && accountIndex > 0;
+            AppModel::instance()->showToast(msg.code(), reusedFallback ? STR_CPP_138.arg(accountIndex) : msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
         return false;  
@@ -969,6 +1060,14 @@ bool QAssistedDraftWallets::requestImportFileAddOrReplacementWithIndexAsync(cons
                 resultAddOrUpdateAKeyToDraftWallet("eSCREEN_INPUT_INDEX");
                 return false;
             }
+        }
+        else if (currentSignerInfo.contains("card_account_indices") && (index == 0 || index == 1)) {
+            int slotKeyIndex = pairKeyIndex(currentSignerInfo, index);
+            if (slotKeyIndex >= 0) {
+                currentSignerInfo["key_index"] = slotKeyIndex;
+                QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);
+            }
+            accountIndex = resolvePairAccountIndex(currentSignerInfo, index);
         }
         auto ret = ImportColdcardViaFile(fileName, accountIndex);
         using Enum = QAssistedDraftWallets::ImportColdcard_t;
@@ -1003,6 +1102,9 @@ bool QAssistedDraftWallets::requestAddOrReplacementBothIndicesIfPossible(const Q
         if (!has) {
             if (!requestAddOrReplacementWithIndex(xfp, 0)) {
                 return false;
+            }
+            if (currentSignerInfo.contains("card_account_indices")) {
+                currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
             }
             currentSignerInfo["has"] = true;
             currentSignerInfo["hasSecond"] = false;

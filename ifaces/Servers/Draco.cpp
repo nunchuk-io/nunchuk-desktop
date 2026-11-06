@@ -305,7 +305,9 @@ void Draco::checkAccountAvailability(const QString &email)
     int     reply_code      = -1;
     QString reply_msg    = "";
 
-    QJsonObject jsonObj = m_rest->getSync(commands[Common::CMD_IDX::ACCOUNT_AVAILABILITY], data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(commands[Common::CMD_IDX::ACCOUNT_AVAILABILITY], data, reply_code, reply_msg,
+                                          QRest::GetRequestOptions(QRest::NetworkErrorPolicy::ShowToast,
+                                                                   QRest::AuthenticationPolicy::Anonymous));
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code    = errorObj["code"].toInt();
@@ -461,8 +463,13 @@ void Draco::verifyNewDevice(const QString &pin)
             setDeviceId(dataObj["deviceId"].toString());
             setDracoToken(dataObj["tokenId"].toString());
             setExpireSec(dataObj["expireInSeconds"].toInt());
-            getMe();
-            CLIENT_INSTANCE->setIsNewDevice(true);
+            if (getMe()) {
+                CLIENT_INSTANCE->setIsNewDevice(true);
+            } else {
+                setDracoToken("");
+                response_code = -1;
+                response_msg = "Unable to load your account information. Please try again.";
+            }
         }
         else{
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
@@ -689,6 +696,7 @@ void Draco::createAccount(const QString& name, const QString& email)
 
 void Draco::singin(const QString& email, const QString& password)
 {
+    setDracoToken("");
     QJsonObject data;
     data["email"] = email;
     data["password"] = password;
@@ -699,6 +707,7 @@ void Draco::singin(const QString& email, const QString& password)
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
+        DBG_INFO << "sign-in response:" << response_code << response_msg;
         setUid(email);
         setPid(password);
         if(response_code == DRACO_CODE::RESPONSE_OK){
@@ -706,7 +715,11 @@ void Draco::singin(const QString& email, const QString& password)
             setDeviceId(dataObj["deviceId"].toString());
             setDracoToken(dataObj["tokenId"].toString());
             setExpireSec(dataObj["expireInSeconds"].toInt());
-            getMe();
+            if (!getMe()) {
+                setDracoToken("");
+                response_code = -1;
+                response_msg = "Unable to load your account information. Please try again.";
+            }
         }
         else if(response_code == DRACO_CODE::LOGIN_NEW_DEVICE){
             QJsonObject detailsObj = errorObj["details"].toObject();
@@ -716,6 +729,8 @@ void Draco::singin(const QString& email, const QString& password)
         else if(response_code == DRACO_CODE::REQUIRED_VERIFICATION){
             requireCaptchaVerification([this, email, password]() {
                 singin(email, password);
+            }, [this, reply_code]() {
+                emit signinResult(reply_code, -1, "Verification was cancelled. Please try again.");
             });
         }
         else{
@@ -735,15 +750,10 @@ bool Draco::signout()
     QJsonObject data;
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = m_rest->postSync(commands[Common::CMD_IDX::SIGNOUT], data, reply_code, reply_msg);
-    if(reply_code == DRACO_CODE::SUCCESSFULL){
-        reset();
-        AppModel::instance()->stopCheckAuthorize();
-        return true;
-    }
-    else{
-        return false;
-    }
+    m_rest->postSync(commands[Common::CMD_IDX::SIGNOUT], data, reply_code, reply_msg);
+    reset();
+    AppModel::instance()->stopCheckAuthorize();
+    return reply_code == DRACO_CODE::SUCCESSFULL;
 }
 
 void Draco::recoverPassword(const QString& email, const QString& forgotToken, const QString& newpassword)
@@ -840,8 +850,9 @@ void Draco::changePassword(const QString& oldpassword, const QString& newpasswor
     }
 }
 
-void Draco::getMe()
+bool Draco::getMe()
 {
+    bool ret = false;
     int     reply_code = -1;
     QString reply_msg  = "";
     DracoUser user;
@@ -878,9 +889,17 @@ void Draco::getMe()
             AppModel::instance()->startCheckAuthorize();
             CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
             getUserSubscriptions();
+            ret = true;
         }
         else if(response_code == DRACO_CODE::UNAUTHORIZED){
-            CLIENT_INSTANCE->requestSignout();
+            if (CLIENT_INSTANCE->isNunchukLoggedIn()) {
+                CLIENT_INSTANCE->requestSignout();
+            } else {
+                setDracoToken("");
+                QMetaObject::invokeMethod(CLIENT_INSTANCE, []() {
+                    CLIENT_INSTANCE->deleteStayLoggedInData();
+                }, Qt::QueuedConnection);
+            }
             AppModel::instance()->stopCheckAuthorize();
         }
         else {
@@ -889,6 +908,7 @@ void Draco::getMe()
     }
 
     CLIENT_INSTANCE->setMe(user);
+    return ret;
 }
 
 void Draco::getMepKey(const QString &public_address)
@@ -2884,7 +2904,6 @@ bool Draco::UserKeysDownloadBackup(const QString &verify_token,
 {
     QJsonObject data;
     data["questions_and_answers"] = answers;
-    DBG_INFO << data;
     QMap<QString, QString> params;
     params["Verify-token"] = verify_token;
 
@@ -4051,7 +4070,7 @@ bool Draco::ChangeEmail(const QJsonObject &request_body,
     }
     QMap<QString, QString> paramsQuery;
     paramsQuery["draft"] = isDraft ? "true" : "false";
-    DBG_INFO << confirmToken << request_body;
+    DBG_INFO << request_body;
     int     reply_code = -1;
     QString reply_msg  = "";
     QJsonObject jsonObj = m_rest->postSync(commands[Premium::CMD_IDX::CHANGING_EMAIL], paramsQuery, params, request_body, reply_code, reply_msg);
@@ -4412,7 +4431,7 @@ bool Draco::ResetKeyReplacement(const QString &wallet_id, const QString& passwor
     return false;
 }
 
-bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString& verification_method, const QString& type, const QString& key_checksum, const QString& passwordToken, QJsonObject& result)
+bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString& verification_method, const QString& type, const QString& key_checksum, const QString& passwordToken, QJsonObject& result, const QJsonObject &key)
 {
     if (wallet_id.isEmpty() || xfp.isEmpty()) return false;
 
@@ -4426,6 +4445,9 @@ bool Draco::VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, c
     data["verification_type"] = type;
     if (!key_checksum.isEmpty()) {
         data["key_checksum"] = key_checksum;
+    }
+    if (!key.isEmpty()) {
+        data["key"] = key;
     }
     QMap<QString, QString> params;
     params["Verify-token"] = passwordToken;
@@ -5899,7 +5921,7 @@ bool Draco::TimeLockConvert(const QJsonObject& requestBody, QJsonObject &result)
     return false;
 }
 
-void Draco::requireCaptchaVerification(std::function<void()> onSuccess)
+void Draco::requireCaptchaVerification(std::function<void()> onSuccess, std::function<void()> onCancel)
 {
     auto *captcha = new QCaptchaVerification();
 
@@ -5920,7 +5942,10 @@ void Draco::requireCaptchaVerification(std::function<void()> onSuccess)
         });
 
     connect(captcha, &QCaptchaVerification::cancelled, this,
-        [safeCaptcha]() {
+        [safeCaptcha, onCancel]() {
+            if (onCancel) {
+                onCancel();
+            }
             if (safeCaptcha) {
                 safeCaptcha->safeClose();
             }

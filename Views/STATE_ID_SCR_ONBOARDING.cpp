@@ -129,7 +129,6 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
     }
     else if (type == "recover-hot-wallet") {
         QString mnemonic = msg.toMap()["mnemonic"].toString();
-        DBG_INFO << mnemonic;
         bool checkmnemonic = qUtils::CheckMnemonic(mnemonic);
         if(checkmnemonic){
             if (auto wallet = OnBoardingModel::instance()->CreateAHotWallet(mnemonic, false)) {

@@ -22,6 +22,7 @@ import QtQuick.Controls
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import HMIEVENTS 1.0
+import EWARNING 1.0
 import Features.Wallets.ViewModels 1.0
 import Features.Draftwallets.OnChain.ViewModels 1.0
 import "../../../../Components/origins"
@@ -47,6 +48,7 @@ QOnScreenContentTypeB {
     property var user: ClientController.user
     property var dashInfo: GroupWallet.dashboardInfo
     property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
+    readonly property bool isConfigurable: dashInfo.isConfigurableReplacement === true
 
     readonly property var hb_description_map: [
         {height: 40,  description: STR.STR_QML_1889 },
@@ -107,7 +109,7 @@ QOnScreenContentTypeB {
                         width: 346
                         height: width * (implicitHeight / implicitWidth)
                         anchors.verticalCenter: parent.verticalCenter
-                        source: guideImageSource()
+                        source: _onScreen.isConfigurable ? "qrc:/Images/Images/onchain_2_of_4_left_panel.svg" : guideImageSource()
                     }
                 }
                 QLato {
@@ -126,11 +128,33 @@ QOnScreenContentTypeB {
                 height: parent.height
                 Flickable {
                     anchors.fill: parent
-                    contentHeight: _contentColumn.height
+                    contentHeight: _onScreen.isConfigurable ? _replacementPolicy.height : _contentColumn.height
                     clip: true
                     ScrollBar.vertical: QScrollBar { }
+                    QOnChainReplacementPolicy {
+                        id: _replacementPolicy
+                        width: parent.width - 8
+                        visible: _onScreen.isConfigurable
+                        dashInfo: _onScreen.dashInfo
+                        isKeyHolderLimited: _onScreen.isKeyHolderLimited
+                        onKeyInheritanceClicked: function(key) { replaceInheritanceKey(key.flat_index, key) }
+                        onKeyHardwareClicked: function(key) { replaceHardwareKey(key.flat_index, key) }
+                        onKeyServerClicked: function(key) {
+                            _info.contentText = STR.STR_QML_962
+                            _info.open()
+                        }
+                        onKeyBackupClicked: function(key) { backupReplaceKey(key.flat_index, key) }
+                        onKeyRemoveClicked: function(key) {
+                            _confirmRemove.keyIndex = key.flat_index
+                            _confirmRemove.contentText = STR.STR_QML_2556.arg(key.old_singer.name).arg(String(key.old_singer.xfp).toUpperCase())
+                            _confirmRemove.open()
+                        }
+                        onRefreshClicked: GroupWallet.refresh()
+                        onTimelockClicked: function(fallbackIndex) { vm.onConfigureTimelock(fallbackIndex) }
+                    }
                     Column {
                         id: _contentColumn
+                        visible: !_onScreen.isConfigurable
                         width: parent.width - 8  // leave room for QScrollBar (8px) — was 346
                         spacing: 4
                         QLato {
@@ -151,65 +175,13 @@ QOnScreenContentTypeB {
                                 model: dashInfo.replaceKeys
                                 QReplaceRequestKey {
                                     width: parent.width  // = _contentColumn.width - 8 = 338
-                                    onInheritanceKeyClicked: {
-                                        dashInfo.startReplaceKeyAtIndex(index)
-                                        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
-                                        if (!has) {
-                                            _hardwareAddKey.key_index = modelData.key_index
-                                            _inheritanceConfigureGuide.openGuide()
-                                        } else {
-                                            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
-                                            dashInfo.requestStartKeyCreate(modelData.tag, true)
-                                        }
-                                    }
-                                    onHardwareClicked: {
-                                        dashInfo.startReplaceKeyAtIndex(index)
-                                        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
-                                        if (!has) {
-                                            _hardwareAddKey.key_index = modelData.key_index
-                                            // BUGFIX: was hardcoded false; any hardware slot can now be an
-                                            // inheritance key per backend is_inheritance, so read it from modelData.
-                                            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
-                                            _hardwareAddKey.open()
-                                        } else {
-                                            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
-                                            dashInfo.requestStartKeyCreate(modelData.tag, true)
-                                        }
-                                    }
+                                    onInheritanceKeyClicked: replaceInheritanceKey(index, modelData)
+                                    onHardwareClicked: replaceHardwareKey(index, modelData)
                                     onSerkeyClicked: {
                                         _info.contentText = STR.STR_QML_962
                                         _info.open()
                                     }
-                                    onBackupClicked: {
-                                        // BUGFIX (NUN-10192): Replace Key now routes by claim_options like Add Key.
-                                        // startReplaceKeyAtIndex() moved to the top - must set currentSigner
-                                        // before requestSetClaimOptions/requestVerifyX read it.
-                                        // BUGFIX: single-option keys (seed-only/encrypted-only) used to skip
-                                        // straight into their own flow; now every configured key (1 or 2
-                                        // options) always goes through the Verify-your-backups checklist
-                                        // (Setup 12c), which shows only the row(s) matching claim_options and
-                                        // picks startFlow()/startVerifyOnly() itself based on upload state.
-                                        // BUGFIX: check wallet_type FIRST - claim_options is an off-chain
-                                        // (MULTI_SIG) concept only; must never route a MINISCRIPT key into
-                                        // the off-chain screens even if claim_options is ever non-empty.
-                                        dashInfo.startReplaceKeyAtIndex(index)
-                                        if (modelData.wallet_type === "MULTI_SIG") {
-                                            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
-                                            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
-                                            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
-                                            if (hasSeed || hasEncrypted) {
-                                                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
-                                            } else {
-                                                // Setup 20dD: empty claim_options -> "Set up" reopens Key Distribution
-                                                // Choice. ROLLOUT WARNING: needs backend NUN-10192 deployed in sync.
-                                                _changeDistribution.hwType = modelData.hwType
-                                                _changeDistribution.openFor(modelData.xfp, modelData.tag)
-                                            }
-                                        } else {
-                                            GroupWallet.qAddHardware = modelData.hwType
-                                            _backupSeedPhraseFlow.startFlow()
-                                        }
-                                    }
+                                    onBackupClicked: backupReplaceKey(index, modelData)
                                 }
                             }
                         }
@@ -417,8 +389,108 @@ QOnScreenContentTypeB {
             }
         }
     }
+    readonly property var draftWalletObj: GroupWallet.qIsByzantine ? GroupWallet : UserWallet
+    function openReuseChooser(index, modelData, isInheritance) {
+        if (!_onScreen.isConfigurable) return false
+        var reusable = dashInfo.replacementReusableKeys(index)
+        if (reusable.length === 0) return false
+        _chooseKey.slotIndex = index
+        _chooseKey.slot = modelData
+        _chooseKey.slotInheritance = isInheritance
+        _chooseKey.pendingKey = null
+        _chooseKey.open()
+        if (_chooseKey.itemInfo) {
+            _chooseKey.itemInfo.selectedXfp = ""
+            _chooseKey.itemInfo.keys = reusable
+        }
+        return true
+    }
+    function replaceInheritanceKey(index, modelData) {
+        dashInfo.startReplaceKeyAtIndex(index)
+        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+        if (!has && openReuseChooser(index, modelData, true)) return
+        replaceInheritanceNewKey(index, modelData)
+    }
+    function replaceInheritanceNewKey(index, modelData) {
+        dashInfo.startReplaceKeyAtIndex(index)
+        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+        if (!has) {
+            _hardwareAddKey.key_index = modelData.key_index
+            _inheritanceConfigureGuide.fallbackNumber = _onScreen.isConfigurable && modelData.section === "FALLBACK" ? modelData.fallback_index + 1 : 0
+            _inheritanceConfigureGuide.openGuide()
+        } else {
+            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
+            dashInfo.requestStartKeyCreate(modelData.tag, true)
+        }
+    }
+    function replaceHardwareKey(index, modelData) {
+        dashInfo.startReplaceKeyAtIndex(index)
+        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+        if (!has && openReuseChooser(index, modelData, false)) return
+        replaceHardwareNewKey(index, modelData)
+    }
+    function replaceHardwareNewKey(index, modelData) {
+        dashInfo.startReplaceKeyAtIndex(index)
+        var has = SignerManagement.currentSigner.has !== undefined && SignerManagement.currentSigner.has
+        if (!has) {
+            _hardwareAddKey.key_index = modelData.key_index
+            _hardwareAddKey.isInheritance = modelData.is_inheritance !== undefined && modelData.is_inheritance
+            _hardwareAddKey.open()
+        } else {
+            GroupWallet.addHardwareFromConfig(modelData.hwType, dashInfo.groupId, modelData.key_index)
+            dashInfo.requestStartKeyCreate(modelData.tag, true)
+        }
+    }
+    function backupReplaceKey(index, modelData) {
+        dashInfo.startReplaceKeyAtIndex(index)
+        if (modelData.wallet_type === "MULTI_SIG") {
+            var claimOptions = modelData.claim_options !== undefined ? modelData.claim_options : []
+            var hasSeed = claimOptions.indexOf("SEED_PHRASE") !== -1
+            var hasEncrypted = claimOptions.indexOf("ENCRYPTED_BACKUP") !== -1
+            if (hasSeed || hasEncrypted) {
+                _verifyBothBackups.open2(modelData.xfp, modelData.tag, claimOptions)
+            } else {
+                _changeDistribution.hwType = modelData.hwType
+                _changeDistribution.openFor(modelData.xfp, modelData.tag)
+            }
+        } else {
+            GroupWallet.qAddHardware = modelData.hwType
+            _backupSeedPhraseFlow.startFlow()
+        }
+    }
     onPrevClicked: {
-        _confirm.open()
+        if (_onScreen.isConfigurable) {
+            closeScreen()
+        } else {
+            _confirm.open()
+        }
+    }
+
+    QIconButton {
+        id: _moreButton
+        visible: _onScreen.isConfigurable
+        width: 48
+        height: 48
+        bgColor: "transparent"
+        icon: "qrc:/Images/Images/more-horizontal-dark.svg"
+        anchors {
+            right: closebutton.left
+            rightMargin: 8
+            verticalCenter: closebutton.verticalCenter
+        }
+        onClicked: _replaceMenu.popup(_moreButton, _moreButton.width - _replaceMenu.width, _moreButton.height)
+    }
+
+    QOnChainSetupMenu {
+        id: _replaceMenu
+        items: [
+            { title: STR.STR_QML_1340, color: "#CF4018" }
+        ]
+        onItemClicked: function(index) {
+            if (index === 0) {
+                _confirm.open()
+            }
+        }
     }
 
     bottomRight: Item{}
@@ -427,6 +499,8 @@ QOnScreenContentTypeB {
     }
     QInheritanceConfigureGuide {
         id: _inheritanceConfigureGuide
+        isConfigurable: _onScreen.isConfigurable
+        isCustomized: _onScreen.isConfigurable && dashInfo.replacePolicy.primary !== undefined && dashInfo.replacePolicy.primary.is_customized === true
         onNextClicked: {
             _hardwareAddKey.isInheritance = true
             _hardwareAddKey.open()
@@ -531,6 +605,76 @@ QOnScreenContentTypeB {
     }
     LetConfigureYourWalletViewModel {
         id: oldVM
+    }
+
+    QPopupOverlayScreen {
+        id: _chooseKey
+        property int slotIndex: -1
+        property var slot: ({})
+        property bool slotInheritance: false
+        property var pendingKey: null
+        content: _chooseKeyComp
+        Component {
+            id: _chooseKeyComp
+            QChooseAKey {
+                titleText: STR.STR_QML_2557.arg(_chooseKey.slot && _chooseKey.slot.fallback_index !== undefined ? _chooseKey.slot.fallback_index + 1 : 1)
+                descriptionText: STR.STR_QML_2558
+                addNewLabel: STR.STR_QML_2559
+                addNewIcon: false
+                onCloseClicked: _chooseKey.close()
+                onPrevClicked: _chooseKey.close()
+                onAddNewKeyClicked: {
+                    _chooseKey.close()
+                    if (_chooseKey.slotInheritance) {
+                        replaceInheritanceNewKey(_chooseKey.slotIndex, _chooseKey.slot)
+                    } else {
+                        replaceHardwareNewKey(_chooseKey.slotIndex, _chooseKey.slot)
+                    }
+                }
+                onKeySelected: function(key) {
+                    _chooseKey.pendingKey = key
+                    dashInfo.startReplaceReuseAtIndex(_chooseKey.slotIndex)
+                    _onScreen.draftWalletObj.addExistingKeyAsync(key.xfp)
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: _onScreen.draftWalletObj
+        function onExistingKeyResult(result, accountIndex, errorMsg) {
+            if (!_chooseKey.opened) return
+            var key = _chooseKey.pendingKey
+            if (result === 1) {
+                _chooseKey.close()
+                GroupWallet.refresh()
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG)
+            } else if (result === 2 && key) {
+                _chooseKey.close()
+                if (key.hwType >= 0) {
+                    GroupWallet.addHardwareFromConfig(key.hwType, dashInfo.groupId, _chooseKey.slot.key_index, true)
+                    _checkFirmware.hadwareTag = key.tag
+                    _checkFirmware.open()
+                } else {
+                    _hardwareAddKey.key_index = _chooseKey.slot.key_index
+                    _hardwareAddKey.isInheritance = _chooseKey.slotInheritance
+                    _hardwareAddKey.open()
+                }
+            } else if (errorMsg !== "") {
+                AppModel.showToast(-1, errorMsg, EWARNING.EXCEPTION_MSG)
+            }
+        }
+    }
+
+    QConfirmYesNoPopup {
+        id: _confirmRemove
+        property int keyIndex: -1
+        title: STR.STR_QML_024
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            dashInfo.removeReplacementAtIndex(keyIndex)
+        }
     }
 
     QConfirmYesNoPopup {

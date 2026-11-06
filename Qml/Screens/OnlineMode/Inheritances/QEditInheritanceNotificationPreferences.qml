@@ -36,6 +36,24 @@ QOnScreenContentTypeB {
     property var    planInfo
     property string emails: planInfo.display_emails
     property var    emails_preference: planInfo.notification_preferences
+    readonly property var unlockTimes: planInfo.onchain_unlock_times !== undefined ? planInfo.onchain_unlock_times : []
+    readonly property bool hasFallbackNotices: unlockTimes.length > 1
+    function fallbacksOf(index) {
+        var item = emails_preference.beneficiary_notifications[index]
+        return item && item.notify_fallbacks !== undefined ? item.notify_fallbacks : []
+    }
+    function primaryOf(index) {
+        var item = emails_preference.beneficiary_notifications[index]
+        return item ? item.notify_timelock_expires === true : false
+    }
+    function updateTimelockNotices(index, primary, fallbacks) {
+        inheritancePlanInfo.editPlanInfoOnchain({
+            "setup_type": "preference",
+            "setup_email": emails_preference.beneficiary_notifications[index].email,
+            "notify_timelock_expires": primary,
+            "notify_fallbacks": fallbacks
+        })
+    }
     property bool   isNotify: planInfo.buffer_period.enabled
     property int    walletType: ServiceSetting.walletInfo.walletType
 
@@ -44,7 +62,10 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: STR.STR_QML_865
 
-    onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    onCloseClicked: {
+        ServiceSetting.planSetupFlow = false
+        closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    }
 
     content: Item {
         function requestFinishInputEmail() {
@@ -119,7 +140,7 @@ QOnScreenContentTypeB {
                 }
                 QLato {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: walletType === NUNCHUCKTYPE.MINISCRIPT ? STR.STR_QML_2113 : STR.STR_QML_869
+                    text: walletType === NUNCHUCKTYPE.MINISCRIPT ? QSTR.STR_QML_2113 : STR.STR_QML_869
                     width: 660
                     height: 56
                     wrapMode: Text.WordWrap
@@ -163,7 +184,10 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    onPrevClicked: {
+        ServiceSetting.planSetupFlow = false
+        closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    }
     onNextClicked: {
         if(walletType !== NUNCHUCKTYPE.MINISCRIPT){
             var buffer_period = {
@@ -201,7 +225,7 @@ QOnScreenContentTypeB {
 
     QConfirmYesNoPopup {
         id: confirmations
-        contentText: STR.STR_QML_2114
+        contentText: QSTR.STR_QML_2114
         leftBtnLabel: "Add email"
         rightBtnLabel: "Continue"
         onConfirmNo: close()
@@ -255,7 +279,7 @@ QOnScreenContentTypeB {
                             spacing: 12
                             QLato {
                                 font.pixelSize: 16
-                                text: STR.STR_QML_852
+                                text: unlockTimes.length > 0 ? STR.STR_QML_2563 : STR.STR_QML_852
                                 anchors.left: parent.left
                             }
 
@@ -334,6 +358,7 @@ QOnScreenContentTypeB {
                                     color: "#F5F5F5"
                                     Column {
                                         id: emailItems
+                                        readonly property int emailIndex: index
                                         width: parent.width - 32
                                         spacing: 16
                                         anchors.centerIn: parent
@@ -357,12 +382,12 @@ QOnScreenContentTypeB {
                                                 QLato {
                                                     width: parent.width
                                                     horizontalAlignment: Text.AlignLeft
-                                                    text: STR.STR_QML_2020
+                                                    text: hasFallbackNotices ? STR.STR_QML_2485 : STR.STR_QML_2020
                                                 }
                                                 QLato {
                                                     width: parent.width
                                                     horizontalAlignment: Text.AlignLeft
-                                                    text: STR.STR_QML_2030
+                                                    text: hasFallbackNotices ? STR.STR_QML_2486 : STR.STR_QML_2030
                                                     font.pixelSize: 12
                                                     wrapMode: Text.WordWrap
                                                     color: "#595959"
@@ -373,9 +398,15 @@ QOnScreenContentTypeB {
                                                 id: notify_timelock_expires_switch
                                                 width: 51
                                                 height: 31
-                                                switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].notify_timelock_expires : false
+                                                switchOn: hasFallbackNotices ? (primaryOf(index) || fallbacksOf(index).length > 0) : primaryOf(index)
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 onSwitchOnChanged: {
+                                                    if (hasFallbackNotices) {
+                                                        var anySelected = primaryOf(index) || fallbacksOf(index).length > 0
+                                                        if (switchOn && !anySelected) updateTimelockNotices(index, true, fallbacksOf(index))
+                                                        else if (!switchOn && anySelected) updateTimelockNotices(index, false, [])
+                                                        return
+                                                    }
                                                     var _editOnchain = {
                                                         "setup_type" : "preference",
                                                         "setup_email": emails_preference.beneficiary_notifications[index].email,
@@ -384,6 +415,57 @@ QOnScreenContentTypeB {
                                                         "include_wallet_config": include_wallet_config_switch.switchOn
                                                     }
                                                     inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                }
+                                            }
+                                        }
+                                        Column {
+                                            width: parent.width
+                                            spacing: 8
+                                            visible: hasFallbackNotices && notify_timelock_expires_switch.switchOn
+                                            Repeater {
+                                                model: unlockTimes
+                                                Row {
+                                                    spacing: 12
+                                                    readonly property bool isPrimary: modelData.fallback_index < 0
+                                                    readonly property bool selected: isPrimary ? primaryOf(emailItems.emailIndex)
+                                                                                               : fallbacksOf(emailItems.emailIndex).indexOf(modelData.fallback_index) !== -1
+                                                    QCheckBox {
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        checked: parent.selected
+                                                        onCheckboxClicked: {
+                                                            var idx = emailItems.emailIndex
+                                                            var primary = primaryOf(idx)
+                                                            var fallbacks = fallbacksOf(idx).slice()
+                                                            if (parent.isPrimary) {
+                                                                primary = !primary
+                                                            } else {
+                                                                var pos = fallbacks.indexOf(modelData.fallback_index)
+                                                                if (pos === -1) fallbacks.push(modelData.fallback_index)
+                                                                else fallbacks.splice(pos, 1)
+                                                                fallbacks.sort(function(a, b) { return a - b })
+                                                            }
+                                                            updateTimelockNotices(idx, primary, fallbacks)
+                                                            if (!primary && fallbacks.length === 0) {
+                                                                notify_timelock_expires_switch.switchOn = false
+                                                            }
+                                                        }
+                                                    }
+                                                    Column {
+                                                        spacing: 2
+                                                        QLato {
+                                                            text: parent.parent.isPrimary ? STR.STR_QML_2489 : STR.STR_QML_2356.arg(modelData.fallback_index + 1)
+                                                            font.pixelSize: 12
+                                                            font.weight: Font.Bold
+                                                            horizontalAlignment: Text.AlignLeft
+                                                        }
+                                                        QLato {
+                                                            text: STR.STR_QML_2487.arg(modelData.display)
+                                                            font.pixelSize: 12
+                                                            color: "#595959"
+                                                            visible: modelData.display !== ""
+                                                            horizontalAlignment: Text.AlignLeft
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -417,7 +499,6 @@ QOnScreenContentTypeB {
                                                     var _editOnchain = {
                                                         "setup_type" : "preference",
                                                         "setup_email": emails_preference.beneficiary_notifications[index].email,
-                                                        "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
                                                         "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
                                                         "include_wallet_config": include_wallet_config_switch.switchOn
                                                     }
@@ -455,7 +536,6 @@ QOnScreenContentTypeB {
                                                     var _editOnchain = {
                                                         "setup_type" : "preference",
                                                         "setup_email": emails_preference.beneficiary_notifications[index].email,
-                                                        "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
                                                         "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
                                                         "include_wallet_config": include_wallet_config_switch.switchOn
                                                     }
@@ -470,12 +550,15 @@ QOnScreenContentTypeB {
                     }
                 }
                 bottomRight: QTextButton {
-                    width: 66
+                    width: label.paintedWidth + 2*20
                     height: 48
-                    label.text: STR.STR_QML_835
+                    label.text: ServiceSetting.planSetupFlow ? STR.STR_QML_265 : STR.STR_QML_835
                     label.font.pixelSize: 16
                     type: eTypeE
-                    onButtonClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+                    onButtonClicked: {
+                        ServiceSetting.planSetupFlow = false
+                        closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+                    }
                 }
                 bottomLeft:  QButtonTextLink {
                     height: 48

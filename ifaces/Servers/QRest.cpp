@@ -77,6 +77,13 @@ bool appendLocalFilePart(QHttpMultiPart *multiPart, const QVariant &input,
     return true;
 }
 
+void applyAuthorizationHeader(QNetworkRequest &request, const QString &token)
+{
+    if (!token.isEmpty()) {
+        request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toLocal8Bit());
+    }
+}
+
 } // namespace
 
 QString    QRest::m_dracoToken      = "";
@@ -161,8 +168,7 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     QFunctionTime f(QString("POST %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -231,8 +237,7 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
         url.setQuery(params);
     }
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -295,8 +300,7 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
     QFunctionTime f(QString("POST %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
@@ -383,8 +387,7 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
         url.setQuery(params);
     }
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
@@ -549,8 +552,7 @@ QJsonObject QRest::doPostSync(const QString &cmd, QJsonObject data, int &reply_c
     QFunctionTime f(QString("POST %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -619,8 +621,7 @@ QJsonObject QRest::doPostSync(const QString &cmd, QMap<QString, QString> paramsQ
         url.setQuery(params);
     }
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -683,8 +684,7 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QVarian
     QFunctionTime f(QString("POST %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
@@ -771,8 +771,7 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QString
         url.setQuery(params);
     }
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
@@ -863,8 +862,7 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
     }
     QNetworkRequest requester_(url);
     const QString authToken = options.authenticationPolicy == AuthenticationPolicy::Anonymous ? QString() : dracoToken();
-    QString headerData = QString("Bearer %1").arg(authToken);
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, authToken);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -945,8 +943,7 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
     }
     QNetworkRequest requester_(url);
     const QString authToken = options.authenticationPolicy == AuthenticationPolicy::Anonymous ? QString() : dracoToken();
-    QString headerData = QString("Bearer %1").arg(authToken);
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, authToken);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -1021,8 +1018,7 @@ QJsonObject QRest::doPutSync(const QString &cmd, QJsonObject data, int &reply_co
     QFunctionTime f(QString("PUT %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -1092,8 +1088,7 @@ QJsonObject QRest::doPutSync(const QString &cmd, QMap<QString, QString> paramsQu
     }
     QFunctionTime f(QString("PUT %1").arg(url.toString()));
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -1158,8 +1153,7 @@ QJsonObject QRest::doDeleteSync(const QString &cmd, QJsonObject data, int &reply
     QFunctionTime f(QString("DELETE %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());
@@ -1230,8 +1224,7 @@ QJsonObject QRest::doDeleteSync(const QString &cmd, QMap<QString, QString> param
     QFunctionTime f(QString("DELETE %1").arg(url.toString()));
     QJsonObject ret;
     QNetworkRequest requester_(url);
-    QString headerData = QString("Bearer %1").arg(dracoToken());
-    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    applyAuthorizationHeader(requester_, dracoToken());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     requester_.setRawHeader("Connection", "keep-alive");
     requester_.setRawHeader("x-nc-device-id", machineUniqueId());

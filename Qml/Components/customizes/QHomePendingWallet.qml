@@ -37,6 +37,8 @@ import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Wallets"
 import "../../Components/customizes/Members"
 import "../../Components/RightPannel/Wallet/Dashboard"
+import "../../Components/customizes/Popups"
+import "../../Screens/OnlineMode/SetupWallets/TimeLocks"
 
 Rectangle {
     id: pendingDashboard
@@ -323,8 +325,13 @@ Rectangle {
                                             _info1.open()
                                             _info1.contentText = QSTR.STR_QML_1346
                                         } else if (modelData.type === AlertType.SETUP_INHERITANCE_PLAN) {
-                                            _info1.open()
-                                            _info1.contentText = QSTR.STR_QML_1355
+                                            if (dashboardInfo.walletOnchainPolicy.type === "CONFIGURABLE") {
+                                                _planOverviewPopup.open()
+                                                if (_planOverviewPopup.itemInfo) _planOverviewPopup.itemInfo.step = 0
+                                            } else {
+                                                _info1.open()
+                                                _info1.contentText = QSTR.STR_QML_1355
+                                            }
                                         }
                                     }
 
@@ -465,6 +472,25 @@ Rectangle {
                         width: ListView.view.width - 24
                         member: modelData
                     }
+                }
+            }
+        }
+    }
+    QPopupOverlayScreen {
+        id: _planOverviewPopup
+        parent: Overlay.overlay
+        content: _planOverviewComp
+        Component {
+            id: _planOverviewComp
+            QPlanOverview {
+                policy: dashboardInfo.walletOnchainPolicy
+                onCloseClicked: _planOverviewPopup.close()
+                onPrevClicked: _planOverviewPopup.close()
+                onFinished: {
+                    _planOverviewPopup.close()
+                    ServiceSetting.planSetupFlow = true
+                    ServiceSetting.setPendingInheritanceEdit(ServiceType.IE_NOTIFICATION)
+                    QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB, 4)
                 }
             }
         }

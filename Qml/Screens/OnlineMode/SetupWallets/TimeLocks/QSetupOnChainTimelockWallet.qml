@@ -28,6 +28,54 @@ import "../../../../Components/customizes/Popups"
 import "../../../../../localization/STR_QML.js" as STR
 
 QSetupOnChainTimelock {
+    id: _replaceTimelock
+    readonly property var dash: GroupWallet.dashboardInfo
+    readonly property bool configurable: dash && dash.isConfigurableReplacement === true
+    readonly property int fallbackIndex: configurable ? dash.editingFallbackIndex : -1
+    readonly property var replacePolicy: configurable ? dash.replacePolicy : ({})
+    readonly property var fallbacks: replacePolicy && replacePolicy.fallbacks ? replacePolicy.fallbacks : []
+    readonly property var primaryLock: replacePolicy && replacePolicy.primary && replacePolicy.primary.timelock ? replacePolicy.primary.timelock : ({})
+
+    function fallbackAt(index) {
+        for (var i = 0; i < fallbacks.length; i++) {
+            if (fallbacks[i].index === index) return fallbacks[i]
+        }
+        return null
+    }
+    function lockOf(item) {
+        return item && item.timelock ? item.timelock : ({})
+    }
+    function hasLock(lock) {
+        return lock && lock.timestamp !== undefined && lock.timestamp > 0
+    }
+    readonly property var current: fallbackIndex >= 0 ? fallbackAt(fallbackIndex) : null
+    readonly property int number: fallbackIndex + 1
+    readonly property var prevLock: fallbackIndex === 0 ? primaryLock : lockOf(fallbackAt(fallbackIndex - 1))
+    readonly property var nextLock: fallbackIndex >= 0 ? lockOf(fallbackAt(fallbackIndex + 1)) : lockOf(fallbackAt(0))
+    readonly property bool hasNext: fallbackIndex >= 0 ? fallbackAt(fallbackIndex + 1) !== null : fallbackAt(0) !== null
+
+    titleText: !configurable ? (vm.valueDate.length > 0 ? QSTR.STR_QML_2076 : QSTR.STR_QML_1992)
+               : fallbackIndex < 0 ? STR.STR_QML_2534 : STR.STR_QML_2535.arg(number)
+    descriptions: !configurable ? [QSTR.STR_QML_1993, QSTR.STR_QML_1994, QSTR.STR_QML_1995]
+                  : fallbackIndex < 0 ? [STR.STR_QML_2398] : [STR.STR_QML_2401]
+    references: {
+        if (!configurable) return []
+        var refs = []
+        if (fallbackIndex >= 0) {
+            refs.push({ label: fallbackIndex === 0 ? STR.STR_QML_2415 : STR.STR_QML_2405.arg(number - 1),
+                        value: hasLock(prevLock) ? prevLock.displayWithZone : STR.STR_QML_2407 })
+        }
+        if (hasNext) {
+            refs.push({ label: fallbackIndex < 0 ? STR.STR_QML_2416 : STR.STR_QML_2406.arg(number + 1),
+                        value: hasLock(nextLock) ? nextLock.displayWithZone : STR.STR_QML_2407 })
+        }
+        return refs
+    }
+    infoBelowInputs: configurable
+    infoText: !configurable ? QSTR.STR_QML_1996
+              : fallbackIndex < 0 ? STR.STR_QML_2408
+              : (current && current.n > 1 ? STR.STR_QML_2537.arg(number) : STR.STR_QML_2536.arg(number))
+
     ReplaceChangeOnChainTimeLockViewModel {
         id: vm
     }

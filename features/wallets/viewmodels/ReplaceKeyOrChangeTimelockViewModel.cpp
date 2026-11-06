@@ -18,12 +18,19 @@ void ReplaceKeyOrChangeTimelockViewModel::onInit() {
     TimeLockReplacementGetInput input;
     input.wallet_id = dashboard->wallet_id();
     input.group_id = dashboard->groupId();
+    input.fallback_index = -1;
     m_timeLockGetUC.executeAsync(input, [this](core::usecase::Result<TimeLockReplacementGetResult> result){
         if (result.isSuccess()) {
             auto timelock = result.value().timelock;            
             clearTimeLock(timelock);
         }
     });
+}
+
+void ReplaceKeyOrChangeTimelockViewModel::onConfigureTimelock(int fallbackIndex) {
+    GUARD_DASHBOARD()
+    dashboard->setEditingFallbackIndex(fallbackIndex);
+    onConfigureClicked();
 }
 
 void ReplaceKeyOrChangeTimelockViewModel::onConfigureClicked() {

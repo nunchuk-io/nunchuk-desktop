@@ -14,6 +14,10 @@ Result<InitializeInheritanceClaimingResult> InitializeInheritanceClaimingUseCase
         result.wallet_id = output.value("wallet_local_id").toString();
         result.inheritance_key_count = output.value("inheritance_key_count").toInt();
         result.key_origins = output.value("key_origins").toArray();
+        result.required_key_counts = output.value("required_key_counts").toArray();
+        if (result.required_key_counts.size() == 1) {
+            result.inheritance_key_count = result.required_key_counts.at(0).toInt(result.inheritance_key_count);
+        }
         return Result<InitializeInheritanceClaimingResult>::success(result);
     } else {
         int code = output.value("code").toInt();

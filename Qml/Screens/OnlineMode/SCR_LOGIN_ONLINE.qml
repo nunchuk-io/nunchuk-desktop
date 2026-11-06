@@ -382,9 +382,14 @@ QScreen {
                     else if(error_code === DRACO_CODE.REQUIRED_VERIFICATION){
                         // TBD
                     }
-                    else {
+                    else if(error_code === DRACO_CODE.RESPONSE_OK) {
                         // User able to signin, request signin (with password input)
                         whereAmI = eSIGN_IN_OLD_ACCOUNT
+                    }
+                    else {
+                        emailaddrs.isValid = false
+                        emailaddrs.errorText = error_msg
+                        emailaddrs.showError = true
                     }
                 }
                 else {

@@ -110,7 +110,7 @@ void EVT_LOGIN_ONLINE_RECOVER_PASSWORD_HANDLER(QVariant msg) {
     QString token = msg.toMap().value("token").toString();
     QString passw = msg.toMap().value("passw").toString();
 
-    DBG_INFO << "email: " << email << " token: " << token << " passw: " << passw;
+    DBG_INFO << "email: " << email;
 
     Draco::instance()->recoverPassword(email, token, passw);
 }

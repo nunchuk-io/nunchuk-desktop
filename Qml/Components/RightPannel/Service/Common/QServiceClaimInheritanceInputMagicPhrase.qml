@@ -351,5 +351,8 @@ Item {
         function onGotoOnChain(inheritance_key_count) {
             _prepareInheritanceKey.onChainClaim(inheritance_key_count);
         }
+        function onGotoOnChainChooseKeyCount(counts) {
+            _prepareInheritanceKey.onChainChooseCount(counts);
+        }
     }
 }

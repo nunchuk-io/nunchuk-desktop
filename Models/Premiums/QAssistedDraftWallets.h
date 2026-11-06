@@ -101,6 +101,7 @@ class QAssistedDraftWallets : public QSwitchAPI {
     // BUGFIX: was fired only on success (1); QML had no event to react to on failure. Now always
     // fires (0 = failed, 1 = success), carrying the backend error message on failure.
     void verifySingleSignerResult(int result, const QString &errorMsg = QString());
+    void existingKeyResult(int result, int accountIndex, const QString &errorMsg);
   public slots:
     void cancelRequestKey(const QString &request_id, const QString &group_id = "");
     void addHardwareFromConfig(int hardwareType, const QString &group_id, int key_index = -1, bool is_inheritance = false);
@@ -108,6 +109,7 @@ class QAssistedDraftWallets : public QSwitchAPI {
     int reuseKeyGetCurrentIndex(const QString &xfp);
     bool requestAddOrReplacementWithIndex(const QString &xfp, int index);
     void requestAddOrReplacementWithIndexAsync(const QString &xfp, int index);
+    void addExistingKeyAsync(const QString &xfp);
     QString bip32path(const QString &xfp, int index);
     QString reuseKeyXfp(const QString &fileName);
     // BUGFIX (root cause of "Run command exit error!" / "This key doesn't match" on seed-phrase

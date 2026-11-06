@@ -93,7 +93,7 @@ class Draco : public QObject {
     void recoverPassword(const QString &email, const QString &forgotToken, const QString &newpassword);
     void forgotPassword(const QString &email);
     void resendPassword(const QString &email);
-    void getMe();
+    bool getMe();
     void getMepKey(const QString &public_address);
     // Frriend/Contacts
     DracoUser search(const QString &email);
@@ -286,7 +286,7 @@ class Draco : public QObject {
 
     bool ResetKeyReplacement(const QString &wallet_id, const QString &passwordToken, QJsonObject &output, QString &errormsg);
 
-    bool VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, const QString &passwordToken, QJsonObject &result);
+    bool VerifyKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &verification_method, const QString &type, const QString &key_checksum, const QString &passwordToken, QJsonObject &result, const QJsonObject &key = QJsonObject());
     bool SetClaimOptionsKeyReplacement(const QString &wallet_id, const QString &xfp, const QStringList &claim_options, const QString &passwordToken, QJsonObject &output, QString &errormsg);
 
     bool RemoveKeyReplacement(const QString &wallet_id, const QString &xfp, const QString &passwordToken, QJsonObject &result);
@@ -372,7 +372,7 @@ class Draco : public QObject {
 
     bool TimeLockConvert(const QJsonObject &requestBody, QJsonObject &result);
 
-    void requireCaptchaVerification(std::function<void()> onSuccess);
+    void requireCaptchaVerification(std::function<void()> onSuccess, std::function<void()> onCancel = nullptr);
 
   private:
     Draco();

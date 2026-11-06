@@ -111,6 +111,8 @@ class QGroupDashboard : public QBasePremium {
 
     Q_PROPERTY(QVariantList keys READ keys NOTIFY draftWalletChanged)
     Q_PROPERTY(QVariantList replaceKeys READ replaceKeys NOTIFY replacementKeysChanged)
+    Q_PROPERTY(bool isConfigurableReplacement READ isConfigurableReplacement NOTIFY replacementKeysChanged)
+    Q_PROPERTY(QVariantMap replacePolicy READ replacePolicy NOTIFY replacementKeysChanged)
 
     Q_PROPERTY(bool hasWallet READ hasWallet NOTIFY groupInfoChanged)
     Q_PROPERTY(QVariantList alerts READ alerts NOTIFY alertInfoChanged)
@@ -136,6 +138,7 @@ class QGroupDashboard : public QBasePremium {
     Q_PROPERTY(QVariantList fallbackPolicies READ fallbackPolicies NOTIFY draftWalletChanged)
     Q_PROPERTY(QVariantList generalValidationErrors READ generalValidationErrors NOTIFY draftWalletChanged)
     Q_PROPERTY(bool draftReadyToContinue READ draftReadyToContinue NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantMap walletOnchainPolicy READ walletOnchainPolicy NOTIFY groupInfoChanged)
     Q_PROPERTY(int editingFallbackIndex READ editingFallbackIndex WRITE setEditingFallbackIndex NOTIFY editingFallbackIndexChanged)
 
   public:
@@ -184,6 +187,15 @@ class QGroupDashboard : public QBasePremium {
     QVariantList fallbackPolicies() const;
     QVariantList generalValidationErrors() const;
     bool draftReadyToContinue() const;
+    QVariantMap walletOnchainPolicy() const;
+    bool isConfigurableReplacement() const;
+    QVariantMap replacePolicy() const;
+    void UpdateConfigurableReplacementKeys();
+    Q_INVOKABLE bool removeReplacementAtIndex(int index);
+    Q_INVOKABLE QVariantList replacementReusableKeys(int index) const;
+    Q_INVOKABLE void startReplaceReuseAtIndex(int index);
+    QJsonObject configurableCardForKeyIndex(int key_index) const;
+    bool replaceSiblingCards(const QString &oldXfp, const QJsonObject &requestBody);
     int editingFallbackIndex() const;
     void setEditingFallbackIndex(int index);
     QJsonObject editingTimelock() const;
@@ -192,6 +204,12 @@ class QGroupDashboard : public QBasePremium {
     Q_INVOKABLE void addFallback(int m, int n);
     Q_INVOKABLE void editFallback(int fallback_index, int m, int n);
     Q_INVOKABLE void removeFallback(int fallback_index);
+    Q_INVOKABLE bool customizeIntroSeen() const;
+    Q_INVOKABLE bool fallbackTimelockMissing(int fallback_index) const;
+    Q_INVOKABLE void markFallbackTimelockPromptIfNeeded();
+    Q_INVOKABLE int takePendingFallbackTimelock();
+    Q_INVOKABLE QVariantList reusableKeys(int flat_index) const;
+    Q_INVOKABLE void markCustomizeIntroSeen();
     void runDraftPolicyRequest(std::function<bool(const QString &, QJsonObject &, QString &)> request);
     void UpdateReplacementKeys(const QJsonObject &data);
     bool GetKeyReplacementStatus();
@@ -350,6 +368,7 @@ class QGroupDashboard : public QBasePremium {
     QVariantList m_fallbackPolicies{};
     QVariantList m_generalValidationErrors{};
     int m_editingFallbackIndex{-1};
+    int m_pendingFallbackTimelock{-1};
     bool m_showDashBoard{false};
     int m_mInfo{0};
     int m_nInfo{0};
@@ -365,6 +384,7 @@ class QGroupDashboard : public QBasePremium {
     QJsonArray m_editMembers;
     QTimer *mTimer{nullptr};
     QJsonObject m_keyReplacementInfo;
+    QVariantMap m_replacePolicy{};
     // Strong reference keeping the health-check object alive for as long as
     // this dashboard is alive.  Without this, QWalletManagement::clear() can
     // free the QGroupWalletHealthCheck while QML still holds the raw pointer

@@ -64,7 +64,7 @@ Item {
     }
 
     function component() {
-        if (isConfigurableCard && modelData.type !== "SERVER" && modelData.has && !isBeforeSlot) {
+        if (isConfigurableCard && modelData.section !== "SPENDING" && modelData.type !== "SERVER" && modelData.has && !isBeforeSlot) {
             return inheritanceAdded
         }
         if(modelData.is_inheritance) {
@@ -138,7 +138,7 @@ Item {
             height: 24
             iconSize: 24
             icon: "qrc:/Images/Images/check-circle-dark.svg"
-            text: isConfigurableCard && (modelData.verification_type === "SELF_VERIFIED" || modelData.verification_type === "APP_VERIFIED") ? STR.STR_QML_2279 : STR.STR_QML_104
+            text: STR.STR_QML_104
             color: "#A7F0BA"
         }
     }
@@ -294,7 +294,7 @@ Item {
                     QLato {
                         width: 150
                         height: 28
-                        text: isConfigurableCard && modelData.section === "PRIMARY" ? STR.STR_QML_2373 : (slot_index === 1 ? STR.STR_QML_084 : STR.STR_QML_954.arg(slot_index))
+                        text: isConfigurableCard && modelData.section === "PRIMARY" && modelData.primary_customized !== true ? STR.STR_QML_2373 : (slot_index === 1 ? STR.STR_QML_084 : STR.STR_QML_954.arg(slot_index))
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }

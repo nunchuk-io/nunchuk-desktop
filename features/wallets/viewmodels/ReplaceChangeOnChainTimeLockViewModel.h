@@ -19,7 +19,11 @@ class ReplaceChangeOnChainTimeLockViewModel : public OnChainTimelockViewModel {
   public slots:
     void onInit() override;
     void setupTimeLock();
+    double selectedTimestamp() const;
+    void close() override;
   private:
+    void refreshReplacement();
+    void resetEditingFallback();
     TimeLockReplacementUpdateUseCase m_timeLockUpdateUC;
     TimeLockReplacementGetUseCase m_timeLockGetUC;
 };

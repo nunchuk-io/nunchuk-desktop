@@ -37,6 +37,9 @@ Item {
     property var  inheritance
     property bool isCancel: false
     property bool isOnChain: false
+    property var  oldInheritance: null
+    readonly property bool isConfigurable: inheritance && inheritance.onchain_inheritance_policy !== undefined
+                                           && inheritance.onchain_inheritance_policy.type === "CONFIGURABLE"
 
     Column {
         spacing: 16
@@ -49,7 +52,7 @@ Item {
             wrapMode: Text.WordWrap
             lineHeight: 28
             lineHeightMode: Text.FixedHeight
-            visible: title.length > 0
+            visible: title.length > 0 && !_item.isConfigurable
         }
         Flickable {
             width: 539 + 12
@@ -63,6 +66,7 @@ Item {
                 spacing: 16
                 Column {
                     spacing: 12
+                    visible: !_item.isConfigurable
                     QLato {
                         width: 539
                         height: paintedHeight
@@ -125,6 +129,7 @@ Item {
                             }
                             height: paintedHeight
                             text: inheritance.note
+                            color: pre.markChanges && inheritance.note_isChanged === true ? "#CF4018" : "#031F2B"
                             font.weight: Font.Normal
                             horizontalAlignment: Text.AlignLeft
                             verticalAlignment: Text.AlignVCenter
@@ -135,6 +140,7 @@ Item {
                     id: pre
                     width: 539
                     inheritance: _item.inheritance
+                    oldInheritance: _item.oldInheritance
                 }
             }
         }

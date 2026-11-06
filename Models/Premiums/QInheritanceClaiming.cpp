@@ -21,6 +21,7 @@
 #include "features/claiming/flows/OnChainClaimingFlow.h"
 #include "app/AppContext.h"
 #include "core/ui/UiServices.inc"
+#include "core/screen/RightPanelNavigator.h"
 
 QInheritanceClaiming::QInheritanceClaiming()
     : QStateFlow()
@@ -109,6 +110,145 @@ void QInheritanceClaiming::clearInheritanceKeys() {
 
 void QInheritanceClaiming::setClaimInit(const InitializeInheritanceClaimingResult& init) {
     m_claimInit = init;
+    m_claimAccountIndex = 0;
+    m_downloadRetry = 0;
+    m_claimPendingXfp.clear();
+    m_claimPendingAccount.clear();
+}
+
+void QInheritanceClaiming::setClaimKeyCount(int count) {
+    if (count > 0) {
+        m_claimInit.inheritance_key_count = count;
+    }
+}
+
+bool QInheritanceClaiming::usesClaimKeyCounts() const {
+    return qUtils::strCompare(m_claimInit.wallet_type, "MINISCRIPT") && !m_claimInit.required_key_counts.isEmpty();
+}
+
+int QInheritanceClaiming::claimAccountIndex() const {
+    return usesClaimKeyCounts() ? m_claimAccountIndex : 0;
+}
+
+QVariantMap QInheritanceClaiming::claimPendingAccount() const {
+    return m_claimPendingAccount;
+}
+
+int QInheritanceClaiming::distinctKeyCount() const {
+    QStringList xfps;
+    for (const auto &js : m_inheritanceKeys) {
+        QString xfp = js.toObject().value("xfp").toString().toLower();
+        if (!xfps.contains(xfp)) {
+            xfps.append(xfp);
+        }
+    }
+    return xfps.size();
+}
+
+bool QInheritanceClaiming::sameKey(const QJsonObject &a, const QJsonObject &b) const {
+    return qUtils::strCompare(a.value("xfp").toString(), b.value("xfp").toString()) &&
+           a.value("derivation_path").toString() == b.value("derivation_path").toString() &&
+           a.value("xpub").toString() == b.value("xpub").toString();
+}
+
+bool QInheritanceClaiming::resolveKeyOrigins(const QJsonArray &origins) {
+    bool added = false;
+    m_claimPendingXfp.clear();
+    for (const auto &js : origins) {
+        QJsonObject origin = js.toObject();
+        QString xfp = origin.value("xfp").toString();
+        int account = qUtils::GetIndexFromPath(origin.value("derivation_path").toString());
+        if (xfp.isEmpty() || account < 0) {
+            continue;
+        }
+        QWarningMessage msg;
+        nunchuk::SingleSigner signer = bridge::nunchukGetOriginSingleSigner(xfp, ENUNCHUCK::WalletType::MINISCRIPT, ENUNCHUCK::AddressType::NATIVE_SEGWIT, account, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+            msg.resetWarningMessage();
+            signer = bridge::nunchukGetOriginSignerFromMasterSigner(xfp, ENUNCHUCK::WalletType::MINISCRIPT, ENUNCHUCK::AddressType::NATIVE_SEGWIT, account, msg);
+        }
+        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+            m_claimAccountIndex = account;
+            m_claimPendingXfp = xfp;
+            continue;
+        }
+        QJsonObject keyObj = qUtils::SingleSignertoJsonObject(signer);
+        bool exists = false;
+        for (const auto &k : m_inheritanceKeys) {
+            if (sameKey(k.toObject(), keyObj)) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            m_inheritanceKeys.append(keyObj);
+            added = true;
+        }
+    }
+    return added;
+}
+
+bool QInheritanceClaiming::handlePendingDownload(const QJsonObject &output) {
+    QJsonObject buffer = output.value("buffer_period_countdown").toObject();
+    if (!buffer.isEmpty()) {
+        m_downloadRetry = 0;
+        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+        emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
+        auto flowMng = app::AppContext::instance()->flowManager();
+        auto flow = flowMng->startFlow<OnChainClaimingFlow>();
+        flow->setmagicWord(m_claimInit.magic);
+        flow->setremaining_display_name(buffer.value("remaining_display_name").toString());
+        if (auto rightPanel = app::AppContext::instance()->rightPanelNavigator()) {
+            rightPanel->requestTerminal(qml::components::rightpannel::service::common::qserviceclaiminheritancebufferperiodhasstarted);
+        }
+        return true;
+    }
+    QJsonArray valid = output.value("valid_keys").toArray();
+    QJsonArray kept;
+    for (const auto &v : valid) {
+        QJsonObject validKey = v.toObject();
+        QJsonObject match = validKey;
+        for (const auto &k : m_inheritanceKeys) {
+            if (sameKey(k.toObject(), validKey)) {
+                match = k.toObject();
+                break;
+            }
+        }
+        kept.append(match);
+    }
+    m_inheritanceKeys = kept;
+    QJsonArray origins = output.value("key_origins").toArray();
+    if (!origins.isEmpty() && resolveKeyOrigins(origins) && m_downloadRetry < 10) {
+        m_downloadRetry++;
+        return requestDownloadWallet();
+    }
+    m_downloadRetry = 0;
+    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+    if (!origins.isEmpty() && !m_claimPendingXfp.isEmpty()) {
+        QVariantMap pending;
+        pending["xfp"] = m_claimPendingXfp;
+        pending["account"] = m_claimAccountIndex;
+        for (const auto &k : m_inheritanceKeys) {
+            QJsonObject key = k.toObject();
+            if (!qUtils::strCompare(key.value("xfp").toString(), m_claimPendingXfp)) {
+                continue;
+            }
+            pending["name"] = key.value("name").toString();
+            for (const auto &t : key.value("tags").toArray()) {
+                if (t.toString() != "INHERITANCE") {
+                    pending["tag"] = t.toString();
+                }
+            }
+            break;
+        }
+        m_claimPendingAccount = pending;
+        emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_ACCOUNT_REQUIRED");
+        return false;
+    }
+    m_claimAccountIndex = 0;
+    m_claimPendingAccount.clear();
+    AppModel::instance()->showToast(0, STR_CPP_140, EWARNING::WarningType::WARNING_MSG);
+    emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_MORE_KEY");
+    return false;
 }
 
 void QInheritanceClaiming::claimInitSaveBsms(const QString& bsms, const nunchuk::Wallet& wallet) {
@@ -124,7 +264,7 @@ bool QInheritanceClaiming::requestDownloadWalletWithIndexAsync(const QString &xf
     runInConcurrent([this, xfp]() ->bool{
         nunchuk::SingleSigner signer;
         auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-        bool ret = draftWallet->checkAndGetSingleSigner(xfp, 0, signer);
+        bool ret = draftWallet->checkAndGetSingleSigner(xfp, claimAccountIndex(), signer);
         if (ret) {
             return requestClaimInheritanceFromSigner(signer);
         } else {
@@ -139,7 +279,7 @@ bool QInheritanceClaiming::requestDownloadWalletWithIndexAsync(const QString &xf
 bool QInheritanceClaiming::requestDownloadWalletViaQR(const QStringList &qr_data) {
     runInConcurrent([this, qr_data]() ->bool{
         QWarningMessage msg;
-        nunchuk::SingleSigner signer = bridge::nunchukParseQRSigners(qr_data, 0, msg);
+        nunchuk::SingleSigner signer = bridge::nunchukParseQRSigners(qr_data, claimAccountIndex(), msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             bool ret = requestClaimInheritanceFromSigner(signer);
             return ret;
@@ -156,7 +296,7 @@ bool QInheritanceClaiming::requestDownloadWalletViaImportFile(const QString &fil
     runInConcurrent([this, fileName]() ->bool{
         QWarningMessage msg;
         QString file_path = qUtils::QGetFilePath(fileName);
-        nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
+        nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, claimAccountIndex(), nunchuk::SignerType::AIRGAP, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             bool ret = requestClaimInheritanceFromSigner(fileSigner);
             return ret;
@@ -172,12 +312,30 @@ bool QInheritanceClaiming::requestClaimInheritanceFromSigner(const nunchuk::Sing
     auto keyObj = qUtils::SingleSignertoJsonObject(signer);
     auto contains = [this, keyObj]() -> bool {
         for (const auto& existingKey : m_inheritanceKeys) {
-            if (existingKey.toObject().value("xfp") == keyObj.value("xfp")) {
+            if (usesClaimKeyCounts() ? sameKey(existingKey.toObject(), keyObj) : existingKey.toObject().value("xfp") == keyObj.value("xfp")) {
                 return true;
             }
         }
         return false;
     };
+    if (usesClaimKeyCounts()) {
+        if (contains()) {
+            emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_MORE_KEY");
+            return false;
+        }
+        m_inheritanceKeys.append(keyObj);
+        m_claimAccountIndex = 0;
+        m_claimPendingXfp.clear();
+        m_claimPendingAccount.clear();
+        m_downloadRetry = 0;
+        int added = distinctKeyCount();
+        if (added < m_claimInit.inheritance_key_count) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_SECOND_KEY");
+            return false;
+        }
+        return requestDownloadWallet();
+    }
     if (contains()) {
         DBG_INFO << "Key already added:" << keyObj;
         emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_SECOND_KEY");
@@ -218,7 +376,11 @@ void QInheritanceClaiming::onChainProcessErrorCode(int error_code, const QString
         // show popup: Your inheritance plan has not been activated yet. Please try again later.
         auto flow = flowMng->startFlow<OnChainClaimingFlow>();
         flow->passClaimingError(error_code, error_msg);
-        subMng->show(qml::screens::onlinemode::claiming::claiminheritanceplanresult);
+        if (error_code == DRACO_CODE::INHERITANCE_803 && usesClaimKeyCounts()) {
+            subMng->show(qml::screens::onlinemode::claiming::claimtimelockactive);
+        } else {
+            subMng->show(qml::screens::onlinemode::claiming::claiminheritanceplanresult);
+        }
     }    break;
     case DRACO_CODE::INHERITANCE_829:
         // show popup: Please come back later
@@ -287,6 +449,8 @@ bool QInheritanceClaiming::requestDownloadWallet() {
             flow->setmagicWord(m_claimInit.magic);
             flow->setbsms(bsms);                    
             flow->claimStatus();
+        } else if (usesClaimKeyCounts()) {
+            return handlePendingDownload(output);
         } else {
             onChainProcessErrorCode(DRACO_CODE::INHERITANCE_831, "No inheritance plan found");
         }
@@ -299,12 +463,11 @@ nunchuk::SingleSigner QInheritanceClaiming::RecoverAnExistingSeed(const QString 
     QString fingerprint = qUtils::GetMasterFingerprint(mnemonic.trimmed(), "");
     nunchuk::SingleSigner outSigner("","","","",{}, "", 0,"");
     auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-    bool ret = draftWallet->checkAndGetSingleSigner(fingerprint, 0, outSigner);
+    bool ret = draftWallet->checkAndGetSingleSigner(fingerprint, claimAccountIndex(), outSigner);
     return outSigner;
 }
 
 bool QInheritanceClaiming::requestDownloadWalletViaSeedPhrase(const QString &mnemonic) {
-    DBG_INFO << mnemonic;
     runInConcurrent([this, mnemonic]() ->bool{
         bool checkmnemonic = qUtils::CheckMnemonic(mnemonic.trimmed());
         if(checkmnemonic){

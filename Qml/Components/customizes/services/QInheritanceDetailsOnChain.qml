@@ -38,9 +38,19 @@ Item {
     property string subtitle1: STR.STR_QML_888
     property string subtitle2: STR.STR_QML_889
     property string warning: STR.STR_QML_890
+    property string fallbackIntro: ""
+    property var fallbackLines: []
     width: 346
     height: 512
+    Flickable {
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: _detailColumn.implicitHeight
+        clip: true
+        interactive: contentHeight > height
+        ScrollBar.vertical: QScrollBar { visible: parent.interactive }
     Column {
+        id: _detailColumn
         width: parent.width
         spacing: 16
         QLato {
@@ -130,6 +140,56 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+        Row {
+            width: 346
+            spacing: 12
+            visible: fallbackIntro !== ""
+            QIcon {
+                iconSize: 24
+                source: "qrc:/Images/Images/3.Active.svg"
+            }
+            Column {
+                width: 310
+                spacing: 10
+                QLato {
+                    width: parent.width
+                    text: fallbackIntro
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                }
+                Rectangle {
+                    width: parent.width
+                    height: _fallbackList.implicitHeight + 24
+                    radius: 12
+                    color: "#F5F5F5"
+                    visible: fallbackLines.length > 0
+                    Column {
+                        id: _fallbackList
+                        x: 12
+                        y: 12
+                        width: parent.width - 24
+                        spacing: 8
+                        Repeater {
+                            model: fallbackLines
+                            Column {
+                                spacing: 2
+                                QLato {
+                                    text: modelData.title
+                                    font.pixelSize: 12
+                                    font.weight: Font.Bold
+                                    horizontalAlignment: Text.AlignLeft
+                                }
+                                QLato {
+                                    text: modelData.detail
+                                    font.pixelSize: 12
+                                    horizontalAlignment: Text.AlignLeft
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         Rectangle {
             width: warningRow.implicitWidth + 24
             height: warningRow.implicitHeight + 24
@@ -157,6 +217,7 @@ Item {
                 }
             }
         }
+    }
     }
     FileDialog {
         id: exportwalletDialog

@@ -206,7 +206,6 @@ bool ProfileSetting::ChangeEmail()
     QJsonObject output;
     QString errormsg;
     QJsonObject data = tag->confirmCodeNonceBody();
-    DBG_INFO << tag->passwordToken() << tag->confirmToken();
     bool ret = Draco::instance()->ChangeEmail(data,
                                               {},
                                               tag->passwordToken(),
@@ -239,7 +238,6 @@ bool ProfileSetting::ChangeEmailNone()
     QJsonObject output;
     QString errormsg;
     QJsonObject data = tag->confirmCodeNonceBody();
-    DBG_INFO << tag->passwordToken() << tag->confirmToken();
     bool ret = Draco::instance()->ChangeEmail(data,
                                               {},
                                               tag->passwordToken(),
@@ -269,9 +267,6 @@ bool ProfileSetting::seccurityQuestion()
         QJsonObject output;
         QString errormsg;
         QJsonObject data = tag->confirmCodeNonceBody();
-        DBG_INFO << tag->passwordToken()
-                 << tag->secQuesToken()
-                 << tag->confirmToken();
         bool ret = Draco::instance()->ChangeEmail(data,
                                                   {},
                                                   tag->passwordToken(),

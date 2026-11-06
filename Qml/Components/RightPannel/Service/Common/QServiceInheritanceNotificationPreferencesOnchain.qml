@@ -10,6 +10,19 @@ Column {
 
     property var inheritance
     property var emails_preference: inheritance.notification_preferences
+    readonly property bool isConfigurablePlan: inheritance && inheritance.onchain_inheritance_policy !== undefined
+                                               && inheritance.onchain_inheritance_policy.type === "CONFIGURABLE"
+    readonly property bool hasFallbackNotices: inheritance && inheritance.onchain_inheritance_policy !== undefined
+                                               && inheritance.onchain_inheritance_policy.type === "CONFIGURABLE"
+                                               && inheritance.onchain_inheritance_policy.fallbacks !== undefined
+                                               && inheritance.onchain_inheritance_policy.fallbacks.length > 0
+    function unlockNoticesText(item) {
+        var names = []
+        if (item.notify_timelock_expires) names.push(STR.STR_QML_2489)
+        var fallbacks = item.notify_fallbacks !== undefined ? item.notify_fallbacks.slice().sort(function(a, b) { return a - b }) : []
+        for (var i = 0; i < fallbacks.length; i++) names.push(STR.STR_QML_2356.arg(fallbacks[i] + 1))
+        return names.length > 0 ? names.join(", ") : STR.STR_QML_432
+    }
 
     signal textEditClicked()
     Item {
@@ -18,7 +31,7 @@ Column {
         QLato {
             font.weight: Font.Bold
             font.pixelSize: 16
-            text: STR.STR_QML_852
+            text: isConfigurablePlan ? STR.STR_QML_2564 : STR.STR_QML_852
             anchors.left: parent.left
         }
         QTextLink {
@@ -102,17 +115,17 @@ Column {
                 Row {
                     width: parent.width
                     QLato {
-                        width: parent.width - 60
+                        width: parent.width - (hasFallbackNotices ? 220 : 60)
                         height: 20
                         horizontalAlignment: Text.AlignLeft
                         anchors.verticalCenter: parent.verticalCenter
-                        text: STR.STR_QML_2020
+                        text: hasFallbackNotices ? STR.STR_QML_2488 : STR.STR_QML_2020
                     }
                     QLato {
-                        width: 60
+                        width: hasFallbackNotices ? 220 : 60
                         font.weight: Font.Bold
                         anchors.verticalCenter: parent.verticalCenter
-                        text: emails_preference.beneficiary_notifications[index].notify_timelock_expires? "Yes" : "No"
+                        text: hasFallbackNotices ? unlockNoticesText(emails_preference.beneficiary_notifications[index]) : (emails_preference.beneficiary_notifications[index].notify_timelock_expires ? "Yes" : "No")
                         color: "#031F2B"
                         horizontalAlignment: Text.AlignRight
                     }

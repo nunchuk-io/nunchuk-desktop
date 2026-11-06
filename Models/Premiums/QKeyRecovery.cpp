@@ -278,7 +278,7 @@ bool QKeyRecovery::KeyRecoveryDownloadBackup()
     QString errormsg;
     QString fingerPrint = m_signer["key_xfp"].toString();
     bool ret = Draco::instance()->UserKeysDownloadBackup(servicesTagPtr()->passwordToken(), fingerPrint, servicesTagPtr()->questionsAndAnswers(), base64, errormsg);
-    DBG_INFO << ret << servicesTagPtr()->passwordToken() << fingerPrint << base64;
+    DBG_INFO << ret << fingerPrint;
     if(ret){
         QByteArray ba = base64.toUtf8();
         m_base64bin = QByteArray::fromBase64(ba);

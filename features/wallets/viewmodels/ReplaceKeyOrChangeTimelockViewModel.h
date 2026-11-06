@@ -17,6 +17,7 @@ class ReplaceKeyOrChangeTimelockViewModel : public OnChainTimelockViewModel {
     void onInit() override;
   public slots:
     void onConfigureClicked();
+    void onConfigureTimelock(int fallbackIndex);
   private:
     TimeLockReplacementGetUseCase m_timeLockGetUC;
 };

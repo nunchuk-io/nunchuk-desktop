@@ -18,7 +18,7 @@ RecoverViaXPRVViewModel::RecoverViaXPRVViewModel(QObject *parent)
 bool RecoverViaXPRVViewModel::validateXPRV(const QString xprv) {
     QWarningMessage msg;
     bool isValid = qUtils::isValidXPRV(xprv, msg);
-    DBG_INFO << "Validating isValid: " << isValid << " XPRV:" << xprv;
+    DBG_INFO << "Validating isValid: " << isValid;
     if (!isValid) {
         emit showToast(-1, Strings.STR_QML_2092(), EWARNING::WarningType::EXCEPTION_MSG);
     }

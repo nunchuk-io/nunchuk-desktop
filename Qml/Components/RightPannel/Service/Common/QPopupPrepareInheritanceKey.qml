@@ -54,7 +54,23 @@ QPopupOverlayScreen {
         { screen: "restore-seed-phrase-to-hardware-device",   screen_component: restore_seed_phrase_to_hardware_device },
         { screen: "your-plan-requires-two-inheritance-keys-added-one",  screen_component: your_plan_requires_two_inheritance_keys_added_one },
         { screen: "recover-an-existing-seed",               screen_component: _recoverAnExistingSeed },
+        { screen: "choose-key-count",                       screen_component: _chooseKeyCount },
+        { screen: "safety-notice",                          screen_component: _safetyNotice },
     ]
+    property var keyCounts: []
+    property string noticeType: ""
+    function showNotices() {
+        return ServiceSetting.servicesTag.usesClaimKeyCounts()
+    }
+    function openNotice(type) {
+        _infoPopup.noticeType = type
+        stateScreen.setScreenFlow("safety-notice")
+    }
+    function onChainChooseCount(counts) {
+        _infoPopup.keyCounts = counts
+        stateScreen.setScreenFlow("choose-key-count")
+        _infoPopup.open()
+    }
 
     content: {
         var itemScreen = map_flow.find(function(e) {if (e.screen === stateScreen.screenFlow) return true; else return false})
@@ -86,7 +102,13 @@ QPopupOverlayScreen {
         id: your_plan_requires_two_inheritance_keys
         QYourPlanRequiresTwoInheritanceKeys { 
             onCloseClicked: _infoPopup.close()
-            onPrevClicked: _infoPopup.close()
+            onPrevClicked: {
+                if (stateScreen.screenFlowStack.length > 1) {
+                    stateScreen.backScreen()
+                } else {
+                    _infoPopup.close()
+                }
+            }
             onNextClicked: {
                 stateScreen.setScreenFlow("prepare-inheritance-key")
             }
@@ -100,8 +122,12 @@ QPopupOverlayScreen {
             onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
                 if (key_option === "hardware-device") {
-                    _hardwareAddKey.isInheritance = true
-                    _hardwareAddKey.open()
+                    if (_infoPopup.showNotices()) {
+                        _infoPopup.openNotice("use-device")
+                    } else {
+                        _hardwareAddKey.isInheritance = true
+                        _hardwareAddKey.open()
+                    }
                 } else {
                     stateScreen.setScreenFlow("recover-inheritance-key")
                 }
@@ -116,9 +142,14 @@ QPopupOverlayScreen {
             onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
                 if (key_option === "hardware-device") {
-                    stateScreen.setScreenFlow("restore-seed-phrase-to-hardware-device")
+                    if (_infoPopup.showNotices()) {
+                        _infoPopup.openNotice("recover-key")
+                    } else {
+                        stateScreen.setScreenFlow("restore-seed-phrase-to-hardware-device")
+                    }
+                } else if (_infoPopup.showNotices()) {
+                    _infoPopup.openNotice("enter-seed")
                 } else {
-                    // Recover via seed phrase backup not yet supported
                     stateScreen.setScreenFlow("recover-an-existing-seed")
                 }                
             }
@@ -157,6 +188,80 @@ QPopupOverlayScreen {
                 _infoPopup.close()
             }
         }
+    }
+
+    Component {
+        id: _chooseKeyCount
+        QClaimChooseKeyCount {
+            counts: _infoPopup.keyCounts
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: _infoPopup.close()
+            onNextClicked: {
+                ServiceSetting.servicesTag.setClaimKeyCount(selectedCount)
+                _infoPopup.inheritance_key_count = selectedCount
+                stateScreen.setScreenFlow(selectedCount > 1 ? "your-plan-requires-two-inheritance-keys" : "prepare-inheritance-key")
+            }
+        }
+    }
+
+    Component {
+        id: _safetyNotice
+        QClaimSafetyNotice {
+            noticeType: _infoPopup.noticeType
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                if (_infoPopup.noticeType === "recover-key") {
+                    stateScreen.setScreenFlow("restore-seed-phrase-to-hardware-device")
+                } else if (_infoPopup.noticeType === "enter-seed") {
+                    stateScreen.setScreenFlow("recover-an-existing-seed")
+                } else {
+                    _hardwareAddKey.isInheritance = true
+                    _hardwareAddKey.open()
+                }
+            }
+        }
+    }
+
+    readonly property var usbClaimTags: ["JADE", "COLDCARD", "LEDGER", "TREZOR", "BITBOX"]
+    readonly property var usbOnlyClaimTags: ["LEDGER", "TREZOR", "BITBOX"]
+    readonly property var deviceNames: ({ "JADE": "Jade", "COLDCARD": "COLDCARD", "LEDGER": "Ledger", "TREZOR": "Trezor",
+                                          "BITBOX": "BitBox", "KEYSTONE": "Keystone", "PASSPORT": "Passport", "SEEDSIGNER": "SeedSigner" })
+    function openAccountRequired() {
+        var pending = ServiceSetting.servicesTag.claimPendingAccount()
+        var tag = pending.tag !== undefined ? pending.tag : ""
+        if (_infoPopup.usbOnlyClaimTags.indexOf(tag) >= 0) {
+            ServiceSetting.requestSignerInitialClaimSetup(tag)
+            ServiceSetting.requestStartAddHardwareKey(tag)
+            return
+        }
+        var device = _infoPopup.deviceNames[tag] !== undefined ? _infoPopup.deviceNames[tag] : (pending.name !== undefined && pending.name !== "" ? pending.name : tag)
+        _accountRequired.deviceTag = tag
+        _accountRequired.title = STR.STR_QML_2560.arg(pending.account).arg(device)
+        _accountRequired.contentText = STR.STR_QML_2561.arg(device).arg(pending.account)
+        _accountRequired.open()
+    }
+
+    QPopupInfoTwoButtons {
+        id: _accountRequired
+        property string deviceTag: ""
+        isVertical: true
+        labels: [STR.STR_QML_2562, STR.STR_QML_035]
+        funcs: [
+            function() {
+                _accountRequired.close()
+                if (_infoPopup.usbClaimTags.indexOf(_accountRequired.deviceTag) >= 0) {
+                    ServiceSetting.requestSignerInitialClaimSetup(_accountRequired.deviceTag)
+                    ServiceSetting.requestStartAddHardwareKey(_accountRequired.deviceTag)
+                } else {
+                    _hardwareAddKey.isInheritance = true
+                    _hardwareAddKey.open()
+                }
+            },
+            function() {
+                _accountRequired.close()
+            }
+        ]
     }
 
     QPopupHardwareAddKey {
@@ -216,6 +321,11 @@ QPopupOverlayScreen {
         function onResultClaimInheritanceAlert(result) {
             if (result === "CLAIM_INHERITANCE_SECOND_KEY") {
                 _infoPopup.onChainClaimSecond(inheritance_key_count)
+            } else if (result === "CLAIM_INHERITANCE_ACCOUNT_REQUIRED") {
+                _infoPopup.openAccountRequired()
+            } else if (result === "CLAIM_INHERITANCE_MORE_KEY") {
+                stateScreen.setScreenFlow("prepare-inheritance-key")
+                _infoPopup.open()
             } else if (result === "CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS") {
                 _infoPopup.close()
             }

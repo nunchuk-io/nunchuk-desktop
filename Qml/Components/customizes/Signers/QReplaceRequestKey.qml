@@ -50,13 +50,28 @@ Item {
     signal serkeyClicked()
     signal hardwareClicked()
     signal backupClicked()
+    signal removeClicked()
 
     property var  key_index: modelData.wallet_type === "MULTI_SIG" ? (modelData.key_index + 1) : modelData.key_index
     property var  walletType: modelData.wallet_type
     property int  slot_index: index + 1
     property bool isBeforeSlot: modelData.has && !modelData.hasSecond
+    readonly property bool isConfigurableCard: modelData.section !== undefined
+
+    function replacedCount() {
+        if (isConfigurableCard && modelData.replace_partial === true) {
+            return 1
+        }
+        if (isConfigurableCard && modelData.single_account === true) {
+            return modelData.replacements.length > 0 ? 2 : 0
+        }
+        return modelData.replacements.length
+    }
 
     function getComponent() {
+        if (isConfigurableCard && modelData.type !== "SERVER" && modelData.has) {
+            return inheritanceAdded
+        }
         if(modelData.is_inheritance) {
             return modelData.has ? inheritanceAdded : inheritanceEmpty
         }
@@ -69,10 +84,10 @@ Item {
     }
 
     function inheritance(replace, add, backup, added) {
-        if(modelData.replacements.length === 0) {
+        if(replacedCount() === 0) {
             return replace
         }
-        else if(modelData.replacements.length === 1) {
+        else if(replacedCount() === 1) {
             return add
         }
         else {
@@ -131,7 +146,7 @@ Item {
                 source: "qrc:/Images/Images/replace.svg"
             }
             QLato {
-                text: STR.STR_QML_2052.arg(modelData.old_singer.name).arg(modelData.old_singer.xfp.toUpperCase())
+                text: (isConfigurableCard ? STR.STR_QML_2567 : STR.STR_QML_2052).arg(modelData.old_singer.name).arg(modelData.old_singer.xfp.toUpperCase())
                 font.pixelSize: 12
                 color: "#031F2B"
             }
@@ -189,6 +204,17 @@ Item {
                     hardwareClicked()
                 }
             }
+        }
+    }
+    Component {
+        id: removeButton
+        QTextButton {
+            width: label.paintedWidth + 2*16
+            height: 36
+            type: eTypeB
+            label.text: STR.STR_QML_1134
+            label.font.pixelSize: 16
+            onButtonClicked: removeClicked()
         }
     }
     Component {
@@ -267,7 +293,16 @@ Item {
         return "VERIFIED"
     }
     // Single source of truth for row state; adds "REPLACE"/"ADD_NEW" tiers before the claim_options tiers.
+    function configurableRowState() {
+        if (replacedCount() === 0) return "REPLACE"
+        if (replacedCount() === 1) return "ADD_NEW"
+        if (modelData.verification_type === "NONE" && !(modelData.section === "SPENDING" && modelData.primary_customized === true)) return "BACKUP"
+        return "ADDED"
+    }
     function inheritanceRowState() {
+        if (isConfigurableCard) {
+            return configurableRowState()
+        }
         if (modelData.wallet_type !== "MULTI_SIG") {
             // Outside NUN-10192 scope - unchanged legacy behavior.
             return inheritance("REPLACE", "ADD_NEW", "BACKUP", "ADDED")
@@ -288,11 +323,11 @@ Item {
     function inheritanceActionComponent() {
         switch (inheritanceRowState()) {
         case "REPLACE": return replaceButton
-        case "ADD_NEW": return addButton
+        case "ADD_NEW": return isConfigurableCard ? replaceButton : addButton
         case "SET_UP": return setUpButton
         case "BACKUP": return backupButton
         case "VERIFY_BACKUP": return verifyBackupButton
-        default: return addedCheck
+        default: return isConfigurableCard ? removeButton : addedCheck
         }
     }
     Component {

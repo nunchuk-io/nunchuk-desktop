@@ -83,7 +83,7 @@ Item {
         anchors.fill: parent
         visible: _card.hasValue
         radius: 8
-        color: "#A7F0BA"
+        color: _card.hasError ? "#FFFFFF" : "#A7F0BA"
         border.width: _card.hasError ? 2 : 0
         border.color: "#CF4018"
         Row {

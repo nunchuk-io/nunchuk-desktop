@@ -417,7 +417,7 @@ Rectangle {
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_2097,
+                        label: QSTR.STR_QML_2097,
                         icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",

@@ -33,6 +33,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1608
     property bool isConfigurable: false
+    property bool isFallback: false
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
@@ -67,7 +68,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         width: parent.width
-                        text: isConfigurable ? STR.STR_QML_2364 : STR.STR_QML_1946
+                        text: !isConfigurable ? STR.STR_QML_1946 : isFallback ? STR.STR_QML_2440 : STR.STR_QML_2364
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap

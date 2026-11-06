@@ -16,6 +16,7 @@ DEFINE_USECASE_INPUT(InitializeInheritanceClaimingInput)
     X(QString, wallet_id)           \
     X(int, inheritance_key_count)   \
     X(QJsonArray, key_origins)  \
+    X(QJsonArray, required_key_counts)  \
     X(int, code)    \
     X(QString, message)
 

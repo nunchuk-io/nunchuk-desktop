@@ -20,8 +20,14 @@
 import "../../../../../localization/STR_QML.js" as STR
 
 QAddCOLDCARDGuideViaQR {
-    label.text: isFlowClamOrAddKeyClaim() ?  STR.STR_QML_2065 : STR.STR_QML_1938.arg(1)
-    guideDescriptionOne: isFlowClamOrAddKeyClaim() ? STR.STR_QML_817 : STR.STR_QML_1926
-    guideDescriptionTwo: isFlowClamOrAddKeyClaim() ? "" : STR.STR_QML_1927
-    guideExportString: STR.STR_QML_1939.arg("0")
+    readonly property var configurableSigner: SignerManagement.currentSigner
+    readonly property bool hasClaimAccount: configurableSigner.claim_account !== undefined
+    readonly property bool isSingleAccountCard: configurableSigner.single_account === true
+    readonly property bool isFallbackCard: isSingleAccountCard && configurableSigner.section === "FALLBACK"
+    readonly property bool hasPresetAccount: isSingleAccountCard && configurableSigner.preset_account !== undefined
+    readonly property int reusedAccount: hasPresetAccount ? configurableSigner.preset_account : (isFallbackCard ? configurableSigner.fallback_index + 2 : 0)
+    label.text: isSingleAccountCard ? STR.STR_QML_2065 : (isFlowClamOrAddKeyClaim() ?  STR.STR_QML_2065 : STR.STR_QML_1938.arg(1))
+    guideDescriptionOne: isSingleAccountCard ? "" : (isFlowClamOrAddKeyClaim() ? STR.STR_QML_817 : STR.STR_QML_1926)
+    guideDescriptionTwo: isFallbackCard ? (hasPresetAccount ? STR.STR_QML_2444.arg(configurableSigner.fallback_index + 1).arg(reusedAccount) : STR.STR_QML_2379.arg(reusedAccount)) : (isSingleAccountCard ? STR.STR_QML_2378 : (isFlowClamOrAddKeyClaim() ? "" : STR.STR_QML_1927))
+    guideExportString: hasClaimAccount ? STR.STR_QML_1939.arg(configurableSigner.claim_account) : (isFallbackCard ? (hasPresetAccount ? STR.STR_QML_1939.arg(reusedAccount) : STR.STR_QML_1939.arg(STR.STR_QML_2380.arg(reusedAccount))) : STR.STR_QML_1939.arg("0"))
 }

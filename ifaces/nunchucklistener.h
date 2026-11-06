@@ -51,4 +51,6 @@ void GroupDeleteListener(const std::string& groupId);
 void ReplaceRequestListener(const std::string& walletId, const std::string& replaceGroupId);
 void GroupWalletDashboardListener(const std::string& walletId);
 
+void InvalidTransactionListener(std::string tx_id, std::string wallet_id);
+
 #endif // NUNCHUCKLISTENER_H

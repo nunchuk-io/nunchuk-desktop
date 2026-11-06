@@ -30,39 +30,65 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: vm.valueDate.length > 0 ? QSTR.STR_QML_2076 : QSTR.STR_QML_1992
+    property string titleText: vm.valueDate.length > 0 ? QSTR.STR_QML_2076 : QSTR.STR_QML_1992
+    property var descriptions: [QSTR.STR_QML_1993, QSTR.STR_QML_1994, QSTR.STR_QML_1995]
+    property var references: []
+    property string infoText: QSTR.STR_QML_1996
+    property var validateSelection: null
+    property bool infoBelowInputs: false
+    label.text: titleText
     onCloseClicked: vm.close()
-    
+
     content: Item {
         Column {
             width: parent.width
             spacing: 24
-            QLato {
-                width: 728
-                text: QSTR.STR_QML_1993
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 28
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
+            Repeater {
+                model: _setup.descriptions
+                QLato {
+                    width: 728
+                    text: modelData
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 28
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
-            QLato {
+            Rectangle {
                 width: 728
-                text: QSTR.STR_QML_1994
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 28
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
-            }
-            QLato {
-                width: 728
-                text: QSTR.STR_QML_1995
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 28
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
+                height: _refColumn.implicitHeight + 24
+                radius: 8
+                color: "#F5F5F5"
+                visible: _setup.references.length > 0
+                Column {
+                    id: _refColumn
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                        leftMargin: 12
+                        rightMargin: 12
+                    }
+                    spacing: 8
+                    Repeater {
+                        model: _setup.references
+                        Column {
+                            spacing: 2
+                            QLato {
+                                text: modelData.label
+                                font.pixelSize: 12
+                                color: "#757575"
+                                horizontalAlignment: Text.AlignLeft
+                            }
+                            QLato {
+                                text: modelData.value
+                                font.weight: Font.Bold
+                                horizontalAlignment: Text.AlignLeft
+                            }
+                        }
+                    }
+                }
             }
             Column {
                 width: parent.width
@@ -204,6 +230,7 @@ QOnScreenContentTypeA {
                                 }
                             }
                             function onInvalidDateAlert() {
+                                _invalidDateAlert.contentText = QSTR.STR_QML_2075
                                 _invalidDateAlert.open()
                             }
                         }
@@ -234,6 +261,12 @@ QOnScreenContentTypeA {
                     color: "#FDEBD2"
                     visible: vm.isShowBlockHeight
                 }
+                QWarningBgMulti {
+                    width: 728
+                    icon: "qrc:/Images/Images/info-60px.svg"
+                    txt.text: _setup.infoText
+                    visible: _setup.infoBelowInputs
+                }
             }
         }
 
@@ -241,8 +274,9 @@ QOnScreenContentTypeA {
             width: 728
             height: 60
             icon: "qrc:/Images/Images/info-60px.svg"
-            txt.text: QSTR.STR_QML_1996
+            txt.text: _setup.infoText
             anchors.bottom: parent.bottom
+            visible: !_setup.infoBelowInputs
         }
     }
     bottomRight: QTextButton {
@@ -256,6 +290,14 @@ QOnScreenContentTypeA {
         }
     }
     onNextClicked: {
+        if (typeof _setup.validateSelection === "function") {
+            var error = _setup.validateSelection(vm.selectedTimestamp())
+            if (error !== "") {
+                _invalidDateAlert.contentText = error
+                _invalidDateAlert.open()
+                return
+            }
+        }
         if (vm.isShowBlockHeight && (vm.xYearsLock > ServiceSetting.servicesTag.setupConfig.max_timelock_years)) {
             blockBaseInfo.confirmTimelockDuration();
             return;

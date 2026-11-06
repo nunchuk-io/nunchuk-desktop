@@ -2446,6 +2446,7 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2254, "Learn more")
     // Hardware device scan: button label while the just-cancelled scan is still unwinding.
     DEFINE_STRING_PROPERTY(STR_QML_2340, "Cancelling...")
+    DEFINE_STRING_PROPERTY(STR_QML_2325, "Backup Password, or the seed phrase you backed up earlier")
 
   public:
     static AppStrings &instance();

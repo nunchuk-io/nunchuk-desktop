@@ -52,12 +52,11 @@ void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
         }
     }
     else if(recover_type == "xprv"){
-        DBG_INFO << msg;
         QString recover_name = msg.toMap().value("recover_name").toString();
         QSignerManagement::instance()->requestCreateSoftwareSignerXprv(recover_name, seed_words);
     }
     else{
-        DBG_INFO << msg;
+        DBG_INFO << recover_type;
     }
 }
 

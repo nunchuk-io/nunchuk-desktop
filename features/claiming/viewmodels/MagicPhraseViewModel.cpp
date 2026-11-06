@@ -51,6 +51,10 @@ void MagicPhraseViewModel::claimInit(const QString &magicPhrase) {
                 flow->setinheritance_key_count(res.inheritance_key_count);
                 flow->setmagicWord(magicPhrase);
                 auto wallet = appModel->walletListPtr()->getWalletById(res.wallet_id);
+                if (!wallet && res.required_key_counts.size() > 1) {
+                    emit gotoOnChainChooseKeyCount(res.required_key_counts.toVariantList());
+                    return;
+                }
                 if (!wallet) {
                     #ifdef NEW_ON_CLAIM
                         GUARD_SUB_SCREEN_MANAGER()

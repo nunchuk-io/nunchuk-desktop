@@ -1,6 +1,7 @@
 #include "TimeLockReplacementGetUseCase.h"
 #include "core/restapi/RestApi.h"
 #include "core/utils/Utils.h"
+#include <QJsonArray>
 
 namespace features::common::usecases {
 using namespace core::usecase;
@@ -19,6 +20,10 @@ Result<TimeLockReplacementGetResult> TimeLockReplacementGetUseCase::execute(cons
 
     QJsonObject status = output["status"].toObject();
     QJsonObject timelock = status.value("timelock").toObject();
+    if (input.fallback_index >= 0) {
+        QJsonArray fallbacks = status.value("fallback_timelocks").toArray();
+        timelock = input.fallback_index < fallbacks.size() ? fallbacks.at(input.fallback_index).toObject() : QJsonObject();
+    }
 
     if (ret) {
         result.timelock = timelock;

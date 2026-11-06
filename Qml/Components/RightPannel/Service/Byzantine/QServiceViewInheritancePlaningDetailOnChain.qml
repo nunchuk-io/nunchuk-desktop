@@ -39,7 +39,8 @@ import "../Common"
 Item {
     id: viewByzantineinheritancePlanRoot
     property var    inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
-    property var    planInfo: inheritancePlanInfo.planInfo
+    property var    planInfo: inheritancePlanInfo ? inheritancePlanInfo.planInfo : null
+    readonly property bool isConfigurablePlan: planInfo && planInfo.onchain_inheritance_policy !== undefined && planInfo.onchain_inheritance_policy !== null && planInfo.onchain_inheritance_policy.type === "CONFIGURABLE"
     property string walletName: ServiceSetting.walletInfo.walletName
     // BUGFIX: see OffChain sibling - ServiceSetting.walletInfo.myRole falls back to a possibly-stale
     // cached role; read it straight off the dashboard instead (no cache fallback).
@@ -90,7 +91,8 @@ Item {
         Rectangle {
             id: _img_bg
             width: parent.width
-            height: 598
+            visible: !isConfigurablePlan
+            height: isConfigurablePlan ? 0 : 598
             color: "#D0E2FF"
             Column {
                 anchors.fill: parent
@@ -116,7 +118,7 @@ Item {
                         width: 48
                         height: 48
                         anchors.right: parent.right
-                        visible: inheritancePlanInfo.isActived
+                        visible: inheritancePlanInfo && inheritancePlanInfo.isActived
                         // Keep the button visible so users know the menu exists; grey it out instead of
                         // hiding it when the role has nothing to do there (optionMenu is empty).
                         enabled: isEdit
@@ -135,9 +137,9 @@ Item {
             width: parent.width
             height: parent.height - _img_bg.height - normalRect.height
             Loader {
-                sourceComponent: bodyplanOnchain
+                sourceComponent: isConfigurablePlan ? bodyplanOnchainConfigurable : bodyplanOnchain
                 anchors.fill: parent
-                anchors.margins: 24
+                anchors.margins: isConfigurablePlan ? 0 : 24
             }
         }
     }
@@ -173,7 +175,7 @@ Item {
                 label.text: QSTR.STR_QML_835
                 label.font.pixelSize: 16
                 type: eTypeE
-                enabled: planInfo.edit_isChanged
+                enabled: planInfo && planInfo.edit_isChanged
                 onButtonClicked: {
                     var _input = {
                         option : "finalize-change"
@@ -187,7 +189,7 @@ Item {
                 label.text: QSTR.STR_QML_805
                 label.font.pixelSize: 16
                 type: eTypeF
-                enabled: planInfo.edit_isChanged
+                enabled: planInfo && planInfo.edit_isChanged
                 onButtonClicked: {
                     var _input = {
                         option : "discard-change"
@@ -300,7 +302,7 @@ Item {
                                     QLato {
                                         font.pixelSize: 16
                                         color: "#1C1C1C"
-                                        text: planInfo.magic !== null ? planInfo.magic : "null null null"
+                                        text: planInfo && planInfo.magic !== null ? planInfo.magic : "null null null"
                                     }
                                 }
                             }
@@ -316,7 +318,7 @@ Item {
                                 id: row_key
                                 spacing: 12
                                 Repeater {
-                                    model: planInfo.inheritance_keys.length
+                                    model: planInfo && planInfo.inheritance_keys ? planInfo.inheritance_keys.length : 0
                                     Rectangle {
                                         width: 393
                                         height: 92
@@ -427,6 +429,100 @@ Item {
     QmlUtils {
         id: utils
     }
+
+    Component {
+        id: bodyplanOnchainConfigurable
+        Flickable {
+            clip: true
+            contentWidth: width
+            contentHeight: _cfgColumn.height + 24
+            ScrollBar.vertical: QScrollBar { }
+            Column {
+                id: _cfgColumn
+                width: parent.width
+                spacing: 0
+                Rectangle {
+                    width: parent.width
+                    height: _cfgHeader.height + 48
+                    color: "#D0E2FF"
+                    Column {
+                        id: _cfgHeader
+                        x: 24
+                        y: 24
+                        width: parent.width - 48
+                        spacing: 24
+                        QServiceOnchainConfigurablePlanSummary {
+                            width: parent.width
+                            planInfo: viewByzantineinheritancePlanRoot.planInfo
+                            walletName: viewByzantineinheritancePlanRoot.walletName
+                        }
+                        Item {
+                            width: parent.width
+                            height: 48
+                            QText {
+                                font.family: "Lato"
+                                font.pixelSize: 28
+                                color: "#031F2B"
+                                font.weight: Font.Bold
+                                text: QSTR.STR_QML_843
+                            }
+                            QIconButton{
+                                width: 48
+                                height: 48
+                                anchors.right: parent.right
+                                visible: inheritancePlanInfo && inheritancePlanInfo.isActived
+                                // Keep the button visible so users know the menu exists; grey it out instead of
+                                // hiding it when the role has nothing to do there (optionMenu is empty).
+                                enabled: isEdit
+                                opacity: isEdit ? 1.0 : 0.4
+                                bgColor: "#D0E2FF"
+                                icon: "qrc:/Images/Images/more-horizontal-dark.svg"
+                                onClicked: {
+                                    optionMenu.popup()
+                                }
+                            }
+                        }
+                    }
+                }
+                Column {
+                    x: 24
+                    width: 661
+                    topPadding: 24
+                    spacing: 24
+                    QTextAreaBoxTypeB {
+                        width: 651
+                        height: 128
+                        label.text: QSTR.STR_QML_850
+                        input.text: planInfo ? planInfo.note : ""
+                        input.backgroundColor: "#F5F5F5"
+                        input.verticalAlignment: Text.AlignTop
+                        input.height: 96
+                        input.readOnly: true
+                        textColor: "#031F2B"
+                        onTextEditClicked: {
+                            if(isEdit) {
+                                QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_LEAVE_MESSAGE)
+                            }
+                        }
+                    }
+                    Rectangle {
+                        height: 1
+                        width: 651
+                        color: "#EAEAEA"
+                    }
+                    QServiceInheritanceNotificationPreferencesOnchain {
+                        width: 651
+                        inheritance: planInfo
+                        onTextEditClicked: {
+                            if(isEdit) {
+                                QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_NOTIFICATION)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     Component {
         id: bodyplanOnchain
         Item {
@@ -445,7 +541,7 @@ Item {
                         width: 651
                         height: 128
                         label.text: QSTR.STR_QML_850
-                        input.text: planInfo.note
+                        input.text: planInfo ? planInfo.note : ""
                         input.backgroundColor: "#F5F5F5"
                         input.verticalAlignment: Text.AlignTop
                         input.height: 96

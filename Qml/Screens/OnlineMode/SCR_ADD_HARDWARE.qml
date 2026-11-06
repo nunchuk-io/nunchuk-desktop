@@ -151,6 +151,15 @@ QScreen {
             // with on-chain timelock inheritance keys). Matches QScreenAddColdcard.qml's MINISCRIPT
             // branch, which never consults is_inheritance at all.
             var xfp = SignerManagement.currentSigner.xfp
+            if (GroupWallet.dashboardInfo.isConfigurablePolicy) {
+                if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
+                    AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                }
+                GroupWallet.dashboardInfo.markFallbackTimelockPromptIfNeeded()
+                GroupWallet.refresh()
+                GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                return
+            }
             if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
                 AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);

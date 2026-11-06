@@ -13,7 +13,8 @@ namespace features::common::usecases {
     X(QString, verifyToken) \
     X(QString, based) \
     X(double, block_height) \
-    X(bool, isShowBlockHeight)
+    X(bool, isShowBlockHeight) \
+    X(int, fallback_index)
 
 DEFINE_USECASE_INPUT(TimeLockReplacementUpdateGetInput)
 
