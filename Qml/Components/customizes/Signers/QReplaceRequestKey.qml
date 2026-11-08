@@ -133,7 +133,7 @@ Item {
         spacing: 4
         Loader {
             id: _source
-            width: 346
+            width: parent.parent.width
             height: 72 + captionLines * 16
             sourceComponent: getComponent()
         }

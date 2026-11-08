@@ -93,7 +93,9 @@ QOnScreenContentTypeB {
                             }
                         }
                         QLato {
+                            width: 680 - 36
                             text: modelData
+                            wrapMode: Text.WordWrap
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignLeft
                         }

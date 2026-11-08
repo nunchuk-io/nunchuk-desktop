@@ -51,7 +51,7 @@ QOnScreenContentTypeA {
             }
             Column {
                 width: 346
-                spacing: 24
+                spacing: 16
                 QLato {
                     width: parent.width
                     text: STR.STR_QML_2539

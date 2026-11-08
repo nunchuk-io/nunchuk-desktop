@@ -66,10 +66,13 @@ QOnScreenContentTypeB {
                 color: "#F5F5F5"
             }
             Column {
+                width: 420
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
                 QLato {
+                    width: parent.width
                     text: _row.key.name !== undefined ? _row.key.name : ""
+                    elide: Text.ElideRight
                     horizontalAlignment: Text.AlignLeft
                 }
                 Row {
@@ -128,7 +131,7 @@ QOnScreenContentTypeB {
             iconSize: 24
             icon: "qrc:/Images/Images/check-circle-dark.svg"
             text: STR.STR_QML_2279
-            color: "transparent"
+            color: "#A7F0BA"
         }
     }
 

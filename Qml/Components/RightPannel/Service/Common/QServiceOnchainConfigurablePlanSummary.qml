@@ -131,16 +131,22 @@ Rectangle {
                     source: "qrc:/Images/Images/wallet-brand-icon.svg"
                 }
                 Column {
+                    width: 304
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 4
                     QLato {
+                        width: parent.width
                         font.weight: Font.Bold
                         color: "#FFFFFF"
                         text: STR.STR_QML_845
+                        horizontalAlignment: Text.AlignLeft
                     }
                     QLato {
+                        width: parent.width
                         color: "#FFFFFF"
                         text: _summary.walletName
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignLeft
                     }
                 }
             }

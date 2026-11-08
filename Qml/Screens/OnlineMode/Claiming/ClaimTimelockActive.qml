@@ -33,7 +33,10 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_2554
     onCloseClicked: vm.close()
-    onPrevClicked: vm.close()
+    onPrevClicked: {
+        vm.close()
+        ServiceSetting.servicesTag.resultClaimInheritanceAlert("CLAIM_INHERITANCE_MORE_KEY")
+    }
     content: Item {
         Row {
             spacing: 36

@@ -51,7 +51,7 @@ void ReplaceChangeOnChainTimeLockViewModel::setupTimeLock() {
             close();
             QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
         } else {
-            emit invalidDateAlert();
+            emit invalidDateAlert(result.error());
         }
     });
 }

@@ -30,7 +30,8 @@ Result<TimeLockReplacementUpdateGetResult> TimeLockReplacementUpdateUseCase::exe
 
     TimeLockReplacementUpdateGetResult result;
     if (!ret) {
-        return Result<TimeLockReplacementUpdateGetResult>::failure(output.value("message").toString());
+        QString message = output.value("message").toString();
+        return Result<TimeLockReplacementUpdateGetResult>::failure(message.isEmpty() ? QString("Invalid timelock data") : message);
     }
     QJsonObject statusOutput;
     QString error_msg;

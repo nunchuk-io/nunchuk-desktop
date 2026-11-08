@@ -102,7 +102,7 @@ Column {
                 width: _errors.width
                 text: modelData
                 color: "#CF4018"
-                font.pixelSize: 16
+                font.pixelSize: 12
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignLeft
             }
@@ -111,7 +111,7 @@ Column {
 
     QLato {
         width: parent.width
-        text: STR.STR_QML_1889
+        text: STR.STR_QML_2570
         lineHeightMode: Text.FixedHeight
         lineHeight: 20
         wrapMode: Text.WordWrap
@@ -168,7 +168,8 @@ Column {
                 id: _primaryRequires
                 visible: _policy.isCustomized
                 text: _policy.requiresText(_policy.primary.m, _policy.primary.n)
-                font.pixelSize: 14
+                font.pixelSize: 12
+                color: "#595959"
                 horizontalAlignment: Text.AlignLeft
             }
         }
@@ -177,8 +178,8 @@ Column {
                 right: parent.right
                 top: parent.top
             }
-            width: _badgeText.paintedWidth + 16
-            height: 24
+            width: _badgeText.paintedWidth + 12
+            height: 20
             radius: 4
             color: "#CF4018"
             QLato {
@@ -186,7 +187,8 @@ Column {
                 anchors.centerIn: parent
                 text: STR.STR_QML_1600
                 color: "#FFFFFF"
-                font.pixelSize: 14
+                font.pixelSize: 12
+                font.weight: Font.Bold
             }
         }
     }
@@ -225,7 +227,6 @@ Column {
         width: parent.width
         text: STR.STR_QML_2354
         font.weight: Font.Bold
-        font.pixelSize: 20
         horizontalAlignment: Text.AlignLeft
     }
     QLato {
@@ -256,7 +257,8 @@ Column {
                     QLato {
                         id: _fbRequires
                         text: _policy.requiresText(_fallback.fallback.m, _fallback.fallback.n)
-                        font.pixelSize: 14
+                        font.pixelSize: 12
+                        color: "#595959"
                         horizontalAlignment: Text.AlignLeft
                     }
                 }

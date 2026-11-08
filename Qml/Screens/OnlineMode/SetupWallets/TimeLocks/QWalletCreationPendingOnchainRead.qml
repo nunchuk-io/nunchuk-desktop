@@ -167,7 +167,9 @@ QOnScreenContentTypeB {
                             onRemoveFallbackClicked: function(fallback) {
                                 _confirmRemoveFallback.fallbackIndex = fallback.index
                                 _confirmRemoveFallback.title = STR.STR_QML_2358.arg(fallback.index + 1)
-                                _confirmRemoveFallback.contentText = fallback.index < dashInfo.fallbackPolicies.length - 1 ? STR.STR_QML_2431 : STR.STR_QML_2430
+                                var hasLater = fallback.index < dashInfo.fallbackPolicies.length - 1
+                                _confirmRemoveFallback.contentText = fallback.n === 1 ? (hasLater ? STR.STR_QML_2569 : STR.STR_QML_2568)
+                                                                                      : (hasLater ? STR.STR_QML_2431 : STR.STR_QML_2430)
                                 _confirmRemoveFallback.open()
                             }
                             onFallbackTimelockClicked: function(fallback) { vm.onConfigureFallbackClicked(fallback.index) }
@@ -882,6 +884,15 @@ QOnScreenContentTypeB {
                     _chooseKey.pendingKey = key
                     draftWalletObj.addExistingKeyAsync(key.xfp)
                 }
+            }
+        }
+    }
+
+    Connections {
+        target: _onScreen.dashInfo
+        function onDraftPolicyRequestFinished(ok, message) {
+            if (!ok && message !== "") {
+                AppModel.showToast(-1, message, EWARNING.EXCEPTION_MSG)
             }
         }
     }

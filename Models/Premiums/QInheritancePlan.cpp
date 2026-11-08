@@ -722,8 +722,12 @@ void QInheritancePlan::editPlanInfoOnchain(const QVariant &info) {
     if (setup_type == "emails") {
         QStringList newEmailList = normalizeEmails(req.value("display_emails").toString());
 
-        QJsonObject oldPrefs = original.value("notification_preferences").toObject();
+        QJsonObject oldPrefs = change.value("notification_preferences").toObject();
         QJsonArray oldList = oldPrefs.value("beneficiary_notifications").toArray();
+        if (oldList.isEmpty()) {
+            oldPrefs = original.value("notification_preferences").toObject();
+            oldList = oldPrefs.value("beneficiary_notifications").toArray();
+        }
 
         QJsonArray newList;
         for (const QString &email : newEmailList) {

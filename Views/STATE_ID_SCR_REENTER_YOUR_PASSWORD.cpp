@@ -152,5 +152,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
 
 
 void EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER(QVariant msg) {
+    ServiceSetting::instance()->takePendingInheritanceEdit();
+    ServiceSetting::instance()->setPlanSetupFlow(false);
 
 }

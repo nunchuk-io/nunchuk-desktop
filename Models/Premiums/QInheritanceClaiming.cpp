@@ -23,6 +23,8 @@
 #include "core/ui/UiServices.inc"
 #include "core/screen/RightPanelNavigator.h"
 
+using features::claiming::flows::OnChainClaimingFlow;
+
 QInheritanceClaiming::QInheritanceClaiming()
     : QStateFlow()
 {
@@ -357,7 +359,6 @@ bool QInheritanceClaiming::requestClaimInheritanceFromSigner(const nunchuk::Sing
     return false;
 }
 
-using features::claiming::flows::OnChainClaimingFlow;
 void QInheritanceClaiming::onChainProcessErrorCode(int error_code, const QString &error_msg) {
     auto flowMng = app::AppContext::instance()->flowManager();
     auto subMng = app::AppContext::instance()->subScreenManager();

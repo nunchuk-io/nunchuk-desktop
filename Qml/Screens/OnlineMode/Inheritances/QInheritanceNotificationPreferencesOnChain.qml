@@ -16,6 +16,12 @@ Item {
     property var oldInheritance: null
     readonly property bool markChanges: isConfigurablePlan && oldInheritance !== null && oldInheritance !== undefined
                                         && oldInheritance.notification_preferences !== undefined
+    function ownerChangedColor() {
+        if (!markChanges) return "#031F2B"
+        var o = oldInheritance.notification_preferences.email_me_wallet_config === true
+        var n = emails_preference && emails_preference.email_me_wallet_config === true
+        return o !== n ? "#CF4018" : "#031F2B"
+    }
     function oldItemOf(email) {
         if (!markChanges) return null
         var list = oldInheritance.notification_preferences.beneficiary_notifications
@@ -90,7 +96,7 @@ Item {
                         font.weight: Font.Bold
                         anchors.verticalCenter: parent.verticalCenter
                         text: emails_preference.email_me_wallet_config ? "Yes" : "No"
-                        color: "#031F2B"
+                        color: ownerChangedColor()
                         horizontalAlignment: Text.AlignRight
                     }
                 }

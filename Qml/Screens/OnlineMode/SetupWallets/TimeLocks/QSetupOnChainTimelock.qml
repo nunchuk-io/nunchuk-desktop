@@ -58,7 +58,7 @@ QOnScreenContentTypeA {
             Rectangle {
                 width: 728
                 height: _refColumn.implicitHeight + 24
-                radius: 8
+                radius: 12
                 color: "#F5F5F5"
                 visible: _setup.references.length > 0
                 Column {
@@ -229,8 +229,8 @@ QOnScreenContentTypeA {
                                     blockBaseInfo.blockBasedTimelock();
                                 }
                             }
-                            function onInvalidDateAlert() {
-                                _invalidDateAlert.contentText = QSTR.STR_QML_2075
+                            function onInvalidDateAlert(message) {
+                                _invalidDateAlert.contentText = (message !== undefined && message !== "" && message !== "Invalid timelock data") ? message : QSTR.STR_QML_2075
                                 _invalidDateAlert.open()
                             }
                         }
@@ -255,7 +255,6 @@ QOnScreenContentTypeA {
 
                 QWarningBgMulti {
                     width: 728
-                    height: 80
                     icon: "qrc:/Images/Images/warning-dark.svg"
                     txt.text: QSTR.STR_QML_2069.arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight)))
                     color: "#FDEBD2"
@@ -272,7 +271,6 @@ QOnScreenContentTypeA {
 
         QWarningBgMulti {
             width: 728
-            height: 60
             icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: _setup.infoText
             anchors.bottom: parent.bottom

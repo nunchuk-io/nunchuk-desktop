@@ -51,8 +51,7 @@ Column {
                 onRemoveClicked: _keyList.removeClicked(modelData)
             }
             Rectangle {
-                width: 346
-                height: 72
+                anchors.fill: parent
                 visible: modelData.has_error === true
                 color: "transparent"
                 radius: 8

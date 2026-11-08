@@ -26,7 +26,7 @@ class OnChainTimelockViewModel : public ActionViewModel {
   public slots:
     void slotTimeChanged();
   signals:
-    void invalidDateAlert();
+    void invalidDateAlert(const QString &message = QString());
   private:
     TimeLockConvertUseCase m_timeLockConvertUC;
 };

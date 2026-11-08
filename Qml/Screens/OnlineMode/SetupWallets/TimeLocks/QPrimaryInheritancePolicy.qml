@@ -48,7 +48,7 @@ QOnScreenContentTypeB {
     content: Item {
         Column {
             width: parent.width
-            spacing: 24
+            spacing: 16
             QLato {
                 width: 680
                 text: _policyScreen.descriptionText

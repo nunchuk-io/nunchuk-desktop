@@ -1,5 +1,6 @@
 #include "InitializeInheritanceClaimingUseCase.h"
 #include "Servers/Draco.h"
+#include <QJsonArray>
 
 namespace features::claiming::usecases {
 using namespace core::usecase;
@@ -14,7 +15,13 @@ Result<InitializeInheritanceClaimingResult> InitializeInheritanceClaimingUseCase
         result.wallet_id = output.value("wallet_local_id").toString();
         result.inheritance_key_count = output.value("inheritance_key_count").toInt();
         result.key_origins = output.value("key_origins").toArray();
-        result.required_key_counts = output.value("required_key_counts").toArray();
+        QJsonArray counts;
+        for (const auto &c : output.value("required_key_counts").toArray()) {
+            if (!counts.contains(c)) {
+                counts.append(c);
+            }
+        }
+        result.required_key_counts = counts;
         if (result.required_key_counts.size() == 1) {
             result.inheritance_key_count = result.required_key_counts.at(0).toInt(result.inheritance_key_count);
         }

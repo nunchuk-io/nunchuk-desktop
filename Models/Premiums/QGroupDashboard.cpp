@@ -2005,7 +2005,7 @@ void QGroupDashboard::UpdateConfigurableKeys(const QJsonObject &data) {
             if (signer.isEmpty()) {
                 obj["key_index"] = key_index;
                 obj["has"] = false;
-                obj["account_indexs"] = QJsonArray{QString("X")};
+                obj["account_indexs"] = QJsonArray{account_index.isDouble() ? QString::number(account_index.toInt()) : QString("X")};
             } else {
                 obj = signer;
                 obj["has"] = true;
@@ -2446,10 +2446,15 @@ void QGroupDashboard::UpdateConfigurableReplacementKeys() {
         ret["old_timelock"] = timelockVariant(oldLock);
         ret["changed"] = !newLock.isEmpty() && newLock.value("value").toVariant().toLongLong() != oldLock.value("value").toVariant().toLongLong();
         QStringList messages;
+        QStringList keyMessages;
         bool timelockError = false;
         for (const auto &e : errors) {
             QJsonObject err = e.toObject();
             if (!matchValidationTarget(err, section, fallback_index)) {
+                continue;
+            }
+            if (err.value("field").toString() == "keys") {
+                keyMessages.append(err.value("message").toString());
                 continue;
             }
             messages.append(err.value("message").toString());
@@ -2458,6 +2463,7 @@ void QGroupDashboard::UpdateConfigurableReplacementKeys() {
             }
         }
         ret["messages"] = messages;
+        ret["key_messages"] = keyMessages;
         ret["timelock_error"] = timelockError;
         return ret;
     };

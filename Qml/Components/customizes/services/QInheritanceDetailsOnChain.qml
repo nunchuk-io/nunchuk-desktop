@@ -172,16 +172,21 @@ Item {
                         Repeater {
                             model: fallbackLines
                             Column {
+                                width: parent.width
                                 spacing: 2
                                 QLato {
+                                    width: parent.width
                                     text: modelData.title
                                     font.pixelSize: 12
                                     font.weight: Font.Bold
+                                    wrapMode: Text.WordWrap
                                     horizontalAlignment: Text.AlignLeft
                                 }
                                 QLato {
+                                    width: parent.width
                                     text: modelData.detail
                                     font.pixelSize: 12
+                                    wrapMode: Text.WordWrap
                                     horizontalAlignment: Text.AlignLeft
                                 }
                             }

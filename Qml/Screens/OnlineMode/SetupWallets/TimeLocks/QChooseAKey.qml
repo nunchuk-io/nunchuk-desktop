@@ -85,10 +85,13 @@ QOnScreenContentTypeB {
                                     color: "#F5F5F5"
                                 }
                                 Column {
+                                    width: 420
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 4
                                     QLato {
+                                        width: parent.width
                                         text: modelData.name
+                                        elide: Text.ElideRight
                                         horizontalAlignment: Text.AlignLeft
                                     }
                                     Rectangle {

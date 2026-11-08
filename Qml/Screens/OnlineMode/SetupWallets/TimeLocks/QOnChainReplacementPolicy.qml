@@ -46,6 +46,25 @@ Column {
 
     spacing: 12
 
+    component ErrorLines: Column {
+        id: _errLines
+        property var messages: []
+        width: _policy.width
+        spacing: 4
+        visible: messages.length > 0
+        Repeater {
+            model: _errLines.messages
+            QLato {
+                width: _errLines.width
+                text: modelData
+                color: "#CF4018"
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+            }
+        }
+    }
+
     function keysOf(section, fallbackIndex) {
         var all = dashInfo ? dashInfo.replaceKeys : []
         var ret = []
@@ -71,7 +90,7 @@ Column {
 
     QLato {
         width: parent.width
-        text: STR.STR_QML_1889
+        text: STR.STR_QML_2570
         lineHeightMode: Text.FixedHeight
         lineHeight: 20
         wrapMode: Text.WordWrap
@@ -128,7 +147,8 @@ Column {
                 id: _primaryRequires
                 visible: _policy.isCustomized
                 text: _policy.requiresText(_policy.primary.m, _policy.primary.n)
-                font.pixelSize: 14
+                font.pixelSize: 12
+                color: "#595959"
                 horizontalAlignment: Text.AlignLeft
             }
         }
@@ -137,8 +157,8 @@ Column {
                 right: parent.right
                 top: parent.top
             }
-            width: _badgeText.paintedWidth + 16
-            height: 24
+            width: _badgeText.paintedWidth + 12
+            height: 20
             radius: 4
             color: "#CF4018"
             QLato {
@@ -146,7 +166,8 @@ Column {
                 anchors.centerIn: parent
                 text: STR.STR_QML_1600
                 color: "#FFFFFF"
-                font.pixelSize: 14
+                font.pixelSize: 12
+                font.weight: Font.Bold
             }
         }
     }
@@ -158,6 +179,9 @@ Column {
         onBackupClicked: function(key) { _policy.keyBackupClicked(key) }
         onRemoveClicked: function(key) { _policy.keyRemoveClicked(key) }
         model: _policy.keysOf("PRIMARY", -1)
+    }
+    ErrorLines {
+        messages: _policy.primary.key_messages !== undefined ? _policy.primary.key_messages : []
     }
     QOnChainReplaceTimelockCard {
         width: parent.width
@@ -175,7 +199,6 @@ Column {
         visible: _policy.fallbacks.length > 0
         text: STR.STR_QML_2354
         font.weight: Font.Bold
-        font.pixelSize: 20
         horizontalAlignment: Text.AlignLeft
     }
     Repeater {
@@ -194,7 +217,8 @@ Column {
                 }
                 QLato {
                     text: _policy.requiresText(_fallback.fallback.m, _fallback.fallback.n)
-                    font.pixelSize: 14
+                    font.pixelSize: 12
+                    color: "#595959"
                     horizontalAlignment: Text.AlignLeft
                 }
             }
@@ -206,6 +230,9 @@ Column {
                 onBackupClicked: function(key) { _policy.keyBackupClicked(key) }
                 onRemoveClicked: function(key) { _policy.keyRemoveClicked(key) }
                 model: _policy.keysOf("FALLBACK", _fallback.fallback.index)
+            }
+            ErrorLines {
+                messages: _fallback.fallback.key_messages !== undefined ? _fallback.fallback.key_messages : []
             }
             QOnChainReplaceTimelockCard {
                 width: parent.width
