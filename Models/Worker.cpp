@@ -2129,7 +2129,7 @@ void Controller::slotFinishSyncWalletDb(const QString &wallet_id,
         wallet->setUnUsedChangeddAddressList(unusedChangeAddresses);
         wallet->startDownloadConversation();
 
-        if (wallet->isReplaced()) {
+        if (!wallet->canSyncWithServer()) {
             emit startGetTransactionHistory(wallet_id);
         } else {
             const QString groupId = wallet->groupId();

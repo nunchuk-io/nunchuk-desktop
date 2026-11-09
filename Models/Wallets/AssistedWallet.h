@@ -44,6 +44,7 @@ public:
     void convert(const nunchuk::Wallet w) override;
     bool isReplaced() const override;
     bool isAssistedWallet() const;
+    bool canSyncWithServer() const;
     QString groupId() const;
 
     QVariant dashboardInfo() const;

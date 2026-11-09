@@ -49,6 +49,10 @@ bool AssistedWallet::isAssistedWallet() const {
     return (isUserWallet() || isGroupWallet()) && !isReplaced();
 }
 
+bool AssistedWallet::canSyncWithServer() const {
+    return !isReplaced() && (isAssistedWallet() || isClaimed());
+}
+
 QString AssistedWallet::groupId() const {
     QString group_id = WalletsMng->groupId(walletId());
     if (group_id == "") {
@@ -71,7 +75,7 @@ QVariant AssistedWallet::serverKeyInfo() const {
 
 void AssistedWallet::GetAsisstedTx(const QString &txid) {
     DBG_INFO << "txid:" << txid << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return;
     }
 
@@ -256,7 +260,7 @@ bool AssistedWallet::isByzantineWallet() {
 
 void AssistedWallet::GetAssistedTxs() {
     DBG_INFO << "FIXME user:" << isUserWallet() << " group:" << isGroupWallet() << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return;
     }
     features::transactions::usecases::FetchTransactionListInput input;
@@ -277,7 +281,7 @@ void AssistedWallet::GetAssistedTxs() {
 
 void AssistedWallet::GetAssistedCancelledTxs() {
     DBG_INFO << "FIXME user:" << isUserWallet() << " group:" << isGroupWallet() << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return;
     }
     features::transactions::usecases::FetchCancelTransactionInput input;
@@ -292,6 +296,9 @@ QTransactionPtr AssistedWallet::SyncAssistedTxs(const nunchuk::Transaction &tx) 
     DBG_INFO << "FIXME user:" << walletId() << " group:" << groupId() << "wallet status:" << status();
     if (isReplaced()) {
         return NULL;
+    }
+    if (!canSyncWithServer()) {
+        return bridge::convertTransaction(tx, walletId());
     }
     features::transactions::usecases::SyncTransactionFlowInput input;
     input.wallet_id = walletId();
@@ -324,7 +331,7 @@ QTransactionPtr AssistedWallet::SyncAssistedTxs(const nunchuk::Transaction &tx) 
 
 void AssistedWallet::UpdateAssistedTxs(const QString &txid, const QString &memo) {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return;
     }
     features::transactions::usecases::UpdateTransactionInput input;
@@ -339,7 +346,7 @@ void AssistedWallet::UpdateAssistedTxs(const QString &txid, const QString &memo)
 
 void AssistedWallet::CancelAssistedTxs(const QString &txid) {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return;
     }
 
@@ -354,7 +361,7 @@ void AssistedWallet::CancelAssistedTxs(const QString &txid) {
 
 void AssistedWallet::CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo) {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status() << "replace: " << isReplaced();
-    if (isReplaced() /* && !isAssistedWallet()*/) {
+    if (!canSyncWithServer()) {
         return;
     }
     features::transactions::usecases::CreateTransactionInput input;
@@ -369,7 +376,7 @@ void AssistedWallet::CreateAsisstedTxs(const QString &txid, const QString &psbt,
 
 void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo) {
     DBG_INFO << "tx_id:" << tx_id << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return;
     }
     features::transactions::usecases::SignTransactionInput input;
@@ -406,7 +413,7 @@ void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, 
 
 bool AssistedWallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt) {
     DBG_INFO << "tx_id:" << tx_id << "wallet status:" << status();
-    if (isReplaced()) {
+    if (!canSyncWithServer()) {
         return false;
     }
     features::transactions::usecases::RbfTransactionInput input;
@@ -423,6 +430,10 @@ bool AssistedWallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt) {
 void AssistedWallet::UpdateWallet(const QString &name, const QString &description) {
     DBG_INFO << name << " description:" << description << "wallet status:" << status();
     if (isReplaced()) {
+        return;
+    }
+    if (!canSyncWithServer()) {
+        BaseWallet::UpdateWallet(name, description);
         return;
     }
     setWalletName(name);
