@@ -1258,6 +1258,20 @@ bool bridge::nunchukDeleteRemoteSigner(const QString &master_fingerprint, const 
     return nunchukiface::instance()->DeleteRemoteSigner(master_fingerprint.toStdString(), derivation_path.toStdString(), msg);
 }
 
+static bool isKeyInAssistedWallet(const QString &xfp)
+{
+    auto walletList = AppModel::instance()->walletListPtr();
+    if (!walletList || xfp.isEmpty()) {
+        return false;
+    }
+    for (const auto &wallet : walletList->fullList()) {
+        if (wallet && wallet->isAssistedWallet() && wallet->isContainKey(xfp)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void bridge::nunchukUpdateMasterSigner(const QMasterSignerPtr &signer, bool sync)
 {
     if(signer){
@@ -1265,7 +1279,7 @@ void bridge::nunchukUpdateMasterSigner(const QMasterSignerPtr &signer, bool sync
             QWarningMessage msg;
             nunchukiface::instance()->UpdateMasterSigner(signer.data()->originMasterSigner(), msg);
         });
-        if (sync) {
+        if (sync && isKeyInAssistedWallet(signer->fingerPrint())) {
             Draco::instance()->assistedKeyUpdateName(signer->fingerPrint(), signer->name());
         }
     }
@@ -1805,7 +1819,7 @@ void bridge::nunchukUpdateRemoteSigner(const QSingleSignerPtr &signer, bool sync
             QWarningMessage msg;
             nunchukiface::instance()->UpdateRemoteSigner(signer.data()->originSingleSigner(), msg);
         });
-        if (sync) {
+        if (sync && isKeyInAssistedWallet(signer->masterFingerPrint())) {
             Draco::instance()->assistedKeyUpdateName(signer->masterFingerPrint(), signer->name());
         }
     }
