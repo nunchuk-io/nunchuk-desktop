@@ -18,6 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "qUtils.h"
+#include "core/hardware/DevicePairingController.h"
 #include "AppModel.h"
 #include "AppSetting.h"
 #include "QOutlog.h"
@@ -938,10 +939,22 @@ nunchuk::SingleSigner qUtils::SanitizeSingleSigner(const nunchuk::SingleSigner &
     return ret;
 }
 
-std::vector<nunchuk::Device> qUtils::GetDevices(const QString &hwi_path, QWarningMessage &msg) {
+std::vector<nunchuk::Device> qUtils::GetDevices(const QString &hwi_path, QWarningMessage &msg,
+                                               bool allow_pairing, const QString &device_type) {
     std::vector<nunchuk::Device> ret{};
     try {
         ret = nunchuk::Utils::GetDevices(hwi_path.toStdString());
+        bool paired = false;
+        if (allow_pairing) {
+            for (const auto &device : ret) {
+                if (device.needs_pairing() && (device_type.isEmpty() ||
+                    QString::fromStdString(device.get_type()).contains(device_type, Qt::CaseInsensitive))) {
+                    core::hardware::DevicePairingController::instance()->pairDevice(hwi_path, device);
+                    paired = true;
+                }
+            }
+        }
+        if (paired) ret = nunchuk::Utils::GetDevices(hwi_path.toStdString());
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);

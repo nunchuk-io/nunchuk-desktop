@@ -4,11 +4,13 @@
 #include "QEventProcessor.h"
 #include <QMetaType>
 #include "core/common/resources/AppStrings.h"
+#include "core/hardware/DevicePairingController.h"
 
 namespace app {
     void registerContextProperty() {
         QEventProcessor::instance()->setContextProperty("FlowManager", QVariant::fromValue(AppContext::instance()->flowManager()));
         QEventProcessor::instance()->setContextProperty("QSTR", QVariant::fromValue(&Strings));
+        QEventProcessor::instance()->setContextProperty("DevicePairing", QVariant::fromValue(core::hardware::DevicePairingController::instance()));
 
         AppContext::instance()->subScreenManager()->onInitialized(QEventProcessor::instance()->getQuickWindow());
     }

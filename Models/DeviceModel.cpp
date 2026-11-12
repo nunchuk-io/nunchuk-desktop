@@ -69,8 +69,13 @@ bool QDevice::needsPinSent() const {
     return m_device.needs_pin_sent();
 }
 
+bool QDevice::needsPairing() const {
+    return m_device.needs_pairing();
+}
+
 bool QDevice::usableToAdd() const
 {
+    if (needsPairing() || masterFingerPrint().isEmpty()) return false;
     bool used = false;
     if(AppModel::instance()->masterSignerList()){
         used = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
@@ -147,6 +152,8 @@ QVariant DeviceListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->needsPassPhraseSent();
     case device_needs_pin_sent_role:
         return d_[index.row()]->needsPinSent();
+    case device_needs_pairing_role:
+        return d_[index.row()]->needsPairing();
     case device_usableToAdd_role:
         return d_[index.row()]->usableToAdd();
     case device_master_signer_id_role:
@@ -166,6 +173,7 @@ QHash<int, QByteArray> DeviceListModel::roleNames() const {
     roles[device_connected_role] = "device_connected";
     roles[device_needs_pass_phrase_sent_role] = "device_needs_pass_phrase_sent";
     roles[device_needs_pin_sent_role] = "device_needs_pin_sent";
+    roles[device_needs_pairing_role] = "device_needs_pairing";
     roles[device_usableToAdd_role] = "device_usable_to_add";
     roles[device_master_signer_id_role] = "device_master_signer_id";
 
@@ -174,7 +182,8 @@ QHash<int, QByteArray> DeviceListModel::roleNames() const {
 
 void DeviceListModel::addDevice(const QDevicePtr &device){
     beginResetModel();
-    if(device && !contains(device.data()->masterFingerPrint())){
+    if(device && (device->masterFingerPrint().isEmpty()
+        ? !getDeviceByPath(device->path()) : !contains(device->masterFingerPrint()))){
         d_.append(device);
     }
     endResetModel();
@@ -309,7 +318,7 @@ bool DeviceListModel::needScanDevice()
     }
     foreach (QDevicePtr i , d_ ){
         DBG_INFO << i.data()->needsPinSent() << i.data()->needsPassPhraseSent();
-        if(i.data()->needsPinSent() || i.data()->needsPassPhraseSent()){
+        if(i.data()->needsPinSent() || i.data()->needsPassPhraseSent() || i.data()->needsPairing()){
             return true;
         }
     }

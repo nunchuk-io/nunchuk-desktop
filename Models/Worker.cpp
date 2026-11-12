@@ -75,7 +75,8 @@ std::vector<nunchuk::Device> uniqueDevices(const std::vector<nunchuk::Device> &d
     result.reserve(devices.size());
     for (const auto &device : devices) {
         const QString fingerprint = QString::fromStdString(device.get_master_fingerprint());
-        const auto duplicate = std::find_if(result.cbegin(), result.cend(), [&fingerprint](const nunchuk::Device &existing) {
+        const auto duplicate = std::find_if(result.cbegin(), result.cend(), [&fingerprint, &device](const nunchuk::Device &existing) {
+            if (fingerprint.isEmpty()) return existing.get_type() == device.get_type() && existing.get_path() == device.get_path();
             return qUtils::strCompare(fingerprint,
                                       QString::fromStdString(existing.get_master_fingerprint()));
         });
@@ -255,11 +256,7 @@ WorkerScanDevicesResult Worker::scanDevices(const WorkerScanDevicesData &data)
     WorkerScanDevicesResult result;
     result.stateId = data.stateId;
     result.isTopUpXpub = data.isTopUpXpub;
-    if (data.isSignedIn) {
-        result.devices = qUtils::GetDevices(data.hwiPath, msg);
-    } else {
-        result.devices = bridge::nunchukGetOriginDevices(msg);
-    }
+    result.devices = qUtils::GetDevices(data.hwiPath, msg, true);
 
     if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
         QString masterSignerId = data.masterSignerId;

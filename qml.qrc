@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>Qml/Components/customizes/Popups/QDevicePairingPopup.qml</file>
         <file>Qml/core/PopupHost.qml</file>
         <file>Qml/core/ScreenHost.qml</file>
         <file>Qml/core/SubScreenHost.qml</file>

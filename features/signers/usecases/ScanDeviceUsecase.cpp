@@ -16,7 +16,7 @@ Result<ScanDeviceResult> ScanDeviceUsecase::execute(const ScanDeviceInput &input
     // instead: it builds a fresh, disposable HWIService per call, so it never shares state with any
     // other in-flight HWI call (scan, sign, health-check...) - same approach the pending-wallet
     // refresh path (Worker::scanDevices) already used, which never hit this error.
-    deviceList_result = qUtils::GetDevices(bridge::hwiCommand(), msg);
+    deviceList_result = qUtils::GetDevices(bridge::hwiCommand(), msg, true, input.deviceType);
     if (!input.deviceType.isEmpty()) {
         std::vector<nunchuk::Device> filteredDevices;
         for (const auto &device : deviceList_result) {
