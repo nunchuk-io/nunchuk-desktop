@@ -13,10 +13,10 @@ ENV ARCH=aarch64 QT_HOST=linux_arm64 QT_ARCH=linux_gcc_arm64 QT_DIR_NAME=gcc_arm
 FROM platform-${TARGETARCH} AS builder
 ARG UBUNTU_IMAGE
 ARG UBUNTU_SNAPSHOT=20261112T000000Z
+ARG USE_UBUNTU_SNAPSHOT=true
 
 ARG QT_VERSION=6.9.3
-# GCC comes from the same frozen Ubuntu archive as its dependencies, with
-# no live PPA. This version is available for both amd64 and arm64.
+# Snapshot builds pin GCC; live builds use the available GCC 14 packages.
 ARG GCC14_VERSION=14.2.0-4ubuntu2~24.04.1
 ARG AQT_VERSION=3.3.0
 ARG QTKEYCHAIN_VERSION=0.15.0
@@ -76,19 +76,18 @@ RUN dpkg-deb --extract /tmp/ca-certificates.deb /tmp/ca-certificates \
     && cat /tmp/ca-certificates/usr/share/ca-certificates/mozilla/*.crt > /etc/ssl/certs/ca-certificates.crt \
     && rm -rf /tmp/ca-certificates
 
-# Freeze the complete dependency closure, including libraries bundled into
-# the AppImage. Signature verification stays enabled; only freshness expiry
-# is disabled for this deliberately historical archive. The snapshot serves
-# both amd64 and arm64, replacing the base image's archive/ports sources.
+# Live builds retain the base image's architecture-specific Ubuntu sources.
 # Install the newer CA package explicitly so APT cannot restore the older bundle.
-RUN printf '%s\n' \
-        'Types: deb' \
-        "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
-        'Suites: noble noble-updates noble-security' \
-        'Components: main restricted universe multiverse' \
-        'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
-        'Check-Valid-Until: no' \
-        > /etc/apt/sources.list.d/ubuntu.sources \
+RUN if [ "${USE_UBUNTU_SNAPSHOT}" = "true" ]; then \
+        printf '%s\n' \
+            'Types: deb' \
+            "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
+            'Suites: noble noble-updates noble-security' \
+            'Components: main restricted universe multiverse' \
+            'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+            'Check-Valid-Until: no' \
+            > /etc/apt/sources.list.d/ubuntu.sources; \
+    fi \
     && apt-get -o Acquire::Retries=3 --error-on=any update \
     && apt-get install -y --no-install-recommends \
         /tmp/ca-certificates.deb \
@@ -166,7 +165,11 @@ RUN printf '%s\n' \
         squashfuse \
         unzip \
         wget \
-    && apt-get install -y --no-install-recommends "gcc-14=${GCC14_VERSION}" "g++-14=${GCC14_VERSION}" \
+    && if [ "${USE_UBUNTU_SNAPSHOT}" = "true" ]; then \
+        apt-get install -y --no-install-recommends "gcc-14=${GCC14_VERSION}" "g++-14=${GCC14_VERSION}"; \
+    else \
+        apt-get install -y --no-install-recommends gcc-14 g++-14; \
+    fi \
     && sed -i 's|^mozilla/emSign_|!mozilla/emSign_|' /etc/ca-certificates.conf \
     && update-ca-certificates --fresh \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
