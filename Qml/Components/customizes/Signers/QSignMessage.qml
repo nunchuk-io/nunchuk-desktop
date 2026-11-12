@@ -183,7 +183,7 @@ QOnScreenContentTypeA {
         label.text: STR.STR_QML_509
         label.font.pixelSize: 16
         type: eTypeE
-        enabled: message_input !== "" && path_input !== ""
+        enabled: message_input !== "" && path_input !== "" && !_indicator.visible
         onButtonClicked: {
             _indicator.loading()
             AppModel.walletInfo.updateSignMessage(fingerPrint, NUNCHUCKTYPE.LEGACY, message_input, path_input)
@@ -199,8 +199,11 @@ QOnScreenContentTypeA {
 
     Connections {
         target: AppModel.walletInfo
-        function onSignMessageChanged() {
+        function onSignMessageChanged(derivationPath) {
             _indicator.stop()
+            if (derivationPath) {
+                _path.textInputted = derivationPath
+            }
         }
     }
 

@@ -248,7 +248,7 @@ signals:
     void creationModeChanged();
     void flowChanged();
     void isDeletingChanged();
-    void signMessageChanged();
+    void signMessageChanged(const QString &derivationPath = {});
     void rollOverProcess(const QString& address);
     void limitKeySetChanged();
     void signerExistListChanged();

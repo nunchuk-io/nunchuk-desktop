@@ -24,6 +24,7 @@
 #include "bridgeifaces.h"
 #include "qUtils.h"
 #include <QQmlEngine>
+#include <algorithm>
 
 int BaseWallet::m_flow = 0;
 BaseWallet::BaseWallet(const nunchuk::Wallet &w)
@@ -536,6 +537,9 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
         nunchuk::SingleSigner signer{};
         QString address;
         QString signature;
+        QString error;
+        int errorCode{0};
+        EWARNING::WarningType errorType{EWARNING::WarningType::NONE_MSG};
     };
     QPointer<BaseWallet> safeThis(this);
     runInConcurrent(
@@ -544,19 +548,51 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
             ENUNCHUCK::AddressType type = (ENUNCHUCK::AddressType)wallet_type;
             QWarningMessage msg;
             DataStruct data;
-            auto signer = bridge::GetSignerFromMasterSigner(xfp, derivationPath, msg);
-            if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-                data.signer = signer;
-                data.address = bridge::GetSignerAddress(signer, (nunchuk::AddressType)type);
-                data.signature = bridge::SignMessage(signer, message, msg);
-            } else {
-                AppModel::instance()->showToast(0, msg.what(), static_cast<EWARNING::WarningType>(msg.type()));
+            data.signer = bridge::GetSignerFromMasterSigner(xfp, derivationPath, msg);
+            if (msg.isSuccess()) {
+                data.address = bridge::GetSignerAddress(data.signer, (nunchuk::AddressType)type, msg);
             }
+            if (msg.isSuccess() && !data.address.isEmpty()) {
+                data.signature = bridge::SignMessage(data.signer, message, msg);
+            }
+            if (msg.isSuccess() && (data.address.isEmpty() || data.signature.isEmpty())) {
+                msg.setWarningMessage(-1, "Could not sign the message.");
+            }
+            if (msg.isSuccess()) {
+                auto verify = [&](const QString &address) {
+                    return nunchuk::Utils::VerifyMessage(address.toStdString(), data.signature.toStdString(), message.toStdString());
+                };
+                bool verified = verify(data.address);
+                const auto &tags = data.signer.get_tags();
+                if (!verified && std::find(tags.begin(), tags.end(), nunchuk::SignerTag::TREZOR) != tags.end()) {
+                    const auto fallbackPath = QString::fromStdString(nunchuk::Utils::TrezorGetSignMessagePath(data.signer));
+                    const auto originalPath = QString::fromStdString(data.signer.get_derivation_path()).replace('h', '\'');
+                    if (fallbackPath != originalPath) {
+                        auto fallbackSigner = bridge::GetSignerFromMasterSigner(xfp, fallbackPath, msg);
+                        if (msg.isSuccess()) {
+                            auto fallbackAddress = bridge::GetSignerAddress(fallbackSigner, (nunchuk::AddressType)type, msg);
+                            if (msg.isSuccess() && verify(fallbackAddress)) {
+                                data.signer = fallbackSigner;
+                                data.address = fallbackAddress;
+                                verified = true;
+                            }
+                        }
+                    }
+                }
+                if (msg.isSuccess() && !verified) {
+                    msg.setWarningMessage(nunchuk::NunchukException::INVALID_SIGNATURE, "The signature does not match the signing address.");
+                }
+            }
+            data.error = msg.what();
+            data.errorCode = msg.code();
+            data.errorType = static_cast<EWARNING::WarningType>(msg.type());
             return data;
         },
         [safeThis, message](DataStruct ret) {
             SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-            if (ret.address.isEmpty() || ret.signature.isEmpty()) {
+            if (ret.errorType != EWARNING::WarningType::NONE_MSG) {
+                emit ptrLamda->signMessageChanged();
+                AppModel::instance()->showToast(ret.errorCode, ret.error, ret.errorType);
                 return;
             }
             auto single = QSingleSignerPtr(new QSingleSigner(ret.signer));
@@ -573,7 +609,7 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
                     AppModel::instance()->setMasterSignerInfo(master);
                 }
             }
-            emit ptrLamda->signMessageChanged();
+            emit ptrLamda->signMessageChanged(QString::fromStdString(ret.signer.get_derivation_path()));
             AppModel::instance()->showToast(0, "The message has been signed", EWARNING::WarningType::SUCCESS_MSG);
         });
 }

@@ -826,7 +826,8 @@ QString SignMessage(const nunchuk::SingleSigner& signer,
                     QWarningMessage &msg);
 
 QString GetSignerAddress(const nunchuk::SingleSigner& signer,
-                         const nunchuk::AddressType& address_type);
+                         const nunchuk::AddressType& address_type,
+                         QWarningMessage &msg);
 
 QString GetHotWalletMnemonic(const QString& wallet_id, const QString& passphrase);
 
