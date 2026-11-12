@@ -186,7 +186,7 @@ public:
     int flow() const;
     void setFlow(int flow);
 
-    Q_INVOKABLE void updateSignMessage(const QString &xfp, int wallet_type, const QString &message, const QString &derivationPath);
+    Q_INVOKABLE void updateSignMessage(QObject *signerInfo, int wallet_type, const QString &message, const QString &derivationPath);
     Q_INVOKABLE void exportBitcoinSignedMessage(const QString &xfp, const QString &file_path);
 
     QVariantList signerExistList() const;

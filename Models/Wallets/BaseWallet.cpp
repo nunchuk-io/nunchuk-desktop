@@ -532,7 +532,17 @@ void BaseWallet::setFlow(int flow) {
     emit flowChanged();
 }
 
-void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QString &message, const QString &derivationPath) {
+void BaseWallet::updateSignMessage(QObject *signerInfo, int wallet_type, const QString &message, const QString &derivationPath) {
+    auto singleSigner = qobject_cast<QSingleSigner *>(signerInfo);
+    auto masterSigner = qobject_cast<QMasterSigner *>(signerInfo);
+    if (!singleSigner && !masterSigner) {
+        emit signMessageChanged();
+        AppModel::instance()->showToast(-1, "Signer not found.", EWARNING::WarningType::EXCEPTION_MSG);
+        return;
+    }
+    const bool isMaster = masterSigner != nullptr;
+    const auto selectedSigner = singleSigner ? singleSigner->originSingleSigner() : nunchuk::SingleSigner{};
+    const auto xfp = isMaster ? masterSigner->fingerPrint() : singleSigner->masterFingerPrint();
     struct DataStruct {
         nunchuk::SingleSigner signer{};
         QString address;
@@ -543,12 +553,13 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
     };
     QPointer<BaseWallet> safeThis(this);
     runInConcurrent(
-        [safeThis, wallet_type, xfp, derivationPath, message]() -> DataStruct {
+        [safeThis, wallet_type, xfp, derivationPath, message, isMaster, selectedSigner]() -> DataStruct {
             SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
             ENUNCHUCK::AddressType type = (ENUNCHUCK::AddressType)wallet_type;
             QWarningMessage msg;
             DataStruct data;
-            data.signer = bridge::GetSignerFromMasterSigner(xfp, derivationPath, msg);
+            data.signer = isMaster ? bridge::GetSignerFromMasterSigner(xfp, derivationPath, msg)
+                                   : bridge::DeriveSigner(selectedSigner, derivationPath, msg);
             if (msg.isSuccess()) {
                 data.address = bridge::GetSignerAddress(data.signer, (nunchuk::AddressType)type, msg);
             }
@@ -568,7 +579,7 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
                     const auto fallbackPath = QString::fromStdString(nunchuk::Utils::TrezorGetSignMessagePath(data.signer));
                     const auto originalPath = QString::fromStdString(data.signer.get_derivation_path()).replace('h', '\'');
                     if (fallbackPath != originalPath) {
-                        auto fallbackSigner = bridge::GetSignerFromMasterSigner(xfp, fallbackPath, msg);
+                        auto fallbackSigner = bridge::DeriveSigner(data.signer, fallbackPath, msg);
                         if (msg.isSuccess()) {
                             auto fallbackAddress = bridge::GetSignerAddress(fallbackSigner, (nunchuk::AddressType)type, msg);
                             if (msg.isSuccess() && verify(fallbackAddress)) {
@@ -588,14 +599,14 @@ void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QS
             data.errorType = static_cast<EWARNING::WarningType>(msg.type());
             return data;
         },
-        [safeThis, message](DataStruct ret) {
+        [safeThis, message, isMaster, selectedSigner](DataStruct ret) {
             SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
             if (ret.errorType != EWARNING::WarningType::NONE_MSG) {
                 emit ptrLamda->signMessageChanged();
                 AppModel::instance()->showToast(ret.errorCode, ret.error, ret.errorType);
                 return;
             }
-            auto single = QSingleSignerPtr(new QSingleSigner(ret.signer));
+            auto single = QSingleSignerPtr(new QSingleSigner(isMaster ? ret.signer : selectedSigner));
             if (single) {
                 single->setMessage(message);
                 single->setAddress(ret.address);

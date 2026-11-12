@@ -186,7 +186,7 @@ QOnScreenContentTypeA {
         enabled: message_input !== "" && path_input !== "" && !_indicator.visible
         onButtonClicked: {
             _indicator.loading()
-            AppModel.walletInfo.updateSignMessage(fingerPrint, NUNCHUCKTYPE.LEGACY, message_input, path_input)
+            AppModel.walletInfo.updateSignMessage(signerInfo, NUNCHUCKTYPE.LEGACY, message_input, path_input)
         }
     }
     FileDialog {

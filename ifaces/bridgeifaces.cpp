@@ -2735,6 +2735,18 @@ QString bridge::SignMessage(const nunchuk::SingleSigner &signer, const QString &
     return QString::fromStdString(nunchukiface::instance()->SignMessage(signer, message.toStdString(), msg));
 }
 
+nunchuk::SingleSigner bridge::DeriveSigner(const nunchuk::SingleSigner &signer, const QString &derivation_path, QWarningMessage &msg)
+{
+    try {
+        return nunchuk::Utils::DeriveSigner(signer, derivation_path.toStdString());
+    } catch (const nunchuk::BaseException &ex) {
+        msg.setWarningMessage(ex.code(), ex.what());
+    } catch (const std::exception &ex) {
+        msg.setWarningMessage(-1, ex.what());
+    }
+    return {};
+}
+
 QString bridge::GetSignerAddress(const nunchuk::SingleSigner &signer, const nunchuk::AddressType &address_type, QWarningMessage &msg)
 {
     return QString::fromStdString(nunchukiface::instance()->GetSignerAddress(signer, address_type, msg));

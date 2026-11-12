@@ -825,6 +825,10 @@ QString SignMessage(const nunchuk::SingleSigner& signer,
                     const QString& message,
                     QWarningMessage &msg);
 
+nunchuk::SingleSigner DeriveSigner(const nunchuk::SingleSigner& signer,
+                                  const QString& derivation_path,
+                                  QWarningMessage &msg);
+
 QString GetSignerAddress(const nunchuk::SingleSigner& signer,
                          const nunchuk::AddressType& address_type,
                          QWarningMessage &msg);
