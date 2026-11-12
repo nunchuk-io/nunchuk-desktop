@@ -42,7 +42,6 @@ QOnScreenContentTypeA {
     property string signerDerivationPath: ""
     property string fingerPrint: ""
     property string keyName: ""
-    property int wallet_type: NUNCHUCKTYPE.LEGACY
     property var signerInfo
 
     property string message_input: ""
@@ -100,35 +99,6 @@ QOnScreenContentTypeA {
                 Column {
                     spacing: 16
                     visible: signerInfo.address !== ""
-                    Column {
-                        spacing: 4
-                        QLato {
-                            text: STR.STR_QML_066
-                            font.weight: Font.Bold
-                        }
-                        QComboBox {
-                            id: _address_type
-                            width: 576
-                            height: 48
-                            current_id: _address_type.model.find(function(e) { if (e.id === wallet_type) return true; else return false } )
-                            defaultValue: {
-                                return { id: qsTr("%1").arg(AppSetting.currency),  displayName: STR.STR_QML_064 }
-                            }
-                            displayText: getDisplay().displayName
-                            model: [
-                                { id: NUNCHUCKTYPE.LEGACY,         displayName: STR.STR_QML_064 },
-                                { id: NUNCHUCKTYPE.NESTED_SEGWIT,  displayName: STR.STR_QML_063 },
-                                { id: NUNCHUCKTYPE.NATIVE_SEGWIT,  displayName: STR.STR_QML_062 },
-                                { id: NUNCHUCKTYPE.TAPROOT,        displayName: STR.STR_QML_553 },
-                            ]
-                            textRole: "displayName"
-                            onActivated: {
-                                if (currentIndex >=0) {
-                                    wallet_type = _address_type.getDisplay().id
-                                }
-                            }
-                        }
-                    }
                     QTextInputBoxTypeB {
                         id: _address
                         label: STR.STR_QML_1129
@@ -216,7 +186,7 @@ QOnScreenContentTypeA {
         enabled: message_input !== "" && path_input !== ""
         onButtonClicked: {
             _indicator.loading()
-            AppModel.walletInfo.updateSignMessage(fingerPrint, wallet_type, message_input, path_input)
+            AppModel.walletInfo.updateSignMessage(fingerPrint, NUNCHUCKTYPE.LEGACY, message_input, path_input)
         }
     }
     FileDialog {

@@ -219,7 +219,7 @@ WorkerCreateMasterSignerResult Worker::createMasterSigner(const WorkerCreateMast
     WorkerCreateMasterSignerResult result;
     if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
         const auto deduplicatedDevices = uniqueDevices(devices);
-        result.signerMessage = qUtils::QGenerateRandomMessage();
+        result.signerMessage = qUtils::QGenerateHealthCheckMessage();
         emit updateNewKeySignMessage(result.signerMessage);
 
         const auto selected = std::find_if(deduplicatedDevices.cbegin(),

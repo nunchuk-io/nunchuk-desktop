@@ -61,7 +61,7 @@ qint64 QAmountFromValue(const QString &btcValue, const bool allow_negative = fal
 
 QString QValueFromAmount(const qint64 amount);
 
-QString QGenerateRandomMessage(int message_length = 20);
+QString QGenerateHealthCheckMessage();
 
 QString QAddressToScriptPubKey(const QString &address);
 

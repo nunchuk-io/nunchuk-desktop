@@ -143,8 +143,8 @@ QString qUtils::QValueFromAmount(const qint64 amount) {
     return ret;
 }
 
-QString qUtils::QGenerateRandomMessage(int message_length) {
-    return QString::fromStdString(nunchuk::Utils::GenerateRandomMessage(message_length));
+QString qUtils::QGenerateHealthCheckMessage() {
+    return QString::fromStdString(nunchuk::Utils::GenerateHealthCheckMessage());
 }
 
 QString qUtils::QAddressToScriptPubKey(const QString &address) {

@@ -517,7 +517,7 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QS
         if (devices) {
             QDevicePtr selectedDv = devices->getDeviceByXfp(xfp);
             int deviceIndex = devices->getDeviceIndexByXfp(xfp);
-            QString in_message = qUtils::QGenerateRandomMessage();
+            QString in_message = qUtils::QGenerateHealthCheckMessage();
             AppModel::instance()->setNewKeySignMessage(in_message);
             if (selectedDv.data()) {
                 AppModel::instance()->setAddSignerStep(1);
