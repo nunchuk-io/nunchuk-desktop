@@ -2005,7 +2005,7 @@ void QGroupDashboard::UpdateConfigurableKeys(const QJsonObject &data) {
             if (signer.isEmpty()) {
                 obj["key_index"] = key_index;
                 obj["has"] = false;
-                obj["account_indexs"] = QJsonArray{account_index.isDouble() ? QString::number(account_index.toInt()) : QString("X")};
+                obj["account_indexs"] = QJsonArray{QString("X")};
             } else {
                 obj = signer;
                 obj["has"] = true;

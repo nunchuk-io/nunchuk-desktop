@@ -306,7 +306,6 @@ Column {
     QIconTextButton {
         width: parent.width
         height: 48
-        enabled: _policy.primary.timelock !== undefined && _policy.primary.timelock.timestamp > 0
         label: _policy.fallbacks.length > 0 ? STR.STR_QML_2372 : STR.STR_QML_2357
         icons: ["add-dark.svg", "add-dark.svg", "add-dark.svg", "add-dark.svg"]
         fontPixelSize: 16
