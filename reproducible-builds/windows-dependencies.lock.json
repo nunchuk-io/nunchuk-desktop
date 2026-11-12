@@ -104,7 +104,7 @@
     "hwi": {
       "version": "3.2.5",
       "url": "https://github.com/nogibi/HWI/releases/download/3.2.5/hwi-3.2.5-windows-x86_64.zip",
-      "sha256": "49c9a6d34d291ab7a15b553356cb7193c17cca9e512d9a0d7fb6dd6892de6bb1"
+      "sha256": "68e5d5219da213ebbb8b5c91fdc0b9b5af2fac952d22fc6fc6c75af77a1197b0"
     }
   },
   "actions": {
