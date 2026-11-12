@@ -169,7 +169,7 @@ QOnScreenContentTypeA {
                                 }
                                 enabled: true
                                 opacity: enabled ? 1 : 0.4
-                                hasEditPath: true
+                                hasEditPath: !single_signer_need_Topup_Xpub
                                 onBip32PathClick: {
                                     var modelData = newWalletInfo.assignAvailableSigners.get(index);
                                     editBip32Path.requestEditBIP32Path(modelData, modelData)
