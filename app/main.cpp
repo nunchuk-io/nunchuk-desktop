@@ -48,9 +48,12 @@
 #include "QPDFPrinter.h"
 #include "app/AppRegister.h"
 
+#include <algorithm>
 #include <clocale>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
 
 #ifdef ENABLE_THREAD_MONITOR
 #include "QPingThread.h"
@@ -173,46 +176,75 @@ public:
     }
 };
 
-inline double calculateScaleFactor()
-{
-    static char  temp_arg[] = "";
-    static char* temp_argv = temp_arg;
-    static int   temp_argc = 1;
-    // assumes that the default desktop resolution is 1080 (scale of 1)
-    double scalePref = 1.0;
+namespace {
+constexpr double kAutoScaleStep = 0.05;
+constexpr double kAutoScaleMin  = 0.5;
 
-    // Probe app only needs QScreen: use QGuiApplication, not the full
-    // QApplication (skips widget/style/palette init — this used to boot the
-    // whole widgets stack twice per app start just to read screen geometry).
-    QGuiApplication* temp = new QGuiApplication(temp_argc, &temp_argv);
-    QScreen* primaryScr = QGuiApplication::primaryScreen();
-    if (primaryScr) {
-        QRect rect = primaryScr->availableGeometry();
-        int screenHeight = rect.height();
-        int screenWidth = rect.width();
-#if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
-        int appWidth = QAPP_WIDTH_EXPECTED + (QAPP_GAP_HEIGHT + rect.x()) * primaryScr->devicePixelRatio();
-        int appHeight = QAPP_HEIGHT_EXPECTED + (QAPP_GAP_HEIGHT + rect.y()) * primaryScr->devicePixelRatio();
-#else
-        int appWidth = screenWidth = QAPP_WIDTH_EXPECTED;
-        int appHeight = screenHeight = QAPP_HEIGHT_EXPECTED;
-#endif
-        if (screenHeight <= appHeight || screenWidth <= appWidth) {
-            scalePref = min((double)screenHeight / appHeight, (double)screenWidth / appWidth);
-        }
-        std::string scaleAsString = QString::number(scalePref, 'f', 1).toStdString();
-        DBG_INFO << screenHeight << screenWidth << appHeight << appWidth << scaleAsString << primaryScr->devicePixelRatio() ;
-        QByteArray scaleAsQByteArray(scaleAsString.c_str(), scaleAsString.length());
-        qputenv("QT_SCALE_FACTOR", scaleAsQByteArray);
+bool hasUserScaleOverride()
+{
+    return qEnvironmentVariableIsSet("QT_SCALE_FACTOR")
+        || qEnvironmentVariableIsSet("QT_SCREEN_SCALE_FACTORS");
+}
+}
+
+static double calculateScaleFactor(int argc, char* argv[])
+{
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+    if (hasUserScaleOverride()) {
+        DBG_INFO << "[SCALE] user override detected, auto-scale skipped."
+                 << "QT_SCALE_FACTOR:" << qEnvironmentVariable("QT_SCALE_FACTOR")
+                 << "QT_SCREEN_SCALE_FACTORS:" << qEnvironmentVariable("QT_SCREEN_SCALE_FACTORS");
+        return 1.0;
     }
-    delete temp;
-    return scalePref;
+
+    std::vector<char*> probeArgv(argv, argv + argc);
+    probeArgv.push_back(nullptr);
+    int probeArgc = argc;
+
+    double scale = 1.0;
+    {
+        QGuiApplication probe(probeArgc, probeArgv.data());
+        QScreen* screen = QGuiApplication::primaryScreen();
+        if (!screen) {
+            DBG_WARN << "[SCALE] no primary screen, auto-scale skipped";
+            return 1.0;
+        }
+
+        const QRect  avail   = screen->availableGeometry();
+        const double usableW = avail.width()  - QAPP_GAP_HEIGHT;
+        const double usableH = avail.height() - QAPP_GAP_HEIGHT;
+        const double fit     = std::min(usableW / QAPP_WIDTH_EXPECTED,
+                                        usableH / QAPP_HEIGHT_EXPECTED);
+
+        if (fit < 1.0) {
+            scale = std::floor(fit / kAutoScaleStep + 1e-9) * kAutoScaleStep;
+            if (scale < kAutoScaleMin) {
+                DBG_WARN << "[SCALE] screen too small, clamping" << scale << "->" << kAutoScaleMin;
+                scale = kAutoScaleMin;
+            }
+        }
+
+        DBG_INFO << "[SCALE] screen:" << screen->name()
+                 << "available:" << avail.x() << avail.y() << avail.width() << avail.height()
+                 << "dpr:" << screen->devicePixelRatio()
+                 << "logicalDpi:" << screen->logicalDotsPerInch()
+                 << "fit:" << fit
+                 << "scale:" << scale;
+    }
+
+    if (scale < 1.0) {
+        qputenv("QT_SCALE_FACTOR", QByteArray::number(scale, 'f', 2));
+    }
+    return scale;
+#else
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+    return 1.0;
+#endif
 }
 
 int main(int argc, char* argv[])
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
 #if defined(Q_OS_WIN) && defined(_MSC_VER)
     // QString::toStdString() returns UTF-8 in Qt 6. Configure the MSVC CRT
     // conversion used by std::filesystem before any worker threads or path
@@ -242,16 +274,13 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationName("nunchuk");
     QCoreApplication::setOrganizationDomain("nunchuk.io");
     QCoreApplication::setApplicationName("NunchukClient");
-    QCoreApplication::setApplicationVersion("2.9.3");
+    QCoreApplication::setApplicationVersion("2.9.4");
 
-    double scale_factor = calculateScaleFactor();
-    // static char  qt_arg[] = "";
-    // static char* qt_argv = qt_arg;
-    // static int   argc_own = 1;
-    // OurApplication app(argc_own, &qt_argv);
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+        Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 
-    OurApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    OurApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    const double scale_factor = calculateScaleFactor(argc, argv);
+    Q_UNUSED(scale_factor);
     OurApplication appNunchuk(argc, argv);
 
     appNunchuk.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
