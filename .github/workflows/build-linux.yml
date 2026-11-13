@@ -4,7 +4,12 @@ run-name: nunchuk-linux-${{ github.ref_type == 'tag' && 'v' || '' }}${{ github.r
 on:
   push:
     tags: [ "*" ]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      use_snapshot:
+        description: Use the frozen Ubuntu snapshot
+        type: boolean
+        default: true
 
 jobs:
   build-image-and-app:
@@ -70,11 +75,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push builder image
+        env:
+          USE_UBUNTU_SNAPSHOT: ${{ github.event_name != 'workflow_dispatch' || inputs.use_snapshot }}
         run: |
           set -euo pipefail
           docker buildx build \
             --platform ${{ matrix.platform }} \
             -f reproducible-builds/Dockerfile.linux \
+            --build-arg "USE_UBUNTU_SNAPSHOT=${USE_UBUNTU_SNAPSHOT}" \
             -t ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }} \
             -t ghcr.io/${{ github.repository }}/nunchuk-builder-linux-${{ matrix.name }}:git-${{ github.sha }} \
             --cache-from type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache-${{ matrix.name }} \

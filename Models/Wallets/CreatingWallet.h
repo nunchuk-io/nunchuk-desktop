@@ -2,6 +2,7 @@
 #define CREATINGWALLET_H
 
 #include <QObject>
+#include <QSet>
 #include "MiniscriptWallet.h"
 
 class CreatingWallet : public MiniscriptWallet
@@ -39,6 +40,8 @@ signals:
     void needBackupChanged();
     void needRegisteredChanged();
 private:
+    void refreshAssignAvailableSigners();
+    QSet<QString> m_customBip32Paths;
     static int m_walletOptionType;
     QSingleSignerListModelPtr m_assignAvailableSigners;
 };

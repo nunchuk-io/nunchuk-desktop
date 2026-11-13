@@ -12,11 +12,11 @@ ENV ARCH=aarch64 QT_HOST=linux_arm64 QT_ARCH=linux_gcc_arm64 QT_DIR_NAME=gcc_arm
 
 FROM platform-${TARGETARCH} AS builder
 ARG UBUNTU_IMAGE
-ARG UBUNTU_SNAPSHOT=20261008T000000Z
+ARG UBUNTU_SNAPSHOT=20261112T000000Z
+ARG USE_UBUNTU_SNAPSHOT=true
 
 ARG QT_VERSION=6.9.3
-# GCC comes from the same frozen Ubuntu archive as its dependencies, with
-# no live PPA. This version is available for both amd64 and arm64.
+# Snapshot builds pin GCC; live builds use the available GCC 14 packages.
 ARG GCC14_VERSION=14.2.0-4ubuntu2~24.04.1
 ARG AQT_VERSION=3.3.0
 ARG QTKEYCHAIN_VERSION=0.15.0
@@ -67,30 +67,30 @@ ENV PATH=${QT_INSTALLED_PREFIX}/bin:${PATH} \
     APPIMAGE_EXTRACT_AND_RUN=1
 
 # The minimal base has no CA roots, and the snapshot service requires HTTPS.
-# BuildKit downloads this pinned package before APT needs certificate trust.
-ADD --checksum=sha256:6bac2a01979e210d9eac1d4d56747ec709ea60654744d66705dc3c36e7629e50 \
-    https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/pool/main/c/ca-certificates/ca-certificates_20260601~24.04.1_all.deb \
+# Bootstrap with the updated CA package and exclude all eMudhra/emSign roots.
+ADD https://security.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb \
     /tmp/ca-certificates.deb
 RUN dpkg-deb --extract /tmp/ca-certificates.deb /tmp/ca-certificates \
+    && rm -f /tmp/ca-certificates/usr/share/ca-certificates/mozilla/emSign_*.crt \
     && mkdir -p /etc/ssl/certs \
     && cat /tmp/ca-certificates/usr/share/ca-certificates/mozilla/*.crt > /etc/ssl/certs/ca-certificates.crt \
-    && rm -rf /tmp/ca-certificates /tmp/ca-certificates.deb
+    && rm -rf /tmp/ca-certificates
 
-# Freeze the complete dependency closure, including libraries bundled into
-# the AppImage. Signature verification stays enabled; only freshness expiry
-# is disabled for this deliberately historical archive. The snapshot serves
-# both amd64 and arm64, replacing the base image's archive/ports sources.
-RUN printf '%s\n' \
-        'Types: deb' \
-        "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
-        'Suites: noble noble-updates noble-security' \
-        'Components: main restricted universe multiverse' \
-        'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
-        'Check-Valid-Until: no' \
-        > /etc/apt/sources.list.d/ubuntu.sources \
-    && apt-get update \
+# Live builds retain the base image's architecture-specific Ubuntu sources.
+# Install the newer CA package explicitly so APT cannot restore the older bundle.
+RUN if [ "${USE_UBUNTU_SNAPSHOT}" = "true" ]; then \
+        printf '%s\n' \
+            'Types: deb' \
+            "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
+            'Suites: noble noble-updates noble-security' \
+            'Components: main restricted universe multiverse' \
+            'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+            'Check-Valid-Until: no' \
+            > /etc/apt/sources.list.d/ubuntu.sources; \
+    fi \
+    && apt-get -o Acquire::Retries=3 --error-on=any update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates \
+        /tmp/ca-certificates.deb \
         cmake \
         curl \
         desktop-file-utils \
@@ -165,10 +165,16 @@ RUN printf '%s\n' \
         squashfuse \
         unzip \
         wget \
-    && apt-get install -y --no-install-recommends "gcc-14=${GCC14_VERSION}" "g++-14=${GCC14_VERSION}" \
+    && if [ "${USE_UBUNTU_SNAPSHOT}" = "true" ]; then \
+        apt-get install -y --no-install-recommends "gcc-14=${GCC14_VERSION}" "g++-14=${GCC14_VERSION}"; \
+    else \
+        apt-get install -y --no-install-recommends gcc-14 g++-14; \
+    fi \
+    && sed -i 's|^mozilla/emSign_|!mozilla/emSign_|' /etc/ca-certificates.conf \
+    && update-ca-certificates --fresh \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/ca-certificates.deb
 
 COPY reproducible-builds/qt-6.9.3-linux-*.sha256 /opt/qt-checksums/
 RUN python3 -m pip install --break-system-packages --no-cache-dir "aqtinstall==${AQT_VERSION}" \

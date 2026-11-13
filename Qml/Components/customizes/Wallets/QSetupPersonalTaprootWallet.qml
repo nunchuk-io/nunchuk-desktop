@@ -192,7 +192,7 @@ QOnScreenContentTypeA {
                                 }
                                 visible: single_signer_checked
                                 height: visible ? 84 : 0
-                                hasEditPath: true
+                                hasEditPath: !single_signer_need_Topup_Xpub
                                 onBtnClicked: {
                                     model.single_signer_checked = !model.single_signer_checked
                                     newWalletInfo.walletM = 0

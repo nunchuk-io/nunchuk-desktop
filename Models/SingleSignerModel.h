@@ -196,7 +196,7 @@ private:
     QString master_signer_id_ = "";
     bool signed_ = false;           // Using for transaction only
     bool needTopUpXpub_ = false;          // Using for create wallet
-    QString message_ = qUtils::QGenerateRandomMessage();
+    QString message_ = qUtils::QGenerateHealthCheckMessage();
     QString signature_ = "";
     int health_ = -1;
     // For add signer to wallet

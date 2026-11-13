@@ -52,6 +52,10 @@ Item {
         objectName: "subScreenHost"
     }
 
+    QDevicePairingPopup {
+        pairing: DevicePairing
+    }
+
     QPopupInfo{
         id:_checkforupdate
         z:100
