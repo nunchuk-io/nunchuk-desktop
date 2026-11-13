@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     readonly property var noticeMap: ({
         "recover-key": { title: STR.STR_QML_2542, headline: STR.STR_QML_2543, body: STR.STR_QML_2544, bullets: [], warning: STR.STR_QML_2545 },
         "use-device":  { title: STR.STR_QML_2366, headline: STR.STR_QML_2546, body: "", bullets: [STR.STR_QML_2547, STR.STR_QML_2548], warning: STR.STR_QML_2549 },
-        "enter-seed":  { title: STR.STR_QML_2550, headline: STR.STR_QML_2551, body: STR.STR_QML_2552, bullets: [], warning: STR.STR_QML_2553 }
+        "enter-seed":  { title: STR.STR_QML_2366, headline: STR.STR_QML_2551, body: STR.STR_QML_2552, bullets: [], warning: STR.STR_QML_2553 }
     })
     readonly property var notice: noticeMap[noticeType] !== undefined ? noticeMap[noticeType] : noticeMap["use-device"]
     label.text: notice.title

@@ -49,6 +49,7 @@
 #include "app/AppRegister.h"
 
 #include <clocale>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
@@ -175,37 +176,43 @@ public:
 
 inline double calculateScaleFactor()
 {
+    double scalePref = 1.0;
+    if (qEnvironmentVariableIsSet("QT_SCALE_FACTOR") || qEnvironmentVariableIsSet("QT_SCREEN_SCALE_FACTORS")) {
+        DBG_INFO << "Scale factor overridden by environment"
+                 << "QT_SCALE_FACTOR:" << qgetenv("QT_SCALE_FACTOR")
+                 << "QT_SCREEN_SCALE_FACTORS:" << qgetenv("QT_SCREEN_SCALE_FACTORS");
+        return scalePref;
+    }
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     static char  temp_arg[] = "";
     static char* temp_argv = temp_arg;
     static int   temp_argc = 1;
-    // assumes that the default desktop resolution is 1080 (scale of 1)
-    double scalePref = 1.0;
+    constexpr double kMinScale = 0.5;
+    constexpr double kScaleStep = 0.05;
 
-    // Probe app only needs QScreen: use QGuiApplication, not the full
-    // QApplication (skips widget/style/palette init — this used to boot the
-    // whole widgets stack twice per app start just to read screen geometry).
     QGuiApplication* temp = new QGuiApplication(temp_argc, &temp_argv);
-    QScreen* primaryScr = QGuiApplication::primaryScreen();
-    if (primaryScr) {
-        QRect rect = primaryScr->availableGeometry();
-        int screenHeight = rect.height();
-        int screenWidth = rect.width();
-#if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
-        int appWidth = QAPP_WIDTH_EXPECTED + (QAPP_GAP_HEIGHT + rect.x()) * primaryScr->devicePixelRatio();
-        int appHeight = QAPP_HEIGHT_EXPECTED + (QAPP_GAP_HEIGHT + rect.y()) * primaryScr->devicePixelRatio();
-#else
-        int appWidth = screenWidth = QAPP_WIDTH_EXPECTED;
-        int appHeight = screenHeight = QAPP_HEIGHT_EXPECTED;
-#endif
-        if (screenHeight <= appHeight || screenWidth <= appWidth) {
-            scalePref = min((double)screenHeight / appHeight, (double)screenWidth / appWidth);
+    if (QScreen* primaryScr = QGuiApplication::primaryScreen()) {
+        const QRect available = primaryScr->availableGeometry();
+        const double requiredWidth = QWINDOW_WIDTH_PREFER;
+        const double requiredHeight = QWINDOW_HEIGHT_PREFER;
+        const double fit = qMin(available.width() / requiredWidth, available.height() / requiredHeight);
+        if (fit < 1.0) {
+            scalePref = qBound(kMinScale, std::floor(fit / kScaleStep) * kScaleStep, 1.0);
         }
-        std::string scaleAsString = QString::number(scalePref, 'f', 1).toStdString();
-        DBG_INFO << screenHeight << screenWidth << appHeight << appWidth << scaleAsString << primaryScr->devicePixelRatio() ;
-        QByteArray scaleAsQByteArray(scaleAsString.c_str(), scaleAsString.length());
-        qputenv("QT_SCALE_FACTOR", scaleAsQByteArray);
+        DBG_INFO << "[SCALE]"
+                 << "screen:" << primaryScr->name()
+                 << "available:" << available.width() << "x" << available.height()
+                 << "required:" << requiredWidth << "x" << requiredHeight
+                 << "osDpr:" << primaryScr->devicePixelRatio()
+                 << "fit:" << fit
+                 << "scale:" << scalePref
+                 << "effectiveDpr:" << primaryScr->devicePixelRatio() * scalePref;
     }
     delete temp;
+    if (scalePref < 1.0) {
+        qputenv("QT_SCALE_FACTOR", QByteArray::number(scalePref, 'f', 2));
+    }
+#endif
     return scalePref;
 }
 
@@ -242,7 +249,7 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationName("nunchuk");
     QCoreApplication::setOrganizationDomain("nunchuk.io");
     QCoreApplication::setApplicationName("NunchukClient");
-    QCoreApplication::setApplicationVersion("2.9.2");
+    QCoreApplication::setApplicationVersion("2.9.5");
 
     double scale_factor = calculateScaleFactor();
     // static char  qt_arg[] = "";

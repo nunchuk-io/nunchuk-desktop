@@ -18,40 +18,60 @@
  *                                                                        *
  **************************************************************************/
 import QtQuick
-import QtQuick.Controls
 import NUNCHUCKTYPE 1.0
-import Features.Common.ViewModels 1.0
-import "../../../Components/origins"
-import "../../../Components/customizes"
-import "../../../Components/customizes/Texts"
-import "../../../Components/customizes/Buttons"
-import "../../../../localization/STR_QML.js" as STR
+import "./../../../origins"
+import "./../../../customizes"
+import "./../../../customizes/Buttons"
+import "./../../../customizes/Popups"
+import "./../../../customizes/services"
+import "./../../../customizes/Texts"
+import "../../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
+    id: _separate
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2554
-    onCloseClicked: vm.close()
-    onPrevClicked: {
-        vm.close()
-        ServiceSetting.servicesTag.resultClaimInheritanceAlert("CLAIM_INHERITANCE_MORE_KEY")
-    }
+    property int keyCount: 2
+    readonly property bool twoKeys: keyCount <= 2
+    label.text: twoKeys ? STR.STR_QML_2583.arg(2) : STR.STR_QML_2584
     content: Item {
         Row {
             spacing: 36
-            QPicture {
+            Rectangle {
                 width: 346
                 height: 512
-                fillMode: Image.PreserveAspectFit
-                source: "qrc:/Images/Images/clock_lock.svg"
+                radius: 24
+                color: "#D0E2FF"
+                QPicture {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    source: "qrc:/Images/Images/how_many_keys_or_seedphrase.svg"
+                }
             }
             Column {
                 width: 346
                 spacing: 16
                 QLato {
                     width: parent.width
-                    text: vm.description
+                    text: STR.STR_QML_2585
+                    font.weight: Font.Bold
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 20
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                }
+                QLato {
+                    width: parent.width
+                    text: _separate.twoKeys ? STR.STR_QML_2586 : STR.STR_QML_2588
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 20
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                }
+                QLato {
+                    width: parent.width
+                    text: _separate.twoKeys ? STR.STR_QML_2587.arg(2) : STR.STR_QML_2589
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 20
                     wrapMode: Text.WordWrap
@@ -59,16 +79,5 @@ QOnScreenContentTypeA {
                 }
             }
         }
-    }
-    bottomRight: QTextButton {
-        width: label.paintedWidth + 16 * 2
-        height: 48
-        label.text: STR.STR_QML_777
-        label.font.pixelSize: 16
-        type: eTypeE
-        onButtonClicked: vm.close()
-    }
-    BaseGuideViewModel {
-        id: vm
     }
 }

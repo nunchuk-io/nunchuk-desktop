@@ -813,22 +813,17 @@ QOnScreenContentTypeB {
                 stepsHeading: STR.STR_QML_2418
                 steps: [
                     { title: STR.STR_QML_2419, description: STR.STR_QML_2420 },
-                    { title: STR.STR_QML_2421, description: STR.STR_QML_2422 },
-                    { title: STR.STR_QML_2423, description: STR.STR_QML_2424 }
+                    { title: STR.STR_QML_2421, description: STR.STR_QML_2422 }
                 ]
                 footerText: ""
-                infoTexts: [STR.STR_QML_2425, STR.STR_QML_2426]
-                secondaryLabel: STR.STR_QML_2427
-                primaryLabel: STR.STR_QML_2428
+                infoTexts: [STR.STR_QML_2572, STR.STR_QML_2426]
+                secondaryLabel: ""
+                primaryLabel: STR.STR_QML_265
                 onCloseClicked: _fallbackIntro.close()
                 onPrevClicked: _fallbackIntro.close()
-                onKeepCurrentClicked: {
-                    _fallbackIntro.close()
-                    openPolicy(-2, true, 1, 1)
-                }
                 onNextClicked: {
                     _fallbackIntro.close()
-                    dashInfo.addFallback(1, 1)
+                    openPolicy(-2, true, 2, 2)
                 }
             }
         }

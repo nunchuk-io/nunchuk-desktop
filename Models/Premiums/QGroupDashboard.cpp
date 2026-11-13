@@ -2166,7 +2166,7 @@ QVariantList QGroupDashboard::replacementReusableKeys(int index) const {
         QJsonObject card = js.toObject();
         QString xfp = card.value("xfp").toString();
         QString type = card.value("type").toString();
-        if (xfp.isEmpty() || type == "SERVER" || seen.contains(xfp.toLower()) || excluded.contains(xfp.toLower())) {
+        if (xfp.isEmpty() || type == "SERVER" || type == "NFC" || seen.contains(xfp.toLower()) || excluded.contains(xfp.toLower())) {
             continue;
         }
         seen.append(xfp.toLower());
@@ -2591,7 +2591,7 @@ QVariantList QGroupDashboard::reusableKeys(int flat_index) const {
         QJsonObject signer = js.toObject();
         QString xfp = signer.value("xfp").toString();
         QString type = signer.value("type").toString();
-        if (xfp.isEmpty() || type == "SERVER" || seen.contains(xfp.toLower()) || excluded.contains(xfp.toLower())) {
+        if (xfp.isEmpty() || type == "SERVER" || type == "NFC" || seen.contains(xfp.toLower()) || excluded.contains(xfp.toLower())) {
             continue;
         }
         seen.append(xfp.toLower());

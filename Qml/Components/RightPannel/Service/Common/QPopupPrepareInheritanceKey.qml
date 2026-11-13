@@ -56,6 +56,7 @@ QPopupOverlayScreen {
         { screen: "recover-an-existing-seed",               screen_component: _recoverAnExistingSeed },
         { screen: "choose-key-count",                       screen_component: _chooseKeyCount },
         { screen: "safety-notice",                          screen_component: _safetyNotice },
+        { screen: "separate-devices",                       screen_component: _separateDevices },
     ]
     property var keyCounts: []
     property string noticeType: ""
@@ -92,6 +93,8 @@ QPopupOverlayScreen {
         _infoPopup.inheritance_key_count = inheritance_key_count
         if (inheritance_key_count == 1) {
             stateScreen.setScreenFlow("prepare-inheritance-key")
+        } else if (_infoPopup.showNotices()) {
+            stateScreen.setScreenFlow("separate-devices")
         } else {
             stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
         }
@@ -199,8 +202,21 @@ QPopupOverlayScreen {
             onNextClicked: {
                 ServiceSetting.servicesTag.setClaimKeyCount(selectedCount)
                 _infoPopup.inheritance_key_count = selectedCount
-                stateScreen.setScreenFlow(selectedCount > 1 ? "your-plan-requires-two-inheritance-keys" : "prepare-inheritance-key")
+                stateScreen.setScreenFlow(selectedCount > 1 ? "separate-devices" : "prepare-inheritance-key")
             }
+        }
+    }
+
+    Component {
+        id: _separateDevices
+        QClaimSeparateDevices {
+            keyCount: _infoPopup.inheritance_key_count
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: {
+                if (stateScreen.screenFlowStack.length > 1) stateScreen.backScreen()
+                else _infoPopup.close()
+            }
+            onNextClicked: stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
         }
     }
 

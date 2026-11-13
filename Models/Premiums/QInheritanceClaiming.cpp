@@ -377,11 +377,7 @@ void QInheritanceClaiming::onChainProcessErrorCode(int error_code, const QString
         // show popup: Your inheritance plan has not been activated yet. Please try again later.
         auto flow = flowMng->startFlow<OnChainClaimingFlow>();
         flow->passClaimingError(error_code, error_msg);
-        if (error_code == DRACO_CODE::INHERITANCE_803 && usesClaimKeyCounts()) {
-            subMng->show(qml::screens::onlinemode::claiming::claimtimelockactive);
-        } else {
-            subMng->show(qml::screens::onlinemode::claiming::claiminheritanceplanresult);
-        }
+        subMng->show(qml::screens::onlinemode::claiming::claiminheritanceplanresult);
     }    break;
     case DRACO_CODE::INHERITANCE_829:
         // show popup: Please come back later

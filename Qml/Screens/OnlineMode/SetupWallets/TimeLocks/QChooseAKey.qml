@@ -162,7 +162,7 @@ QOnScreenContentTypeB {
         QTextButton {
             width: label.paintedWidth + 2*20
             height: 48
-            label.text: STR.STR_QML_265
+            label.text: STR.STR_QML_2571
             label.font.pixelSize: 16
             type: eTypeE
             enabled: _choose.selectedXfp !== ""

@@ -36,7 +36,8 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1911
+    property string keyRoleName: ""
+    label.text: keyRoleName === "" ? STR.STR_QML_1911 : STR.STR_QML_2576.arg(keyRoleName)
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var maps: [
         {id: "SELF_VERIFIED",              display_name: STR.STR_QML_1915, is_recommended: true},
@@ -49,7 +50,7 @@ QOnScreenContentTypeA {
             spacing: 24
             QLato {
                 width: 539
-                text: STR.STR_QML_1912 + "\n\n" + STR.STR_QML_1913 + "\n\n" + STR.STR_QML_1914
+                text: STR.STR_QML_1912 + "\n\n" + (keyRoleName === "" ? STR.STR_QML_1913 : STR.STR_QML_2577.arg(keyRoleName)) + "\n\n" + STR.STR_QML_1914
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 20
                 wrapMode: Text.WordWrap

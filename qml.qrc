@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>Qml/Components/customizes/Popups/QDevicePairingPopup.qml</file>
         <file>Qml/core/PopupHost.qml</file>
         <file>Qml/core/ScreenHost.qml</file>
         <file>Qml/core/SubScreenHost.qml</file>
@@ -749,6 +750,7 @@
         <file>Qml/Components/RightPannel/Service/Common/QPopupPrepareInheritanceKey.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QClaimChooseKeyCount.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QClaimSafetyNotice.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QClaimSeparateDevices.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QYourPlanRequiresTwoInheritanceKeys.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPrepareInheritanceKey.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QRecoverInheritanceKey.qml</file>
@@ -779,7 +781,6 @@
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOffChain.qml</file>
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOnChain.qml</file>
         <file>Qml/Screens/OnlineMode/Claiming/ClaimInheritancePlanResult.qml</file>
-        <file>Qml/Screens/OnlineMode/Claiming/ClaimTimelockActive.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceInputBackupPassword.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceInputMagicPhrase.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceOptionsProceed.qml</file>

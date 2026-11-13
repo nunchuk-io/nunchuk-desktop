@@ -36,7 +36,9 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1906
+    property string keyRoleName: ""
+    property string fallbackName: ""
+    label.text: keyRoleName === "" ? STR.STR_QML_1906 : STR.STR_QML_2573.arg(keyRoleName)
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
@@ -63,7 +65,7 @@ QOnScreenContentTypeA {
                     spacing: 24
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1907
+                        text: keyRoleName === "" ? STR.STR_QML_1907 : (fallbackName !== "" ? STR.STR_QML_2574.arg(keyRoleName).arg(fallbackName) : STR.STR_QML_2575.arg(keyRoleName))
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 28
                         wrapMode: Text.WordWrap

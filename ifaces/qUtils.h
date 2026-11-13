@@ -61,7 +61,7 @@ qint64 QAmountFromValue(const QString &btcValue, const bool allow_negative = fal
 
 QString QValueFromAmount(const qint64 amount);
 
-QString QGenerateRandomMessage(int message_length = 20);
+QString QGenerateHealthCheckMessage();
 
 QString QAddressToScriptPubKey(const QString &address);
 
@@ -171,7 +171,8 @@ nunchuk::SingleSigner ParseSignerString(const QString key_spec, QWarningMessage 
 
 nunchuk::SingleSigner SanitizeSingleSigner(const nunchuk::SingleSigner &signer, QWarningMessage &msg);
 
-std::vector<nunchuk::Device> GetDevices(const QString &hwi_path, QWarningMessage &msg);
+std::vector<nunchuk::Device> GetDevices(const QString &hwi_path, QWarningMessage &msg,
+                                      bool allow_pairing = false, const QString &device_type = {});
 
 QString SignPsbt(const QString &hwi_path, const nunchuk::Device &device, const QString &psbt, QWarningMessage &msg);
 

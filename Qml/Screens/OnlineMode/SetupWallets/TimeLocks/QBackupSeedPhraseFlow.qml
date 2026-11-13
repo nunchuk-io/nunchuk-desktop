@@ -67,6 +67,33 @@ QPopupOverlayScreen {
     // BUGFIX: tracks which caller started this flow, so verifyResult() below can follow old on-chain
     // logic exactly (silent close / toast-only on failure) instead of the new off-chain result screens.
     property bool isOffChain: false
+    property string keyRoleName: ""
+    property string fallbackName: ""
+    function roleOf(k) {
+        keyRoleName = ""
+        fallbackName = ""
+        if (!k || k.section === undefined) return
+        var xfp = k.xfp !== undefined ? String(k.xfp).toLowerCase() : ""
+        var customized = k.primary_customized === true
+        var cards = []
+        try {
+            cards = GroupWallet.dashboardInfo.hasWallet ? GroupWallet.dashboardInfo.replaceKeys : GroupWallet.dashboardInfo.keys
+        } catch (e) { cards = [] }
+        var inPrimary = k.section === "PRIMARY"
+        var earliestFallback = k.section === "FALLBACK" ? k.fallback_index : -1
+        for (var i = 0; i < cards.length; i++) {
+            var c = cards[i]
+            if (!c || String(c.xfp !== undefined ? c.xfp : "").toLowerCase() !== xfp || xfp === "") continue
+            if (c.section === "PRIMARY") inPrimary = true
+            else if (c.section === "FALLBACK" && (earliestFallback < 0 || c.fallback_index < earliestFallback)) earliestFallback = c.fallback_index
+        }
+        if (inPrimary) {
+            keyRoleName = customized ? STR.STR_QML_2582 : ""
+        } else if (earliestFallback >= 0) {
+            keyRoleName = STR.STR_QML_2581.arg(earliestFallback + 1)
+            fallbackName = STR.STR_QML_2356.arg(earliestFallback + 1)
+        }
+    }
     QScreenStateFlow {
         id: stateFlow
     }
@@ -80,6 +107,7 @@ QPopupOverlayScreen {
         }
         var k = isOffChain ? key : SignerManagement.currentSigner
         verificationMethod = isOffChain ? "SEED_PHRASE" : ""
+        roleOf(isOffChain ? null : k)
         xfp = k.xfp !== undefined ? k.xfp : ""
         signerTag = k.tag !== undefined ? k.tag : ""
         signerName = k.name !== undefined ? k.name : ""
@@ -124,6 +152,8 @@ QPopupOverlayScreen {
     Component {
         id: backup_your_inheritance_key_seed_phrase
         QBackUpYourInheritanceKeySeedPhrase {
+            keyRoleName: _infoPopup.keyRoleName
+            fallbackName: _infoPopup.fallbackName
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateFlow.backScreen()
             onNextClicked: stateFlow.setScreenFlow("important-notice-about-passphrase")
@@ -135,6 +165,7 @@ QPopupOverlayScreen {
         QScreenAdd {
             anchors.fill: parent
             QVerifyYourInheritanceKeySeedPhraseQuestion {
+                keyRoleName: _infoPopup.keyRoleName
                 onCloseClicked: _infoPopup.close()
                 onPrevClicked: stateFlow.backScreen()
                 onNextClicked: {
@@ -164,6 +195,7 @@ QPopupOverlayScreen {
     Component {
         id: important_notice_about_passphrase_guide
         QVerifyYourInheritanceKeySeedPhraseGuide {
+            keyRoleName: _infoPopup.keyRoleName
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateFlow.backScreen()
             onNextClicked: stateFlow.setScreenFlow("re-add-the-stored-key")

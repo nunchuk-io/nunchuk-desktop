@@ -36,7 +36,8 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1911
+    property string keyRoleName: ""
+    label.text: keyRoleName === "" ? STR.STR_QML_1911 : STR.STR_QML_2576.arg(keyRoleName)
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
@@ -72,10 +73,10 @@ QOnScreenContentTypeA {
                         id: _guide
                         width: parent.width
                         readonly property var content_map: [
-                            {height: 100,  content: STR.STR_QML_1917 , icon: "qrc:/Images/Images/1.Active.svg" },
+                            {height: 100,  content: keyRoleName === "" ? STR.STR_QML_1917 : STR.STR_QML_2578.arg(keyRoleName), icon: "qrc:/Images/Images/1.Active.svg" },
                             {height: 40,  content: STR.STR_QML_1918 , icon: "qrc:/Images/Images/2.Active.svg" },
-                            {height: 40, content: STR.STR_QML_1919 , icon: "qrc:/Images/Images/3.Active.svg" },
-                            {height: 100,  content: STR.STR_QML_1920 , icon: "qrc:/Images/Images/4.Active.svg" },
+                            {height: 40, content: keyRoleName === "" ? STR.STR_QML_1919 : STR.STR_QML_2579.arg(keyRoleName), icon: "qrc:/Images/Images/3.Active.svg" },
+                            {height: 100,  content: keyRoleName === "" ? STR.STR_QML_1920 : STR.STR_QML_2580.arg(keyRoleName), icon: "qrc:/Images/Images/4.Active.svg" },
                         ]
                         model: content_map.length
                         Rectangle {

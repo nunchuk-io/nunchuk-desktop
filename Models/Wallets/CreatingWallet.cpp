@@ -128,6 +128,12 @@ void CreatingWallet::CreateAssignAvailableSigners() {
         [safeThis](const QSingleSignerListModelPtr& available_signers) {
             SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
             ptrLamda->m_assignAvailableSigners = available_signers;
+            ptrLamda->m_customBip32Paths.clear();
+            // Wait until the selection handler has finished updating the model.
+            connect(available_signers.data(), &SingleSignerListModel::signerSelectedCountChanged,
+                    ptrLamda, &CreatingWallet::refreshAssignAvailableSigners, Qt::QueuedConnection);
+            connect(available_signers.data(), &QAbstractItemModel::modelReset,
+                    ptrLamda, &CreatingWallet::refreshAssignAvailableSigners, Qt::QueuedConnection);
             emit ptrLamda->assignAvailableSignersChanged();
         }
     );
@@ -136,6 +142,37 @@ void CreatingWallet::CreateAssignAvailableSigners() {
 SingleSignerListModel *CreatingWallet::assignAvailableSigners()
 {
     return m_assignAvailableSigners.data();
+}
+
+void CreatingWallet::refreshAssignAvailableSigners()
+{
+    const auto available_signers = assignAvailableSigners();
+    if (!available_signers || (walletType() != (int)nunchuk::WalletType::SINGLE_SIG &&
+                              walletType() != (int)nunchuk::WalletType::MULTI_SIG)) {
+        return;
+    }
+    const int count = available_signers->signerSelectedCount();
+    if (count == 0) return;
+
+    const auto wallet_type = count == 1 ? ENUNCHUCK::WalletType::SINGLE_SIG : ENUNCHUCK::WalletType::MULTI_SIG;
+    const auto address_type = static_cast<ENUNCHUCK::AddressType>(walletAddressType());
+    setWalletType(static_cast<int>(wallet_type));
+    const auto signers = available_signers->fullList();
+    for (int i = 0; i < signers.size(); ++i) {
+        const auto &signer = signers.at(i);
+        if (!signer || !signer->checked() || m_customBip32Paths.contains(signer->fingerPrint())) continue;
+
+        QWarningMessage msg;
+        const auto resolved = bridge::nunchukGetAvailableSignerFromSingleSigner(signer, wallet_type, address_type, msg);
+        const bool success = resolved && msg.type() == static_cast<int>(EWARNING::WarningType::NONE_MSG);
+        if (success) {
+            // Keep checkbox and other UI state while updating the path and xpub together.
+            signer->convert(resolved->originSingleSigner());
+        }
+        signer->setNeedTopUpXpub(!success);
+        const auto model_index = available_signers->index(i, 0);
+        emit available_signers->dataChanged(model_index, model_index);
+    }
 }
 
 bool CreatingWallet::confirmAndAssignKeysToWallet()
@@ -161,14 +198,12 @@ bool CreatingWallet::confirmAndAssignKeysToWallet()
         }
         QSingleSignerPtr signer = p;
         QWarningMessage msg;
-        QString master_id = p->masterSignerId().isEmpty() ? p->fingerPrint() : p->masterSignerId();
-        QString new_path = p->derivationPath();
-        // if (bridge::IsSignerUsedInWallets(master_id, p->originSingleSigner())) { // TBD need improve
+        if (!m_customBip32Paths.contains(p->fingerPrint())) {
             auto signer_tmp = bridge::nunchukGetAvailableSignerFromSingleSigner(p, wallet_type, address_type, msg);
             if (msg.type() == static_cast<int>(EWARNING::WarningType::NONE_MSG) && signer_tmp) {
                 signer = signer_tmp;
             }
-        // }
+        }
         if (signer) {
             signer_list.push_back(signer->originSingleSigner());
             if (msg.type() == static_cast<int>(EWARNING::WarningType::NONE_MSG)) continue;
@@ -246,13 +281,13 @@ bool CreatingWallet::editBIP32Path(const QVariant &singleData, const QVariant &c
         auto maps = singleData.toMap();
         auto customMaps = customData.toMap();
         QString master_id = maps.value("singleSigner_masterSignerId").toString();
-        bool isChecked = maps.value("single_signer_checked").toBool();
         DBG_INFO << "master_id: " << master_id << "path: " << path;
         if (!qUtils::QIsValidDerivationPath(path)) {
             emit editBIP32PathSuccess(-1); // Invalid format
             return false;
         }
         QPointer<CreatingWallet> safeThis(this);
+        const auto available_signers = m_assignAvailableSigners;
         struct DataStruct {
             nunchuk::SingleSigner signer{};
             int errorType{0};
@@ -272,16 +307,25 @@ bool CreatingWallet::editBIP32Path(const QVariant &singleData, const QVariant &c
                 }
                 return data;
             },
-            [safeThis, isChecked](DataStruct data) {
+            [safeThis, available_signers](DataStruct data) {
                 SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
                 if (data.errorType == 1) {
-                    auto s = QSingleSignerPtr(new QSingleSigner(data.signer));
-                    const auto available_signers = safeThis->assignAvailableSigners();
-                    if (available_signers) {
-                        auto index = available_signers->getIndexByFingerPrint(s->fingerPrint());
-                        s->setChecked(isChecked);
-                        available_signers->replaceSingleSigner(index, s);
+                    if (!available_signers || available_signers != ptrLamda->m_assignAvailableSigners) {
+                        emit ptrLamda->editBIP32PathSuccess(-4);
+                        return;
                     }
+                    const QString xfp = QString::fromStdString(data.signer.get_master_fingerprint());
+                    const int index = available_signers->getIndexByFingerPrint(xfp);
+                    auto signer = available_signers->getSingleSignerByIndex(index);
+                    if (!signer) {
+                        emit ptrLamda->editBIP32PathSuccess(-4);
+                        return;
+                    }
+                    signer->convert(data.signer);
+                    signer->setNeedTopUpXpub(false);
+                    ptrLamda->m_customBip32Paths.insert(xfp);
+                    const auto model_index = available_signers->index(index, 0);
+                    emit available_signers->dataChanged(model_index, model_index);
                 }
                 emit ptrLamda->editBIP32PathSuccess(data.errorType); // -2 Not Found Key
             });

@@ -134,6 +134,7 @@ QOnScreenContentTypeB {
     bottomRight: Row {
         spacing: 12
         QTextButton {
+            visible: _intro.secondaryLabel !== ""
             width: label.paintedWidth + 2*20
             height: 48
             label.text: _intro.secondaryLabel

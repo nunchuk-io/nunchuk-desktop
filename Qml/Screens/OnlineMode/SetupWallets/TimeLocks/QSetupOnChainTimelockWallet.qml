@@ -76,6 +76,23 @@ QSetupOnChainTimelock {
               : fallbackIndex < 0 ? STR.STR_QML_2408
               : (current && current.n > 1 ? STR.STR_QML_2537.arg(number) : STR.STR_QML_2536.arg(number))
 
+    validateSelection: configurable ? function(timestamp) {
+        if (fallbackIndex < 0) {
+            if (hasNext && hasLock(nextLock) && timestamp >= nextLock.timestamp) {
+                return STR.STR_QML_2414.arg(nextLock.display)
+            }
+            return ""
+        }
+        if (hasLock(prevLock) && timestamp <= prevLock.timestamp) {
+            var prevName = fallbackIndex === 0 ? STR.STR_QML_2413 : STR.STR_QML_2356.arg(number - 1)
+            return STR.STR_QML_2411.arg(number).arg(prevName).arg(prevLock.display)
+        }
+        if (hasNext && hasLock(nextLock) && timestamp >= nextLock.timestamp) {
+            return STR.STR_QML_2412.arg(number).arg(number + 1).arg(nextLock.display)
+        }
+        return ""
+    } : null
+
     ReplaceChangeOnChainTimeLockViewModel {
         id: vm
     }

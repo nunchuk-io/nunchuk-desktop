@@ -37,6 +37,7 @@ class QDevice : public QObject
     Q_PROPERTY(bool deviceConnected               READ connected              CONSTANT            )
     Q_PROPERTY(bool deviceNeedsPassPhraseSent     READ needsPassPhraseSent    NOTIFY needsPassPhraseSentChanged  )
     Q_PROPERTY(bool deviceNeedsPinSent            READ needsPinSent           NOTIFY needsPinSentChanged         )
+    Q_PROPERTY(bool deviceNeedsPairing            READ needsPairing           NOTIFY needsPairingChanged         )
     Q_PROPERTY(QString masterSignerId             READ masterSignerId         NOTIFY masterSignerIdChanged       )
     Q_PROPERTY(QString cardId                     READ cardId         CONSTANT)
 public:
@@ -50,6 +51,7 @@ public:
     bool connected() const;
     bool needsPassPhraseSent() const;
     bool needsPinSent() const;
+    bool needsPairing() const;
     bool usableToAdd() const;
     QString masterSignerId() const;
     QString cardId() const;
@@ -70,6 +72,7 @@ signals:
     void connectedChanged();
     void needsPassPhraseSentChanged();
     void needsPinSentChanged();
+    void needsPairingChanged();
     void nameChanged();
     void usableToSignChanged();
     void usableToAddChanged();
@@ -108,6 +111,7 @@ public:
         device_needs_pin_sent_role,
         device_usableToAdd_role,
         device_master_signer_id_role,
+        device_needs_pairing_role,
     };
     bool removeDevice(const QString xfp);
 

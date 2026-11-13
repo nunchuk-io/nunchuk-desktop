@@ -169,7 +169,7 @@ void QMasterSigner::setFingerPrint(const QString &d) {
 
 QString QMasterSigner::message() {
     if (messageToSign_.isEmpty() || messageToSign_.isNull() || messageToSign_ == "") {
-        messageToSign_ = qUtils::QGenerateRandomMessage();
+        messageToSign_ = qUtils::QGenerateHealthCheckMessage();
     }
     return messageToSign_;
 }
