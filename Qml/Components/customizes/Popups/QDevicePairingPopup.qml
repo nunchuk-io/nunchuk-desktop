@@ -16,7 +16,9 @@ QPopup {
     Connections {
         target: root.pairing
         function onStateChanged() {
-            if (root.pairing.active && root.pairing.stage !== "canceling") root.open()
+            if (root.pairing.active && (root.pairing.stage === "enter_code" ||
+                                       root.pairing.stage === "confirm_code" ||
+                                       root.pairing.stage === "confirming")) root.open()
             else root.close()
         }
     }
@@ -55,7 +57,7 @@ QPopup {
                         ? qsTr("Complete the confirmation on your hardware device.")
                         : root.pairing.stage === "canceling"
                             ? qsTr("Canceling pairing…")
-                            : qsTr("Unlock your device and approve the connection to continue.")
+                            : ""
         }
         QTextInputBoxTypeB {
             id: codeInput
