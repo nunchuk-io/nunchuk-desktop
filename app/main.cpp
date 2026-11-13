@@ -183,12 +183,11 @@ inline double calculateScaleFactor()
                  << "QT_SCREEN_SCALE_FACTORS:" << qgetenv("QT_SCREEN_SCALE_FACTORS");
         return scalePref;
     }
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     static char  temp_arg[] = "";
     static char* temp_argv = temp_arg;
     static int   temp_argc = 1;
     constexpr double kMinScale = 0.5;
-    constexpr double kScaleStep = 0.05;
+    constexpr double kScaleStep = 0.02;
 
     QGuiApplication* temp = new QGuiApplication(temp_argc, &temp_argv);
     if (QScreen* primaryScr = QGuiApplication::primaryScreen()) {
@@ -207,12 +206,17 @@ inline double calculateScaleFactor()
                  << "fit:" << fit
                  << "scale:" << scalePref
                  << "effectiveDpr:" << primaryScr->devicePixelRatio() * scalePref;
+        if (QAPP_WIDTH_EXPECTED * scalePref > available.width() ||
+            QAPP_HEIGHT_EXPECTED * scalePref > available.height()) {
+            DBG_ERROR << "[SCALE] window may still exceed available screen area at minimum scale"
+                      << "available:" << available.width() << "x" << available.height()
+                      << "windowAtMinScale:" << QAPP_WIDTH_EXPECTED * scalePref << "x" << QAPP_HEIGHT_EXPECTED * scalePref;
+        }
     }
     delete temp;
     if (scalePref < 1.0) {
         qputenv("QT_SCALE_FACTOR", QByteArray::number(scalePref, 'f', 2));
     }
-#endif
     return scalePref;
 }
 
@@ -343,31 +347,11 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->initFonts(montserratFonts);
 
     // Handle window size
-#if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
+    DBG_INFO << "[SCALE] applied scale factor:" << scale_factor;
     QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
     QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
-    QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
+    QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", 1.0);
     QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
-#else
-    DBG_INFO << scale_factor;
-    QScreen* primaryScr = OurApplication::primaryScreen();
-    if (primaryScr) {
-        QRect rect = primaryScr->availableGeometry();
-        int screenHeight = rect.height();
-        if(screenHeight < QAPP_HEIGHT_EXPECTED){
-            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_MIN);
-            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_MIN);
-            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_MIN/(double)QAPP_HEIGHT_EXPECTED));
-            QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_MIN, QAPP_HEIGHT_MIN);
-        }
-        else {
-            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
-            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
-            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
-            QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
-        }
-    }
-#endif
     AppSetting::instance();
 
     QEventProcessor::instance()->setContextProperty("MAINNET_SERVER", MAINNET_SERVER);
