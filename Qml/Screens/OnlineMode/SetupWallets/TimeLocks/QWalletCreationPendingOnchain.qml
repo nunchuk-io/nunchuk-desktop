@@ -33,7 +33,14 @@ Loader {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    sourceComponent: (isAlertRead() || isRead) ? _read : _unread
+    readonly property bool isConfigurable: dashInfo.isConfigurablePolicy === true
+    property bool guideDone: false
+    sourceComponent: {
+        if (isConfigurable) {
+            return (guideDone || dashInfo.timelockGuideSeen()) ? _read : _timelockGuide
+        }
+        return (isAlertRead() || isRead) ? _read : _unread
+    }
 
     function isAlertRead() {
         return alert.status != undefined && alert.status != null && alert.status === "READ"
@@ -45,6 +52,18 @@ Loader {
             onNextClicked: {
                 dashInfo.markRead()
                 isRead = true                
+            }
+        }
+    }
+
+    Component {
+        id: _timelockGuide
+        QHowOnChainTimelockWorks {
+            onPrevClicked: closeScreen()
+            onNextClicked: {
+                dashInfo.markRead()
+                dashInfo.markTimelockGuideSeen()
+                guideDone = true
             }
         }
     }

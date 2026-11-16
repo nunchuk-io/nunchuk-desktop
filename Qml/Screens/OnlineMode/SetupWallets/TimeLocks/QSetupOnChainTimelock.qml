@@ -262,6 +262,7 @@ QOnScreenContentTypeA {
                 }
                 QWarningBgMulti {
                     width: 728
+                    compact: true
                     icon: "qrc:/Images/Images/info-60px.svg"
                     txt.text: _setup.infoText
                     visible: _setup.infoBelowInputs

@@ -99,6 +99,7 @@ QOnScreenContentTypeA {
                     }
                 }
                 QWarningBgMulti {
+                    compact: true
                     width: parent.width
                     icon: "qrc:/Images/Images/warning-dark.svg"
                     color: "#FDEBD2"

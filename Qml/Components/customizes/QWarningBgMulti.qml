@@ -40,6 +40,7 @@ Rectangle {
     property string icon: ""
     property alias txt: _txt
     property int iSize: 24
+    property bool compact: false
 
     Row {
         id: _content
@@ -62,8 +63,10 @@ Rectangle {
             id: _txt
             width: _root.width - 2*12 - iSize - 12
             wrapMode: Text.WordWrap
-            lineHeight: 28
+            lineHeight: _root.compact ? 16 : 28
             lineHeightMode: Text.FixedHeight
+            font.pixelSize: _root.compact ? 12 : 16
+            font.weight: _root.compact ? Font.Bold : Font.Normal
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             anchors.verticalCenter: parent.verticalCenter

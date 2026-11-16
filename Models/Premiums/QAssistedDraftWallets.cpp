@@ -39,6 +39,12 @@ inline QString titleCase(QString str) {
     return tmp;
 }
 } // namespace
+static void clearWaitCursor() {
+    while (qApp->overrideCursor()) {
+        qApp->restoreOverrideCursor();
+    }
+}
+
 QAssistedDraftWallets::QAssistedDraftWallets(int mode)
     : QSwitchAPI(mode), mRefreshDeviceList(QDeviceListModelPtr(new DeviceListModel())),
       m_availableSignerListPtr(QSingleSignerListModelPtr(new SingleSignerListModel())) {
@@ -773,7 +779,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
         }
         return true;
     },[](bool ret) {
-        qApp->restoreOverrideCursor();
+        clearWaitCursor();
     });
 }
 
@@ -802,7 +808,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr
         }
         return true;
     },[](bool ret) {
-        qApp->restoreOverrideCursor();
+        clearWaitCursor();
     });
 }
 
@@ -833,7 +839,7 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &file
         }
         return true;
     },[](bool ret) {
-        qApp->restoreOverrideCursor();
+        clearWaitCursor();
     });
 }
 

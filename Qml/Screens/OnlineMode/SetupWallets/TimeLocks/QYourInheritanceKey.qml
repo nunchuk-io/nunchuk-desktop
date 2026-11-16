@@ -34,6 +34,14 @@ QOnScreenContentTypeB {
     property bool isConfigurable: false
     property bool isCustomized: false
     property int fallbackNumber: 0
+    bottomLeft: QTextButton {
+        width: 80
+        height: 48
+        label.text: isConfigurable ? STR.STR_QML_059 : STR.STR_QML_245
+        label.font.pixelSize: 16
+        type: eTypeF
+        onButtonClicked: prevClicked()
+    }
     label.text: !isConfigurable ? STR.STR_QML_1941 : fallbackNumber > 0 ? STR.STR_QML_2437.arg(fallbackNumber) : isCustomized ? STR.STR_QML_2434 : STR.STR_QML_1941
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
@@ -90,11 +98,12 @@ QOnScreenContentTypeB {
         }
 
         QWarningBgMulti {
-            width: 718
-            height: 80
+            width: isConfigurable ? 728 : 718
+            compact: isConfigurable
             icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: STR.STR_QML_1948
             anchors.bottom: parent.bottom
+            Component.onCompleted: if (!isConfigurable) height = 80
         }
     }
 }

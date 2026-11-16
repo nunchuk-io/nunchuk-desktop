@@ -115,6 +115,7 @@ QOnScreenContentTypeB {
             Repeater {
                 model: _intro.infoTexts
                 QWarningBgMulti {
+                    compact: true
                     width: parent.width
                     icon: "qrc:/Images/Images/info-60px.svg"
                     txt.text: modelData

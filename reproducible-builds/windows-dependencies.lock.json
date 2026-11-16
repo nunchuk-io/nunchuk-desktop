@@ -102,9 +102,9 @@
       ]
     },
     "hwi": {
-      "version": "3.2.5",
-      "url": "https://github.com/nogibi/HWI/releases/download/3.2.5/hwi-3.2.5-windows-x86_64.zip",
-      "sha256": "f8f32f3119b9e943adc6109403c1c70c939a0a49fe52c4195878f16714be09b5"
+      "version": "3.2.6",
+      "url": "https://github.com/nogibi/HWI/releases/download/3.2.6/hwi-3.2.6-windows-x86_64.zip",
+      "sha256": "96a2e96ba588abd631d361bcd72abfca6f09113d1a0bd8294904c2a31d5c9b0b"
     }
   },
   "actions": {

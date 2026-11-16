@@ -2640,6 +2640,24 @@ int QGroupDashboard::takePendingFallbackTimelock() {
     return ret;
 }
 
+static QString timelockGuideKey(const QJsonObject &draft) {
+    return QString("onchain_timelock_guide_seen/%1").arg(draft.value("id").toString());
+}
+
+bool QGroupDashboard::timelockGuideSeen() const {
+    if (m_walletDraftInfo.value("id").toString().isEmpty()) {
+        return false;
+    }
+    return AppSetting::instance()->value(timelockGuideKey(m_walletDraftInfo), false).toBool();
+}
+
+void QGroupDashboard::markTimelockGuideSeen() {
+    if (m_walletDraftInfo.value("id").toString().isEmpty()) {
+        return;
+    }
+    AppSetting::instance()->setValue(timelockGuideKey(m_walletDraftInfo), true);
+}
+
 bool QGroupDashboard::customizeIntroSeen() const {
     if (m_walletDraftInfo.value("id").toString().isEmpty()) {
         return false;

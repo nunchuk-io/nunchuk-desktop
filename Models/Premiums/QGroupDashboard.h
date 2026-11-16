@@ -210,6 +210,8 @@ class QGroupDashboard : public QBasePremium {
     Q_INVOKABLE int takePendingFallbackTimelock();
     Q_INVOKABLE QVariantList reusableKeys(int flat_index) const;
     Q_INVOKABLE void markCustomizeIntroSeen();
+    Q_INVOKABLE bool timelockGuideSeen() const;
+    Q_INVOKABLE void markTimelockGuideSeen();
     void runDraftPolicyRequest(std::function<bool(const QString &, QJsonObject &, QString &)> request);
     void UpdateReplacementKeys(const QJsonObject &data);
     bool GetKeyReplacementStatus();

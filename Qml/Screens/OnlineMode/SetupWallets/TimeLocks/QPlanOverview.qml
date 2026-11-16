@@ -146,6 +146,7 @@ QOnScreenContentTypeB {
                             text: _plan.fallbackCount > 0 ? STR.STR_QML_2472 : (_plan.customized ? STR.STR_QML_2471 : STR.STR_QML_2470)
                         }
                         QWarningBgMulti {
+                            compact: true
                             width: parent.width
                             icon: "qrc:/Images/Images/info-60px.svg"
                             txt.text: (_plan.fallbackCount > 0 || _plan.customized) ? STR.STR_QML_2474 : STR.STR_QML_2473
@@ -159,6 +160,7 @@ QOnScreenContentTypeB {
                         BodyText { text: STR.STR_QML_2479 }
                         BodyText { text: _plan.fallbackCount > 0 ? STR.STR_QML_2481 : STR.STR_QML_2480 }
                         QWarningBgMulti {
+                            compact: true
                             width: parent.width
                             icon: "qrc:/Images/Images/info-60px.svg"
                             txt.text: _plan.byCount(STR.STR_QML_2482, STR.STR_QML_2483, STR.STR_QML_2484)
