@@ -141,6 +141,7 @@ QOnScreenContentTypeB {
                                 var reusable = key.single_account === true ? dashInfo.reusableKeys(key.flat_index) : []
                                 if (reusable.length > 0) {
                                     _chooseKey.slot = key
+                                    _chooseKey.isChange = true
                                     _chooseKey.open()
                                     if (_chooseKey.itemInfo) {
                                         _chooseKey.itemInfo.selectedXfp = ""
@@ -429,6 +430,7 @@ QOnScreenContentTypeB {
             var reusable = canReuse ? dashInfo.reusableKeys(index) : []
             if (reusable.length > 0) {
                 _chooseKey.slot = modelData
+                _chooseKey.isChange = false
                 _chooseKey.open()
                 if (_chooseKey.itemInfo) {
                     _chooseKey.itemInfo.selectedXfp = ""
@@ -865,6 +867,11 @@ QOnScreenContentTypeB {
         id: _chooseKey
         property var slot: ({})
         property var pendingKey: null
+        property bool isChange: false
+        function resetSlotSigner() {
+            if (isChange) dashInfo.startChangeKeyAtIndex(slot.flat_index)
+            else dashInfo.startAddKeyAtIndex(slot.flat_index)
+        }
         content: _chooseKeyComp
         Component {
             id: _chooseKeyComp
@@ -873,10 +880,12 @@ QOnScreenContentTypeB {
                 onPrevClicked: _chooseKey.close()
                 onAddNewKeyClicked: {
                     _chooseKey.close()
+                    _chooseKey.resetSlotSigner()
                     openNewKeyGuide(_chooseKey.slot)
                 }
                 onKeySelected: function(key) {
                     _chooseKey.pendingKey = key
+                    _chooseKey.resetSlotSigner()
                     draftWalletObj.addExistingKeyAsync(key.xfp)
                 }
             }

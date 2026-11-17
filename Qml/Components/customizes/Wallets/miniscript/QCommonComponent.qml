@@ -73,23 +73,15 @@ Item {
                     height: 20
                     spacing: 4
 
-                    QLato {
-                        width: paintedWidth
+                    QMarqueeLato {
+                        id: _titleText
+                        width: parent.width - (_tapBadge.visible ? _tapBadge.width + 4 : 0)
                         height: 20
-                        text: miniscript.firstLine
+                        text: miniscript.firstLine + (getTitle() !== "" ? " " + getTitle() : "")
                         font.weight: Font.Normal
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    QLato {
-                        width: paintedWidth
-                        height: 20
-                        text: getTitle()
-                        font.weight: Font.Normal
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
                     }
                     Rectangle {
+                        id: _tapBadge
                         width: 70
                         height: 20
                         color: "#FFFFFF"

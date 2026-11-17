@@ -277,7 +277,10 @@ QJsonObject QInheritancePlan::JsBody() {
     QStringList emails = email.split(",");
     QJsonArray arrays;
     for (QString e : emails) {
-        arrays.append(e);
+        e = e.trimmed();
+        if (!e.isEmpty()) {
+            arrays.append(e);
+        }
     }
     body["notification_emails"] = arrays;
     body["notify_today"] = m_planInfo["buffer_period"].toObject()["enabled"].toBool();

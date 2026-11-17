@@ -76,7 +76,7 @@ Item {
                 spacing: 16
                 anchors.centerIn: parent
                 QLato {
-                    text: ClientController.user.email
+                    text: (ClientController.user.email !== undefined && ClientController.user.email !== "") ? ClientController.user.email : ((ClientController.user.username !== undefined && ClientController.user.username !== "") ? ClientController.user.username : ClientController.user.name)
                     width: parent.width
                     elide: Text.ElideRight
                     font.weight: Font.Bold

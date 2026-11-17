@@ -232,12 +232,22 @@ void QAssistedDraftWallets::addHardwareFromConfig(int hardwareType, const QStrin
 
     bool is_inheritance = currentSignerInfo.value("is_inheritance").toBool();
     QJsonArray tags = currentSignerInfo.value("tags").toArray();
-    if (tags.isEmpty() && !request.mTag.isEmpty()) {
-        tags.append(request.mTag);
-        if (is_inheritance) {
-            tags.append("INHERITANCE");
+    if (!request.mTag.isEmpty()) {
+        QStringList deviceTags;
+        for (const auto &hw : map_keys) {
+            deviceTags.append(hw.mTag);
         }
-        currentSignerInfo["tags"] = tags;
+        QJsonArray updated;
+        for (const auto &t : tags) {
+            if (!deviceTags.contains(t.toString())) {
+                updated.append(t);
+            }
+        }
+        updated.prepend(request.mTag);
+        if (is_inheritance && !updated.contains("INHERITANCE")) {
+            updated.append("INHERITANCE");
+        }
+        currentSignerInfo["tags"] = updated;
     }
 
     QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);

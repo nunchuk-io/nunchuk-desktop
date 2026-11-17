@@ -137,6 +137,7 @@
         <file>Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_TAPSIGNER_RECOVERED_SUCCESS.qml</file>
         <file>Qml/Components/customizes/Texts/QLato.qml</file>
+        <file>Qml/Components/customizes/Texts/QMarqueeLato.qml</file>
         <file>Qml/Components/customizes/Texts/QMontserrat.qml</file>
         <file>Qml/Components/customizes/Texts/QHeadLine.qml</file>
         <file>Qml/Components/customizes/Buttons/QBaseButton.qml</file>

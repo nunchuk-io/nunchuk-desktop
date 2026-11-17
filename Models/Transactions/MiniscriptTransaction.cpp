@@ -7,6 +7,9 @@
 #include "Chats/matrixbrigde.h"
 #include "AppModel.h"
 #include <QQmlEngine>
+#include <functional>
+#include <algorithm>
+#include <climits>
 #include <nunchukmatrix.h>
 #include "Servers/Byzantine.h"
 #include "Premiums/QGroupDashboard.h"
@@ -721,6 +724,89 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
             QJsonObject firstLineObj;
             frame.selfSatisfiable = frame.parentSatisfiable && frame.node->is_satisfiable(tx);
 
+            auto keySigned = [&](const std::string &xfp) -> bool {
+                bool signedStatus = signers[xfp];
+                auto list = allFinalSigners();
+                if (list && (!txJson().isEmpty() || isDummyTx())) {
+                    auto signer = list->getSingleSignerByFingerPrint(QString::fromStdString(xfp));
+                    if (!signer.isNull()) {
+                        signedStatus = signer->signerSigned();
+                    }
+                }
+                return signedStatus;
+            };
+            std::function<int(const nunchuk::ScriptNode &)> neededSignatures = [&](const nunchuk::ScriptNode &n) -> int {
+                switch (n.get_type()) {
+                case nunchuk::ScriptNode::Type::PK: {
+                    std::string xfp = qUtils::ParseSignerString(QString::fromStdString(n.get_keys()[0]), msg).get_master_fingerprint();
+                    return keySigned(xfp) ? 0 : 1;
+                }
+                case nunchuk::ScriptNode::Type::MULTI: {
+                    int done = 0;
+                    for (const auto &key : n.get_keys()) {
+                        std::string xfp = qUtils::ParseSignerString(QString::fromStdString(key), msg).get_master_fingerprint();
+                        if (keySigned(xfp)) done++;
+                    }
+                    return std::max(0, (int)n.get_k() - done);
+                }
+                case nunchuk::ScriptNode::Type::MUSIG: {
+                    int done = 0;
+                    try {
+                        if (!tx.get_keyset_status().empty()) {
+                            for (const auto &it : n.get_keyset_status(tx).second) {
+                                if (it.second) done++;
+                            }
+                        }
+                    } catch (...) {
+                    }
+                    return std::max(0, (int)n.get_k() - done);
+                }
+                case nunchuk::ScriptNode::Type::AND: {
+                    int sum = 0;
+                    for (const auto &sub : n.get_subs()) sum += neededSignatures(sub);
+                    return sum;
+                }
+                case nunchuk::ScriptNode::Type::OR:
+                case nunchuk::ScriptNode::Type::OR_TAPROOT: {
+                    int best = INT_MAX;
+                    for (const auto &sub : n.get_subs()) best = std::min(best, neededSignatures(sub));
+                    return best == INT_MAX ? 0 : best;
+                }
+                case nunchuk::ScriptNode::Type::ANDOR: {
+                    const auto &subs = n.get_subs();
+                    if (subs.size() < 3) return 0;
+                    return std::min(neededSignatures(subs[0]) + neededSignatures(subs[1]), neededSignatures(subs[2]));
+                }
+                case nunchuk::ScriptNode::Type::THRESH: {
+                    std::vector<int> needs;
+                    for (const auto &sub : n.get_subs()) needs.push_back(neededSignatures(sub));
+                    std::sort(needs.begin(), needs.end());
+                    int sum = 0;
+                    for (size_t i = 0; i < needs.size() && i < n.get_k(); i++) sum += needs[i];
+                    return sum;
+                }
+                default:
+                    return 0;
+                }
+            };
+            auto applyPendingForKeyChildren = [&](QJsonObject &obj) {
+                if (tx_status != (int)nunchuk::TransactionStatus::PENDING_SIGNATURES) return;
+                bool hasDirectKey = false;
+                for (const auto &sub : frame.node->get_subs()) {
+                    if (sub.get_type() == nunchuk::ScriptNode::Type::PK) {
+                        hasDirectKey = true;
+                        break;
+                    }
+                }
+                if (!hasDirectKey) return;
+                int pending = neededSignatures(*frame.node);
+                if (pending > 0) {
+                    obj["txStatus"] = tx_status;
+                    obj["pendingNonce"] = 0;
+                    obj["pendingSignature"] = pending;
+                }
+            };
+
             QString firstLine = qUtils::ScriptNodeIdToString(frame.node->get_id());
             firstLineObj["firstLine"] = firstLine;
             firstLineObj["satisfiable"] = frame.selfSatisfiable;
@@ -747,23 +833,8 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                 firstLineObj["timelockType"] = static_cast<int>(timelock.type());
                 firstLineObj["coinsGroup"] = generateCoinsGroup(frame.coinsGroup);
 
-                // BUGFIX: unlike MUSIG below, this never set txStatus/pendingSignature, so the
-                // "Pending x signatures" badge never showed for plain multisig nodes. Plain
-                // multisig has no nonce round, so only ever flag PENDING_SIGNATURES here - never
-                // propagate a PENDING_NONCE status onto this node (that only applies to MuSig).
-                // Pending count is against k (M of M-of-N), not all N keys - only M signatures
-                // are ever needed, so remaining = max(0, M - signedSoFar).
-                firstLineObj["pendingNonce"] = 0;
-                if (tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES) {
-                    int signedCount = 0;
-                    for (const auto &key : frame.node->get_keys()) {
-                        std::string xfp = qUtils::ParseSignerString(QString::fromStdString(key), msg).get_master_fingerprint();
-                        if (signers[xfp]) signedCount++;
-                    }
-                    firstLineObj["txStatus"] = tx_status;
-                    firstLineObj["pendingSignature"] = std::max(0, (int)frame.node->get_k() - signedCount);
-                }
-                frame.result.append(firstLineObj);
+                QJsonArray keyObjs;
+                int signedCount = 0;
                 for (int i = 0; i < frame.node->get_keys().size(); i++) {
                     QJsonObject keyObj;
                     QString firstLineKey = QString("%1%2.").arg(firstLine).arg(i + 1);
@@ -771,6 +842,18 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                     keyObj["satisfiable"] = frame.selfSatisfiable;
                     std::string xfp = qUtils::ParseSignerString(QString::fromStdString(frame.node->get_keys()[i]), msg).get_master_fingerprint();
                     keyObj = processKeyNodeJson(keyObj, QString::fromStdString(xfp), tx_status, signers[xfp]);
+                    if (keyObj.value("alreadySigned").toBool()) {
+                        signedCount++;
+                    }
+                    keyObjs.append(keyObj);
+                }
+                firstLineObj["pendingNonce"] = 0;
+                if (tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES && (int)frame.node->get_k() - signedCount > 0) {
+                    firstLineObj["txStatus"] = tx_status;
+                    firstLineObj["pendingSignature"] = (int)frame.node->get_k() - signedCount;
+                }
+                frame.result.append(firstLineObj);
+                for (const auto &keyObj : keyObjs) {
                     frame.result.append(keyObj);
                 }
                 break;
@@ -810,6 +893,7 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                 if (level == top_level) {
                     frame.coinsGroupList = qUtils::GetCoinsGroupedBySubPolicies(*frame.node, coins, chain_tip);
                 }
+                applyPendingForKeyChildren(firstLineObj);
                 frame.result.append(firstLineObj);
                 break;
             }
@@ -883,6 +967,7 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
             }
 
             default:
+                applyPendingForKeyChildren(firstLineObj);
                 frame.result.append(firstLineObj);
                 break;
             }
