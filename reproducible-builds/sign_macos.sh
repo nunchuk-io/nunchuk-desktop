@@ -135,9 +135,19 @@ fi
 umask 022
 
 codesign_deep() {
-    codesign --remove-signature "$1" >/dev/null 2>&1 || true
-    codesign --deep --force --verify --options=runtime --verbose --timestamp \
-        --entitlements "$2" -s "${MACOS_CERTIFICATE_NAME}" --keychain "${KEYCHAIN_PATH}" "$1"
+    local attempt
+    for attempt in 1 2 3; do
+        codesign --remove-signature "$1" >/dev/null 2>&1 || true
+        if codesign --deep --force --verify --options=runtime --verbose --timestamp \
+            --entitlements "$2" -s "${MACOS_CERTIFICATE_NAME}" --keychain "${KEYCHAIN_PATH}" "$1"; then
+            return 0
+        fi
+        if (( attempt < 3 )); then
+            sleep $((attempt * 30))
+        fi
+    done
+    echo "codesign failed after three attempts: $1" >&2
+    exit 1
 }
 
 echo "Signing internal components (dylib/so/bundle/plugin)..."
@@ -156,11 +166,24 @@ echo "Signing Nunchuk main executable..."
 codesign_deep "${MAIN_EXECUTABLE}" "${ENTITLEMENTS}"
 
 echo "Signing HWI..."
-codesign --remove-signature "${HWI_PATH}" >/dev/null 2>&1 || true
-codesign --force --options=runtime --timestamp \
-    --entitlements "${ENTITLEMENTS_HWI}" -s "${MACOS_CERTIFICATE_NAME}" \
-    --keychain "${KEYCHAIN_PATH}" "${HWI_PATH}"
-codesign --verify --strict --verbose=4 "${HWI_PATH}"
+hwi_signed=0
+for attempt in 1 2 3; do
+    codesign --remove-signature "${HWI_PATH}" >/dev/null 2>&1 || true
+    if codesign --force --options=runtime --timestamp \
+        --entitlements "${ENTITLEMENTS_HWI}" -s "${MACOS_CERTIFICATE_NAME}" \
+        --keychain "${KEYCHAIN_PATH}" "${HWI_PATH}" \
+        && codesign --verify --strict --verbose=4 "${HWI_PATH}"; then
+        hwi_signed=1
+        break
+    fi
+    if (( attempt < 3 )); then
+        sleep $((attempt * 30))
+    fi
+done
+if (( hwi_signed != 1 )); then
+    echo "Signing HWI failed after three attempts." >&2
+    exit 1
+fi
 
 echo "Signing QtWebEngineProcess helper..."
 webengine_helper_app="${APP_PATH}/Contents/Frameworks/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app"
@@ -175,13 +198,24 @@ if [[ -d "${webengine_helper_app}" ]]; then
 fi
 
 echo "Signing the app bundle..."
-codesign --remove-signature "${APP_PATH}" >/dev/null 2>&1 || true
-codesign --force --verify --options=runtime --verbose --timestamp \
-    --entitlements "${ENTITLEMENTS}" -s "${MACOS_CERTIFICATE_NAME}" \
-    --keychain "${KEYCHAIN_PATH}" "${APP_PATH}"
-
-echo "Verifying signature..."
-codesign --verify --deep --strict --verbose=4 "${APP_PATH}"
+app_signed=0
+for attempt in 1 2 3; do
+    codesign --remove-signature "${APP_PATH}" >/dev/null 2>&1 || true
+    if codesign --force --verify --options=runtime --verbose --timestamp \
+        --entitlements "${ENTITLEMENTS}" -s "${MACOS_CERTIFICATE_NAME}" \
+        --keychain "${KEYCHAIN_PATH}" "${APP_PATH}" \
+        && codesign --verify --deep --strict --verbose=4 "${APP_PATH}"; then
+        app_signed=1
+        break
+    fi
+    if (( attempt < 3 )); then
+        sleep $((attempt * 30))
+    fi
+done
+if (( app_signed != 1 )); then
+    echo "Signing the app bundle failed after three attempts." >&2
+    exit 1
+fi
 codesign -dvvvv "${APP_PATH}"
 
 echo "Creating notarization profile..."
