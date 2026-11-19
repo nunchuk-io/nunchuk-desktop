@@ -43,7 +43,7 @@ bool InternalEncryptKeyStore::getOrCreateKey(std::vector<uint8_t> &key)
     DBG_ERROR << "Keychain support is not built into this binary, cannot store the internal encrypt key";
     return false;
 #else
-    QKeychain::ReadPasswordJob readJob(QLatin1String(KEYCHAIN_SERVICE));
+    QKeychain::ReadPasswordJob readJob{QLatin1String(KEYCHAIN_SERVICE)};
     readJob.setAutoDelete(false);
     readJob.setKey(QLatin1String(KEYCHAIN_KEY));
     QEventLoop readLoop;
@@ -74,7 +74,7 @@ bool InternalEncryptKeyStore::getOrCreateKey(std::vector<uint8_t> &key)
         generated[i + 3] = static_cast<char>((word >> 24) & 0xFF);
     }
 
-    QKeychain::WritePasswordJob writeJob(QLatin1String(KEYCHAIN_SERVICE));
+    QKeychain::WritePasswordJob writeJob{QLatin1String(KEYCHAIN_SERVICE)};
     writeJob.setAutoDelete(false);
     writeJob.setKey(QLatin1String(KEYCHAIN_KEY));
     writeJob.setBinaryData(generated);

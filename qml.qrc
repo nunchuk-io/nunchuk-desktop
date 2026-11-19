@@ -1084,6 +1084,7 @@
         <file>Images/Device_Icons/other-hardware-dark.svg</file>
         <file>Images/Device_Icons/passport-hardware-dark.svg</file>
         <file>Images/Device_Icons/seedsigner-hardware-dark.svg</file>
+        <file>Images/Device_Icons/ic-krux-hardware-dark.svg</file>
         <file>Images/Device_Icons/trezor-hardware-dark.svg</file>
         <file>Images/save-backup-dark.svg</file>
         <file>Images/COLDCARD-register.svg</file>
@@ -1206,6 +1207,7 @@
         <file>Images/Device_Icons/other-hardware-light.svg</file>
         <file>Images/Device_Icons/passport-hardware-light.svg</file>
         <file>Images/Device_Icons/seedsigner-hardware-light.svg</file>
+        <file>Images/Device_Icons/ic-krux-hardware-light.svg</file>
         <file>Images/Device_Icons/trezor-hardware-light.svg</file>
         <file>Images/Device_Icons/unknown-key-light.svg</file>
         <file>Images/type-assisted-wallet.svg</file>

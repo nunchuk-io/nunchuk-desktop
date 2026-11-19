@@ -65,6 +65,7 @@ QIcon {
                 case "software":  img = "qrc:/Images/Images/Device_Icons/software_dark.svg"; break
                 case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
                 case "jade"     : img = "qrc:/Images/Images/Device_Icons/jade-hardware-dark.svg"; break
+                case "krux"     : img = "qrc:/Images/Images/Device_Icons/ic-krux-hardware-dark.svg"; break
                 default: img = ""
                 }
                 if (img === "") {
@@ -78,6 +79,7 @@ QIcon {
                     case "JADE":        img = "qrc:/Images/Images/Device_Icons/jade-hardware-dark.svg"; break
                     case "PASSPORT":    img = "qrc:/Images/Images/Device_Icons/passport-hardware-dark.svg"; break
                     case "SEEDSIGNER":  img = "qrc:/Images/Images/Device_Icons/seedsigner-hardware-dark.svg"; break
+                    case "KRUX":        img = "qrc:/Images/Images/Device_Icons/ic-krux-hardware-dark.svg"; break
                     default:img = "qrc:/Images/Images/Device_Icons/unknown-key-dark.svg"; break
                     }
                 }
