@@ -135,7 +135,7 @@ class BaseTransaction : public QStateFlow {
     Q_PROPERTY(QCoinTagsModel*      parentCoinsTag          READ parentCoinsTag          NOTIFY parentCoinsTagChanged)
     Q_PROPERTY(int                  keysetsCount            READ keysetsCount            NOTIFY nunchukTransactionChanged)
     Q_PROPERTY(bool                 isCpfp                  READ isCpfp                  NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString              packageFeeRate          READ packageFeeRate          NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString              packageFeeRate          READ packageFeeRate          NOTIFY packageFeeRateChanged)
     Q_PROPERTY(QString              scriptPathFeeRate       READ scriptPathFeeRate       NOTIFY nunchukTransactionChanged)
     Q_PROPERTY(QString              txidReplacing           READ txidReplacing           NOTIFY txidReplacingChanged)
     Q_PROPERTY(bool                 useScriptPath           READ useScriptPath           NOTIFY useScriptPathChanged)
@@ -272,6 +272,7 @@ class BaseTransaction : public QStateFlow {
     QUTXOListModel *inputCoins();
     QUTXOListModel *manualCoins();
     void createFilteringCoinInCoinSelection();
+    void clearManualCoins();
 
     QUTXOListModelPtr GetUtxoListSelected();
 
@@ -388,6 +389,7 @@ class BaseTransaction : public QStateFlow {
 
   signals:
     void nunchukTransactionChanged();
+    void packageFeeRateChanged();
     void isValidChanged();
     void replacedTxidChanged();
     void roomIdChanged();

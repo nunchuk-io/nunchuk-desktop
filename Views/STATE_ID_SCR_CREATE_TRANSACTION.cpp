@@ -28,10 +28,16 @@
 
 void SCR_CREATE_TRANSACTION_Entry(QVariant msg) {
     AppModel::instance()->startGetEstimatedFee();
-    const bool preserveFixedInputs = msg.toMap().value("preserveFixedInputCoins").toBool();
+    const QVariantMap context = msg.toMap();
+    const bool preserveFixedInputs = context.value("preserveFixedInputCoins").toBool();
     if (!preserveFixedInputs) {
         if (auto wallet = AppModel::instance()->walletInfo()) {
             wallet->setFixedInputCoins(false);
+        }
+    }
+    if (context.value("discardManualCoins").toBool()) {
+        if (auto trans = AppModel::instance()->transactionInfoPtr()) {
+            trans->clearManualCoins();
         }
     }
 }

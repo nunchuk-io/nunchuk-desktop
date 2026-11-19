@@ -274,7 +274,7 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationName("nunchuk");
     QCoreApplication::setOrganizationDomain("nunchuk.io");
     QCoreApplication::setApplicationName("NunchukClient");
-    QCoreApplication::setApplicationVersion("2.9.4");
+    QCoreApplication::setApplicationVersion("2.9.5");
 
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
