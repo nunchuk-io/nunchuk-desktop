@@ -20,6 +20,7 @@
 #include "bridgeifaces.h"
 #include "Chats/matrixbrigde.h"
 #include "Chats/ClientController.h"
+#include "core/security/InternalEncryptKeyStore.h"
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QDir>
@@ -141,6 +142,14 @@ bool bridge::configureFilesystemPaths(nunchuk::AppSettings &settings,
 
     DBG_INFO << "DATAPATH" << storagePath << "-> libnunchuk:" << effectiveStoragePath;
     settings.set_storage_path(effectiveStoragePath.toStdString());
+
+    std::vector<uint8_t> internalEncryptKey;
+    if (core::security::InternalEncryptKeyStore::getOrCreateKey(internalEncryptKey)) {
+        settings.set_internal_encrypt_key(internalEncryptKey);
+        core::security::InternalEncryptKeyStore::wipe(internalEncryptKey);
+    } else {
+        DBG_ERROR << "Proceeding without an internal encrypt key; on-device mnemonic/master xprv will not be encrypted this session";
+    }
     return true;
 }
 
@@ -1617,6 +1626,11 @@ void bridge::nunchukCacheMasterSignerXPub(const QString &mastersigner_id,
                                           QWarningMessage &msg)
 {
     nunchukiface::instance()->CacheMasterSignerXPub(mastersigner_id.toStdString(), msg);
+}
+
+void bridge::nunchukSetRecoveryMode(bool value, QWarningMessage &msg)
+{
+    nunchukiface::instance()->RecoveryMode(value, msg);
 }
 
 void bridge::nunchukUpdateAppSettings(QWarningMessage &msg)

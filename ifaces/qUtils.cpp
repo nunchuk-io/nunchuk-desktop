@@ -725,8 +725,11 @@ QStringList qUtils::DeriveAddresses(const nunchuk::Wallet &wallet, int from_inde
 int qUtils::GetIndexFromPath(const QString &path) {
     QWarningMessage msg;
     int index = -1;
+    QString normalized = path.trimmed();
+    normalized.replace('\'', 'h');
+    normalized.replace('H', 'h');
     try {
-        index = nunchuk::Utils::GetIndexFromPath(path.toStdString());
+        index = nunchuk::Utils::GetIndexFromPath(normalized.toStdString());
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);

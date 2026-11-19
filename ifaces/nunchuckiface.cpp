@@ -1347,6 +1347,22 @@ void nunchukiface::CacheMasterSignerXPub(const std::string &mastersigner_id, QWa
     }
 }
 
+void nunchukiface::RecoveryMode(bool value, QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->RecoveryMode(value);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
 int nunchukiface::GetChainTip(QWarningMessage &msg)
 {
     int ret = 0;

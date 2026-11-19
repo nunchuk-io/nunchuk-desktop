@@ -148,8 +148,14 @@ int QInheritanceClaiming::distinctKeyCount() const {
 }
 
 bool QInheritanceClaiming::sameKey(const QJsonObject &a, const QJsonObject &b) const {
+    auto normalizePath = [](QString path) {
+        path = path.trimmed();
+        path.replace('\'', 'h');
+        path.replace('H', 'h');
+        return path;
+    };
     return qUtils::strCompare(a.value("xfp").toString(), b.value("xfp").toString()) &&
-           a.value("derivation_path").toString() == b.value("derivation_path").toString() &&
+           normalizePath(a.value("derivation_path").toString()) == normalizePath(b.value("derivation_path").toString()) &&
            a.value("xpub").toString() == b.value("xpub").toString();
 }
 

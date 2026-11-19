@@ -36,6 +36,7 @@
 #include "OnBoardingModel.h"
 #include "QThreadForwarder.h"
 #include <QThreadPool>
+#include <QMessageBox>
 
 #include "features/wallets/usecases/SyncWalletFromRemoteUseCase.h"
 using features::wallets::usecases::SyncWalletFromRemoteUseCase;
@@ -49,6 +50,37 @@ public:
         DBG_INFO << "Running task on thread:" << QThread::currentThread();
     }
 };
+
+namespace {
+
+bool isInternalEncryptKeyError(int code, const QString &what, EWARNING::WarningType type)
+{
+    if (EWARNING::WarningType::EXCEPTION_MSG != type ||
+        nunchuk::NunchukException::INVALID_STATE != code) {
+        return false;
+    }
+    return what.contains("Internal encrypt key is not setup") ||
+           what.contains("Invalid encrypted value");
+}
+
+bool confirmAndEnableRecoveryMode()
+{
+    const auto answer = QMessageBox::warning(
+        nullptr, QObject::tr("Nunchuk"),
+        QObject::tr("This device's encryption key is missing or no longer matches your data. "
+                    "Continuing will permanently erase the on-device backup (mnemonic/master key) "
+                    "for the affected signer. You will need to recover it from your own backup "
+                    "afterward. Do you want to continue?"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (answer != QMessageBox::Yes) {
+        return false;
+    }
+    QWarningMessage recoveryMsg;
+    bridge::nunchukSetRecoveryMode(true, recoveryMsg);
+    return (int)EWARNING::WarningType::NONE_MSG == recoveryMsg.type();
+}
+
+}  // namespace
 
 AppModel::AppModel(): m_inititalized{false},
     m_walletList(QWalletListModelPtr(new WalletListModel())),
@@ -1432,6 +1464,21 @@ void AppModel::recieveToast(int code, const QString &what, EWARNING::WarningType
             if(message.type() == (int)EWARNING::WarningType::EXCEPTION_MSG && message.what().contains("invalid MXC")){
                 DBG_ERROR << "EXCEPTION:" << message.what() << "Code:" << message.code();
                 return;
+            }
+            if(isInternalEncryptKeyError(code, what, type)){
+                if(confirmAndEnableRecoveryMode()){
+                    QJsonObject recovered;
+                    QWarningMessage recoveredMsg;
+                    recoveredMsg.setWarningMessage(0, QObject::tr("The on-device backup for the affected signer has been cleared. Please recover it from your own backup."), EWARNING::WarningType::WARNING_MSG);
+                    recovered["contentDisplay"] = recoveredMsg.contentDisplay();
+                    recovered["explaination"  ] = recoveredMsg.explaination();
+                    recovered["what"          ] = recoveredMsg.what();
+                    recovered["code"          ] = recoveredMsg.code();
+                    recovered["type"          ] = recoveredMsg.type();
+                    recovered["popupType"     ] = recoveredMsg.popupType();
+                    QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(recovered));
+                    return;
+                }
             }
             QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(data));
         });

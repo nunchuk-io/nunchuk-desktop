@@ -622,6 +622,8 @@ void nunchukBlockChanged(const int height, const QString &hex_header);
 void nunchukCacheMasterSignerXPub(const QString &mastersigner_id,
                                   QWarningMessage &msg);
 
+void nunchukSetRecoveryMode(bool value, QWarningMessage &msg);
+
 void nunchukUpdateAppSettings(QWarningMessage &msg);
 
 bool nunchukExportWallet(const QString &wallet_id, const QString &file_path, const nunchuk::ExportFormat format);

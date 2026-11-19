@@ -308,6 +308,8 @@ public:
 
     void CacheMasterSignerXPub(const std::string& mastersigner_id, QWarningMessage& msg);
 
+    void RecoveryMode(bool value, QWarningMessage& msg);
+
     int GetChainTip(QWarningMessage& msg);
 
     bool ExportHealthCheckMessage(const std::string& message, const std::string& file_path, QWarningMessage& msg);
