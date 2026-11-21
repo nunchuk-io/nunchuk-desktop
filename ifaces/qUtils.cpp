@@ -788,6 +788,18 @@ QString qUtils::GetBip32DerivationPath(const nunchuk::WalletType &wallet_type, c
     return QString::fromStdString(path);
 }
 
+bool qUtils::IsDefaultBip32Path(const QString &path, const nunchuk::AddressType &address_type, const nunchuk::WalletType &wallet_type) {
+    bool ret {true};
+    try {
+        ret = nunchuk::Utils::IsDefaultBip32Path(path.trimmed().toStdString(), address_type, wallet_type);
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    } catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
 QString qUtils::ExportBitcoinSignedMessage(const QString &message, const QString &address, const QString &signature) {
     nunchuk::BitcoinSignedMessage btc(message.toStdString(), address.toStdString(), signature.toStdString());
     return QString::fromStdString(nunchuk::ExportBitcoinSignedMessage(btc));

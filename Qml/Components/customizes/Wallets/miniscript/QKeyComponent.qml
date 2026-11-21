@@ -39,6 +39,12 @@ Item {
     }
     property var showEdit: true
     readonly property bool hasKey: miniscript.keyObj !== null && miniscript.keyObj !== undefined
+    readonly property bool isNonStandardPath: hasKey &&
+                                               (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) &&
+                                               (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM) &&
+                                               !AppSetting.isDefaultBip32Path(miniscript.keyObj.singleSigner_derivationPath,
+                                                                              newWalletInfo.walletAddressType,
+                                                                              newWalletInfo.walletType)
     signal bip32PathClick(string key, string xfp, string path)
 
     Row {
@@ -151,8 +157,13 @@ Item {
                          && miniscript.keyObj !== undefined
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM
-                text: hasKey ? qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath) : ""
-                color: miniscript.keyStrCount > 1 ? "#CF4018": "#757575"
+                text: {
+                    if (!hasKey) return ""
+                    if (isNonStandardPath) return qsTr("BIP32 path: %1 ⚠︎").arg(miniscript.keyObj.singleSigner_derivationPath)
+                    return qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath)
+                }
+                color: miniscript.keyStrCount > 1 ? "#CF4018" : (isNonStandardPath ? "#A66800" : "#757575")
+                font.weight: isNonStandardPath ? Font.Bold : Font.Normal
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 font.pixelSize: 12

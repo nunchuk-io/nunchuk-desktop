@@ -134,6 +134,28 @@ bool QInheritancePlan::isSetup() const {
     return qUtils::strCompare(email, me.email);
 }
 
+static long int activationSeconds(const QString &activation_date, const QString &format) {
+    const QString value = activation_date.trimmed();
+    for (const QString &f : {format, QString("MM/dd/yyyy hh:mm"), QString("MM/dd/yyyy")}) {
+        if (f.isEmpty())
+            continue;
+        QDateTime dt = QDateTime::fromString(value, f);
+        if (dt.isValid()) {
+            return static_cast<long int>(dt.toSecsSinceEpoch());
+        }
+    }
+    return 0;
+}
+
+bool QInheritancePlan::activationDateChanged() const {
+    if (auto w = walletInfoPtr()) {
+        if (w->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+            return false;
+        }
+    }
+    return m_planInfo.value("activation_date").toString().trimmed() != m_planInfoCurrent.value("activation_date").toString().trimmed();
+}
+
 QString QInheritancePlan::formatDateTime() const {
     if (auto walletInfo = walletInfoPtr()) {
         if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
@@ -284,15 +306,11 @@ QJsonObject QInheritancePlan::JsBody() {
     }
     body["notification_emails"] = arrays;
     body["notify_today"] = m_planInfo["buffer_period"].toObject()["enabled"].toBool();
-    QString activation_date = m_planInfo["activation_date"].toString();
-    long int t = qUtils::GetTimeSecond(activation_date); // seconds
-    double activation_time_milis = m_planInfoCurrent["activation_time_milis"].toDouble();
-    long int old_activeTime = static_cast<long int>(activation_time_milis / 1000); // ms → seconds
-    // Both t and old_activeTime are in seconds — use fromSecsSinceEpoch for correct date display.
-    if (QDateTime::fromSecsSinceEpoch(old_activeTime).date() == QDateTime::fromSecsSinceEpoch(t).date()) {
-        body["activation_time_milis"] = activation_time_milis;
-    } else {
+    if (activationDateChanged()) {
+        long int t = activationSeconds(m_planInfo["activation_date"].toString(), formatDateTime());
         body["activation_time_milis"] = (double)t * 1000;
+    } else if (m_planInfoCurrent.contains("activation_time_milis") && !m_planInfoCurrent.value("activation_time_milis").isNull()) {
+        body["activation_time_milis"] = m_planInfoCurrent.value("activation_time_milis");
     }
     body["notification_preferences"] = m_planInfo["notification_preferences"].toObject();
     body["timezone"] = m_planInfo["timezone"].toString();
@@ -417,14 +435,13 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     if (!wallet) {
         return false;
     }
-    QString activation_date = m_planInfo["activation_date"].toString();
-    long int activeTime = qUtils::GetTimeSecond(activation_date);                                                  // seconds
-    long int old_activeTime = static_cast<long int>(m_planInfoCurrent["activation_time_milis"].toDouble() / 1000); // ms → seconds
-    long int currentTime = qUtils::GetCurrentTimeSecond();                                                         // seconds
-    // All three values are in seconds — use fromSecsSinceEpoch for correct date comparison.
-    if (!isCancel && QDateTime::fromSecsSinceEpoch(old_activeTime).date() != QDateTime::fromSecsSinceEpoch(activeTime).date() && activeTime < currentTime) {
-        AppModel::instance()->showToast(0, STR_CPP_120, EWARNING::WarningType::ERROR_MSG);
-        return false;
+    if (!isCancel && activationDateChanged()) {
+        long int activeTime = activationSeconds(m_planInfo["activation_date"].toString(), formatDateTime());
+        long int currentTime = qUtils::GetCurrentTimeSecond();
+        if (activeTime < currentTime) {
+            AppModel::instance()->showToast(0, STR_CPP_120, EWARNING::WarningType::ERROR_MSG);
+            return false;
+        }
     }
     QJsonObject bodyCancel;
     bodyCancel["wallet"] = wallet_id();

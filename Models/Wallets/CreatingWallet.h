@@ -34,6 +34,9 @@ public slots:
     void clearPassphrase(const QString& masterFingerPrint);
     void startGetXpubs(int indexXpub);
     bool editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path) override;
+    bool hasNonStandardBip32PathKeys();
+    int nonStandardBip32PathKeyCount();
+    void removeNonStandardBip32PathKeys();
 signals:
     void walletOptTypeChanged();
     void assignAvailableSignersChanged();

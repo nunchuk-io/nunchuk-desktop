@@ -35,6 +35,12 @@ Item {
     height: 84
     property bool hasEditPath: false
     property alias signerData: dataSingle
+    readonly property bool isNonStandardPath: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) &&
+                                               (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM) &&
+                                               dataSingle.single_checked &&
+                                               !AppSetting.isDefaultBip32Path(dataSingle.single_derivationPath,
+                                                                              AppModel.newWalletInfo.walletAddressType,
+                                                                              AppModel.newWalletInfo.walletType)
     signal btnClicked()
     signal bip32PathClick(var xfp, var path)
     QSingleSignerData {
@@ -129,10 +135,12 @@ Item {
                 }
             }
             QLato {
-                visible: hasEditPath
+                visible: hasEditPath || isNonStandardPath
                 width: paintedWidth + 4 + 12
-                text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
-                color: "#757575"
+                text: isNonStandardPath ? qsTr("BIP32 path: %1 ⚠︎").arg(dataSingle.single_derivationPath)
+                                        : qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
+                color: isNonStandardPath ? "#A66800" : "#757575"
+                font.weight: isNonStandardPath ? Font.Bold : Font.Normal
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 font.pixelSize: 12

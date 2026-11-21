@@ -21,6 +21,7 @@
 #include "AppModel.h"
 #include "Servers/Draco.h"
 #include "ViewsEnums.h"
+#include "Premiums/QWalletManagement.h"
 #include "core/bridge/ExternalBridges.h"
 #include "core/utils/Utils.h"
 #include "utils/enumconverter.hpp"
@@ -44,6 +45,12 @@ QSingleSigner::QSingleSigner(const nunchuk::SingleSigner &singleKey) : isDraft(f
             }
             if (resolved.isEmpty() && AppModel::instance()->remoteSignerList()) {
                 resolved = AppModel::instance()->remoteSignerList()->getRemoteSignerNameByFingerPrint(xfp);
+            }
+            if (resolved.isEmpty() || qUtils::strCompare(resolved, "import")) {
+                QString serverName = WalletsMng->serverSignerName(xfp);
+                if (!serverName.isEmpty()) {
+                    resolved = serverName;
+                }
             }
             if (!resolved.isEmpty()) {
                 DBG_INFO << "Resolved m_signername"

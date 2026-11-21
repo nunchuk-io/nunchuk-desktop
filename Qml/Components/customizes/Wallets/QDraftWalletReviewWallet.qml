@@ -41,6 +41,8 @@ QOnScreenContentTypeA {
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var newWalletInfo  : AppModel.newWalletInfo
     property bool nextEnabled: true
+    signal removeNonStandardKeysClicked()
+    signal createAnywayClicked()
     content: Item {
         anchors {
             top: parent.top
@@ -74,11 +76,29 @@ QOnScreenContentTypeA {
         type: eTypeE
         enabled: nextEnabled
         onButtonClicked: {
-            nextClicked()
+            if (newWalletInfo.hasNonStandardBip32PathKeys()) {
+                _keyCompatibilityWarning.open()
+            } else {
+                nextClicked()
+            }
         }
     }
     property var topUpXpub: AppModel.newWalletInfo
     QSetupTopUpXpubFlow {
 
+    }
+    QPopupKeyCompatibilityWarning {
+        id: _keyCompatibilityWarning
+        signersModel: newWalletInfo.walletSingleSignerAssigned
+        addressType: newWalletInfo.walletAddressType
+        walletType: newWalletInfo.walletType
+        singleKey: newWalletInfo.nonStandardBip32PathKeyCount() <= 1
+        onRemoveNonStandardKeys: {
+            removeNonStandardKeysClicked()
+            prevClicked()
+        }
+        onCreateAnyway: {
+            nextClicked()
+        }
     }
 }

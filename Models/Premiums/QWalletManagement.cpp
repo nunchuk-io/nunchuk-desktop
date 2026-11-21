@@ -218,6 +218,19 @@ QString QWalletManagement::slugInfo(WalletId wallet_id) const {
     return "";
 }
 
+QString QWalletManagement::serverSignerName(const QString &xfp) const {
+    for (auto it = mWalletsInfo.constBegin(); it != mWalletsInfo.constEnd(); ++it) {
+        for (const auto &js : it.value().value("signers").toArray()) {
+            QJsonObject signer = js.toObject();
+            QString name = signer.value("name").toString().trimmed();
+            if (qUtils::strCompare(signer.value("xfp").toString(), xfp) && !name.isEmpty() && !qUtils::strCompare(name, "import")) {
+                return name;
+            }
+        }
+    }
+    return QString();
+}
+
 QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const {
     if (mWalletsInfo.contains(wallet_id)) {
         return mWalletsInfo.value(wallet_id);

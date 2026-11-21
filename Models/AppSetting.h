@@ -296,6 +296,10 @@ public:
     Q_INVOKABLE void updateFavoriteAddress(const QString &label, const QString &address);
     Q_INVOKABLE bool validateAddress(const QString &address);
 
+    Q_INVOKABLE bool isDefaultBip32Path(const QString &path, int addressType, int walletType);
+    Q_INVOKABLE QString bip32PathWarningFlag(int addressType, int walletType);
+    Q_INVOKABLE QString bip32PathWarningCopy(int addressType, int walletType, bool singleKey);
+
     int feeSetting();
     void setFeeSetting(int fee);
 

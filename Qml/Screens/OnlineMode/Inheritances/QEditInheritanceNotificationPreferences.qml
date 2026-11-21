@@ -231,7 +231,16 @@ QOnScreenContentTypeB {
         onConfirmNo: close()
         onConfirmYes: {
             close()
-            _Notification.nextClicked()
+            if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                inheritancePlanInfo.editPlanInfoOnchain({
+                    "setup_type": "emails",
+                    "display_emails": ""
+                })
+                ServiceSetting.planSetupFlow = false
+                closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+            } else {
+                _Notification.nextClicked()
+            }
         }
     }
 

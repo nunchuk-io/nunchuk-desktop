@@ -693,6 +693,7 @@
         <file>Qml/Components/customizes/Popups/QTimePicker.qml</file>
         <file>Qml/Components/customizes/Wallets/QPopupTaprootWarningAndInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QPopupMiniscriptTemplateSwitch.qml</file>
+        <file>Qml/Components/customizes/Wallets/QPopupKeyCompatibilityWarning.qml</file>
         <file>Qml/Components/origins/QScreenStateFlow.qml</file>
         <file>Qml/Screens/OnlineMode/Coins/QCoinAge.qml</file>
         <file>Qml/Components/customizes/Transactions/QRoundBadgeStatus.qml</file>

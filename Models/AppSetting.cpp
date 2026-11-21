@@ -21,6 +21,8 @@
 #include "AppModel.h"
 #include "Servers/Draco.h"
 #include "QOutlog.h"
+#include "qUtils.h"
+#include "nunchuk.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -1212,6 +1214,37 @@ bool AppSetting::validateAddress(const QString &address)
     QString message = QString("Invalid address: %1").arg(address);
     AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
     return false;
+}
+
+bool AppSetting::isDefaultBip32Path(const QString &path, int addressType, int walletType)
+{
+    if ((nunchuk::WalletType)walletType != nunchuk::WalletType::MULTI_SIG &&
+        (nunchuk::WalletType)walletType != nunchuk::WalletType::MINISCRIPT) {
+        return true;
+    }
+    return qUtils::IsDefaultBip32Path(path,
+                                       (nunchuk::AddressType)addressType,
+                                       (nunchuk::WalletType)walletType);
+}
+
+QString AppSetting::bip32PathWarningFlag(int addressType, int walletType)
+{
+    if ((nunchuk::AddressType)addressType == nunchuk::AddressType::NATIVE_SEGWIT) {
+        return QString::fromUtf8("⚠︎ Not the standard path for multisig. Please use BIP48 derivation.");
+    }
+    return QString::fromUtf8("⚠︎ Not the standard path for this wallet type.");
+}
+
+QString AppSetting::bip32PathWarningCopy(int addressType, int walletType, bool singleKey)
+{
+    QString subject = singleKey ? "This key doesn't" : "These keys don't";
+    if ((nunchuk::AddressType)addressType == nunchuk::AddressType::NATIVE_SEGWIT) {
+        nunchuk::Chain chain = static_cast<nunchuk::Chain>(primaryServer());
+        QString standardPath = (chain == nunchuk::Chain::MAIN) ? "m/48'/0'/0'/2'" : "m/48'/1'/0'/2'";
+        return QString("%1 use the standard BIP32 path for a Native SegWit multisig wallet (%2).")
+                .arg(subject, standardPath);
+    }
+    return QString("%1 use the standard BIP32 path for this wallet type.").arg(subject);
 }
 
 int AppSetting::feeSetting()

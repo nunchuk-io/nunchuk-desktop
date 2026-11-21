@@ -213,6 +213,46 @@ jobs:
           set -euo pipefail
           gh release upload "${VERSION}" assets/SHA256SUMS assets/SHA256SUMS.asc --clobber
 
+      - name: Update release notes
+        if: ${{ inputs.upload_to_release }}
+        run: |
+          set -euo pipefail
+          base="https://github.com/${GH_REPO}/releases/download/${VERSION}"
+          macos_arm="nunchuk-macos-v${VERSION}-arm64.dmg"
+          macos_x64="nunchuk-macos-v${VERSION}-x86_64.dmg"
+          win_setup="nunchuk-windows-v${VERSION}-x64-setup-unsigned.exe"
+          win_portable="nunchuk-windows-v${VERSION}-x64-portable-unsigned.zip"
+          linux_x64="nunchuk-linux-v${VERSION}-x86_64.AppImage"
+          linux_arm="nunchuk-linux-v${VERSION}-aarch64.AppImage"
+
+          names="$(gh release view "${VERSION}" --json assets --jq '.assets[].name')"
+          missing=0
+          for f in "${macos_arm}" "${macos_x64}" "${win_setup}" "${win_portable}" "${linux_x64}" "${linux_arm}"; do
+            if ! grep -qxF -- "${f}" <<<"${names}"; then
+              echo "Release asset not found: ${f}" >&2
+              missing=1
+            fi
+          done
+          [[ "${missing}" -eq 0 ]]
+
+          cat > release-notes.md <<EOF
+          * Bug fixes and improvements
+
+          🍏 macOS
+          * Apple Silicon (M1, M2, M3, M4, etc.): [Download ${macos_arm}](${base}/${macos_arm})
+          * Intel Macs: [Download ${macos_x64}](${base}/${macos_x64})
+          🪟 Windows (64-bit Intel / AMD)
+          * Installer: [${win_setup}](${base}/${win_setup})
+          * Portable (No installation required): [${win_portable}](${base}/${win_portable})
+          🐧 Linux
+          * Intel / AMD 64-bit (Standard PC / Laptop): [Download ${linux_x64}](${base}/${linux_x64})
+          * ARM 64-bit (Raspberry Pi & ARM Single-Board Computers): [Download ${linux_arm}](${base}/${linux_arm})
+
+          [GPG public key](https://keys.openpgp.org/search?q=${RELEASE_GPG_FINGERPRINT}) | [Build instructions](https://github.com/nunchuk-io/docs/blob/main/build_instructions.md)
+          EOF
+
+          gh release edit "${VERSION}" --notes-file release-notes.md
+
       - name: Upload signed checksums as workflow artifact
         uses: actions/upload-artifact@v4
         with:

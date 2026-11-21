@@ -79,6 +79,16 @@ QScreen {
                 }
                 QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
             }
+            onRemoveNonStandardKeysClicked: {
+                var keys = sandbox.groupKeys
+                for (var i = keys.length - 1; i >= 0; i--) {
+                    var k = keys[i]
+                    if (k.single_signer_is_local &&
+                        !AppSetting.isDefaultBip32Path(k.singleSigner_derivationPath, sandbox.addressType, NUNCHUCKTYPE.MULTI_SIG)) {
+                        sandbox.removeKey(i)
+                    }
+                }
+            }
         }
     }
     Component {

@@ -223,6 +223,70 @@ bool CreatingWallet::confirmAndAssignKeysToWallet()
     }
 }
 
+bool CreatingWallet::hasNonStandardBip32PathKeys()
+{
+    const auto signersList = singleSignersAssigned();
+    if (!signersList) {
+        return false;
+    }
+    const auto address_type = static_cast<nunchuk::AddressType>(walletAddressType());
+    const auto wallet_type = static_cast<nunchuk::WalletType>(walletType());
+    const auto full_list = signersList->fullList();
+    for (const QSingleSignerPtr &p : full_list) {
+        if (!p) continue;
+        if (p->signerType() == (int)nunchuk::SignerType::SERVER ||
+            p->signerType() == (int)nunchuk::SignerType::PLATFORM) continue;
+        if (!qUtils::IsDefaultBip32Path(p->derivationPath(), address_type, wallet_type)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int CreatingWallet::nonStandardBip32PathKeyCount()
+{
+    const auto signersList = singleSignersAssigned();
+    if (!signersList) {
+        return 0;
+    }
+    const auto address_type = static_cast<nunchuk::AddressType>(walletAddressType());
+    const auto wallet_type = static_cast<nunchuk::WalletType>(walletType());
+    int count = 0;
+    const auto full_list = signersList->fullList();
+    for (const QSingleSignerPtr &p : full_list) {
+        if (!p) continue;
+        if (p->signerType() == (int)nunchuk::SignerType::SERVER ||
+            p->signerType() == (int)nunchuk::SignerType::PLATFORM) continue;
+        if (!qUtils::IsDefaultBip32Path(p->derivationPath(), address_type, wallet_type)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+void CreatingWallet::removeNonStandardBip32PathKeys()
+{
+    const auto signersList = singleSignersAssigned();
+    const auto available_signers = assignAvailableSigners();
+    if (!signersList || !available_signers) {
+        return;
+    }
+    const auto address_type = static_cast<nunchuk::AddressType>(walletAddressType());
+    const auto wallet_type = static_cast<nunchuk::WalletType>(walletType());
+    const auto full_list = signersList->fullList();
+    for (const QSingleSignerPtr &p : full_list) {
+        if (!p) continue;
+        if (p->signerType() == (int)nunchuk::SignerType::SERVER ||
+            p->signerType() == (int)nunchuk::SignerType::PLATFORM) continue;
+        if (!qUtils::IsDefaultBip32Path(p->derivationPath(), address_type, wallet_type)) {
+            const int index = available_signers->getIndexByFingerPrint(p->fingerPrint());
+            if (index >= 0) {
+                available_signers->setUserChecked(false, index);
+            }
+        }
+    }
+}
+
 void CreatingWallet::clearPassphrase(const QString &masterFingerPrint)
 {
     const auto available_signers = assignAvailableSigners();

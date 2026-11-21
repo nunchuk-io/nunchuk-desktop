@@ -34,6 +34,12 @@ import "../../../../localization/STR_QML.js" as STR
 Loader {
     id: _source
     property alias signerData: dataSingle
+    readonly property bool isNonStandardPath: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) &&
+                                               (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM) &&
+                                               dataSingle.single_masterFingerPrint !== "" &&
+                                               !AppSetting.isDefaultBip32Path(dataSingle.single_derivationPath,
+                                                                              sandbox.addressType,
+                                                                              NUNCHUCKTYPE.MULTI_SIG)
     QSingleSignerData {
         id: dataSingle
     }
@@ -256,6 +262,16 @@ Loader {
                             }
                         }
                     }
+                    QLato {
+                        width: 280
+                        wrapMode: Text.WordWrap
+                        text: AppSetting.bip32PathWarningFlag(sandbox.addressType, NUNCHUCKTYPE.MULTI_SIG)
+                        color: "#A66800"
+                        font.weight: Font.Bold
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignLeft
+                        visible: isNonStandardPath
+                    }
                 }
             }
             QTextButton {
@@ -368,6 +384,16 @@ Loader {
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 12
+                    }
+                    QLato {
+                        width: 280
+                        wrapMode: Text.WordWrap
+                        text: AppSetting.bip32PathWarningFlag(sandbox.addressType, NUNCHUCKTYPE.MULTI_SIG)
+                        color: "#A66800"
+                        font.weight: Font.Bold
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignLeft
+                        visible: isNonStandardPath
                     }
                 }
             }

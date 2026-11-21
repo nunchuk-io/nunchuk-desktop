@@ -80,6 +80,9 @@ Loader {
                 AppModel.startCreateWallet(false, "");
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
+            onRemoveNonStandardKeysClicked: {
+                newWalletInfo.removeNonStandardBip32PathKeys()
+            }
         }
     }
 }

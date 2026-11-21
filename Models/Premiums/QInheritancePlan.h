@@ -55,6 +55,7 @@ class QInheritancePlan : public QBasePremium {
 
   private:
     QJsonObject ConvertToDisplayQml(QJsonObject data);
+    bool activationDateChanged() const;
 
   public:
     void UpdateFromDummyTx(QJsonObject data);

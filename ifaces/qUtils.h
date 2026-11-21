@@ -153,6 +153,8 @@ bool IsSilentPaymentAddress(const QString &address);
 
 QString GetBip32DerivationPath(const nunchuk::WalletType &wallet_type, const nunchuk::AddressType &address_type);
 
+bool IsDefaultBip32Path(const QString &path, const nunchuk::AddressType &address_type, const nunchuk::WalletType &wallet_type);
+
 QString ExportBitcoinSignedMessage(const QString &message, const QString &address, const QString &signature);
 
 QString qAddressTypeToStr(const nunchuk::AddressType &address_type);

@@ -16,6 +16,7 @@ class QWalletManagement : public QObject {
     virtual ~QWalletManagement();
     void GetListGroupWallet();
     void UpdateSigner(const QJsonObject &signer);
+    QString serverSignerName(const QString &xfp) const;
     void SyncDeleteWallets(int mode);
     void UpdateSyncWalletFlows();
     void StoreWalletsInfo(const QJsonArray &walletArray);

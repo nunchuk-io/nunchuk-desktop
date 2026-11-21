@@ -36,6 +36,11 @@ Item {
     width: 350
     height: _column.childrenRect.height + 12*2
     property alias signerData: dataSingle
+    readonly property bool isNonStandardPath: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) &&
+                                               (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM) &&
+                                               !AppSetting.isDefaultBip32Path(dataSingle.single_derivationPath,
+                                                                              AppModel.newWalletInfo.walletAddressType,
+                                                                              AppModel.newWalletInfo.walletType)
     signal requestGetXpubs(var num, var name)
     QSingleSignerData {
         id: dataSingle
@@ -139,11 +144,22 @@ Item {
                 height: 16
                 width: parent.width
                 text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
-                color: "#031F2B"
+                color: isNonStandardPath ? "#A66800" : "#031F2B"
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 font.pixelSize: 12
+                font.weight: isNonStandardPath ? Font.Bold : Font.Normal
                 visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
+            }
+            QLato {
+                width: parent.width
+                text: AppSetting.bip32PathWarningFlag(AppModel.newWalletInfo.walletAddressType, AppModel.newWalletInfo.walletType)
+                color: "#A66800"
+                font.weight: Font.Bold
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                visible: isNonStandardPath
             }
         }
         QTextButton {
