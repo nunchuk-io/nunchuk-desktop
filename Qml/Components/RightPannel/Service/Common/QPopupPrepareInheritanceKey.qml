@@ -93,7 +93,7 @@ QPopupOverlayScreen {
         _infoPopup.inheritance_key_count = inheritance_key_count
         if (inheritance_key_count == 1) {
             stateScreen.setScreenFlow("prepare-inheritance-key")
-        } else if (_infoPopup.showNotices()) {
+        } else if (ServiceSetting.servicesTag.showSeparateDevices(inheritance_key_count)) {
             stateScreen.setScreenFlow("separate-devices")
         } else {
             stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
@@ -202,7 +202,13 @@ QPopupOverlayScreen {
             onNextClicked: {
                 ServiceSetting.servicesTag.setClaimKeyCount(selectedCount)
                 _infoPopup.inheritance_key_count = selectedCount
-                stateScreen.setScreenFlow(selectedCount > 1 ? "separate-devices" : "prepare-inheritance-key")
+                if (selectedCount <= 1) {
+                    stateScreen.setScreenFlow("prepare-inheritance-key")
+                } else if (ServiceSetting.servicesTag.showSeparateDevices(selectedCount)) {
+                    stateScreen.setScreenFlow("separate-devices")
+                } else {
+                    stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
+                }
             }
         }
     }

@@ -67,7 +67,7 @@ QOnScreenContentTypeA {
         label.text: QSTR.STR_QML_2100
         label.font.pixelSize: 16
         type: eTypeE
-        onButtonClicked: vm.onAddFirstKeyClicked()
+        onButtonClicked: vm.onOffChainAddFirstKeyClicked()
     }
 
     YourPlanRequireInheritanceKeys {

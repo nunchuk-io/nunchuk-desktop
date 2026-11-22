@@ -17,6 +17,7 @@ DEFINE_USECASE_INPUT(InitializeInheritanceClaimingInput)
     X(int, inheritance_key_count)   \
     X(QJsonArray, key_origins)  \
     X(QJsonArray, required_key_counts)  \
+    X(bool, show_seed_phrase_guidance)  \
     X(int, code)    \
     X(QString, message)
 

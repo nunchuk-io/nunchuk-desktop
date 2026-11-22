@@ -66,6 +66,7 @@ public:
     void onChainProcessErrorCode(int error_code, const QString &error_msg);
     Q_INVOKABLE void setClaimKeyCount(int count);
     Q_INVOKABLE bool usesClaimKeyCounts() const;
+    Q_INVOKABLE bool showSeparateDevices(int keyCount) const;
     Q_INVOKABLE int claimAccountIndex() const;
     Q_INVOKABLE QVariantMap claimPendingAccount() const;
 public slots:

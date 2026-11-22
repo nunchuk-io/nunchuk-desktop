@@ -135,6 +135,7 @@ class QAssistedDraftWallets : public QSwitchAPI {
   private:
     QJsonObject configurableVerifyKey(const QString &verifyType, const QString &verificationMethod);
     void setRecoveredVerifyKey(const nunchuk::SingleSigner &signer);
+    bool expectedSignerForVerify(const QString &xfp, const QString &derivationPath, const QJsonObject &signerInfo, nunchuk::SingleSigner &out);
     bool isConfigurableDraft() const;
     int configurableVerifyAccountIndex() const;
     QJsonObject m_recoveredVerifyKey{};

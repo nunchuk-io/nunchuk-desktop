@@ -468,6 +468,16 @@ public:
     nunchuk::Transaction ImportPassportTransaction(const std::string& wallet_id,
                                                    const std::vector<std::string>& qr_data,
                                                    QWarningMessage& msg);
+    void MigrateGuestToAccount(const std::string& storage_path,
+                               const std::string& account,
+                               bool keep,
+                               QWarningMessage& msg);
+    void SetStoragePassphrase(const std::string& storage_path,
+                              const std::string& account,
+                              nunchuk::Chain chain,
+                              const std::string& old_passphrase,
+                              const std::string& new_passphrase,
+                              QWarningMessage& msg);
     void stopInstance(int mode);
     void stopOneInstance();
     void stopAllInstance();

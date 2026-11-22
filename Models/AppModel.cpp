@@ -34,6 +34,7 @@
 #include "Premiums/QSharedWallets.h"
 #include "ServiceSetting.h"
 #include "OnBoardingModel.h"
+#include "GuestMigration/QGuestMigration.h"
 #include "QThreadForwarder.h"
 #include <QThreadPool>
 #include <QMessageBox>
@@ -344,6 +345,7 @@ bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassp
     QWarningMessage nunchukMsg;
     bridge::nunchukSetCurrentMode(ONLINE_MODE);
     QString account = Draco::instance()->Uid();
+    QGuestMigration::instance()->prepareAccountInstance(account);
     bridge::nunchukMakeInstanceForAccount(account,
                                           dbPassphrase,
                                           nunchukMsg);
@@ -351,6 +353,7 @@ bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassp
         ret = true;
         AppModel::instance()->requestInitialData();
         AppModel::instance()->timerFeeRatesHandle();
+        QGuestMigration::instance()->onAccountInstanceReady();
         timeoutHandler(500,[account](){
             CLIENT_INSTANCE->requestLogin();
             CLIENT_INSTANCE->saveStayLoggedInData();
@@ -885,6 +888,9 @@ void AppModel::requestClearData()
 void AppModel::requestOnboarding()
 {
     timeoutHandler(1000,[=, this]{
+        if (QGuestMigration::instance()->deferOnboarding()) {
+            return;
+        }
         if (CLIENT_INSTANCE->isSubscribed() || QGroupWallets::instance()->existGroupPending() || AppModel::instance()->walletListPtr()->existGroupWallet()) {
             AppSetting::instance()->setIsFirstTimeOnboarding(true);
         } else {

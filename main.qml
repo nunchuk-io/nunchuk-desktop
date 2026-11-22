@@ -98,6 +98,9 @@ Item {
             }
         ]
     }
+    QPopupGuestMigration {
+        z: 100
+    }
     Connections {
         target: AppModel
         function onSyncingWalletFromServer(fingerPrint) {

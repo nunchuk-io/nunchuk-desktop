@@ -107,7 +107,7 @@ QVariant QInheritancePlan::planInfoUpdate() const {
     if (_old["activation_date"] != _new["activation_date"]) {
         change["activation_date_isChanged"] = true;
     }
-    if (_old["buffer_period_id"] != _new["buffer_period_id"]) {
+    if (_old["buffer_period"].toObject()["id"] != _new["buffer_period"].toObject()["id"]) {
         change["buffer_period_isChanged"] = true;
     }
     if (_old["notify_today"] != _new["notify_today"]) {

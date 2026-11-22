@@ -36,6 +36,9 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     anchors.fill: parent
+    onVisibleChanged: {
+        if (visible) GuestMigration.refresh()
+    }
     Flickable {
         anchors.fill: parent
         contentWidth: parent.width
@@ -398,6 +401,48 @@ Item {
                 }
             }
 
+            Rectangle {
+                width: 627
+                height: 1
+                color: "#EAEAEA"
+                anchors.left: parent.left
+                anchors.leftMargin: 24
+                visible: guestMigrationRow.visible
+            }
+            Item {
+                id: guestMigrationRow
+                width: 627
+                height: 25*2 + 48
+                anchors.left: parent.left
+                anchors.leftMargin: 24
+                visible: GuestMigration.canMigrate
+                Component.onCompleted: GuestMigration.refresh()
+                QText {
+                    width: 560
+                    height: 28
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignLeft
+                    text: STR.STR_QML_2602
+                    font.family: "Lato"
+                    font.pixelSize: 20
+                    font.weight: Font.Bold
+                    color: "#031F2B"
+                }
+                QIcon {
+                    iconSize: 24
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    source: "qrc:/Images/Images/right-arrow-dark.svg"
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    enabled: !GuestMigration.busy
+                    onClicked: GuestMigration.requestPrompt()
+                }
+            }
             Rectangle {
                 width: 627
                 height: 1

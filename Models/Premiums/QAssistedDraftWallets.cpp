@@ -752,6 +752,40 @@ ENUNCHUCK::WalletType QAssistedDraftWallets::walletType() const {
     }
 }
 
+bool QAssistedDraftWallets::expectedSignerForVerify(const QString &xfp, const QString &derivationPath, const QJsonObject &signerInfo, nunchuk::SingleSigner &out) {
+    auto normalizePath = [](QString path) {
+        path = path.trimmed().toLower().replace("'", "h");
+        if (path.startsWith("m/"))
+            path = path.mid(2);
+        return path;
+    };
+    const QString wantPath = normalizePath(derivationPath);
+    if (xfp.isEmpty() || wantPath.isEmpty()) {
+        return false;
+    }
+    QString xpub;
+    if (qUtils::strCompare(signerInfo.value("xfp").toString(), xfp) && normalizePath(signerInfo.value("derivation_path").toString()) == wantPath) {
+        xpub = signerInfo.value("xpub").toString();
+    }
+    if (xpub.isEmpty()) {
+        QWarningMessage msg;
+        std::vector<nunchuk::SingleSigner> remotes = nunchukiface::instance()->GetRemoteSigners(msg);
+        for (const auto &r : remotes) {
+            if (qUtils::strCompare(QString::fromStdString(r.get_master_fingerprint()), xfp) &&
+                normalizePath(QString::fromStdString(r.get_derivation_path())) == wantPath && !r.get_xpub().empty()) {
+                xpub = QString::fromStdString(r.get_xpub());
+                break;
+            }
+        }
+    }
+    if (xpub.isEmpty()) {
+        return false;
+    }
+    out = nunchuk::SingleSigner(signerInfo.value("name").toString().toStdString(), xpub.toStdString(), "", derivationPath.toStdString(), {0, 1},
+                                xfp.toLower().toStdString(), 0);
+    return true;
+}
+
 void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType, const QString &verificationMethod, const QString &xfp, const QString &derivationPath) {
 
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -769,6 +803,13 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
                 QWarningMessage msg;
                 auto derivation_path = !derivationPath.isEmpty() ? derivationPath : currentSigerInfo.value("derivation_path").toString();
                 auto signer = bridge::nunchukGetSignerFromMasterSigner(xfpSelected, derivation_path, msg);
+                if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+                    nunchuk::SingleSigner expected;
+                    if (expectedSignerForVerify(xfpSelected, derivation_path, currentSigerInfo, expected)) {
+                        msg.resetWarningMessage();
+                        signer = QSingleSignerPtr(new QSingleSigner(expected));
+                    }
+                }
                 if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                     msg.resetWarningMessage();
                     bridge::nunchukVerifySingleSigner(device, signer, msg);

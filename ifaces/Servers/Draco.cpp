@@ -33,6 +33,7 @@
 #include <QtWidgets/qwidget.h>
 #include "ServiceSetting.h"
 #include "QThreadForwarder.h"
+#include "GuestMigration/QGuestMigration.h"
 
 using namespace Command;
 
@@ -245,6 +246,7 @@ void Draco::applyFederatedSigninResult(const QJsonObject &result)
     setDeviceId(deviceId);
     setDracoToken(tokenId);
     setExpireSec(expireIn);
+    QGuestMigration::instance()->markFederatedSignin();
     QEventProcessor::instance()->sendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
 }
 
@@ -678,6 +680,7 @@ void Draco::createAccount(const QString& name, const QString& email)
             setDracoToken(dataObj["tokenId"].toString());
             setExpireSec(dataObj["expireInSeconds"].toInt());
             setEmailRequested(email);
+            QGuestMigration::instance()->markNewAccount(email);
         }
         else if(response_code == DRACO_CODE::REQUIRED_VERIFICATION){
             requireCaptchaVerification([this, name, email]() {

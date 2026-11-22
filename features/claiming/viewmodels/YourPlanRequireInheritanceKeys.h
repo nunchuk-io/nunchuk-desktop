@@ -16,6 +16,7 @@ class YourPlanRequireInheritanceKeys : public ActionViewModel {
   public slots:
     void next() override;
     void onAddFirstKeyClicked();
+    void onOffChainAddFirstKeyClicked();
     void onAddSecondKeyClicked();
 };
 } // namespace features::claiming::viewmodels

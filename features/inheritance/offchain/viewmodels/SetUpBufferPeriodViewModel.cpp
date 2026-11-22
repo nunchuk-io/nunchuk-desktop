@@ -46,7 +46,7 @@ void SetUpBufferPeriodViewModel::applyCurrentBufferPeriod() {
     }
     const QJsonObject current = holder.value("buffer_period").toObject();
     QString currentId = current.value("id").toString();
-    if (currentId.isEmpty()) {
+    if (currentId.isEmpty() && !holder.contains("buffer_period")) {
         currentId = holder.value("buffer_period_id").toString();
     }
     const QString interval = current.value("interval").toString();

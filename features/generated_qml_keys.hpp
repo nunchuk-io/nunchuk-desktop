@@ -666,6 +666,7 @@ QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qyourinheritanceke
 QML_KEY_IN(qml::features::claiming, qconfirmtransaction, "qml.features.claiming.qconfirmtransaction");
 QML_KEY_IN(qml::features::claiming, qtransactiondetails, "qml.features.claiming.qtransactiondetails");
 QML_KEY_IN(qml::features::claiming, qtransactiondetailsclaimed, "qml.features.claiming.qtransactiondetailsclaimed");
+QML_KEY_IN(qml::features::claiming::offchain, qclaimseparatedevices, "qml.features.claiming.offchain.qclaimseparatedevices");
 QML_KEY_IN(qml::features::claiming::offchain, qexportcompleted, "qml.features.claiming.offchain.qexportcompleted");
 QML_KEY_IN(qml::features::claiming::offchain, qsinglesignerverifydelegate, "qml.features.claiming.offchain.qsinglesignerverifydelegate");
 QML_KEY_IN(qml::features::claiming::offchain, qverifyinheritancekey, "qml.features.claiming.offchain.qverifyinheritancekey");

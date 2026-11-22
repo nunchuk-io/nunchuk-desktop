@@ -18,6 +18,16 @@ void YourPlanRequireInheritanceKeys::onAddFirstKeyClicked() {
     rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritanceoptionsproceed);
     close();
 }
+void YourPlanRequireInheritanceKeys::onOffChainAddFirstKeyClicked() {
+    GUARD_SERVICE_TAG()
+    if (serviceTag->showSeparateDevices(inheritance_key_count())) {
+        GUARD_SUB_SCREEN_MANAGER()
+        subMng->show(qml::features::claiming::offchain::qclaimseparatedevices);
+        return;
+    }
+    onAddFirstKeyClicked();
+}
+
 void YourPlanRequireInheritanceKeys::onAddSecondKeyClicked() {
     // Subsequent inheritance keys skip "How would you like to proceed?" (D02) and go
     // straight to "Add inheritance key" (D04) - same flow-handoff as ProceedOptionsViewModel.

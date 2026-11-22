@@ -39,6 +39,7 @@
 #include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 #include "Premiums/QUserWallets.h"
+#include "GuestMigration/QGuestMigration.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QSharedWallets.h"
 #include "Signers/QSignerManagement.h"
@@ -378,6 +379,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->setContextProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
     QEventProcessor::instance()->setContextProperty("PDFPrinter", QVariant::fromValue(QPDFPrinter::instance()));
     QEventProcessor::instance()->setContextProperty("SignerManagement", QVariant::fromValue(QSignerManagement::instance()));
+    QEventProcessor::instance()->setContextProperty("GuestMigration", QVariant::fromValue(QGuestMigration::instance()));
     app::registerContextProperty();
     app::registerViewModels();
     QEventProcessor::instance()->completed();

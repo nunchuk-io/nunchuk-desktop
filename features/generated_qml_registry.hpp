@@ -663,6 +663,7 @@ static const QHash<QString, QString> QML_REGISTRY = {
     { "qml.features.claiming.qconfirmtransaction", "qrc:/Qml/features/claiming/QConfirmTransaction.qml" },
     { "qml.features.claiming.qtransactiondetails", "qrc:/Qml/features/claiming/QTransactionDetails.qml" },
     { "qml.features.claiming.qtransactiondetailsclaimed", "qrc:/Qml/features/claiming/QTransactionDetailsClaimed.qml" },
+    { "qml.features.claiming.offchain.qclaimseparatedevices", "qrc:/Qml/features/claiming/offchain/QClaimSeparateDevices.qml" },
     { "qml.features.claiming.offchain.qexportcompleted", "qrc:/Qml/features/claiming/offchain/QExportCompleted.qml" },
     { "qml.features.claiming.offchain.qsinglesignerverifydelegate", "qrc:/Qml/features/claiming/offchain/QSingleSignerVerifyDelegate.qml" },
     { "qml.features.claiming.offchain.qverifyinheritancekey", "qrc:/Qml/features/claiming/offchain/QVerifyInheritanceKey.qml" },

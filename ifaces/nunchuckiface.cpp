@@ -2310,6 +2310,44 @@ void nunchukiface::killHwiProcessAllInstance()
     }
 }
 
+void nunchukiface::MigrateGuestToAccount(const std::string &storage_path,
+                                         const std::string &account,
+                                         bool keep,
+                                         QWarningMessage &msg)
+{
+    try {
+        nunchuk::Utils::MigrateGuestToAccount(storage_path, account, "", keep);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+void nunchukiface::SetStoragePassphrase(const std::string &storage_path,
+                                        const std::string &account,
+                                        nunchuk::Chain chain,
+                                        const std::string &old_passphrase,
+                                        const std::string &new_passphrase,
+                                        QWarningMessage &msg)
+{
+    try {
+        nunchuk::Utils::SetPassPhrase(storage_path, account, chain, old_passphrase, new_passphrase);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
 void nunchukiface::stopOneInstance()
 {
     stopInstance(nunchukMode());

@@ -274,6 +274,7 @@
         <file>Qml/Components/customizes/Popups/QPopupHomeReminder.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoTwoButtons.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoThreeButtons.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupGuestMigration.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupEnterPreimageInHex.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QAccessingWalletConfiguration.qml</file>
         <file>Qml/Screens/OnlineMode/ServerKeys/QPlatformKeyPolicyChange.qml</file>
@@ -817,6 +818,7 @@
         <file>Qml/features/signers/platform/QPlatformKeyPolicyDelegate.qml</file>
         <file>Qml/features/signers/platform/QSetupEnableToggle.qml</file>
         <file>Qml/features/signers/platform/QSetupSpendingLimit.qml</file>
+        <file>Qml/features/claiming/offchain/QClaimSeparateDevices.qml</file>
         <file>Qml/features/claiming/offchain/QExportCompleted.qml</file>
         <file>Qml/features/common/QResultSuccess.qml</file>
         <file>Qml/features/common/QSignaturesRequiredBase.qml</file>

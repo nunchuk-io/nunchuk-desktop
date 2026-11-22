@@ -128,6 +128,10 @@ bool QInheritanceClaiming::usesClaimKeyCounts() const {
     return qUtils::strCompare(m_claimInit.wallet_type, "MINISCRIPT") && !m_claimInit.required_key_counts.isEmpty();
 }
 
+bool QInheritanceClaiming::showSeparateDevices(int keyCount) const {
+    return m_claimInit.show_seed_phrase_guidance && keyCount >= 2;
+}
+
 int QInheritanceClaiming::claimAccountIndex() const {
     return usesClaimKeyCounts() ? m_claimAccountIndex : 0;
 }

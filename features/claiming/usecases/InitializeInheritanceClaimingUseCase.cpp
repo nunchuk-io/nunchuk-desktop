@@ -15,6 +15,7 @@ Result<InitializeInheritanceClaimingResult> InitializeInheritanceClaimingUseCase
         result.wallet_id = output.value("wallet_local_id").toString();
         result.inheritance_key_count = output.value("inheritance_key_count").toInt();
         result.key_origins = output.value("key_origins").toArray();
+        result.show_seed_phrase_guidance = output.value("show_seed_phrase_guidance").toBool(false);
         QJsonArray counts;
         for (const auto &c : output.value("required_key_counts").toArray()) {
             if (!counts.contains(c)) {
