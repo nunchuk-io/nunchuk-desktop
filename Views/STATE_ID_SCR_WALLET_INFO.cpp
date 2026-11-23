@@ -29,6 +29,9 @@
 #include "Servers/Draco.h"
 #include "ServiceSetting.h"
 #include "Premiums/QWalletServicesTag.h"
+#include "features/wallets/usecases/DeleteWalletUseCase.h"
+#include <QApplication>
+#include <QCursor>
 
 void SCR_WALLET_INFO_Entry(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
@@ -49,6 +52,33 @@ void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg) {
     DBG_INFO << name << description;
     if (auto w = AppModel::instance()->walletInfo()) {
         bridge::nunchukUpdateWallet(w->walletId(), name, description);
+    }
+}
+
+void deleteClaimedWallet(const QString &wallet_id) {
+    features::wallets::usecases::DeleteWalletInput input;
+    input.wallet_id = wallet_id;
+    input.group_id = "";
+    input.isClaimed = true;
+    features::wallets::usecases::DeleteWalletUseCase deleteWalletUseCase;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    auto result = deleteWalletUseCase.execute(input);
+    qApp->restoreOverrideCursor();
+    if (!result.isSuccess()) {
+        QString error = result.error().trimmed();
+        AppModel::instance()->showToast(-1, error.isEmpty() ? STR_CPP_111 : error, EWARNING::WarningType::EXCEPTION_MSG);
+        return;
+    }
+    QWarningMessage msgwarning;
+    bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+    if (ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
+        AppModel::instance()->removeWallet(wallet_id);
+        AppSetting::instance()->deleteWalletCached(wallet_id);
+        AppSetting::instance()->deleteSortCoinByAge(wallet_id);
+        QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
+        AppModel::instance()->setWalletListCurrentIndex(0);
+    } else {
+        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
     }
 }
 

@@ -28,6 +28,7 @@
 #include "Premiums/QKeyRecovery.h"
 #include "Premiums/QGroupDashboard.h"
 #include "Premiums/QGroupWallets.h"
+#include "STATE_ID_SCR_WALLET_INFO.h"
 
 static QVariant passWordObject = QVariant();
 void SCR_REENTER_YOUR_PASSWORD_Entry(QVariant msg) {
@@ -104,6 +105,12 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         break;
     case E::STATE_ID_SCR_WALLET_INFO:
         if (wallet && wallet->servicesTagPtr()->requestDeleteWalletVerifyPassword(password)) {
+            if (wallet->isClaimed() && !wallet->isAssistedWallet()) {
+                QString claimedWalletId = wallet->walletId();
+                QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_BACK);
+                deleteClaimedWallet(claimedWalletId);
+                break;
+            }
             ServiceSetting::instance()->setWalletInfo(wallet);
             if (wallet && wallet->DeleteWalletRequiredSignatures()) {
                 AppModel::instance()->walletInfoPtr()->setIsDeleting(wallet->isDeleting());

@@ -31,6 +31,7 @@ void SCR_WALLET_INFO_Entry(QVariant msg);
 void SCR_WALLET_INFO_Exit(QVariant msg);
 void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg);
 void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg);
+void deleteClaimedWallet(const QString &wallet_id);
 void EVT_WALLET_INFO_EXPORT_DB_HANDLER(QVariant msg);
 void EVT_WALLET_INFO_EXPORT_CSV_HANDLER(QVariant msg);
 void EVT_WALLET_INFO_EXPORT_DESCRIPTOR_HANDLER(QVariant msg);

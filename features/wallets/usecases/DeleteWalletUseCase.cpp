@@ -21,7 +21,8 @@ Result<DeleteWalletResult> DeleteWalletUseCase::execute(const DeleteWalletInput 
     if (ret) {
         return Result<DeleteWalletResult>::success(result);
     } else {
-        return Result<DeleteWalletResult>::failure(QString("%1 %2").arg(errormsg).arg(input.wallet_id));
+        DBG_INFO << "delete wallet failed:" << input.wallet_id << errormsg;
+        return Result<DeleteWalletResult>::failure(errormsg);
     }
 }
 }
