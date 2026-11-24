@@ -83,10 +83,23 @@ void TransactionDetailsViewModel::txSignRequest(const QString &xfp) {
         QSingleSignerPtr signer = transactionInfo()->singleSignersAssigned()->getSingleSignerByFingerPrint(xfp);
         if (!signer) {
             DBG_INFO << "Signer not found for fingerprint: " << xfp << transactionInfo()->singleSignersAssigned()->rowCount();
+            emit showToast(0, "Signer not found", EWARNING::WarningType::ERROR_MSG);
             emit finishedSigningTransaction();
             return;
         }
         int signerType = signer.data()->signerType();
+        if ((int)ENUNCHUCK::SignerType::SOFTWARE != signerType && transactionInfo()->isClaimTx()) {
+            auto deviceList = appModel->deviceList();
+            QDevicePtr device = deviceList ? deviceList->getDeviceByXfp(xfp) : QDevicePtr();
+            if (device) {
+                startSigningTransaction(device, false);
+            } else {
+                DBG_INFO << "Device not found for fingerprint: " << xfp;
+                emit showToast(0, "Signer device not found", EWARNING::WarningType::ERROR_MSG);
+                emit finishedSigningTransaction();
+            }
+            return;
+        }
         if ((int)ENUNCHUCK::SignerType::SOFTWARE == signerType) {
             auto masterSignerList = appModel->masterSignerListPtr();
             if (!masterSignerList) {
@@ -140,6 +153,7 @@ void TransactionDetailsViewModel::txSignRequest(const QString &xfp) {
                 startSigningTransaction(device, false);
             } else {
                 DBG_INFO << "Device not found for fingerprint: " << xfp;
+                emit showToast(0, "Signer device not found", EWARNING::WarningType::ERROR_MSG);
                 emit finishedSigningTransaction();
             }
         } else {
@@ -287,9 +301,16 @@ void TransactionDetailsViewModel::startSigningTransaction(const QDevicePtr &devi
     auto currentFlow = flowMng->currentFlow();
     auto flow = qobject_cast<TransactionFlow *>(currentFlow);
     if (!flow) {
+        DBG_INFO << "Transaction flow not found";
+        emit finishedSigningTransaction();
         return;
     }
     LibSignTransactionInput input;
+    if (!flow->isOffClaim() && !flow->isOnClaim() && !flow->isNormal()) {
+        DBG_INFO << "Unknown work flow:" << flow->workFlowId();
+        emit finishedSigningTransaction();
+        return;
+    }
     if (flow->isOffClaim()) {
         input.wallet = nunWallet();
         input.wallet_id = std::nullopt;

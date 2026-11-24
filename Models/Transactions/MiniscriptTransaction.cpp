@@ -1139,6 +1139,14 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
             line["alreadySigned"] = signer->signerSigned();
         }
         bool canSign = signer->hasSignBtn();
+        bool claimDeviceConnected = isClaimTx() && signer->signerType() != (int)ENUNCHUCK::SignerType::SOFTWARE &&
+                                    AppModel::instance()->deviceList() && AppModel::instance()->deviceList()->contains(xfp);
+        if (claimDeviceConnected) {
+            line["hasSignOrScan"] = true;
+            line["signerReadyToSign"] = true;
+            line["signerType"] = (int)ENUNCHUCK::SignerType::HARDWARE;
+            return line;
+        }
         if (!canSign) {
             line["hasSignOrScan"] = false;
             line["signerReadyToSign"] = false;

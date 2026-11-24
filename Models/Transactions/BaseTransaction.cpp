@@ -852,7 +852,9 @@ SingleSignerListModel *BaseTransaction::normalWalletSigners(const QWalletPtr &wa
 
 SingleSignerListModel *BaseTransaction::allFinalSigners() {
     QWalletPtr wallet = QWalletPtr(NULL);
-    if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
+    if (m_signerWallet) {
+        wallet = m_signerWallet;
+    } else if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
         wallet = AppModel::instance()->walletInfoPtr();
     } else {
         wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
