@@ -1331,12 +1331,16 @@ void MiniscriptWallet::requestAddNewKey() {
     QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST);
 }
 
-void MiniscriptWallet::requestAddExistKey(const QString &xfp) {
+void MiniscriptWallet::requestAddExistKey(const QString &xfp, const QString &derivationPath) {
     QSignerManagement::instance()->clearExecute();
     const auto available_signers = dynamic_cast<Wallet *>(this)->assignAvailableSigners();
-    auto key = available_signers->getSingleSignerByFingerPrint(xfp);
+    // Disambiguate same-fingerprint keys (e.g. two airgap xpubs from one seed)
+    // by derivation path when provided; fall back to first fingerprint match.
+    auto key = derivationPath.isEmpty()
+                   ? available_signers->getSingleSignerByFingerPrint(xfp)
+                   : available_signers->getSingleSignerBy(xfp, derivationPath);
     if (!key) {
-        DBG_ERROR << "No signer found with fingerprint:" << xfp;
+        DBG_ERROR << "No signer found with fingerprint:" << xfp << "path:" << derivationPath;
         return;
     }
     QWarningMessage msg;
