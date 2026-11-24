@@ -107,6 +107,7 @@ find_package(Qt6 COMPONENTS Core CorePrivate Qml Quick Gui Multimedia Concurrent
 
 if(USING_WEBENGINE)
     message(STATUS "---------------------------------> USING WEBENGINE")
+    add_definitions(-DUSING_WEBENGINE)
     find_package(Qt6 COMPONENTS WebEngineWidgets REQUIRED)
     if (Qt6WebEngineWidgets_FOUND)
         message( STATUS "Using WebEngineWidgets ${Qt6WebEngineWidgets_VERSION} at ${Qt6WebEngineWidgets_DIR}")
@@ -153,6 +154,9 @@ set(Nunchuk_INC_PATH
 
 # Source
 file(GLOB_RECURSE SOURCES_IFACES	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/ifaces/*.cpp		${CMAKE_SOURCE_DIR}/ifaces/*.h)
+if(NOT USING_WEBENGINE)
+    list(FILTER SOURCES_IFACES EXCLUDE REGEX ".*QCaptchaVerification\\.(cpp|h)$")
+endif()
 file(GLOB_RECURSE SOURCES_MODELS	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Models/*.cpp		${CMAKE_SOURCE_DIR}/Models/*.h)
 file(GLOB_RECURSE SOURCES_QAPPENGINE	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/QAppEngine/*.cpp		${CMAKE_SOURCE_DIR}/QAppEngine/*.h)
 file(GLOB_RECURSE SOURCES_QSCANNER	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/QRScanner/*.cpp		${CMAKE_SOURCE_DIR}/QRScanner/*.h)

@@ -26,7 +26,9 @@
 #include <QDir>
 #include <QThreadPool>
 #include "QEventProcessor.h"
+#ifdef USING_WEBENGINE
 #include "Servers/QCaptchaVerification.h"
+#endif
 #include "Views/Views.h"
 #include "Models/AppModel.h"
 #include "Models/AppSetting.h"
