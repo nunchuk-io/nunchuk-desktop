@@ -19,9 +19,7 @@ void InheritanceUnlockedViewModel::requestWithdrawBitcoin() {
 }
 
 void InheritanceUnlockedViewModel::onInit() {
-    GUARD_FLOW_MANAGER()
-    auto currentFlow = flowMng->currentFlow();
-    auto claimingFlow = qobject_cast<ClaimingFlow *>(currentFlow);
+    auto claimingFlow = ClaimingFlow::resumeClaimingFlow(this);
     if (!claimingFlow) {
         return;
     }

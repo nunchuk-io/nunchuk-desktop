@@ -13,6 +13,7 @@ class WithdrawBitcoinViewModel : public ActionViewModel {
   public:
     explicit WithdrawBitcoinViewModel(QObject *parent = nullptr);
     void forwardAmount();
+    void onInit() override;
   public slots:
     void next() override;
     void back() override;

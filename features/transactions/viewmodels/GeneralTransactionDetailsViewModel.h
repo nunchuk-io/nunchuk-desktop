@@ -12,6 +12,7 @@ class GeneralTransactionDetailsViewModel : public BaseTransactionViewModel {
     DEFINE_QT_PROPERTY(QStringList, qrExported)
   public:
     explicit GeneralTransactionDetailsViewModel(QObject *parent = nullptr);
+    ~GeneralTransactionDetailsViewModel() override;
 
   public slots:
     void verifyAddress(const QString &address);
@@ -22,5 +23,6 @@ class GeneralTransactionDetailsViewModel : public BaseTransactionViewModel {
   private:
     AddressToVerifyUseCase m_addressToVerifyUC;
     ScanDeviceUsecase m_scanDeviceUC;
+    bool m_isScanning{false};
 };
 } // namespace features::transactions::viewmodels

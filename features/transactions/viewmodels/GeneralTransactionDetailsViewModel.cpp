@@ -8,6 +8,13 @@ using namespace features::transactions::usecases;
 
 GeneralTransactionDetailsViewModel::GeneralTransactionDetailsViewModel(QObject *parent) : BaseTransactionViewModel(parent) {}
 
+GeneralTransactionDetailsViewModel::~GeneralTransactionDetailsViewModel() {
+    if (m_isScanning) {
+        m_isScanning = false;
+        qApp->restoreOverrideCursor();
+    }
+}
+
 void GeneralTransactionDetailsViewModel::verifyAddress(const QString &address) {
     GUARD_CLIENT_CONTROLLER()
     AddressToVerifyInput input;
@@ -30,16 +37,29 @@ void GeneralTransactionDetailsViewModel::scanDevice() {
     ScanDeviceInput input;
     input.isLoginRequired = clientCtrl->isNunchukLoggedIn();
     input.deviceType = "";
+    if (m_isScanning) {
+        DBG_INFO << "Scan already in progress";
+        return;
+    }
     DBG_INFO << "Start scanning devices...";
+    m_isScanning = true;
     qApp->setOverrideCursor(Qt::WaitCursor);
     m_scanDeviceUC.executeAsync(input, [this](core::usecase::Result<ScanDeviceResult> result) {
-        qApp->restoreOverrideCursor();
+        if (m_isScanning) {
+            m_isScanning = false;
+            qApp->restoreOverrideCursor();
+        }
+        DBG_INFO << "Scan finished:" << result.isSuccess() << result.error();
         if (result.isSuccess()) {
             QDeviceListModelPtr deviceList = QDeviceListModelPtr(new DeviceListModel());
             if (deviceList) {
                 deviceList->clearList();
                 const auto &devices = result.value().devices;
+                DBG_INFO << "Scanned devices:" << devices.size();
                 for (const auto &device : devices) {
+                    DBG_INFO << "device type:" << QString::fromStdString(device.get_type()) << "model:" << QString::fromStdString(device.get_model())
+                             << "xfp:" << QString::fromStdString(device.get_master_fingerprint()) << "needs_pin:" << device.needs_pin_sent()
+                             << "needs_passphrase:" << device.needs_pass_phrase_sent() << "connected:" << device.connected();
                     QDevicePtr devicePtr = QDevicePtr(new QDevice(device));
                     deviceList->addDevice(devicePtr);
                 }

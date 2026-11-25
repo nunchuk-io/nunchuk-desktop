@@ -18,8 +18,10 @@ void ClaimTransactionFlow::proceedTransaction(QVariant feeInput) {
     bool subtractFromFeeAmout = maps.value("subtractFromFeeAmout").toBool();
     int feeRate = maps.value("feeRate").toDouble() * 1000; // Convert sats/Byte to sats/kB
     bool manualFee = maps.value("manualFee").toBool();
-    if (!manualFee)
+    if (!manualFee || feeRate <= 0)
         feeRate = appModel->fastestFeeOrigin(); // default value
+    if (feeRate <= 0)
+        feeRate = 1000;
     bool antiFeeSnipping = maps.value("antiFeeSnipping").toBool();
     DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
 

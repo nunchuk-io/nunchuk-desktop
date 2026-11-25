@@ -20,10 +20,12 @@ void WithdrawBitcoinViewModel::back() {
     rightPanel->back();
 }
 
+void WithdrawBitcoinViewModel::onInit() {
+    ClaimingFlow::resumeClaimingFlow(this);
+}
+
 void WithdrawBitcoinViewModel::forwardAmount() {
-    GUARD_FLOW_MANAGER()
-    auto flow = flowMng->currentFlow();
-    auto claimingFlow = qobject_cast<ClaimingFlow *>(flow);
+    auto claimingFlow = ClaimingFlow::resumeClaimingFlow();
     if (claimingFlow) {
         claimingFlow->setwithdrawAmountSats(0); // when withdrawing all, set amount to full balance (Don't set amount)
     }

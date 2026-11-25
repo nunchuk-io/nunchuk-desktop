@@ -11,6 +11,7 @@
 #include "features/claiming/viewmodels/WithdrawSelectWalletViewModel.h"
 #include "features/claiming/viewmodels/YourPlanRequireInheritanceKeys.h"
 #include "features/transactions/viewmodels/TransactionDetailsClaimedViewModel.h"
+#include "features/transactions/flows/TransactionFlow.h"
 #include "generated_qml_keys.hpp"
 #include <QLocale>
 
@@ -21,6 +22,33 @@ using namespace features::claiming::usecases;
 using namespace features::transactions::usecases;
 
 ClaimingFlow::ClaimingFlow(FlowContext *ctx, QObject *parent) : KeyProceedFlow(ctx, parent) {}
+
+ClaimingFlow *ClaimingFlow::resumeClaimingFlow(QObject *vm) {
+    GUARD_FLOW_MANAGER(nullptr)
+    auto current = flowMng->currentFlow();
+    if (auto claimingFlow = qobject_cast<ClaimingFlow *>(current)) {
+        return claimingFlow;
+    }
+    QStringList ids;
+    if (auto transactionFlow = qobject_cast<features::transactions::flows::TransactionFlow *>(current)) {
+        ids << transactionFlow->workFlowId();
+    }
+    ids << QStringLiteral("OnChainClaimingFlow") << QStringLiteral("OffChainClaimingFlow");
+    for (const auto &id : ids) {
+        if (id.isEmpty()) {
+            continue;
+        }
+        if (auto claimingFlow = qobject_cast<ClaimingFlow *>(flowMng->getFlow(id))) {
+            DBG_INFO << "Resume claiming flow:" << id << "from:" << (current ? current->id() : QString());
+            flowMng->resumeFlow(id);
+            if (vm) {
+                flowMng->bindViewModel(vm);
+            }
+            return claimingFlow;
+        }
+    }
+    return nullptr;
+}
 
 void ClaimingFlow::claimStatus() {
     // BUGFIX: guard re-entrancy (e.g. double-click) - WorkerConcurrent silently drops a 2nd

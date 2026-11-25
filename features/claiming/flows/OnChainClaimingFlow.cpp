@@ -9,7 +9,15 @@ namespace features::claiming::flows {
 using features::common::viewmodels::BaseGuideViewModel;
 using features::wallets::viewmodels::RegisterWalletOnHardwareViewModel;
 
-OnChainClaimingFlow::OnChainClaimingFlow(FlowContext* ctx, QObject *parent) : ClaimingFlow(ctx, parent) {}
+OnChainClaimingFlow::OnChainClaimingFlow(FlowContext* ctx, QObject *parent) : ClaimingFlow(ctx, parent) {
+    qint64 fastestFee = 0;
+    if (auto appModel = AppModel::instance()) {
+        fastestFee = appModel->fastestFeeOrigin();
+    }
+    setfee_rate(fastestFee > 0 ? static_cast<double>(fastestFee) : 1000.0);
+    setanti_fee_sniping(false);
+    setsubtract_fee_from_amount(false);
+}
 
 void OnChainClaimingFlow::passClaimingError(int code, const QString& message) {
     m_errorCode = code;
