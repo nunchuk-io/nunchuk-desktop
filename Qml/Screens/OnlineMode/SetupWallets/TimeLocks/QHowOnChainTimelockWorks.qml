@@ -106,13 +106,16 @@ QOnScreenContentTypeA {
         Row {
             spacing: 36
             Rectangle {
+                id: _guidePanel
                 width: 346
                 height: 512
                 radius: 24
                 color: "#D0E2FF"
+                clip: true
                 QSvgImage {
-                    width: 346
-                    height: width * (implicitHeight / implicitWidth)
+                    readonly property real ratio: implicitWidth > 0 ? implicitHeight / implicitWidth : 0
+                    width: ratio > 0 ? Math.min(_guidePanel.width, _guidePanel.height / ratio) : _guidePanel.width
+                    height: width * ratio
                     anchors.centerIn: parent
                     source: guideImageSource()
                 }
