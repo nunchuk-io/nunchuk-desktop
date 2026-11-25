@@ -10,7 +10,7 @@ using features::claiming::flows::ClaimingFlow;
 WithdrawACustomAmountViewModel::WithdrawACustomAmountViewModel(QObject *parent) : ActionViewModel(parent) {}
 
 void WithdrawACustomAmountViewModel::forwardAmount() {
-    auto claimingFlow = ClaimingFlow::resumeClaimingFlow();
+    auto claimingFlow = ClaimingFlow::resumeClaimingFlow(nullptr, true);
     if (claimingFlow) {
         claimingFlow->setwithdrawAmountSats(withdrawAmountSats());
     }

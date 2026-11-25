@@ -11,6 +11,7 @@
 namespace features::claiming::viewmodels {
 using namespace core::viewmodels;
 using namespace features::claiming::usecases;
+using features::claiming::flows::ClaimingFlow;
 using features::claiming::flows::OffChainClaimingFlow;
 using features::claiming::flows::OnChainClaimingFlow;
 
@@ -20,6 +21,7 @@ void MagicPhraseViewModel::startOffChainClaimingFlow(const QString &magicPhrase,
     GUARD_FLOW_MANAGER()
     flowMng->stopFlow<OffChainClaimingFlow>();
     auto flow = flowMng->startFlow<OffChainClaimingFlow>();
+    ClaimingFlow::setActiveClaimFlowId(flow->id());
     flow->setmagicWord(magicPhrase);
     flow->setkeyOrigins(keyOrigins);
     flow->setinheritance_key_count(inheritance_key_count);
@@ -48,6 +50,7 @@ void MagicPhraseViewModel::claimInit(const QString &magicPhrase) {
                 GUARD_FLOW_MANAGER()
                 flowMng->stopFlow<OnChainClaimingFlow>();
                 auto flow = flowMng->startFlow<OnChainClaimingFlow>();
+                ClaimingFlow::setActiveClaimFlowId(flow->id());
                 flow->setinheritance_key_count(res.inheritance_key_count);
                 flow->setmagicWord(magicPhrase);
                 auto wallet = appModel->walletListPtr()->getWalletById(res.wallet_id);

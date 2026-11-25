@@ -12,6 +12,7 @@
 #include "features/claiming/viewmodels/YourPlanRequireInheritanceKeys.h"
 #include "features/transactions/viewmodels/TransactionDetailsClaimedViewModel.h"
 #include "features/transactions/flows/TransactionFlow.h"
+#include "app/AppContext.h"
 #include "generated_qml_keys.hpp"
 #include <QLocale>
 
@@ -23,8 +24,22 @@ using namespace features::transactions::usecases;
 
 ClaimingFlow::ClaimingFlow(FlowContext *ctx, QObject *parent) : KeyProceedFlow(ctx, parent) {}
 
-ClaimingFlow *ClaimingFlow::resumeClaimingFlow(QObject *vm) {
-    GUARD_FLOW_MANAGER(nullptr)
+static QString s_activeClaimFlowId;
+
+void ClaimingFlow::setActiveClaimFlowId(const QString &id) {
+    s_activeClaimFlowId = id;
+}
+
+QString ClaimingFlow::activeClaimFlowId() {
+    return s_activeClaimFlowId;
+}
+
+ClaimingFlow *ClaimingFlow::resumeClaimingFlow(QObject *vm, bool makeCurrent) {
+    auto appCtx = app::AppContext::instance();
+    auto flowMng = appCtx ? appCtx->flowManager() : nullptr;
+    if (!flowMng) {
+        return nullptr;
+    }
     auto current = flowMng->currentFlow();
     if (auto claimingFlow = qobject_cast<ClaimingFlow *>(current)) {
         return claimingFlow;
@@ -33,16 +48,18 @@ ClaimingFlow *ClaimingFlow::resumeClaimingFlow(QObject *vm) {
     if (auto transactionFlow = qobject_cast<features::transactions::flows::TransactionFlow *>(current)) {
         ids << transactionFlow->workFlowId();
     }
-    ids << QStringLiteral("OnChainClaimingFlow") << QStringLiteral("OffChainClaimingFlow");
+    ids << s_activeClaimFlowId;
     for (const auto &id : ids) {
         if (id.isEmpty()) {
             continue;
         }
         if (auto claimingFlow = qobject_cast<ClaimingFlow *>(flowMng->getFlow(id))) {
-            DBG_INFO << "Resume claiming flow:" << id << "from:" << (current ? current->id() : QString());
-            flowMng->resumeFlow(id);
+            DBG_INFO << "Claiming flow:" << id << "current:" << (current ? current->id() : QString()) << "makeCurrent:" << makeCurrent;
+            if (makeCurrent) {
+                flowMng->resumeFlow(id);
+            }
             if (vm) {
-                flowMng->bindViewModel(vm);
+                claimingFlow->bind(vm);
             }
             return claimingFlow;
         }

@@ -1,7 +1,6 @@
 #include "QInheritanceClaiming.h"
 
 #include <QLocale>
-#include <QRegularExpression>
 #include <QJsonDocument>
 #include <QObject>
 #include <QJsonObject>
@@ -422,35 +421,17 @@ bool QInheritanceClaiming::requestDownloadWallet() {
         if (!bsms.isEmpty()) {
             QWarningMessage msg;
             mInheritance.wallet = qUtils::ParseWalletDescriptor(bsms, msg);
-            const QString parsed_id = QString::fromStdString(mInheritance.wallet.get_id());
-            const bool existedLocally = bridge::nunchukHasWallet(parsed_id);
-            QString wallet_name;
-            if (existedLocally) {
-                QWarningMessage getMsg;
-                wallet_name = QString::fromStdString(bridge::nunchukGetOriginWallet(parsed_id, getMsg).get_name());
-            }
-            if (wallet_name.trimmed().isEmpty()) {
-                static const QRegularExpression pattern(QStringLiteral("^Inheritance-#(\\d+)$"), QRegularExpression::CaseInsensitiveOption);
-                int maxIndex = 0;
-                QWarningMessage listMsg;
-                for (const auto &w : bridge::nunchukGetOriginWallets(listMsg)) {
-                    const auto match = pattern.match(QString::fromStdString(w.get_name()).trimmed());
-                    if (match.hasMatch()) {
-                        maxIndex = qMax(maxIndex, match.captured(1).toInt());
-                    }
-                }
-                wallet_name = QString("Inheritance-#%1").arg(maxIndex + 1);
+            QString wallet_name = m_walletInfoClaim.value("name").toString().trimmed();
+            if (wallet_name.isEmpty()) {
+                wallet_name = QStringLiteral("Inheritance Wallet");
             }
             mInheritance.wallet.set_name(wallet_name.toStdString());
+            const QString wallet_description = m_walletInfoClaim.value("description").toString();
+            if (!wallet_description.isEmpty()) {
+                mInheritance.wallet.set_description(wallet_description.toStdString());
+            }
             bridge::nunchukCreateWallet(mInheritance.wallet, true, msg);
             QString wallet_id = QString::fromStdString(mInheritance.wallet.get_id());
-            if (!existedLocally) {
-                QJsonObject updateOutput;
-                QString updateError;
-                if (!Draco::instance()->ClaimingWalletUpdate(wallet_id, wallet_name, QString::fromStdString(mInheritance.wallet.get_description()), updateOutput, updateError)) {
-                    DBG_INFO << "ClaimingWalletUpdate failed:" << wallet_id << updateError;
-                }
-            }
             {
                 QWalletCached cachedData;
                 cachedData.groupId = m_walletInfoClaim.value("group_id").toString();

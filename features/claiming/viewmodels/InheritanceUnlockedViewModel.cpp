@@ -29,8 +29,7 @@ void InheritanceUnlockedViewModel::onInit() {
 void InheritanceUnlockedViewModel::viewWalletClicked() {
     GUARD_APP_MODEL()
     // Select the specific claimed wallet before switching tabs, not just a generic tab switch.
-    GUARD_FLOW_MANAGER()
-    auto claimingFlow = qobject_cast<ClaimingFlow *>(flowMng->currentFlow());
+    auto claimingFlow = ClaimingFlow::resumeClaimingFlow(nullptr, true);
     if (claimingFlow) {
         QString walletId = QString::fromStdString(claimingFlow->nunWallet().get_id());
         if (auto wallet = appModel->walletListPtr()->getWalletById(walletId)) {
@@ -44,9 +43,7 @@ void InheritanceUnlockedViewModel::withdrawBitcoinClicked() {
     if (isRegistered()) {
         requestWithdrawBitcoin();
     } else {
-        GUARD_FLOW_MANAGER()
-        auto currentFlow = flowMng->currentFlow();
-        auto claimingFlow = qobject_cast<ClaimingFlow *>(currentFlow);
+        auto claimingFlow = ClaimingFlow::resumeClaimingFlow(nullptr, true);
         if (!claimingFlow) {
             return;
         }

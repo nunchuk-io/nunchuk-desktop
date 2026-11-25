@@ -88,6 +88,13 @@ void TransactionDetailsViewModel::txSignRequest(const QString &xfp) {
             return;
         }
         int signerType = signer.data()->signerType();
+        if (transactionInfo()->isClaimTx()) {
+            if (auto masterList = appModel->masterSignerListPtr()) {
+                if (auto master = masterList->getMasterSignerByXfp(xfp)) {
+                    signerType = master->signerType();
+                }
+            }
+        }
         if ((int)ENUNCHUCK::SignerType::SOFTWARE != signerType && transactionInfo()->isClaimTx()) {
             auto deviceList = appModel->deviceList();
             QDevicePtr device = deviceList ? deviceList->getDeviceByXfp(xfp) : QDevicePtr();

@@ -25,7 +25,7 @@ void WithdrawBitcoinViewModel::onInit() {
 }
 
 void WithdrawBitcoinViewModel::forwardAmount() {
-    auto claimingFlow = ClaimingFlow::resumeClaimingFlow();
+    auto claimingFlow = ClaimingFlow::resumeClaimingFlow(nullptr, true);
     if (claimingFlow) {
         claimingFlow->setwithdrawAmountSats(0); // when withdrawing all, set amount to full balance (Don't set amount)
     }

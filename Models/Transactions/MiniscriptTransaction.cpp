@@ -1139,13 +1139,8 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
             line["alreadySigned"] = signer->signerSigned();
         }
         bool canSign = signer->hasSignBtn();
-        bool claimDeviceConnected = isClaimTx() && signer->signerType() != (int)ENUNCHUCK::SignerType::SOFTWARE &&
-                                    AppModel::instance()->deviceList() && AppModel::instance()->deviceList()->contains(xfp);
-        if (claimDeviceConnected) {
-            line["hasSignOrScan"] = true;
-            line["signerReadyToSign"] = true;
-            line["signerType"] = (int)ENUNCHUCK::SignerType::HARDWARE;
-            return line;
+        if (isClaimTx() && canSign) {
+            return processClaimKeyNodeJson(line, xfp);
         }
         if (!canSign) {
             line["hasSignOrScan"] = false;
@@ -1168,6 +1163,40 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
         line["hasSignOrScan"] = false; // no sign button, no scan button
         line["signerReadyToSign"] = false;
     }
+    return line;
+}
+
+QJsonObject MiniscriptTransaction::processClaimKeyNodeJson(QJsonObject line, const QString &xfp) {
+    auto appModel = AppModel::instance();
+    const bool deviceConnected = appModel->deviceList() && appModel->deviceList()->contains(xfp);
+    int signerType = -1;
+    if (auto masterList = appModel->masterSignerListPtr()) {
+        if (auto master = masterList->getMasterSignerByXfp(xfp)) {
+            signerType = master->signerType();
+        }
+    }
+    if (signerType < 0 && appModel->remoteSignerList() && appModel->remoteSignerList()->containsFingerPrint(xfp)) {
+        signerType = (int)ENUNCHUCK::SignerType::AIRGAP;
+    }
+    if (deviceConnected && signerType != (int)ENUNCHUCK::SignerType::SOFTWARE) {
+        signerType = (int)ENUNCHUCK::SignerType::HARDWARE;
+    }
+    switch (signerType) {
+    case (int)ENUNCHUCK::SignerType::HARDWARE:
+        line["hasSignOrScan"] = true;
+        line["signerReadyToSign"] = deviceConnected;
+        break;
+    case (int)ENUNCHUCK::SignerType::SOFTWARE:
+    case (int)ENUNCHUCK::SignerType::AIRGAP:
+        line["hasSignOrScan"] = true;
+        line["signerReadyToSign"] = true;
+        break;
+    default:
+        line["hasSignOrScan"] = false;
+        line["signerReadyToSign"] = false;
+        break;
+    }
+    line["signerType"] = signerType < 0 ? (int)ENUNCHUCK::SignerType::UNKNOWN : signerType;
     return line;
 }
 

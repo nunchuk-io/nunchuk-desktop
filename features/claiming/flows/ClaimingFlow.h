@@ -59,7 +59,9 @@ class ClaimingFlow : public KeyProceedFlow {
     bool addAuthorization(const QString &token);
 
     virtual bool isManualClaiming() = 0;
-    static ClaimingFlow *resumeClaimingFlow(QObject *vm = nullptr);
+    static ClaimingFlow *resumeClaimingFlow(QObject *vm = nullptr, bool makeCurrent = false);
+    static void setActiveClaimFlowId(const QString &id);
+    static QString activeClaimFlowId();
   signals:
     void forwardTransaction();
   public slots:
