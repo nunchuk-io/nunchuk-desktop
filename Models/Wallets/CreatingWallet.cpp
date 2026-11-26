@@ -42,16 +42,10 @@ void CreatingWallet::setNeedBackup(const bool data)
         return; // Replaced or assisted wallets do not require backup
     }
     QWalletCached cache;
-    AppSetting::instance()->getwalletCached(walletId(), cache);
-    auto keepIfNotEmpty = [](QString &dst, const QString &value) {
-        if (!value.isEmpty()) {
-            dst = value;
-        }
-    };
-    keepIfNotEmpty(cache.groupId, groupId());
-    keepIfNotEmpty(cache.slug, slug());
-    keepIfNotEmpty(cache.myRole, myRole());
-    keepIfNotEmpty(cache.status, status());
+    cache.groupId   = groupId();
+    cache.slug      = slug();
+    cache.myRole    = myRole();
+    cache.status    = status();
     cache.backedup  = !data;
     cache.hideFiatCurrency = isByzantineGuardian();
     AppSetting::instance()->setWalletCached(walletId(), cache);
@@ -77,16 +71,10 @@ void CreatingWallet::setNeedRegistered(const bool data)
         return; // Replaced or assisted wallets do not require registration
     }
     QWalletCached cache;
-    AppSetting::instance()->getwalletCached(walletId(), cache);
-    auto keepIfNotEmpty = [](QString &dst, const QString &value) {
-        if (!value.isEmpty()) {
-            dst = value;
-        }
-    };
-    keepIfNotEmpty(cache.groupId, groupId());
-    keepIfNotEmpty(cache.slug, slug());
-    keepIfNotEmpty(cache.myRole, myRole());
-    keepIfNotEmpty(cache.status, status());
+    cache.groupId   = groupId();
+    cache.slug      = slug();
+    cache.myRole    = myRole();
+    cache.status    = status();
     cache.registered = !data;
     cache.hideFiatCurrency = isByzantineGuardian();
     AppSetting::instance()->setWalletCached(walletId(), cache);
