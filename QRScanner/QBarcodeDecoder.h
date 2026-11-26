@@ -33,7 +33,6 @@
 #define DEFAULT_RES_H 1920
 
 constexpr int MAX_DECODE_DIM = 1600;
-constexpr int FALLBACK_DIM = 800;
 constexpr int HEAVY_PASS_INTERVAL = 3;
 
 class QBarcodeDecoder : public QObject

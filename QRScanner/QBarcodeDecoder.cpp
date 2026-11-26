@@ -145,7 +145,8 @@ void QBarcodeDecoder::process(const QImage& capturedImage, ZXing::BarcodeFormats
 
         if (!result.isValid()) {
             result = ReadBarcode(work, ReaderOptions(base)
-                .setBinarizer(Binarizer::GlobalHistogram));
+                .setBinarizer(Binarizer::GlobalHistogram)
+                .setTryInvert(true));
             pass = 2;
         }
 
@@ -157,28 +158,6 @@ void QBarcodeDecoder::process(const QImage& capturedImage, ZXing::BarcodeFormats
                 .setBinarizer(Binarizer::LocalAverage)
                 .setTryInvert(true));
             pass = 3;
-        }
-
-        if (runHeavyPasses && !result.isValid() && std::max(work.width(), work.height()) > FALLBACK_DIM) {
-            const QImage small = work.scaled(FALLBACK_DIM, FALLBACK_DIM,
-                                             Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            result = ReadBarcode(small, ReaderOptions(base)
-                .setBinarizer(Binarizer::LocalAverage)
-                .setTryInvert(true));
-            pass = 4;
-        }
-
-        if (runHeavyPasses && !result.isValid()) {
-            const int cw = work.width() / 2;
-            const int ch = work.height() / 2;
-            if (cw >= 64 && ch >= 64 && std::max(cw, ch) * 2 <= MAX_DECODE_DIM) {
-                const QImage center = work.copy((work.width() - cw) / 2, (work.height() - ch) / 2, cw, ch)
-                                          .scaled(cw * 2, ch * 2, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                result = ReadBarcode(center, ReaderOptions(base)
-                    .setBinarizer(Binarizer::LocalAverage)
-                    .setTryInvert(true));
-                pass = 5;
-            }
         }
 
         if (result.isValid()) {

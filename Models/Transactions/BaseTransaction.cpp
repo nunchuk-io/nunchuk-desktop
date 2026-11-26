@@ -610,13 +610,19 @@ void BaseTransaction::createFilteringCoinInCoinSelection() {
             }
         }
     }
-    for (auto old_utxo : m_inputCoins->fullList()) {
-        for (auto new_utxo : m_manualCoins->fullList()) {
-            if (old_utxo->txid() == new_utxo->txid()) {
-                new_utxo->setSelected(true);
-            }
+    if (auto inputs = inputCoins()) {
+        for (auto input : inputs->fullList()) {
+            m_manualCoins->updateSelected(input->txid(), input->vout());
         }
     }
+    emit manualCoinsChanged();
+}
+
+void BaseTransaction::clearManualCoins() {
+    if (m_manualCoins.isNull()) {
+        return;
+    }
+    m_manualCoins.clear();
     emit manualCoinsChanged();
 }
 
@@ -1200,7 +1206,7 @@ void BaseTransaction::setPackageFeeRate(int satvKB) {
         return;
 
     m_packageFeeRate = satvKB;
-    emit nunchukTransactionChanged();
+    emit packageFeeRateChanged();
 }
 
 QString BaseTransaction::destination() {

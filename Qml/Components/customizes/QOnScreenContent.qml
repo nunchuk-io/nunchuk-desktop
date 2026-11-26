@@ -68,7 +68,7 @@ Item {
         }
         Loader {
             id: extraTopInfo
-            height: extraTopInfo.sourceComponent ? extraTopInfo.item.height : 0
+            height: extraTopInfo.item ? extraTopInfo.item.height : 0
             anchors.top: parent.top
         }
     }

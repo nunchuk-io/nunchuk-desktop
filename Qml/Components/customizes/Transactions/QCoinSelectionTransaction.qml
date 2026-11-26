@@ -66,7 +66,8 @@ Column {
                 GlobalData.txManualFeeContextKey = AppModel.walletInfo.walletId
                         + "|" + AppModel.transactionInfo.destination
                 var input = {
-                    type: "select-coin-for-create-transaction"
+                    type: "select-coin-for-create-transaction",
+                    resetSelection: true
                 }
                 QMLHandle.sendEvent(EVT.EVT_COIN_DETAILS_CONTROL_REQUEST, input)
             }

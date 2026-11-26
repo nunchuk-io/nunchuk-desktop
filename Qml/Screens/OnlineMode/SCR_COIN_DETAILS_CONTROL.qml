@@ -198,12 +198,15 @@ QScreen {
     Component {
         id: _filter_Search_coins_for_tx
         QViewFilteringSearchCoins {
-            filterData: transactionInfo.manualCoins.filter
+            filterData: transactionInfo.manualCoins ? transactionInfo.manualCoins.filter : ({})
             hasBack: true
             includeLockedCoins: false
             typeApply: "apply-filter-coin-collection-for-create-transaction"
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {})
+                QMLHandle.sendEvent(EVT.EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {
+                                        preserveFixedInputCoins: true,
+                                        discardManualCoins: true
+                                    })
             }
             onApplyClicked: {
                 var input = {

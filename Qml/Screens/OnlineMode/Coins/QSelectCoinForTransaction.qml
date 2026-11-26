@@ -40,7 +40,10 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
-    onCloseClicked: QMLHandle.sendEvent(EVT.EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {})
+    onCloseClicked: QMLHandle.sendEvent(EVT.EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {
+                                            preserveFixedInputCoins: true,
+                                            discardManualCoins: true
+                                        })
     property var transactionInfo: AppModel.transactionInfo
     extraTop: Item {
         id: header
@@ -84,7 +87,7 @@ QOnScreenContentTypeA {
                     height: 16
                     color: "#CF4018"
                     radius: 16
-                    visible: transactionInfo.manualCoins.isFiltered
+                    visible: transactionInfo.manualCoins ? transactionInfo.manualCoins.isFiltered : false
                     anchors {
                         top: parent.top
                         topMargin: -8
@@ -115,10 +118,13 @@ QOnScreenContentTypeA {
                     anchors.verticalCenter: parent.verticalCenter
                     QCheckBox {
                         id: selectAllBox
-                        checked: transactionInfo.manualCoins.isChecked
-                        partiallyChecked: transactionInfo.manualCoins.isPartiallyChecked
+                        checked: transactionInfo.manualCoins ? transactionInfo.manualCoins.isChecked : false
+                        partiallyChecked: transactionInfo.manualCoins ? transactionInfo.manualCoins.isPartiallyChecked : false
                         anchors.verticalCenter: parent.verticalCenter
                         onCheckboxClicked: {
+                            if (!transactionInfo.manualCoins) {
+                                return
+                            }
                             isEnabled = true
                             transactionInfo.manualCoins.selectAll(!selectAllBox.checked)
                         }
@@ -144,7 +150,7 @@ QOnScreenContentTypeA {
                         id: _txt
                         width: 600
                         height: 16
-                        text: STR.STR_QML_1508.arg(transactionInfo.manualCoins.amountDisplay)
+                        text: STR.STR_QML_1508.arg(transactionInfo.manualCoins ? transactionInfo.manualCoins.amountDisplay : "")
                                                 .arg(RoomWalletData.unitValue)
                                                 .arg(transactionInfo.total)
                                                 .arg(RoomWalletData.unitValue)
@@ -232,7 +238,7 @@ QOnScreenContentTypeA {
             label.text: STR.STR_QML_1499
             label.font.pixelSize: 16
             type: eTypeB
-            enabled: isEnabled
+            enabled: isEnabled && !!transactionInfo.manualCoins && transactionInfo.manualCoins.selectedCount > 0
             onButtonClicked: {
                 if (transactionInfo.manualCoins.selectedLockedCount > 0) {
                     _confirm.action = function(){

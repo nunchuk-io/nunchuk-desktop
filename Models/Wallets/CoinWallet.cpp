@@ -4,6 +4,7 @@
 #include "Servers/Draco.h"
 #include "Servers/Byzantine.h"
 #include "QThreadForwarder.h"
+#include "localization/STR_CPP.h"
 
 CoinWallet::CoinWallet(const nunchuk::Wallet &w) :
     ReplacedWallet{w},
@@ -790,7 +791,14 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
     }
     else if (type == "select-coin-for-create-transaction") {
         if (auto trans = AppModel::instance()->transactionInfoPtr()) {
-            trans->createFilteringCoinInCoinSelection();
+            if (maps["resetSelection"].toBool()) {
+                if (auto manualCoins = trans->manualCoins()) {
+                    manualCoins->selectAll(false);
+                }
+                trans->createFilteringCoinInCoinSelection();
+            } else if (!trans->manualCoins()) {
+                trans->createFilteringCoinInCoinSelection();
+            }
         }
     }
     else if (type == "use-selected-coins-create-transaction") {
@@ -801,16 +809,16 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
             if (trans && wallet) {
                 QVariantMap draft_data;
                 draft_data["subtractFromFeeAmout"]  = trans->subtractFromFeeAmount();
-                draft_data["feeRate"]               = trans->feeRateSats()/1000; // Convert sats/Byte to sats/kB
+                draft_data["feeRate"]               = trans->feeRateSats() / 1000.0;
                 draft_data["manualFee"]             = true;
                 draft_data["manualOutput"]          = true;
-                // DBG_INFO << "Customize coins" << trans->feeRate() << trans->feeRateSats();
-                // bool subtractFromFeeAmout   = draftTransactionInput.value("subtractFromFeeAmout").toBool();
-                // int  feeRate                = draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-                // bool manualFee              = draftTransactionInput.value("manualFee").toBool();
-                // bool manualOutput           = draftTransactionInput.value("manualOutput").toBool();
+                const bool previousFixedInputCoins = wallet->fixedInputCoins();
+                wallet->setFixedInputCoins(false);
+                if (!wallet->UpdateDraftTransaction(draft_data)) {
+                    wallet->setFixedInputCoins(previousFixedInputCoins);
+                    return;
+                }
                 wallet->setFixedInputCoins(true);
-                wallet->UpdateDraftTransaction(draft_data);
                 QVariantMap returnContext;
                 returnContext["preserveFixedInputCoins"] = true;
                 QEventProcessor::instance()->sendEvent(
@@ -822,7 +830,8 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
         return true;
     }
     else if (type == "filtering-text") {
-        if (auto trans = AppModel::instance()->transactionInfoPtr()) {
+        auto trans = AppModel::instance()->transactionInfoPtr();
+        if (trans && trans->manualCoins()) {
             DBG_INFO << "searchText" << maps["searchText"].toString();
             trans->manualCoins()->searchByString(maps["searchText"].toString());
             emit trans->manualCoinsChanged();
@@ -830,7 +839,8 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
         return true;
     }
     else if (type == "apply-filter-coin-collection-for-create-transaction") {
-        if (auto trans = AppModel::instance()->transactionInfoPtr()) {
+        auto trans = AppModel::instance()->transactionInfoPtr();
+        if (trans && trans->manualCoins()) {
             trans->manualCoins()->searchByFilter(msg);
         }
         return true;
@@ -1542,7 +1552,7 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
     DBG_INFO <<  draftTransactionInput.value("feeRate");
 
     bool    subtractFromFeeAmout   = draftTransactionInput.value("subtractFromFeeAmout").toBool();
-    qint64  feeRate                = draftTransactionInput.value("feeRate").toLongLong()*1000; // Convert sats/Byte to sats/kB
+    qint64  feeRate                = qRound64(draftTransactionInput.value("feeRate").toDouble()*1000); // Convert sats/Byte to sats/kB
     bool    manualFee              = draftTransactionInput.value("manualFee").toBool();
     bool    manualOutput           = draftTransactionInput.value("manualOutput").toBool();
     if(!manualFee) {
@@ -1590,8 +1600,14 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
             AppModel::instance()->transactionInfo()->setMemo(memo);
             AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
             AppModel::instance()->transactionInfo()->setSigningPathSelected(selectedSigningPath);
+            return true;
         }
-        return true;
+        if ((int)EWARNING::WarningType::NONE_MSG != msgwarning.type()) {
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+        } else {
+            AppModel::instance()->showToast(-1, STR_CPP_073, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        return false;
     }
     else {
         QWarningMessage msgwarning;
@@ -1609,12 +1625,14 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
                 trans.data()->setMemo(memo);
                 trans.data()->setUseScriptPath(use_script_path);
                 AppModel::instance()->setTransactionInfo(trans);
+                return true;
             }
+            AppModel::instance()->showToast(-1, STR_CPP_073, EWARNING::WarningType::EXCEPTION_MSG);
         }
         else {
             AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
-    }    
+    }
     return false;
 }
 
