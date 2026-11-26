@@ -2447,6 +2447,9 @@ class AppStrings : public QObject {
     // Hardware device scan: button label while the just-cancelled scan is still unwinding.
     DEFINE_STRING_PROPERTY(STR_QML_2340, "Cancelling...")
     DEFINE_STRING_PROPERTY(STR_QML_2325, "Backup Password, or the seed phrase you backed up earlier")
+    DEFINE_STRING_PROPERTY(STR_QML_2609, "Unable to read the imported transaction. Please check the QR code or file and try again.")
+    DEFINE_STRING_PROPERTY(STR_QML_2610, "The imported data does not belong to this transaction.")
+    DEFINE_STRING_PROPERTY(STR_QML_2611, "The imported data does not contain any new signature.")
 
   public:
     static AppStrings &instance();

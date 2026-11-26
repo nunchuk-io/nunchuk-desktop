@@ -52,21 +52,25 @@ QScreen {
     }
 
     function requestExportViaQR() {
-        qrcodeExportResult.filename = "Transaction_" + AppModel.transactionInfo.txid;
-        qrcodeExportResult.open();
         var datalegacy = {
             "qrtype": "QR-transaction"
         };
         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE, datalegacy);
+        if (AppModel.qrExported.length > 0) {
+            qrcodeExportResult.filename = "Transaction_" + AppModel.transactionInfo.txid;
+            qrcodeExportResult.open();
+        }
     }
 
     function requestExportViaBBQR() {
-        qrcodeExportResult.filename = "Transaction_bbqr_" + AppModel.transactionInfo.txid;
-        qrcodeExportResult.open();
         var datalegacy = {
             "qrtype": "BBQR-transaction"
         };
         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE, datalegacy);
+        if (AppModel.qrExported.length > 0) {
+            qrcodeExportResult.filename = "Transaction_bbqr_" + AppModel.transactionInfo.txid;
+            qrcodeExportResult.open();
+        }
     }
 
     function urlActiveLink() {

@@ -67,7 +67,7 @@ signals:
     void errorOccured(const QString& errorString);
     void tagFound(const QString &tag);
 private:
-    bool m_isDecoding = false;
+    std::atomic<bool> m_isDecoding{false};
     std::atomic<int> m_missCount{0};
     void setIsDecoding(bool isDecoding);
 };

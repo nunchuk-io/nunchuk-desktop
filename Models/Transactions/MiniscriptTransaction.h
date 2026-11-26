@@ -72,7 +72,7 @@ private:
     QJsonValue processNodeJson(const QJsonValue& value, const QStringList& nodes);
     QJsonValue processSignNodeJson(const QJsonValue& walletJs, const QJsonValue& txJs);
     QJsonObject processKeyNodeJson(const QJsonObject& value, QString xfp, int keyset_status, bool keyset_signed);
-    QJsonObject processClaimKeyNodeJson(QJsonObject line, const QString &xfp);
+    QJsonObject processClaimKeyNodeJson(QJsonObject line, const QString &xfp, bool canSign);
     QJsonObject generateCoinsGroup(const nunchuk::CoinsGroup &coinsGroup);
 public slots:
     // Add any public slots specific to MiniscriptTransaction here

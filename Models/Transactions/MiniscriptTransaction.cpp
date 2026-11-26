@@ -1139,8 +1139,8 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
             line["alreadySigned"] = signer->signerSigned();
         }
         bool canSign = signer->hasSignBtn();
-        if (isClaimTx() && canSign) {
-            return processClaimKeyNodeJson(line, xfp);
+        if (isClaimTx()) {
+            return processClaimKeyNodeJson(line, xfp, canSign);
         }
         if (!canSign) {
             line["hasSignOrScan"] = false;
@@ -1166,7 +1166,7 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
     return line;
 }
 
-QJsonObject MiniscriptTransaction::processClaimKeyNodeJson(QJsonObject line, const QString &xfp) {
+QJsonObject MiniscriptTransaction::processClaimKeyNodeJson(QJsonObject line, const QString &xfp, bool canSign) {
     auto appModel = AppModel::instance();
     const bool deviceConnected = appModel->deviceList() && appModel->deviceList()->contains(xfp);
     int signerType = -1;
@@ -1181,22 +1181,33 @@ QJsonObject MiniscriptTransaction::processClaimKeyNodeJson(QJsonObject line, con
     if (deviceConnected && signerType != (int)ENUNCHUCK::SignerType::SOFTWARE) {
         signerType = (int)ENUNCHUCK::SignerType::HARDWARE;
     }
-    switch (signerType) {
-    case (int)ENUNCHUCK::SignerType::HARDWARE:
-        line["hasSignOrScan"] = true;
-        line["signerReadyToSign"] = deviceConnected;
-        break;
-    case (int)ENUNCHUCK::SignerType::SOFTWARE:
-    case (int)ENUNCHUCK::SignerType::AIRGAP:
-        line["hasSignOrScan"] = true;
-        line["signerReadyToSign"] = true;
-        break;
-    default:
+    if (!canSign) {
         line["hasSignOrScan"] = false;
         line["signerReadyToSign"] = false;
-        break;
+    } else {
+        switch (signerType) {
+        case (int)ENUNCHUCK::SignerType::HARDWARE:
+            line["hasSignOrScan"] = true;
+            line["signerReadyToSign"] = deviceConnected;
+            break;
+        case (int)ENUNCHUCK::SignerType::SOFTWARE:
+        case (int)ENUNCHUCK::SignerType::AIRGAP:
+            line["hasSignOrScan"] = true;
+            line["signerReadyToSign"] = true;
+            break;
+        default:
+            line["hasSignOrScan"] = false;
+            line["signerReadyToSign"] = false;
+            break;
+        }
     }
-    line["signerType"] = signerType < 0 ? (int)ENUNCHUCK::SignerType::UNKNOWN : signerType;
+    const int resolvedType = signerType < 0 ? (int)ENUNCHUCK::SignerType::UNKNOWN : signerType;
+    line["signerType"] = resolvedType;
+    if (signerType >= 0) {
+        QJsonObject keyObj = line.value("keyObj").toObject();
+        keyObj["single_signer_type"] = resolvedType;
+        line["keyObj"] = keyObj;
+    }
     return line;
 }
 

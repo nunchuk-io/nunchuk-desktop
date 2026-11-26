@@ -1,4 +1,5 @@
 #include "TransactionHelper.h"
+#include "BaseTransaction.h"
 #include "ViewsEnums.h"
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
@@ -92,13 +93,15 @@ void importFile(const QVariant &msg) {
         const int signedBefore = BaseTransaction::signedCount(wallet_id, before);
         QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         const bool imported = trans && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type();
-        if (imported && BaseTransaction::hasSigningProgress(wallet_id, signedBefore, before, trans.data()->nunchukTransaction())) {
+        const int check = imported ? BaseTransaction::checkSigningProgress(wallet_id, signedBefore, before, trans.data()->nunchukTransaction())
+                                   : (int)BaseTransaction::ImportInvalid;
+        if (check == BaseTransaction::ImportOk) {
             AppModel::instance()->setTransactionInfo(trans);
             wallet.data()->SignAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
             AppModel::instance()->requestSyncWalletDb(wallet_id);
         } else {
-            DBG_INFO << "Import transaction file failed or adds no signature:" << msgwarning.what();
-            AppModel::instance()->showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
+            DBG_INFO << "Import transaction file rejected:" << check << msgwarning.what();
+            AppModel::instance()->showToast(0, BaseTransaction::importErrorMessage(check), EWARNING::WarningType::ERROR_MSG);
         }
     }
 }

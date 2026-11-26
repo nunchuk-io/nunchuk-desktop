@@ -108,13 +108,10 @@ QBarcodeDecoder::QBarcodeDecoder(QObject *parent) : QObject(parent)
 
 void QBarcodeDecoder::setIsDecoding(bool isDecoding)
 {
-    if (m_isDecoding == isDecoding) {
+    if (m_isDecoding.exchange(isDecoding) == isDecoding) {
         return;
     }
-
-    m_isDecoding = isDecoding;
-
-    emit isDecodingChanged(m_isDecoding);
+    emit isDecodingChanged(isDecoding);
 }
 
 bool QBarcodeDecoder::  isDecoding() const
@@ -155,8 +152,8 @@ void QBarcodeDecoder::process(const QImage& capturedImage, ZXing::BarcodeFormats
         const bool runHeavyPasses = !result.isValid() && (m_missCount.fetch_add(1) % HEAVY_PASS_INTERVAL == 0);
 
         if (runHeavyPasses) {
-            const QImage gray = stretchContrast(work.convertToFormat(QImage::Format_Grayscale8));
-            result = ReadBarcode(gray, ReaderOptions(base)
+            const QImage stretched = stretchContrast(work);
+            result = ReadBarcode(stretched, ReaderOptions(base)
                 .setBinarizer(Binarizer::LocalAverage)
                 .setTryInvert(true));
             pass = 3;
@@ -171,9 +168,24 @@ void QBarcodeDecoder::process(const QImage& capturedImage, ZXing::BarcodeFormats
             pass = 4;
         }
 
+        if (runHeavyPasses && !result.isValid()) {
+            const int cw = work.width() / 2;
+            const int ch = work.height() / 2;
+            if (cw >= 64 && ch >= 64 && std::max(cw, ch) * 2 <= MAX_DECODE_DIM) {
+                const QImage center = work.copy((work.width() - cw) / 2, (work.height() - ch) / 2, cw, ch)
+                                          .scaled(cw * 2, ch * 2, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                result = ReadBarcode(center, ReaderOptions(base)
+                    .setBinarizer(Binarizer::LocalAverage)
+                    .setTryInvert(true));
+                pass = 5;
+            }
+        }
+
         if (result.isValid()) {
-            DBG_INFO << "QR decoded pass" << pass << "size" << work.width() << "x" << work.height()
-                     << "in" << timer.elapsed() << "ms";
+            if (pass != 1) {
+                DBG_INFO << "QR decoded pass" << pass << "size" << work.width() << "x" << work.height()
+                         << "in" << timer.elapsed() << "ms";
+            }
             emit tagFound(result.text());
         }
     }
@@ -214,22 +226,11 @@ QImage QBarcodeDecoder::prepareImage(const QImage &image) const
     if (image.isNull())
         return image;
 
-    QImage result = (image.width() > MAX_DECODE_DIM || image.height() > MAX_DECODE_DIM)
-        ? image.scaled(MAX_DECODE_DIM, MAX_DECODE_DIM,
-                       Qt::KeepAspectRatio, Qt::SmoothTransformation)
-        : image;
-
-    // Ensure pixel format is one ZXing handles natively (avoids internal copy).
-    const auto fmt = result.format();
-    if (fmt != QImage::Format_Grayscale8 &&
-        fmt != QImage::Format_RGB888     &&
-        fmt != QImage::Format_RGBX8888   &&
-        fmt != QImage::Format_RGBA8888)
-    {
-        result = result.convertToFormat(QImage::Format_RGBX8888);
+    QImage gray = image.format() == QImage::Format_Grayscale8 ? image : image.convertToFormat(QImage::Format_Grayscale8);
+    if (gray.width() > MAX_DECODE_DIM || gray.height() > MAX_DECODE_DIM) {
+        gray = gray.scaled(MAX_DECODE_DIM, MAX_DECODE_DIM, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
-
-    return result;
+    return gray;
 }
 
 QImage QBarcodeDecoder::stretchContrast(const QImage &gray) const

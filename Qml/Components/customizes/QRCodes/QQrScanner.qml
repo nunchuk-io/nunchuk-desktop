@@ -40,8 +40,10 @@ Item {
     CameraPermission {
         id: camPerm
         onStatusChanged: {
-            if (status === Qt.PermissionStatus.Granted)
+            if (status === Qt.PermissionStatus.Granted) {
+                qrscannerRoot.configureCamera()
                 camera.start()
+            }
             else if (status === Qt.PermissionStatus.Denied)
                 camera.stop()
         }

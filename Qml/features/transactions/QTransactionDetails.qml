@@ -310,13 +310,17 @@ QOnScreenContentTypeA {
     }
     function requestExportViaQR() {
         vm.txSignExportQr()
-        qrcodeExportResult.filename = "Transaction_" + transactionInfo.txid
-        qrcodeExportResult.open()
+        if (vm.qrExported.length > 0) {
+            qrcodeExportResult.filename = "Transaction_" + transactionInfo.txid
+            qrcodeExportResult.open()
+        }
     }
     function requestExportViaBBQR() {
         vm.txSignExportBBQr()
-        qrcodeExportResult.filename = "Transaction_bbqr_" + transactionInfo.txid
-        qrcodeExportResult.open()
+        if (vm.qrExported.length > 0) {
+            qrcodeExportResult.filename = "Transaction_bbqr_" + transactionInfo.txid
+            qrcodeExportResult.open()
+        }
     }
 
     Connections {

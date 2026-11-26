@@ -217,6 +217,7 @@ class BaseTransaction : public QStateFlow {
     SingleSignerListModel *taprootMiniscriptSigners(const QWalletPtr &wallet);
 
     SingleSignerListModel *normalWalletSigners(const QWalletPtr &wallet);
+    void applyClaimSignerTypes();
     SingleSignerListModel *allFinalSigners();
     void updateSignaturesForDummyTx();
     int numberSigned();
@@ -319,8 +320,10 @@ class BaseTransaction : public QStateFlow {
     GroupTransactionStateRefreshContext groupTransactionStateRefreshContext() const;
 
   public:
+    enum ImportCheck { ImportOk = 0, ImportInvalid, ImportWrongTx, ImportNoNewSignature };
     static int signedCount(const QString &walletId, const nunchuk::Transaction &tx);
-    static bool hasSigningProgress(const QString &walletId, int signedBefore, const nunchuk::Transaction &before, const nunchuk::Transaction &after);
+    static int checkSigningProgress(const QString &walletId, int signedBefore, const nunchuk::Transaction &before, const nunchuk::Transaction &after);
+    static QString importErrorMessage(int importCheck);
 
   public slots:
     bool parseQRTransaction(const QStringList &qrtags);
@@ -333,6 +336,7 @@ class BaseTransaction : public QStateFlow {
 
   protected:
     bool ImportQRTransaction(const QStringList &qrtags);
+    int m_lastImportCheck {ImportOk};
 
   private:
     bool canRefreshGroupTransactionState(const QString &walletIdSnapshot, const QString &txidSnapshot) const;

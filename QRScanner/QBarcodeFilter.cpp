@@ -20,6 +20,7 @@
 #include "QBarcodeFilter.h"
 #include <QRegularExpression>
 #include <QThread>
+#include <QScopeGuard>
 #include "QOutlog.h"
 #include <string>
 #include <vector>
@@ -160,8 +161,12 @@ void QBarcodeFilter::processFrame(const QVideoFrame &frame)
     auto decoder    = m_decoder;
     auto processing = m_processing;
     QtConcurrent::run([decoder, processing, image]() {
-        decoder->process(image, ZXing::BarcodeFormat::QRCode);
-        processing->fetchAndSubRelease(1);
+        auto release = qScopeGuard([processing]() { processing->fetchAndSubRelease(1); });
+        try {
+            decoder->process(image, ZXing::BarcodeFormat::QRCode);
+        } catch (...) {
+            DBG_INFO << "QR decode threw unknown exception";
+        }
     });
 }
 
@@ -234,7 +239,17 @@ void QBarcodeFilter::onDecoderTagFound(const QString &tag)
             } catch (...) {
                 decoded = false;
             }
-            complete = decoded || m_multipartTags.size() >= m_multipartTotal * 3;
+            bool allPureParts = true;
+            for (int i = 1; i <= m_multipartTotal; ++i) {
+                if (!m_parts.contains(i)) {
+                    allPureParts = false;
+                    break;
+                }
+            }
+            if (!decoded) {
+                DBG_INFO << "QR psbt not decodable yet, pure parts complete:" << allPureParts << "tags:" << m_multipartTags.size();
+            }
+            complete = decoded || allPureParts || m_multipartTags.size() >= m_multipartTotal * 3;
         }
         percent = complete ? 100 : qBound(0, got * 100 / m_multipartTotal, 99);
     } else if (tag != m_lastSingleTag) {

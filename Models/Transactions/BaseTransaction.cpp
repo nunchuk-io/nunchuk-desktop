@@ -34,6 +34,7 @@
 #include <QPointer>
 #include <QQmlEngine>
 #include <QThread>
+#include <algorithm>
 #include <array>
 #include <nunchukmatrix.h>
 
@@ -384,7 +385,7 @@ bool BaseTransaction::parseQRTransaction(const QStringList &qrtags) {
         AppModel::instance()->transactionInfoChanged();
         return true;
     }
-    AppModel::instance()->showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
+    AppModel::instance()->showToast(0, importErrorMessage(m_lastImportCheck), EWARNING::WarningType::ERROR_MSG);
     return false;
 }
 
@@ -448,14 +449,33 @@ int BaseTransaction::signedCount(const QString &walletId, const nunchuk::Transac
     return count;
 }
 
-bool BaseTransaction::hasSigningProgress(const QString &walletId, int signedBefore, const nunchuk::Transaction &before, const nunchuk::Transaction &after) {
+int BaseTransaction::checkSigningProgress(const QString &walletId, int signedBefore, const nunchuk::Transaction &before, const nunchuk::Transaction &after) {
+    if (!before.get_txid().empty() && after.get_txid() != before.get_txid()) {
+        DBG_INFO << "Imported transaction does not match current tx:" << QString::fromStdString(after.get_txid()) << "!=" << QString::fromStdString(before.get_txid());
+        return ImportWrongTx;
+    }
     if (signedCount(walletId, after) > signedBefore) {
-        return true;
+        return ImportOk;
     }
     if (after.get_status() != before.get_status()) {
-        return true;
+        return ImportOk;
     }
-    return after.get_keyset_status() != before.get_keyset_status();
+    if (after.get_keyset_status() != before.get_keyset_status()) {
+        return ImportOk;
+    }
+    DBG_INFO << "Imported data does not add any signature, signed:" << signedBefore;
+    return ImportNoNewSignature;
+}
+
+QString BaseTransaction::importErrorMessage(int importCheck) {
+    switch (importCheck) {
+    case ImportWrongTx:
+        return Strings.STR_QML_2610();
+    case ImportNoNewSignature:
+        return Strings.STR_QML_2611();
+    default:
+        return Strings.STR_QML_2609();
+    }
 }
 
 bool BaseTransaction::ImportQRTransaction(const QStringList &qrtags) {
@@ -464,10 +484,11 @@ bool BaseTransaction::ImportQRTransaction(const QStringList &qrtags) {
     QString wallet_id = walletId();
     QWarningMessage msg;
     const int signedBefore = signedCount(wallet_id, m_transaction);
+    m_lastImportCheck = ImportInvalid;
     nunchuk::Transaction trans_result = bridge::nunchukImportQRTransaction(wallet_id, in, msg);
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        if (!hasSigningProgress(wallet_id, signedBefore, m_transaction, trans_result)) {
-            DBG_INFO << "Imported QR does not add any signature, signed:" << signedBefore;
+        m_lastImportCheck = checkSigningProgress(wallet_id, signedBefore, m_transaction, trans_result);
+        if (m_lastImportCheck != ImportOk) {
             return false;
         }
         setNunchukTransaction(trans_result);
@@ -489,6 +510,7 @@ bool BaseTransaction::ImportQRTransaction(const QStringList &qrtags) {
         }
         return true;
     } else {
+        DBG_INFO << "Import QR transaction failed:" << in.size() << msg.what();
         return false;
     }
 }
@@ -874,10 +896,32 @@ SingleSignerListModel *BaseTransaction::normalWalletSigners(const QWalletPtr &wa
             m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second, "");
         }
         updateSignaturesForDummyTx();
+        applyClaimSignerTypes();
         m_signers.data()->requestSort(true);
         return m_signers.data();
     } else {
         return (new SingleSignerListModel());
+    }
+}
+
+void BaseTransaction::applyClaimSignerTypes() {
+    if (!isClaimTx() || m_signers.isNull()) {
+        return;
+    }
+    auto masterList = AppModel::instance()->masterSignerListPtr();
+    if (!masterList) {
+        return;
+    }
+    for (int i = 0; i < m_signers->rowCount(); i++) {
+        auto signer = m_signers->getSingleSignerByIndex(i);
+        if (!signer) {
+            continue;
+        }
+        if (auto master = masterList->getMasterSignerByXfp(signer->masterFingerPrint())) {
+            if (signer->signerType() != master->signerType()) {
+                signer->setSignerType(master->signerType());
+            }
+        }
     }
 }
 
@@ -896,6 +940,7 @@ SingleSignerListModel *BaseTransaction::allFinalSigners() {
             m_signers = wallet->singleSignersAssigned()->cloneFinalSigners(final_signers);
         }
         updateSignaturesForDummyTx();
+        applyClaimSignerTypes();
         return m_signers.data();
     } else {
         return (new SingleSignerListModel());
