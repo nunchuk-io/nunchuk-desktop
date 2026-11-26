@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QVideoFrame>
+#include <atomic>
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -30,6 +31,10 @@
 // Default camera resolution width/height
 #define DEFAULT_RES_W 1080
 #define DEFAULT_RES_H 1920
+
+constexpr int MAX_DECODE_DIM = 1600;
+constexpr int FALLBACK_DIM = 800;
+constexpr int HEAVY_PASS_INTERVAL = 3;
 
 class QBarcodeDecoder : public QObject
 {
@@ -43,6 +48,7 @@ public:
     QImage videoFrameToImage(const QVideoFrame &videoFrame, const QRect &captureRect) const;
     QImage smoothTransformation(const QImage &image) const;  // legacy — kept for ABI
     QImage prepareImage(const QImage &image) const;          // downscale + normalize for ZXing
+    QImage stretchContrast(const QImage &gray) const;
 
 public slots:
     void process(const QImage& capturedImage, ZXing::BarcodeFormats formats);
@@ -62,6 +68,7 @@ signals:
     void tagFound(const QString &tag);
 private:
     bool m_isDecoding = false;
+    std::atomic<int> m_missCount{0};
     void setIsDecoding(bool isDecoding);
 };
 

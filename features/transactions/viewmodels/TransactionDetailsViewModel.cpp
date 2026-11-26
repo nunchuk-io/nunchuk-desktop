@@ -5,6 +5,8 @@
 #include "core/ui/UiServices.inc"
 #include "features/transactions/flows/TransactionFlow.h"
 #include "generated_qml_keys.hpp"
+#include <QByteArray>
+#include <QFile>
 
 namespace features::transactions::viewmodels {
 using namespace features::transactions::usecases;
@@ -21,23 +23,66 @@ TransactionFlow *TransactionDetailsViewModel::currentTransactionFlow() {
 void TransactionDetailsViewModel::importQrOffChain(TransactionFlow *flow, const QStringList &tags) {
     QWarningMessage msg;
     QString psbt_signed = qUtils::ParseQRTransaction(tags, msg);
+    if (!msg.isSuccess() || psbt_signed.isEmpty()) {
+        DBG_INFO << "Parse QR transaction failed:" << tags.size() << msg.what();
+        emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
+    if (psbt_signed.trimmed() == QString::fromStdString(nunTx().get_psbt()).trimmed()) {
+        emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
     flow->proceedTransaction(psbt_signed);
 }
 
-void TransactionDetailsViewModel::importQrOnChainOrNormal(const QStringList &tags) {
+void TransactionDetailsViewModel::importQrOnChainOrNormal(const QStringList &qrTags) {
+    QStringList tags = qrTags;
+    tags.removeDuplicates();
     QWarningMessage msg;
     nunchuk::Transaction signedTx = bridge::nunchukImportQRTransaction(walletId(), tags, msg);
-    if (msg.isSuccess()) {
+    if (!msg.isSuccess()) {
+        DBG_INFO << "Import QR transaction failed:" << tags.size() << msg.what();
+    }
+    if (msg.isSuccess() && addsSignature(signedTx)) {
         updateTransactionStatus(signedTx);
     } else {
         emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
     }
 }
 
+bool TransactionDetailsViewModel::addsSignature(const nunchuk::Transaction &signedTx) {
+    auto countSigned = [](const nunchuk::Transaction &tx) {
+        int count = 0;
+        for (const auto &signer : tx.get_signers()) {
+            if (signer.second) {
+                ++count;
+            }
+        }
+        return count;
+    };
+    const auto current = nunTx();
+    if (countSigned(signedTx) <= countSigned(current) && signedTx.get_psbt() == current.get_psbt()) {
+        DBG_INFO << "Imported data does not add any signature";
+        return false;
+    }
+    return true;
+}
+
 void TransactionDetailsViewModel::importFileOffChain(TransactionFlow *flow, const QString &filePath) {
-    QString psbt_signed = qUtils::ImportDataViaFile(filePath);
-    DBG_INFO << "Imported PSBT from file: " << psbt_signed;
-    if (psbt_signed.isEmpty()) {
+    QString psbt_signed;
+    QFile file(filePath);
+    if (file.open(QIODevice::ReadOnly)) {
+        const QByteArray raw = file.readAll();
+        file.close();
+        static const QByteArray psbtMagic("psbt\xff", 5);
+        if (raw.startsWith(psbtMagic)) {
+            psbt_signed = QString::fromLatin1(raw.toBase64());
+        } else {
+            psbt_signed = QString::fromUtf8(raw).trimmed();
+        }
+    }
+    DBG_INFO << "Imported PSBT from file size:" << psbt_signed.size();
+    if (psbt_signed.isEmpty() || psbt_signed == QString::fromStdString(nunTx().get_psbt()).trimmed()) {
         emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
         return;
     }
@@ -47,7 +92,7 @@ void TransactionDetailsViewModel::importFileOffChain(TransactionFlow *flow, cons
 void TransactionDetailsViewModel::importFileOnChainOrNormal(const QString &filePath) {
     QWarningMessage msg;
     nunchuk::Transaction signedTx = bridge::transaction::ImportTransaction(walletId(), filePath, msg);
-    if (msg.isSuccess()) {
+    if (msg.isSuccess() && addsSignature(signedTx)) {
         updateTransactionStatus(signedTx);
     } else {
         emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
@@ -255,7 +300,9 @@ void TransactionDetailsViewModel::txSignExportFile(const QString &filePath) {
     }
     if (flow->isOffClaim()) {
         QString psbt = QString::fromStdString(nunTx().get_psbt());
-        qUtils::ExportDataViaFile(file_path, psbt);
+        if (!qUtils::ExportDataViaFile(file_path, psbt)) {
+            emit showToast(0, "Cannot export transaction file", EWARNING::WarningType::ERROR_MSG);
+        }
     } else if (flow->isOnClaim() || flow->isNormal()) {
         QWarningMessage msg;
         bool ret = bridge::nunchukExportTransaction(walletId(), transactionInfo()->txid(), file_path, msg);
@@ -390,6 +437,9 @@ void TransactionDetailsViewModel::updateTransactionStatus(const nunchuk::Transac
             transactionFlow->proceedTransaction(tx);
         }
     } else if (flow->isOnClaim() || flow->isNormal()) {
+        if (flow->isOnClaim()) {
+            flow->setnunTx(tx);
+        }
         setnunTx(tx);
         displayTransactionInfo();
         emit finishedSigningTransaction();

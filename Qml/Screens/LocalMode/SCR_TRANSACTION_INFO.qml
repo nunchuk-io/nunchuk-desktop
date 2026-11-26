@@ -628,9 +628,11 @@ QScreen {
 
         onTagFound: {
             if (qrcodeImport.complete) {
-                AppModel.transactionInfo.parseQRTransaction(qrcodeImport.tags);
+                var imported = AppModel.transactionInfo.parseQRTransaction(qrcodeImport.tags);
                 qrcodeImport.close();
-                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_QRCODE);
+                if (imported) {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_QRCODE);
+                }
             }
         }
     }

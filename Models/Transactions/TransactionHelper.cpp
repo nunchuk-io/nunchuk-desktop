@@ -6,6 +6,7 @@
 #include "QEventProcessor.h"
 #include "Servers/Draco.h"
 #include "bridgeifaces.h"
+#include "core/common/resources/AppStrings.h"
 #include "localization/STR_CPP.h"
 
 #define GUARD_TX_WALLET() \
@@ -87,11 +88,16 @@ void importFile(const QVariant &msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if (file_path != "" && wallet) {
         QWarningMessage msgwarning;
+        const QString oldPsbt = txInfo->psbt();
         QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
-        if (trans) {
+        const bool imported = trans && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type();
+        if (imported && trans.data()->psbt() != oldPsbt) {
             AppModel::instance()->setTransactionInfo(trans);
             wallet.data()->SignAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
             AppModel::instance()->requestSyncWalletDb(wallet_id);
+        } else {
+            DBG_INFO << "Import transaction file failed or adds no signature:" << msgwarning.what();
+            AppModel::instance()->showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
         }
     }
 }

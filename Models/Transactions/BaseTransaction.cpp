@@ -384,6 +384,7 @@ bool BaseTransaction::parseQRTransaction(const QStringList &qrtags) {
         AppModel::instance()->transactionInfoChanged();
         return true;
     }
+    AppModel::instance()->showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
     return false;
 }
 
@@ -439,6 +440,19 @@ bool BaseTransaction::ImportQRTransaction(const QStringList &qrtags) {
     QWarningMessage msg;
     nunchuk::Transaction trans_result = bridge::nunchukImportQRTransaction(wallet_id, in, msg);
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+        auto countSigned = [](const nunchuk::Transaction &tx) {
+            int count = 0;
+            for (const auto &signer : tx.get_signers()) {
+                if (signer.second) {
+                    ++count;
+                }
+            }
+            return count;
+        };
+        if (countSigned(trans_result) <= countSigned(m_transaction) && trans_result.get_psbt() == m_transaction.get_psbt()) {
+            DBG_INFO << "Imported QR does not add any signature";
+            return false;
+        }
         setNunchukTransaction(trans_result);
         if (roomId() != "") {
             QWarningMessage room_msg;

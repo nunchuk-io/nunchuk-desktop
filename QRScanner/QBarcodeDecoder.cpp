@@ -32,6 +32,8 @@
 #include <QScopeGuard>
 #include <QDateTime>
 #include <QPainter>
+#include <QElapsedTimer>
+#include <algorithm>
 
 namespace ZXing {
 namespace Qt {
@@ -128,42 +130,52 @@ void QBarcodeDecoder::process(const QImage& capturedImage, ZXing::BarcodeFormats
     if (capturedImage.isNull())
         return;
 
-    // Base options shared by all passes.
-    // tryHarder + tryRotate cover most orientation/damage cases.
     const auto base = ReaderOptions()
         .setFormats(formats)
         .setTryHarder(true)
         .setTryRotate(true)
+        .setTryDownscale(true)
         .setIsPure(false);
 
     try {
-        // Normalize resolution and pixel format once — reused across passes.
+        QElapsedTimer timer;
+        timer.start();
         const QImage work = prepareImage(capturedImage);
 
-        // ── Pass 1: LocalAverage binarizer ──────────────────────────────────
-        // Best for normal lighting and reasonable contrast. Fast path.
         auto result = ReadBarcode(work, ReaderOptions(base)
             .setBinarizer(Binarizer::LocalAverage));
+        int pass = 1;
 
-        // ── Pass 2: GlobalHistogram binarizer ───────────────────────────────
-        // Better for low-contrast QR codes, faded prints, glossy surfaces,
-        // or scenes with very uneven ambient lighting.
         if (!result.isValid()) {
             result = ReadBarcode(work, ReaderOptions(base)
                 .setBinarizer(Binarizer::GlobalHistogram));
+            pass = 2;
         }
 
-        // ── Pass 3: Grayscale + LocalAverage ────────────────────────────────
-        // Strips colour information that can mislead binarization on images
-        // with reflections, coloured backgrounds, or strong colour casts.
-        if (!result.isValid()) {
-            const QImage gray = work.convertToFormat(QImage::Format_Grayscale8);
+        const bool runHeavyPasses = !result.isValid() && (m_missCount.fetch_add(1) % HEAVY_PASS_INTERVAL == 0);
+
+        if (runHeavyPasses) {
+            const QImage gray = stretchContrast(work.convertToFormat(QImage::Format_Grayscale8));
             result = ReadBarcode(gray, ReaderOptions(base)
-                .setBinarizer(Binarizer::LocalAverage));
+                .setBinarizer(Binarizer::LocalAverage)
+                .setTryInvert(true));
+            pass = 3;
         }
 
-        if (result.isValid())
+        if (runHeavyPasses && !result.isValid() && std::max(work.width(), work.height()) > FALLBACK_DIM) {
+            const QImage small = work.scaled(FALLBACK_DIM, FALLBACK_DIM,
+                                             Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            result = ReadBarcode(small, ReaderOptions(base)
+                .setBinarizer(Binarizer::LocalAverage)
+                .setTryInvert(true));
+            pass = 4;
+        }
+
+        if (result.isValid()) {
+            DBG_INFO << "QR decoded pass" << pass << "size" << work.width() << "x" << work.height()
+                     << "in" << timer.elapsed() << "ms";
             emit tagFound(result.text());
+        }
     }
     catch (std::exception& e) {
         emit errorOccured("ZXing exception: " + QString::fromLocal8Bit(e.what()));
@@ -197,19 +209,10 @@ QImage QBarcodeDecoder::videoFrameToImage(const QVideoFrame &videoFrame, const Q
     return image.copy(captureRect);
 }
 
-// ── prepareImage ─────────────────────────────────────────────────────────────
-// Normalises the image before handing it to ZXing:
-//   1. Downscales to at most MAX_DECODE_DIM on the long edge.
-//      ZXing complexity is O(area); a 4× downscale cuts time by 16×.
-//      640 px is enough for QR version 40 (177×177 modules → ~3.6 px/module).
-//   2. Converts to RGBX8888 if not already in a ZXing-native format, so
-//      ZXing's internal conversion is a no-op.
 QImage QBarcodeDecoder::prepareImage(const QImage &image) const
 {
     if (image.isNull())
         return image;
-
-    constexpr int MAX_DECODE_DIM = 640;
 
     QImage result = (image.width() > MAX_DECODE_DIM || image.height() > MAX_DECODE_DIM)
         ? image.scaled(MAX_DECODE_DIM, MAX_DECODE_DIM,
@@ -227,6 +230,50 @@ QImage QBarcodeDecoder::prepareImage(const QImage &image) const
     }
 
     return result;
+}
+
+QImage QBarcodeDecoder::stretchContrast(const QImage &gray) const
+{
+    if (gray.isNull() || gray.format() != QImage::Format_Grayscale8)
+        return gray;
+
+    int hist[256] = {0};
+    const int w = gray.width();
+    const int h = gray.height();
+    for (int y = 0; y < h; ++y) {
+        const uchar *line = gray.constScanLine(y);
+        for (int x = 0; x < w; ++x)
+            ++hist[line[x]];
+    }
+
+    const qint64 total = static_cast<qint64>(w) * h;
+    const qint64 cut = total / 100;
+    int lo = 0, hi = 255;
+    qint64 acc = 0;
+    for (int i = 0; i < 256; ++i) {
+        acc += hist[i];
+        if (acc > cut) { lo = i; break; }
+    }
+    acc = 0;
+    for (int i = 255; i >= 0; --i) {
+        acc += hist[i];
+        if (acc > cut) { hi = i; break; }
+    }
+    if (hi - lo < 16)
+        return gray;
+
+    uchar lut[256];
+    for (int i = 0; i < 256; ++i)
+        lut[i] = static_cast<uchar>(qBound(0, (i - lo) * 255 / (hi - lo), 255));
+
+    QImage out(gray.size(), QImage::Format_Grayscale8);
+    for (int y = 0; y < h; ++y) {
+        const uchar *src = gray.constScanLine(y);
+        uchar *dst = out.scanLine(y);
+        for (int x = 0; x < w; ++x)
+            dst[x] = lut[src[x]];
+    }
+    return out;
 }
 
 // ── smoothTransformation ──────────────────────────────────────────────────────

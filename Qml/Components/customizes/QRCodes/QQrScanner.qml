@@ -52,10 +52,6 @@ Item {
         camera: Camera {
             id: camera
 
-            // DO NOT set focusMode — macOS built-in cameras (FaceTime HD,
-            // Continuity Camera) do not support programmatic focus and will
-            // fail silently if an unsupported mode is set.
-
             onErrorOccurred: (errorCode, errorString) => {
                 console.warn("[QQrScanner] Camera error", errorCode, ":", errorString)
             }
@@ -64,7 +60,7 @@ Item {
                 var res = (cameraFormat && cameraFormat.resolution.width > 0)
                           ? cameraFormat.resolution : Qt.size(0, 0)
                 if (res.width > 0 && res.height > 0) {
-                    var sz = Math.min(res.width, res.height) * 0.8
+                    var sz = Math.min(res.width, res.height) * 0.9
                     barcodeFilter.captureRect = Qt.rect(
                         (res.width  - sz) / 2,
                         (res.height - sz) / 2,
@@ -167,7 +163,30 @@ Item {
         onScanCompleteChanged:      { qrscannerRoot.complete = barcodeFilter.scanComplete }
     }
 
+    function configureCamera() {
+        var formats = camera.cameraDevice.videoFormats
+        var best = null
+        var bestArea = 0
+        for (var i = 0; i < formats.length; ++i) {
+            var f = formats[i]
+            var area = f.resolution.width * f.resolution.height
+            if (area > 2100000 || f.maxFrameRate < 15)
+                continue
+            if (area > bestArea) {
+                best = f
+                bestArea = area
+            }
+        }
+        if (best)
+            camera.cameraFormat = best
+        if (camera.isFocusModeSupported(Camera.FocusModeAutoNear))
+            camera.focusMode = Camera.FocusModeAutoNear
+        else if (camera.isFocusModeSupported(Camera.FocusModeAuto))
+            camera.focusMode = Camera.FocusModeAuto
+    }
+
     Component.onCompleted: {
+        configureCamera()
         if (camPerm.status === Qt.PermissionStatus.Granted)
             camera.start()
         else

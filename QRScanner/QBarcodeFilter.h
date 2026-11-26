@@ -29,6 +29,9 @@
 #include <QVideoFrame>
 #include <QtConcurrent>
 #include <QVariant>
+#include <QSet>
+#include <QString>
+#include <QStringList>
 
 #include "QBarcodeDecoder.h"
 #include "BarcodeFormat.h"
@@ -89,6 +92,10 @@ private:
     QRectF m_captureRect;
     int    m_scanPercent  = 0;
     bool   m_scanComplete = false;
+    QSet<int> m_parts;
+    QStringList m_multipartTags;
+    QString   m_multipartKey;
+    int       m_multipartTotal = 0;
 };
 
 #endif // QBARCODEFILTER_H

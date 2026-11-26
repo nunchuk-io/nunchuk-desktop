@@ -18,6 +18,12 @@
  *                                                                        *
  **************************************************************************/
 #include "QBarcodeFilter.h"
+#include <QRegularExpression>
+#include <QThread>
+#include "QOutlog.h"
+#include <string>
+#include <vector>
+#include "nunchuk.h"
 
 QBarcodeFilter::QBarcodeFilter(QObject *parent)
     : QObject(parent)
@@ -119,21 +125,22 @@ void QBarcodeFilter::processFrame(const QVideoFrame &frame)
     if (!frame.isValid())
         return;
 
-    // Debounce: drop frames while a decode is already running.
-    // testAndSetAcquire(expected, newValue): returns true only if the swap succeeded.
-    if (!m_processing->testAndSetAcquire(0, 1))
+    static const int kMaxConcurrentDecodes = qBound(1, QThread::idealThreadCount() / 2, 2);
+    if (m_processing->fetchAndAddAcquire(1) >= kMaxConcurrentDecodes) {
+        m_processing->fetchAndSubRelease(1);
         return;
+    }
 
     QVideoFrame copy(frame);
     if (!copy.map(QVideoFrame::ReadOnly)) {
-        m_processing->storeRelease(0);
+        m_processing->fetchAndSubRelease(1);
         return;
     }
     QImage image = copy.toImage();
     copy.unmap();
 
     if (image.isNull()) {
-        m_processing->storeRelease(0);
+        m_processing->fetchAndSubRelease(1);
         return;
     }
 
@@ -154,21 +161,85 @@ void QBarcodeFilter::processFrame(const QVideoFrame &frame)
     auto processing = m_processing;
     QtConcurrent::run([decoder, processing, image]() {
         decoder->process(image, ZXing::BarcodeFormat::QRCode);
-        processing->storeRelease(0);
+        processing->fetchAndSubRelease(1);
     });
 }
 
 // ── Decoder relay ─────────────────────────────────────────────────────────────
 // Called on the main thread (QueuedConnection from worker thread).
+namespace {
+bool parseMultipart(const QString &tag, QString &key, int &index, int &total, bool &isPsbtUr)
+{
+    static const QRegularExpression urRe(QStringLiteral("^ur:([a-z0-9\\-]+)/(\\d+)-(\\d+)/"),
+                                         QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression bbqrRe(QStringLiteral("^B\\$[0-9A-Z]{2}([0-9A-Z]{2})([0-9A-Z]{2})"),
+                                           QRegularExpression::CaseInsensitiveOption);
+    isPsbtUr = false;
+    auto m = urRe.match(tag);
+    if (m.hasMatch()) {
+        index = m.captured(2).toInt();
+        total = m.captured(3).toInt();
+        isPsbtUr = m.captured(1).compare(QStringLiteral("crypto-psbt"), Qt::CaseInsensitive) == 0;
+        key = QStringLiteral("ur:") + m.captured(1).toLower() + QString::number(total);
+        return total > 1;
+    }
+    m = bbqrRe.match(tag);
+    if (m.hasMatch()) {
+        bool ok1 = false, ok2 = false;
+        total = m.captured(1).toInt(&ok1, 36);
+        index = m.captured(2).toInt(&ok2, 36);
+        key = QStringLiteral("bbqr") + QString::number(total);
+        return ok1 && ok2 && total > 1;
+    }
+    return false;
+}
+}
+
 void QBarcodeFilter::onDecoderTagFound(const QString &tag)
 {
-    if (!m_scanComplete) {
-        m_scanComplete = true;
-        emit scanCompleteChanged();
+    QString key;
+    int index = 0;
+    int total = 0;
+    int percent = 100;
+    bool complete = true;
+    bool isPsbtUr = false;
+    if (parseMultipart(tag, key, index, total, isPsbtUr)) {
+        if (key != m_multipartKey) {
+            m_multipartKey = key;
+            m_multipartTotal = total;
+            m_parts.clear();
+            m_multipartTags.clear();
+        }
+        m_parts.insert(index);
+        if (m_multipartTags.contains(tag)) {
+            return;
+        }
+        m_multipartTags.append(tag);
+        DBG_INFO << "QR part" << index << "/" << m_multipartTotal << "collected" << m_multipartTags.size();
+        const int got = static_cast<int>(m_parts.size());
+        complete = got >= m_multipartTotal;
+        if (complete && isPsbtUr) {
+            bool decoded = false;
+            try {
+                std::vector<std::string> in;
+                for (const QString &t : m_multipartTags) {
+                    in.push_back(t.toStdString());
+                }
+                decoded = !nunchuk::Utils::ParseKeystoneTransaction(in).empty();
+            } catch (...) {
+                decoded = false;
+            }
+            complete = decoded || m_multipartTags.size() >= m_multipartTotal * 3;
+        }
+        percent = complete ? 100 : qBound(0, got * 100 / m_multipartTotal, 99);
     }
-    if (m_scanPercent != 100) {
-        m_scanPercent = 100;
+    if (m_scanPercent != percent) {
+        m_scanPercent = percent;
         emit scanPercentChanged();
+    }
+    if (m_scanComplete != complete) {
+        m_scanComplete = complete;
+        emit scanCompleteChanged();
     }
     emit tagFound(tag);
 }
