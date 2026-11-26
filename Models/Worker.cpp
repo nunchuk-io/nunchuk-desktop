@@ -18,6 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "Worker.h"
+#include <QElapsedTimer>
 #include "bridgeifaces.h"
 #include "bridgeTransaction.h"
 #include "Chats/matrixbrigde.h"
@@ -905,9 +906,10 @@ Controller::Controller() {
     qRegisterMetaType<WorkerDeviceInputData>();
     qRegisterMetaType<WorkerMultiDeviceSyncData>();
 
-    Worker *worker = Worker::create(&workerThread);
+    workerThread = new QThread();
+    Worker *worker = Worker::create(workerThread);
 
-    connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
+    connect(workerThread, &QThread::finished, worker, &QObject::deleteLater);
 
     // Create master signer
     connect(this, &Controller::startCreateMasterSigner, this, &Controller::slotPrepareCreateMasterSigner);
@@ -1078,7 +1080,7 @@ Controller::Controller() {
     connect(worker, &Worker::prepareSyncWalletDb, this, &Controller::slotApplySyncWalletSnapshot, Qt::QueuedConnection);
     connect(worker, &Worker::finishSyncWalletDb, this, &Controller::slotFinishSyncWalletDb, Qt::QueuedConnection);
 
-    workerThread.start();
+    workerThread->start();
 }
 
 Controller::~Controller() {
@@ -1086,12 +1088,39 @@ Controller::~Controller() {
         std::lock_guard<std::mutex> lock(mainThreadDispatchMutex);
         mainThreadDispatchEnabled.store(false, std::memory_order_release);
     }
-    if(workerThread.isRunning()){
-        workerThread.requestInterruption();
-        workerThread.quit();
-        workerThread.wait(5000);
+    if (workerThread) {
+        if (workerThread->isRunning()) {
+            workerThread->requestInterruption();
+            workerThread->quit();
+            if (!workerThread->wait(5000)) {
+                workerThread = nullptr;
+                this->disconnect();
+                return;
+            }
+        }
+        delete workerThread;
+        workerThread = nullptr;
     }
     this->disconnect();
+}
+
+void Controller::shutdownWorker(int timeoutMs)
+{
+    if (!workerThread || !workerThread->isRunning()) return;
+    workerThread->requestInterruption();
+    workerThread->quit();
+    QElapsedTimer timer;
+    timer.start();
+    const bool onMainThread = qApp && QThread::currentThread() == qApp->thread();
+    while (!workerThread->wait(50)) {
+        if (timer.elapsed() >= timeoutMs) {
+            DBG_ERROR << "[SHUTDOWN] worker thread still running after" << timeoutMs << "ms";
+            return;
+        }
+        if (onMainThread) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        }
+    }
 }
 
 bool Controller::scanDevicesSync()

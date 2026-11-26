@@ -318,6 +318,10 @@ class BaseTransaction : public QStateFlow {
     void startGroupTransactionStateRefresh(const GroupTransactionStateRefreshContext &context);
     GroupTransactionStateRefreshContext groupTransactionStateRefreshContext() const;
 
+  public:
+    static int signedCount(const QString &walletId, const nunchuk::Transaction &tx);
+    static bool hasSigningProgress(const QString &walletId, int signedBefore, const nunchuk::Transaction &before, const nunchuk::Transaction &after);
+
   public slots:
     bool parseQRTransaction(const QStringList &qrtags);
     void copyTransactionID();

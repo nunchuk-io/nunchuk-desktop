@@ -94,6 +94,7 @@ private:
     bool   m_scanComplete = false;
     QSet<int> m_parts;
     QStringList m_multipartTags;
+    QString   m_lastSingleTag;
     QString   m_multipartKey;
     int       m_multipartTotal = 0;
 };

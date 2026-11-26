@@ -124,6 +124,10 @@ AppModel::AppModel(): m_inititalized{false},
         DBG_INFO << "[SHUTDOWN] APPLICATION ABOUT TO QUIT BEGIN"
                  << "activeThreadCount:" << QThreadPool::globalInstance()->activeThreadCount();
 
+        DBG_INFO << "[SHUTDOWN] shutdownWorker BEGIN";
+        shutdownWorker(8000);
+        DBG_INFO << "[SHUTDOWN] shutdownWorker END";
+
         DBG_INFO << "[SHUTDOWN] stopAllNunchuk BEGIN";
         bridge::stopAllNunchuk();
         DBG_INFO << "[SHUTDOWN] stopAllNunchuk END";

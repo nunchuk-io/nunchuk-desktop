@@ -174,8 +174,13 @@ bool parseMultipart(const QString &tag, QString &key, int &index, int &total, bo
                                          QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression bbqrRe(QStringLiteral("^B\\$[0-9A-Z]{2}([0-9A-Z]{2})([0-9A-Z]{2})"),
                                            QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression urV1Re(QStringLiteral("^ur:([a-z0-9\\-]+)/(\\d+)of(\\d+)/"),
+                                           QRegularExpression::CaseInsensitiveOption);
     isPsbtUr = false;
     auto m = urRe.match(tag);
+    if (!m.hasMatch()) {
+        m = urV1Re.match(tag);
+    }
     if (m.hasMatch()) {
         index = m.captured(2).toInt();
         total = m.captured(3).toInt();
@@ -232,6 +237,9 @@ void QBarcodeFilter::onDecoderTagFound(const QString &tag)
             complete = decoded || m_multipartTags.size() >= m_multipartTotal * 3;
         }
         percent = complete ? 100 : qBound(0, got * 100 / m_multipartTotal, 99);
+    } else if (tag != m_lastSingleTag) {
+        m_lastSingleTag = tag;
+        DBG_INFO << "QR single tag, length:" << tag.size() << "prefix:" << tag.left(48);
     }
     if (m_scanPercent != percent) {
         m_scanPercent = percent;

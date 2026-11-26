@@ -433,24 +433,41 @@ void BaseTransaction::createParentCoinTag() {
     emit parentCoinsTagChanged();
 }
 
+int BaseTransaction::signedCount(const QString &walletId, const nunchuk::Transaction &tx) {
+    int fromMap = 0;
+    for (const auto &signer : tx.get_signers()) {
+        if (signer.second) {
+            ++fromMap;
+        }
+    }
+    int count = std::max(fromMap, static_cast<int>(tx.get_signed().size()));
+    const QString txId = QString::fromStdString(tx.get_txid());
+    if (!walletId.isEmpty() && !txId.isEmpty()) {
+        count = std::max(count, static_cast<int>(bridge::nunchukGetTransactionSigners(walletId, txId).size()));
+    }
+    return count;
+}
+
+bool BaseTransaction::hasSigningProgress(const QString &walletId, int signedBefore, const nunchuk::Transaction &before, const nunchuk::Transaction &after) {
+    if (signedCount(walletId, after) > signedBefore) {
+        return true;
+    }
+    if (after.get_status() != before.get_status()) {
+        return true;
+    }
+    return after.get_keyset_status() != before.get_keyset_status();
+}
+
 bool BaseTransaction::ImportQRTransaction(const QStringList &qrtags) {
     QStringList in = qrtags;
     in.removeDuplicates();
     QString wallet_id = walletId();
     QWarningMessage msg;
+    const int signedBefore = signedCount(wallet_id, m_transaction);
     nunchuk::Transaction trans_result = bridge::nunchukImportQRTransaction(wallet_id, in, msg);
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        auto countSigned = [](const nunchuk::Transaction &tx) {
-            int count = 0;
-            for (const auto &signer : tx.get_signers()) {
-                if (signer.second) {
-                    ++count;
-                }
-            }
-            return count;
-        };
-        if (countSigned(trans_result) <= countSigned(m_transaction) && trans_result.get_psbt() == m_transaction.get_psbt()) {
-            DBG_INFO << "Imported QR does not add any signature";
+        if (!hasSigningProgress(wallet_id, signedBefore, m_transaction, trans_result)) {
+            DBG_INFO << "Imported QR does not add any signature, signed:" << signedBefore;
             return false;
         }
         setNunchukTransaction(trans_result);

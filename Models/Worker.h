@@ -390,10 +390,11 @@ signals:
 class Controller : public QObject
 {
     Q_OBJECT
-    QThread workerThread;
+    QThread *workerThread {nullptr};
 public:
     Controller();
     virtual ~Controller();
+    void shutdownWorker(int timeoutMs);
     bool scanDevicesSync();
 public slots:
     void slotPrepareCreateMasterSigner(const QString &name, const QString &xfp);

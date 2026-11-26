@@ -1,5 +1,6 @@
 #include "TransactionDetailsViewModel.h"
 #include "Models/WalletModel.h"
+#include "Models/Transactions/BaseTransaction.h"
 #include "ViewsEnums.h"
 #include "core/common/resources/AppStrings.h"
 #include "core/ui/UiServices.inc"
@@ -39,30 +40,22 @@ void TransactionDetailsViewModel::importQrOnChainOrNormal(const QStringList &qrT
     QStringList tags = qrTags;
     tags.removeDuplicates();
     QWarningMessage msg;
+    const auto current = nunTx();
+    const int signedBefore = BaseTransaction::signedCount(walletId(), current);
     nunchuk::Transaction signedTx = bridge::nunchukImportQRTransaction(walletId(), tags, msg);
     if (!msg.isSuccess()) {
         DBG_INFO << "Import QR transaction failed:" << tags.size() << msg.what();
     }
-    if (msg.isSuccess() && addsSignature(signedTx)) {
+    if (msg.isSuccess() && addsSignature(signedBefore, current, signedTx)) {
         updateTransactionStatus(signedTx);
     } else {
         emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
     }
 }
 
-bool TransactionDetailsViewModel::addsSignature(const nunchuk::Transaction &signedTx) {
-    auto countSigned = [](const nunchuk::Transaction &tx) {
-        int count = 0;
-        for (const auto &signer : tx.get_signers()) {
-            if (signer.second) {
-                ++count;
-            }
-        }
-        return count;
-    };
-    const auto current = nunTx();
-    if (countSigned(signedTx) <= countSigned(current) && signedTx.get_psbt() == current.get_psbt()) {
-        DBG_INFO << "Imported data does not add any signature";
+bool TransactionDetailsViewModel::addsSignature(int signedBefore, const nunchuk::Transaction &current, const nunchuk::Transaction &signedTx) {
+    if (!BaseTransaction::hasSigningProgress(walletId(), signedBefore, current, signedTx)) {
+        DBG_INFO << "Imported data does not add any signature, signed:" << signedBefore;
         return false;
     }
     return true;
@@ -91,8 +84,10 @@ void TransactionDetailsViewModel::importFileOffChain(TransactionFlow *flow, cons
 
 void TransactionDetailsViewModel::importFileOnChainOrNormal(const QString &filePath) {
     QWarningMessage msg;
+    const auto current = nunTx();
+    const int signedBefore = BaseTransaction::signedCount(walletId(), current);
     nunchuk::Transaction signedTx = bridge::transaction::ImportTransaction(walletId(), filePath, msg);
-    if (msg.isSuccess() && addsSignature(signedTx)) {
+    if (msg.isSuccess() && addsSignature(signedBefore, current, signedTx)) {
         updateTransactionStatus(signedTx);
     } else {
         emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
@@ -329,7 +324,12 @@ void TransactionDetailsViewModel::txBroadcast() {
         input.tx_id = transactionInfo()->txid();
         m_broadcastTxUC.executeAsync(input, [this, flow](core::usecase::Result<LibBroadcastTxResult> result) {
             if (result.isSuccess()) {
-                const auto &tx = result.value().tx;
+                auto tx = result.value().tx;
+                if (flow->isOnClaim() && tx.get_status() != nunchuk::TransactionStatus::PENDING_CONFIRMATION &&
+                    tx.get_status() != nunchuk::TransactionStatus::CONFIRMED) {
+                    DBG_INFO << "Claim broadcast returned status" << (int)tx.get_status() << "- forcing PENDING_CONFIRMATION";
+                    tx.set_status(nunchuk::TransactionStatus::PENDING_CONFIRMATION);
+                }
                 walletInfo()->AssignTagsToTxChange();
                 updateTransactionStatus(tx);
                 if (flow->isOnClaim()) {

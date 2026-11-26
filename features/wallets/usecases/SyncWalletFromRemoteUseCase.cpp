@@ -147,10 +147,24 @@ void SyncWalletFromRemoteUseCase::syncSignerFromRemote(const QJsonObject &signer
 
 void SyncWalletFromRemoteUseCase::walletCached(const QJsonObject &walletData) {
     QString wallet_id = walletData.value("local_id").toString();
+    QWalletCached previous;
+    const bool hasPrevious = AppSetting::instance()->getwalletCached(wallet_id, previous);
     QWalletCached cachedData;
     cachedData.groupId = walletData.value("group_id").toString();
     cachedData.slug = walletData.value("slug").toString();
     cachedData.myRole = walletData.value("role").toString();
+    if (hasPrevious) {
+        if (cachedData.slug.isEmpty() && !previous.slug.isEmpty()) {
+            DBG_INFO << "walletCached: server slug empty, keep previous slug for" << wallet_id << previous.slug;
+            cachedData.slug = previous.slug;
+        }
+        if (cachedData.groupId.isEmpty() && !previous.groupId.isEmpty()) {
+            cachedData.groupId = previous.groupId;
+        }
+        if (cachedData.myRole.isEmpty() && !previous.myRole.isEmpty()) {
+            cachedData.myRole = previous.myRole;
+        }
+    }
     cachedData.status = walletData.value("status").toString();
     cachedData.backedup = true;
     cachedData.hideFiatCurrency = walletData.value("hide_fiat_currency").toBool();

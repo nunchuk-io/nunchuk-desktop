@@ -88,10 +88,11 @@ void importFile(const QVariant &msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if (file_path != "" && wallet) {
         QWarningMessage msgwarning;
-        const QString oldPsbt = txInfo->psbt();
+        const nunchuk::Transaction before = txInfo->nunchukTransaction();
+        const int signedBefore = BaseTransaction::signedCount(wallet_id, before);
         QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         const bool imported = trans && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type();
-        if (imported && trans.data()->psbt() != oldPsbt) {
+        if (imported && BaseTransaction::hasSigningProgress(wallet_id, signedBefore, before, trans.data()->nunchukTransaction())) {
             AppModel::instance()->setTransactionInfo(trans);
             wallet.data()->SignAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
             AppModel::instance()->requestSyncWalletDb(wallet_id);

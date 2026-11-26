@@ -38,7 +38,7 @@ class TransactionDetailsViewModel : public GeneralTransactionDetailsViewModel {
     void exportQrOnChainOrNormal();
     void importQrOffChain(TransactionFlow *flow, const QStringList &tags);
     void importQrOnChainOrNormal(const QStringList &tags);
-    bool addsSignature(const nunchuk::Transaction &signedTx);
+    bool addsSignature(int signedBefore, const nunchuk::Transaction &current, const nunchuk::Transaction &signedTx);
     void importFileOffChain(TransactionFlow *flow, const QString &filePath);
     void importFileOnChainOrNormal(const QString &filePath);
 
